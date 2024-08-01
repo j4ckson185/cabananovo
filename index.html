@@ -326,13 +326,10 @@ main {
     displayProducts(products);
   }
 
-  function getUniqueCategories() {
-    return [...new Set(products.map(product => product.category))];
-  }
-
-  function displayCategories() {
+  async function fetchCategories() {
+    const snapshot = await db.collection('categories').get();
+    const categories = snapshot.docs.map(doc => doc.data().name);
     const categoriesContainer = document.getElementById('categories');
-    const categories = getUniqueCategories();
     categoriesContainer.innerHTML = categories.map(category => `
       <button class="category-btn" onclick="filterByCategory('${category}')">${category}</button>
     `).join('');
@@ -664,7 +661,7 @@ main {
   });
 
   // Inicializa a exibição de categorias e produtos
-  displayCategories();
+  fetchCategories();
   fetchProducts();
 </script>
 </body>
