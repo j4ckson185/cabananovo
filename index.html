@@ -555,15 +555,13 @@ main {
   }
 
   function addNewOrder(order) {
-    let orders = JSON.parse(localStorage.getItem('orders')) || [];
-    orders.push(order);
-    localStorage.setItem('orders', JSON.stringify(orders));
-
-    // Trigger the storage event manually to notify the gestor page
-    const event = new Event('storage');
-    event.key = 'orders';
-    event.newValue = JSON.stringify(orders);
-    window.dispatchEvent(event);
+    db.collection('orders').add(order)
+      .then(() => {
+        console.log('Order added to Firestore');
+      })
+      .catch((error) => {
+        console.error('Error adding order to Firestore: ', error);
+      });
   }
 
   document.getElementById('checkoutForm').addEventListener('submit', function(e) {
