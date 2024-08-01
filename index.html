@@ -299,6 +299,7 @@ main {
 <script>
   console.log('Script index carregado');
 
+  // Carrega os produtos do localStorage
   const products = JSON.parse(localStorage.getItem('products')) || [];
   let cart = JSON.parse(localStorage.getItem('cart')) || [];
   const deliveryFee = 3.00;
@@ -641,11 +642,17 @@ main {
     closeBtn.onclick = function() {
       closeModal();
     }
-  })
+  }
 
   // Inicializa a exibição de categorias e produtos
   displayCategories();
   displayProducts();
+
+  // Carregar dados do localStorage para garantir persistência
+  window.addEventListener('load', () => {
+    displayCategories();
+    displayProducts();
+  });
 </script>
 </body>
 </html>
