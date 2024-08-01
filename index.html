@@ -357,7 +357,7 @@ main {
       `).join('');
     }
 
-    function openProductDetails(productId, event) {
+    window.openProductDetails = function(productId, event) {
       if (event) {
         event.stopPropagation();
       }
@@ -419,7 +419,7 @@ main {
       }
     }
 
-    function addToCart(productId) {
+    window.addToCart = function(productId) {
       const product = products.find(p => p.id === productId);
       const accompaniments = Array.from(document.querySelectorAll('#accompaniments input[type="checkbox"]:checked')).map(cb => cb.value);
       const extras = Array.from(document.querySelectorAll('#extras input[type="checkbox"]:checked')).map(cb => cb.value);
@@ -455,7 +455,7 @@ main {
       return total;
     }
 
-    function openCart() {
+    window.openCart = function() {
       const modal = document.getElementById('cartModal');
       const cartContent = document.getElementById('cartContent');
       const cartTotal = document.getElementById('cartTotal');
@@ -478,29 +478,17 @@ main {
       modal.style.display = "block";
     }
 
-    function continueShopping() {
+    window.continueShopping = function() {
       document.getElementById('cartModal').style.display = "none";
     }
 
-    function removeFromCart(itemId) {
+    window.removeFromCart = function(itemId) {
       cart = cart.filter(item => item.id !== itemId);
       localStorage.setItem('cart', JSON.stringify(cart));
       openCart(); // Atualiza a exibição do carrinho
     }
 
-    function checkout() {
-      if (cart.length === 0) {
-        alert('Seu carrinho está vazio. Adicione itens antes de finalizar o pedido.');
-        return;
-      }
-
-      const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-      cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
-
-      modal.style.display = "block";
-    }
-
-    function openCheckout() {
+    window.openCheckout = function() {
       const checkoutModal = document.getElementById('checkoutModal');
       const orderSummary = document.getElementById('orderSummary');
 
@@ -527,7 +515,7 @@ main {
       checkoutModal.style.display = "block";
     }
 
-    function handlePaymentChange() {
+    window.handlePaymentChange = function() {
       const paymentMethod = document.getElementById('paymentMethod').value;
       const cashInfo = document.getElementById('cashInfo');
       const pixInfo = document.getElementById('pixInfo');
@@ -544,7 +532,7 @@ main {
       }
     }
 
-    function handleChangeNeeded() {
+    window.handleChangeNeeded = function() {
       const changeNeeded = document.getElementById('changeNeeded').value;
       const changeAmountDiv = document.getElementById('changeAmountDiv');
 
