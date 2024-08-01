@@ -179,16 +179,34 @@ main {
 
     window.advanceOrder = function(orderId) {
       const order = orders.find(o => o.id === orderId);
+      if (!order) {
+        console.error('Pedido não encontrado:', orderId);
+        return;
+      }
       if (order.status === 'preparing') {
         order.status = 'delivery';
       } else if (order.status === 'delivery') {
         order.status = 'finished';
       }
-      db.collection('orders').doc(order.id).update({ status: order.status });
+      db.collection('orders').doc(order.id).update({ status: order.status })
+        .then(() => {
+          console.log('Status do pedido atualizado com sucesso!');
+          displayOrders();
+        })
+        .catch(error => {
+          console.error('Erro ao atualizar status do pedido:', error);
+        });
     }
 
     window.finishOrder = function(orderId) {
-      db.collection('orders').doc(orderId).delete();
+      db.collection('orders').doc(orderId).delete()
+        .then(() => {
+          console.log('Pedido finalizado com sucesso!');
+          displayOrders();
+        })
+        .catch(error => {
+          console.error('Erro ao finalizar pedido:', error);
+        });
     }
 
     // Listener para o Firestore
