@@ -180,7 +180,7 @@ main {
     window.advanceOrder = function(orderId) {
       console.log('Tentando avançar pedido:', orderId);
       console.log('Pedidos disponíveis:', orders);
-      const order = orders.find(o => o.id === orderId);
+      const order = orders.find(o => o.id.toString() === orderId.toString());
       if (!order) {
         console.error('Pedido não encontrado:', orderId);
         return;
@@ -190,7 +190,7 @@ main {
       } else if (order.status === 'delivery') {
         order.status = 'finished';
       }
-      db.collection('orders').doc(order.id).update({ status: order.status })
+      db.collection('orders').doc(order.id.toString()).update({ status: order.status })
         .then(() => {
           console.log('Status do pedido atualizado com sucesso!');
           displayOrders();
@@ -202,7 +202,7 @@ main {
 
     window.finishOrder = function(orderId) {
       console.log('Finalizando pedido:', orderId);
-      db.collection('orders').doc(orderId).delete()
+      db.collection('orders').doc(orderId.toString()).delete()
         .then(() => {
           console.log('Pedido finalizado com sucesso!');
           displayOrders();
