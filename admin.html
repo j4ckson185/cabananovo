@@ -5,66 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Administração - Cabana Açaí</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        h1, h2 {
-            color: #333;
-        }
-        form {
-            background: #fff;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-        }
-        input[type="text"], input[type="number"], textarea, select {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        button {
-            background: #333;
-            color: #fff;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #444;
-        }
-        #productsList, #categoriesList {
-            background: #fff;
-            padding: 20px;
-            border-radius: 5px;
-        }
-        .product-item, .category-item {
-            background: #f9f9f9;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-        }
-        .edit-btn, .delete-btn {
-            margin-left: 10px;
-            padding: 5px 10px;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-        .edit-btn {
-            background: #4CAF50;
-            color: white;
-        }
-        .delete-btn {
-            background: #f44336;
-            color: white;
-        }
+        /* Seu CSS existente */
     </style>
 </head>
 <body>
@@ -101,21 +42,56 @@
     <h2>Produtos</h2>
     <div id="productsList"></div>
 
+    <!-- Adicione o Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
     <script>
-        console.log('Script admin carregado');
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
+            authDomain: "cabana-8d55e.firebaseapp.com",
+            databaseURL: "https://cabana-8d55e-default-rtdb.firebaseio.com",
+            projectId: "cabana-8d55e",
+            storageBucket: "cabana-8d55e.appspot.com",
+            messagingSenderId: "706144237954",
+            appId: "1:706144237954:web:345c10370972486afc779b",
+            measurementId: "G-96Y337GYT8"
+        };
 
-        let categories = JSON.parse(localStorage.getItem('categories')) || [];
-        let products = JSON.parse(localStorage.getItem('products')) || [];
-        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        // Inicialize o Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let categories = [];
+        let products = [];
         let editingProductId = null;
 
-        console.log('Categorias:', categories);
-        console.log('Produtos:', products);
-        console.log('Carrinho:', cart);
+        async function fetchCategories() {
+            const snapshot = await db.collection('categories').get();
+            categories = snapshot.docs.map(doc => doc.data().name);
+            updateCategoriesList();
+            updateCategorySelect();
+        }
 
-        function saveData() {
-            localStorage.setItem('categories', JSON.stringify(categories));
-            localStorage.setItem('products', JSON.stringify(products));
+        async function fetchProducts() {
+            const snapshot = await db.collection('products').get();
+            products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            updateProductsList();
+        }
+
+        async function addCategory(name) {
+            await db.collection('categories').add({ name });
+            fetchCategories();
+        }
+
+        async function addProduct(product) {
+            if (editingProductId) {
+                await db.collection('products').doc(editingProductId).update(product);
+                editingProductId = null;
+            } else {
+                await db.collection('products').add(product);
+            }
+            fetchProducts();
         }
 
         function addExtraItem() {
@@ -132,17 +108,13 @@
         document.getElementById('addCategoryForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const categoryName = document.getElementById('categoryName').value;
-            categories.push(categoryName);
-            updateCategoriesList();
-            updateCategorySelect();
-            saveData();
+            addCategory(categoryName);
             this.reset();
         });
 
         document.getElementById('addProductForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const product = {
-                id: editingProductId || Date.now(),
                 name: document.getElementById('productName').value,
                 price: parseFloat(document.getElementById('productPrice').value),
                 category: document.getElementById('productCategory').value,
@@ -156,19 +128,7 @@
                     price: parseFloat(div.children[1].value)
                 }))
             };
-
-            if (editingProductId) {
-                const index = products.findIndex(p => p.id === editingProductId);
-                if (index !== -1) {
-                    products[index] = product;
-                }
-                editingProductId = null;
-            } else {
-                products.push(product);
-            }
-
-            updateProductsList();
-            saveData();
+            addProduct(product);
             this.reset();
             document.getElementById('extrasContainer').innerHTML = '';
             addExtraItem();
@@ -198,21 +158,25 @@
                     <h3>${product.name}</h3>
                     <p>Preço: R$ ${parseFloat(product.price).toFixed(2)}</p>
                     <p>Categoria: ${product.category}</p>
-                    <button class="edit-btn" onclick="editProduct(${product.id})">Editar</button>
-                    <button class="delete-btn" onclick="deleteProduct(${product.id})">Deletar</button>
+                    <button class="edit-btn" onclick="editProduct('${product.id}')">Editar</button>
+                    <button class="delete-btn" onclick="deleteProduct('${product.id}')">Deletar</button>
                 </div>
             `).join('');
         }
 
-        function deleteCategory(category) {
-            categories = categories.filter(c => c !== category);
-            updateCategoriesList();
-            updateCategorySelect();
-            saveData();
+        async function deleteCategory(name) {
+            const snapshot = await db.collection('categories').where('name', '==', name).get();
+            snapshot.forEach(doc => doc.ref.delete());
+            fetchCategories();
         }
 
-        function editProduct(productId) {
-            const product = products.find(p => p.id === productId);
+        async function deleteProduct(id) {
+            await db.collection('products').doc(id).delete();
+            fetchProducts();
+        }
+
+        async function editProduct(id) {
+            const product = products.find(p => p.id === id);
             if (product) {
                 document.getElementById('productName').value = product.name;
                 document.getElementById('productPrice').value = parseFloat(product.price);
@@ -235,21 +199,13 @@
                     extrasContainer.appendChild(extraDiv);
                 });
 
-                editingProductId = productId;
+                editingProductId = id;
             }
         }
 
-        function deleteProduct(productId) {
-            products = products.filter(p => p.id !== productId);
-            updateProductsList();
-            saveData();
-        }
-
-        // Initialize
-        addExtraItem();
-        updateCategoriesList();
-        updateCategorySelect();
-        updateProductsList();
+        // Inicializar a exibição das categorias e produtos
+        fetchCategories();
+        fetchProducts();
     </script>
 </body>
 </html>
