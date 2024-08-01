@@ -108,82 +108,99 @@ main {
   </div>
 </main>
 
+<!-- Adicione o Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script>
-let orders = JSON.parse(localStorage.getItem('orders')) || [];
+  // Configuração do Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
+    authDomain: "cabana-8d55e.firebaseapp.com",
+    databaseURL: "https://cabana-8d55e-default-rtdb.firebaseio.com",
+    projectId: "cabana-8d55e",
+    storageBucket: "cabana-8d55e.appspot.com",
+    messagingSenderId: "706144237954",
+    appId: "1:706144237954:web:345c10370972486afc779b",
+    measurementId: "G-96Y337GYT8"
+  };
 
-function addOrderToColumn(order, columnId) {
-  const column = document.getElementById(columnId);
-  const orderDiv = document.createElement('div');
-  orderDiv.className = 'order';
-  orderDiv.innerHTML = `
-    <h3>Pedido #${order.id}</h3>
-    <p><strong>Nome:</strong> ${order.name}</p>
-    <p><strong>Endereço:</strong> ${order.address}</p>
-    <p><strong>Telefone:</strong> ${order.phone}</p>
-    <p><strong>Método de Pagamento:</strong> ${order.paymentMethod}</p>
-    ${order.changeNeeded ? `<p><strong>Precisa de troco:</strong> ${order.changeNeeded}</p>` : ''}
-    ${order.changeAmount ? `<p><strong>Quanto de troco:</strong> R$ ${parseFloat(order.changeAmount).toFixed(2)}</p>` : ''}
-    <p><strong>Itens do Pedido:</strong></p>
-    <ul>
-      ${order.items.map(item => `
-        <li>${item.name} - R$ ${item.totalPrice.toFixed(2)}</li>
-        ${item.accompaniments.length > 0 ? `<p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>` : ''}
-        ${item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
-      `).join('')}
-    </ul>
-    <p><strong>Subtotal:</strong> R$ ${order.subtotal.toFixed(2)}</p>
-    <p><strong>Taxa de Entrega:</strong> R$ ${order.deliveryFee.toFixed(2)}</p>
-    <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
-    ${order.status === 'finished' 
-      ? `<button class="btn" onclick="finishOrder(${order.id})">Finalizar</button>` 
-      : `<button class="btn" onclick="advanceOrder(${order.id})">Avançar</button>`}
-  `;
-  column.appendChild(orderDiv);
-}
+  // Inicialize o Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-function displayOrders() {
-  document.getElementById('preparingColumn').innerHTML = '<h2>Em preparo</h2>';
-  document.getElementById('deliveryColumn').innerHTML = '<h2>Saiu pra entrega</h2>';
-  document.getElementById('finishedColumn').innerHTML = '<h2>Finalizado</h2>';
+  function addOrderToColumn(order, columnId) {
+    const column = document.getElementById(columnId);
+    const orderDiv = document.createElement('div');
+    orderDiv.className = 'order';
+    orderDiv.innerHTML = `
+      <h3>Pedido #${order.id}</h3>
+      <p><strong>Nome:</strong> ${order.name}</p>
+      <p><strong>Endereço:</strong> ${order.address}</p>
+      <p><strong>Telefone:</strong> ${order.phone}</p>
+      <p><strong>Método de Pagamento:</strong> ${order.paymentMethod}</p>
+      ${order.changeNeeded ? `<p><strong>Precisa de troco:</strong> ${order.changeNeeded}</p>` : ''}
+      ${order.changeAmount ? `<p><strong>Quanto de troco:</strong> R$ ${parseFloat(order.changeAmount).toFixed(2)}</p>` : ''}
+      <p><strong>Itens do Pedido:</strong></p>
+      <ul>
+        ${order.items.map(item => `
+          <li>${item.name} - R$ ${item.totalPrice.toFixed(2)}</li>
+          ${item.accompaniments.length > 0 ? `<p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>` : ''}
+          ${item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+        `).join('')}
+      </ul>
+      <p><strong>Subtotal:</strong> R$ ${order.subtotal.toFixed(2)}</p>
+      <p><strong>Taxa de Entrega:</strong> R$ ${order.deliveryFee.toFixed(2)}</p>
+      <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
+      ${order.status === 'finished' 
+        ? `<button class="btn" onclick="finishOrder('${order.id}')">Finalizar</button>` 
+        : `<button class="btn" onclick="advanceOrder('${order.id}')">Avançar</button>`}
+    `;
+    column.appendChild(orderDiv);
+  }
 
-  orders.forEach(order => {
-    if (order.status === 'preparing') {
-      addOrderToColumn(order, 'preparingColumn');
-    } else if (order.status === 'delivery') {
-      addOrderToColumn(order, 'deliveryColumn');
-    } else if (order.status === 'finished') {
-      addOrderToColumn(order, 'finishedColumn');
-    }
+  function displayOrders(orders) {
+    document.getElementById('preparingColumn').innerHTML = '<h2>Em preparo</h2>';
+    document.getElementById('deliveryColumn').innerHTML = '<h2>Saiu pra entrega</h2>';
+    document.getElementById('finishedColumn').innerHTML = '<h2>Finalizado</h2>';
+
+    orders.forEach(order => {
+      if (order.status === 'preparing') {
+        addOrderToColumn(order, 'preparingColumn');
+      } else if (order.status === 'delivery') {
+        addOrderToColumn(order, 'deliveryColumn');
+      } else if (order.status === 'finished') {
+        addOrderToColumn(order, 'finishedColumn');
+      }
+    });
+  }
+
+  function advanceOrder(orderId) {
+    const orderRef = db.collection('orders').doc(orderId);
+    orderRef.get().then((doc) => {
+      if (doc.exists) {
+        const order = doc.data();
+        if (order.status === 'preparing') {
+          orderRef.update({ status: 'delivery' });
+        } else if (order.status === 'delivery') {
+          orderRef.update({ status: 'finished' });
+        }
+      }
+    });
+  }
+
+  function finishOrder(orderId) {
+    db.collection('orders').doc(orderId).delete().then(() => {
+      console.log('Order successfully deleted!');
+    }).catch((error) => {
+      console.error('Error removing order: ', error);
+    });
+  }
+
+  db.collection('orders').onSnapshot((snapshot) => {
+    const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    displayOrders(orders);
   });
-}
 
-function advanceOrder(orderId) {
-  const order = orders.find(o => o.id === orderId);
-  if (order.status === 'preparing') {
-    order.status = 'delivery';
-  } else if (order.status === 'delivery') {
-    order.status = 'finished';
-  }
-  localStorage.setItem('orders', JSON.stringify(orders));
-  displayOrders();
-}
-
-function finishOrder(orderId) {
-  orders = orders.filter(o => o.id !== orderId);
-  localStorage.setItem('orders', JSON.stringify(orders));
-  displayOrders();
-}
-
-// Chamada inicial para exibir os pedidos
-displayOrders();
-
-// Listener para o evento de armazenamento
-window.addEventListener('storage', function(event) {
-  if (event.key === 'orders') {
-    orders = JSON.parse(event.newValue);
-    displayOrders();
-  }
-});
 </script>
 </body>
 </html>
