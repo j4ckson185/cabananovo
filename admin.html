@@ -5,7 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Administração - Cabana Açaí</title>
     <style>
-        /* Seu estilo CSS existente */
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        form {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        input[type="text"], input[type="number"], textarea, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #333;
+            color: #fff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #444;
+        }
+        #productsList, #categoriesList {
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .product-item, .category-item {
+            background: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .edit-btn, .delete-btn {
+            margin-left: 10px;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .edit-btn {
+            background: #4CAF50;
+            color: white;
+        }
+        .delete-btn {
+            background: #f44336;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -43,9 +102,16 @@
     <div id="productsList"></div>
 
     <script>
+        console.log('Script admin carregado');
+
         let categories = JSON.parse(localStorage.getItem('categories')) || [];
         let products = JSON.parse(localStorage.getItem('products')) || [];
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
         let editingProductId = null;
+
+        console.log('Categorias:', categories);
+        console.log('Produtos:', products);
+        console.log('Carrinho:', cart);
 
         function saveData() {
             localStorage.setItem('categories', JSON.stringify(categories));
