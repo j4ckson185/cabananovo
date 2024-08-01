@@ -183,11 +183,10 @@ main {
         if (doc.exists) {
           const order = doc.data();
           if (order.status === 'preparing') {
-            order.status = 'delivery';
+            orderRef.update({ status: 'delivery' });
           } else if (order.status === 'delivery') {
-            order.status = 'finished';
+            orderRef.update({ status: 'finished' });
           }
-          orderRef.update({ status: order.status });
         }
       }).catch(error => {
         console.error("Error updating document: ", error);
