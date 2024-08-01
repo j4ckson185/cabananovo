@@ -70,6 +70,39 @@
 <body>
     <h1>Painel de Administração - Cabana Açaí</h1>
 
+    <h2>Configurar Horário de Funcionamento</h2>
+    <form id="hoursForm">
+        <div>
+            <label for="monday">Segunda-feira:</label>
+            <input type="time" id="mondayOpen" required> às <input type="time" id="mondayClose" required>
+        </div>
+        <div>
+            <label for="tuesday">Terça-feira:</label>
+            <input type="time" id="tuesdayOpen" required> às <input type="time" id="tuesdayClose" required>
+        </div>
+        <div>
+            <label for="wednesday">Quarta-feira:</label>
+            <input type="time" id="wednesdayOpen" required> às <input type="time" id="wednesdayClose" required>
+        </div>
+        <div>
+            <label for="thursday">Quinta-feira:</label>
+            <input type="time" id="thursdayOpen" required> às <input type="time" id="thursdayClose" required>
+        </div>
+        <div>
+            <label for="friday">Sexta-feira:</label>
+            <input type="time" id="fridayOpen" required> às <input type="time" id="fridayClose" required>
+        </div>
+        <div>
+            <label for="saturday">Sábado:</label>
+            <input type="time" id="saturdayOpen" required> às <input type="time" id="saturdayClose" required>
+        </div>
+        <div>
+            <label for="sunday">Domingo:</label>
+            <input type="time" id="sundayOpen" required> às <input type="time" id="sundayClose" required>
+        </div>
+        <button type="submit">Salvar Horários</button>
+    </form>
+
     <h2>Adicionar Categoria</h2>
     <form id="addCategoryForm">
         <input type="text" id="categoryName" placeholder="Nome da Categoria" required>
@@ -101,11 +134,9 @@
     <h2>Produtos</h2>
     <div id="productsList"></div>
 
-    <!-- Adicione o Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script>
-        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
             authDomain: "cabana-8d55e.firebaseapp.com",
@@ -116,8 +147,7 @@
             appId: "1:706144237954:web:345c10370972486afc779b",
             measurementId: "G-96Y337GYT8"
         };
-
-        // Inicialize o Firebase
+        
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
@@ -134,9 +164,54 @@
 
         async function fetchProducts() {
             const snapshot = await db.collection('products').get();
-            products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            products = snapshot.docs.map(doc => doc.data());
             updateProductsList();
         }
+
+        async function fetchHours() {
+            const doc = await db.collection('settings').doc('hours').get();
+            if (doc.exists) {
+                const hours = doc.data();
+                document.getElementById('mondayOpen').value = hours.mondayOpen;
+                document.getElementById('mondayClose').value = hours.mondayClose;
+                document.getElementById('tuesdayOpen').value = hours.tuesdayOpen;
+                document.getElementById('tuesdayClose').value = hours.tuesdayClose;
+                document.getElementById('wednesdayOpen').value = hours.wednesdayOpen;
+                document.getElementById('wednesdayClose').value = hours.wednesdayClose;
+                document.getElementById('thursdayOpen').value = hours.thursdayOpen;
+                document.getElementById('thursdayClose').value = hours.thursdayClose;
+                document.getElementById('fridayOpen').value = hours.fridayOpen;
+                document.getElementById('fridayClose').value = hours.fridayClose;
+                document.getElementById('saturdayOpen').value = hours.saturdayOpen;
+                document.getElementById('saturdayClose').value = hours.saturdayClose;
+                document.getElementById('sundayOpen').value = hours.sundayOpen;
+                document.getElementById('sundayClose').value = hours.sundayClose;
+            }
+        }
+
+        document.getElementById('hoursForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const hours = {
+                mondayOpen: document.getElementById('mondayOpen').value,
+                mondayClose: document.getElementById('mondayClose').value,
+                tuesdayOpen: document.getElementById('tuesdayOpen').value,
+                tuesdayClose: document.getElementById('tuesdayClose').value,
+                wednesdayOpen: document.getElementById('wednesdayOpen').value,
+                wednesdayClose: document.getElementById('wednesdayClose').value,
+                thursdayOpen: document.getElementById('thursdayOpen').value,
+                thursdayClose: document.getElementById('thursdayClose').value,
+                fridayOpen: document.getElementById('fridayOpen').value,
+                fridayClose: document.getElementById('fridayClose').value,
+                saturdayOpen: document.getElementById('saturdayOpen').value,
+                saturdayClose: document.getElementById('saturdayClose').value,
+                sundayOpen: document.getElementById('sundayOpen').value,
+                sundayClose: document.getElementById('sundayClose').value,
+            };
+
+            await db.collection('settings').doc('hours').set(hours);
+            alert('Horários de funcionamento salvos com sucesso!');
+        });
 
         function saveData() {
             localStorage.setItem('categories', JSON.stringify(categories));
@@ -160,12 +235,8 @@
             categories.push(categoryName);
             updateCategoriesList();
             updateCategorySelect();
-            saveData();
-
-            // Adiciona a categoria ao Firestore
             await db.collection('categories').add({ name: categoryName });
-
-            this.reset();
+            alert('Categoria adicionada com sucesso!');
         });
 
         document.getElementById('addProductForm').addEventListener('submit', async function(e) {
@@ -194,14 +265,11 @@
                 editingProductId = null;
             } else {
                 products.push(product);
+                await db.collection('products').add(product);
             }
 
             updateProductsList();
             saveData();
-
-            // Adiciona o produto ao Firestore
-            await db.collection('products').doc(product.id.toString()).set(product);
-
             this.reset();
             document.getElementById('extrasContainer').innerHTML = '';
             addExtraItem();
@@ -242,11 +310,6 @@
             updateCategoriesList();
             updateCategorySelect();
             saveData();
-
-            // Remove a categoria do Firestore
-            db.collection('categories').where('name', '==', category).get().then(snapshot => {
-                snapshot.forEach(doc => doc.ref.delete());
-            });
         }
 
         function editProduct(productId) {
@@ -281,15 +344,13 @@
             products = products.filter(p => p.id !== productId);
             updateProductsList();
             saveData();
-
-            // Remove o produto do Firestore
-            db.collection('products').doc(productId.toString()).delete();
         }
 
         // Initialize
         addExtraItem();
         fetchCategories();
         fetchProducts();
+        fetchHours();
     </script>
 </body>
 </html>
