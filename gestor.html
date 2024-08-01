@@ -134,9 +134,7 @@ function addOrderToColumn(order, columnId) {
     <p><strong>Subtotal:</strong> R$ ${order.subtotal.toFixed(2)}</p>
     <p><strong>Taxa de Entrega:</strong> R$ ${order.deliveryFee.toFixed(2)}</p>
     <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
-    ${order.status === 'finished' 
-      ? `<button class="btn" onclick="finishOrder(${order.id})">Finalizar</button>` 
-      : `<button class="btn" onclick="advanceOrder(${order.id})">Avançar</button>`}
+    <button class="btn" onclick="advanceOrder(${order.id})">Avançar</button>
   `;
   column.appendChild(orderDiv);
 }
@@ -168,22 +166,42 @@ function advanceOrder(orderId) {
   displayOrders();
 }
 
-function finishOrder(orderId) {
-  orders = orders.filter(o => o.id !== orderId);
+// Chamada inicial para exibir os pedidos
+displayOrders();
+
+// Função para adicionar novo pedido
+function addNewOrder(order) {
+  orders.push(order);
   localStorage.setItem('orders', JSON.stringify(orders));
   displayOrders();
 }
 
-// Chamada inicial para exibir os pedidos
-displayOrders();
+// Exemplo de pedido (substituir com os pedidos reais)
+const exampleOrder = {
+  id: Date.now(),
+  name: 'João Silva',
+  address: 'Rua Exemplo, 123',
+  phone: '84999999999',
+  paymentMethod: 'Dinheiro',
+  changeNeeded: 'Sim',
+  changeAmount: '50.00',
+  items: [
+    {
+      name: 'Açaí Médio',
+      totalPrice: 15.00,
+      accompaniments: ['Granola', 'Banana'],
+      extras: ['Leite Condensado']
+    }
+  ],
+  subtotal: 15.00,
+  deliveryFee: 3.00,
+  total: 18.00,
+  status: 'preparing'
+};
 
-// Listener para o evento de armazenamento
-window.addEventListener('storage', function(event) {
-  if (event.key === 'orders') {
-    orders = JSON.parse(event.newValue);
-    displayOrders();
-  }
-});
+// Adiciona o exemplo de pedido ao iniciar (remover isso no uso real)
+addNewOrder(exampleOrder);
+
 </script>
 </body>
 </html>
