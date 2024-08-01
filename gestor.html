@@ -178,30 +178,42 @@ main {
     }
 
     window.advanceOrder = function(orderId) {
+      console.log(`Avançando pedido ${orderId}`); // Log para depuração
       const orderRef = db.collection('orders').doc(orderId);
       orderRef.get().then(doc => {
         if (doc.exists) {
           const order = doc.data();
+          console.log('Pedido atual:', order); // Log para depuração
           if (order.status === 'preparing') {
-            orderRef.update({ status: 'delivery' });
+            orderRef.update({ status: 'delivery' })
+              .then(() => console.log('Status atualizado para delivery'))
+              .catch(error => console.error('Erro ao atualizar status:', error));
           } else if (order.status === 'delivery') {
-            orderRef.update({ status: 'finished' });
+            orderRef.update({ status: 'finished' })
+              .then(() => console.log('Status atualizado para finished'))
+              .catch(error => console.error('Erro ao atualizar status:', error));
           }
+        } else {
+          console.error('Pedido não encontrado');
         }
       }).catch(error => {
-        console.error("Error updating document: ", error);
+        console.error("Erro ao obter documento:", error);
       });
     }
 
     window.finishOrder = function(orderId) {
-      db.collection('orders').doc(orderId).delete().catch(error => {
-        console.error("Error removing document: ", error);
-      });
+      console.log(`Finalizando pedido ${orderId}`); // Log para depuração
+      db.collection('orders').doc(orderId).delete()
+        .then(() => console.log('Pedido finalizado'))
+        .catch(error => {
+          console.error("Erro ao remover documento:", error);
+        });
     }
 
     // Listener para o Firestore
     db.collection('orders').onSnapshot(snapshot => {
       orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log('Pedidos recebidos:', orders); // Log para depuração
       displayOrders();
     });
   });
