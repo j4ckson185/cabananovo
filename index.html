@@ -38,6 +38,10 @@ header {
   height: auto;
   margin-bottom: 10px;
 }
+.status {
+  font-size: 18px;
+  margin-top: 5px;
+}
 .cart-icon {
   font-size: 24px;
   cursor: pointer;
@@ -227,6 +231,7 @@ main {
   <div class="header-content">
     <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Cabana Açaí Logo" class="logo">
     <h1>Cabana Açaí</h1>
+    <div id="storeStatus" class="status"></div>
   </div>
   <div class="cart-icon" onclick="openCart()">🛒</div>
 </header>
@@ -335,6 +340,72 @@ main {
       <button class="category-btn" onclick="filterByCategory('${category}')">${category}</button>
     `).join('');
     categoriesContainer.innerHTML = `<button class="category-btn" onclick="filterByCategory('all')">Todos</button>` + categoriesContainer.innerHTML;
+  }
+
+  async function fetchHours() {
+    const doc = await db.collection('settings').doc('hours').get();
+    if (doc.exists) {
+      const hours = doc.data();
+      return hours;
+    } else {
+      return null;
+    }
+  }
+
+  function isStoreOpen(hours) {
+    const now = new Date();
+    const day = now.getDay();
+    const currentTime = now.getHours() * 60 + now.getMinutes(); // converte o horário atual para minutos
+
+    let openTime, closeTime;
+    switch (day) {
+      case 0:
+        openTime = parseTime(hours.sundayOpen);
+        closeTime = parseTime(hours.sundayClose);
+        break;
+      case 1:
+        openTime = parseTime(hours.mondayOpen);
+        closeTime = parseTime(hours.mondayClose);
+        break;
+      case 2:
+        openTime = parseTime(hours.tuesdayOpen);
+        closeTime = parseTime(hours.tuesdayClose);
+        break;
+      case 3:
+        openTime = parseTime(hours.wednesdayOpen);
+        closeTime = parseTime(hours.wednesdayClose);
+        break;
+      case 4:
+        openTime = parseTime(hours.thursdayOpen);
+        closeTime = parseTime(hours.thursdayClose);
+        break;
+      case 5:
+        openTime = parseTime(hours.fridayOpen);
+        closeTime = parseTime(hours.fridayClose);
+        break;
+      case 6:
+        openTime = parseTime(hours.saturdayOpen);
+        closeTime = parseTime(hours.saturdayClose);
+        break;
+    }
+
+    return currentTime >= openTime && currentTime <= closeTime;
+  }
+
+  function parseTime(timeStr) {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+  }
+
+  function displayStoreStatus(isOpen) {
+    const statusElement = document.getElementById('storeStatus');
+    if (isOpen) {
+      statusElement.textContent = 'Aberto';
+      statusElement.style.color = 'green';
+    } else {
+      statusElement.textContent = 'Fechado';
+      statusElement.style.color = 'red';
+    }
   }
 
   function filterByCategory(category) {
@@ -663,6 +734,12 @@ main {
   // Inicializa a exibição de categorias e produtos
   fetchCategories();
   fetchProducts();
+  fetchHours().then(hours => {
+    if (hours) {
+      const isOpen = isStoreOpen(hours);
+      displayStoreStatus(isOpen);
+    }
+  });
 </script>
 </body>
 </html>
