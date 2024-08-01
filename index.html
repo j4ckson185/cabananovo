@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cabana Açaí</title>
 <style>
-/* Estilos omitidos para brevidade */
+/* Seus estilos aqui */
 </style>
 </head>
 <body>
@@ -131,13 +131,13 @@
   function displayProducts(productsToDisplay = products) {
     const productGrid = document.getElementById('productGrid');
     productGrid.innerHTML = productsToDisplay.map(product => `
-      <div class="product-card" onclick="openProductDetails('${product.id}')">
+      <div class="product-card" onclick="openProductDetails(${product.id})">
         <img src="${product.image}" alt="${product.name}" class="product-image">
         <div class="product-info">
           <h3 class="product-title">${product.name}</h3>
           <p class="product-price">R$ ${parseFloat(product.price).toFixed(2)}</p>
           <p class="product-description">${product.description.substring(0, 100)}...</p>
-          <button class="btn" onclick="openProductDetails('${product.id}', event)">Ver Detalhes</button>
+          <button class="btn" onclick="openProductDetails(${product.id}, event)">Ver Detalhes</button>
         </div>
       </div>
     `).join('');
@@ -179,7 +179,7 @@
           `).join('')}
         </div>
       </div>
-      <button id="addToCartBtn" class="btn" onclick="addToCart('${product.id}')">Adicionar ao Carrinho</button>
+      <button id="addToCartBtn" class="btn" onclick="addToCart(${product.id})">Adicionar ao Carrinho</button>
     `;
 
     modal.style.display = "block";
@@ -341,6 +341,14 @@
     }
   }
 
+  function addNewOrder(order) {
+    db.collection('orders').add(order).then((docRef) => {
+      console.log("Order added with ID: ", docRef.id);
+    }).catch((error) => {
+      console.error("Error adding order: ", error);
+    });
+  }
+
   document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
@@ -375,8 +383,9 @@
     message += `\nTaxa de Entrega: R$ ${deliveryFee.toFixed(2)}`;
     message += `\nTotal: R$ ${(cart.reduce((sum, item) => sum + item.totalPrice, 0) + deliveryFee).toFixed(2)}`;
 
-    // Adicionar pedido ao Firestore
+    // Enviar pedido para o gestor de pedidos
     const order = {
+      id: Date.now(),
       name: name,
       address: address,
       phone: phone,
@@ -389,26 +398,21 @@
       total: cart.reduce((sum, item) => sum + item.totalPrice, 0) + deliveryFee,
       status: 'preparing'
     };
+    addNewOrder(order);
 
-    db.collection('orders').add(order)
-      .then(() => {
-        // Redirecionar para o WhatsApp
-        window.location.href = `https://wa.me/5584988731028?text=${encodeURIComponent(message)}`;
+    // Redirecionar para o WhatsApp
+    window.location.href = `https://wa.me/5584988731028?text=${encodeURIComponent(message)}`;
 
-        // Limpar o carrinho e redefinir a forma de pagamento após a confirmação do pedido
-        cart = [];
-        localStorage.setItem('cart', JSON.stringify(cart));
+    // Limpar o carrinho e redefinir a forma de pagamento após a confirmação do pedido
+    cart = [];
+    localStorage.setItem('cart', JSON.stringify(cart));
 
-        // Redefinir a forma de pagamento para 'Cartão'
-        document.getElementById('paymentMethod').value = 'card';
-        handlePaymentChange();
+    // Redefinir a forma de pagamento para 'Cartão'
+    document.getElementById('paymentMethod').value = 'card';
+    handlePaymentChange();
 
-        // Fechar o modal de checkout
-        document.getElementById('checkoutModal').style.display = "none";
-      })
-      .catch((error) => {
-        console.error("Error adding order: ", error);
-      });
+    // Fechar o modal de checkout
+    document.getElementById('checkoutModal').style.display = "none";
   });
 
   // Adicionando a função de fechar para o modal de checkout
