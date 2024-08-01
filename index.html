@@ -440,8 +440,7 @@ main {
 
     cart.push(cartItem);
     localStorage.setItem('cart', JSON.stringify(cart));
-    closeModal();
-    alert('Produto adicionado ao carrinho!');
+    openCart(); // Abre o carrinho após adicionar o produto
   }
 
   function calculateTotalPrice(product, selectedExtras) {
