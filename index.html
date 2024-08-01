@@ -362,6 +362,10 @@ main {
         event.stopPropagation();
       }
       const product = products.find(p => p.id === productId);
+      if (!product) {
+        console.error('Produto não encontrado:', productId);
+        return;
+      }
       const modal = document.getElementById('productModal');
       const modalContent = document.getElementById('modalContent');
 
@@ -421,6 +425,10 @@ main {
 
     window.addToCart = function(productId) {
       const product = products.find(p => p.id === productId);
+      if (!product) {
+        console.error('Produto não encontrado:', productId);
+        return;
+      }
       const accompaniments = Array.from(document.querySelectorAll('#accompaniments input[type="checkbox"]:checked')).map(cb => cb.value);
       const extras = Array.from(document.querySelectorAll('#extras input[type="checkbox"]:checked')).map(cb => cb.value);
 
