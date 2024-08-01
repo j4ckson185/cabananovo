@@ -129,7 +129,7 @@ main {
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    let orders = [];
+    let orders = JSON.parse(localStorage.getItem('orders')) || [];
 
     function addOrderToColumn(order, columnId) {
       const column = document.getElementById(columnId);
@@ -179,7 +179,6 @@ main {
 
     window.advanceOrder = function(orderId) {
       console.log('Tentando avançar pedido:', orderId);
-      console.log('Pedidos disponíveis:', orders);
       const order = orders.find(o => o.id === orderId);
       if (!order) {
         console.error('Pedido não encontrado:', orderId);
@@ -190,31 +189,21 @@ main {
       } else if (order.status === 'delivery') {
         order.status = 'finished';
       }
-      db.collection('orders').doc(order.id.toString()).update({ status: order.status })
-        .then(() => {
-          console.log('Status do pedido atualizado com sucesso!');
-          displayOrders();
-        })
-        .catch(error => {
-          console.error('Erro ao atualizar status do pedido:', error);
-        });
+      localStorage.setItem('orders', JSON.stringify(orders));
+      displayOrders();
     }
 
     window.finishOrder = function(orderId) {
       console.log('Finalizando pedido:', orderId);
-      db.collection('orders').doc(orderId.toString()).delete()
-        .then(() => {
-          console.log('Pedido finalizado com sucesso!');
-          displayOrders();
-        })
-        .catch(error => {
-          console.error('Erro ao finalizar pedido:', error);
-        });
+      orders = orders.filter(o => o.id !== orderId);
+      localStorage.setItem('orders', JSON.stringify(orders));
+      displayOrders();
     }
 
     // Listener para o Firestore
     db.collection('orders').onSnapshot(snapshot => {
       orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      localStorage.setItem('orders', JSON.stringify(orders));
       console.log('Pedidos recebidos:', orders);
       displayOrders();
     });
