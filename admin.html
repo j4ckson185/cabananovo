@@ -121,36 +121,35 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        let categories = [];
-        let products = [];
+        let categories = JSON.parse(localStorage.getItem('categories')) || [];
+        let products = JSON.parse(localStorage.getItem('products')) || [];
         let editingProductId = null;
 
-        async function fetchCategories() {
-            const snapshot = await db.collection('categories').get();
-            categories = snapshot.docs.map(doc => doc.data().name);
-            updateCategoriesList();
-            updateCategorySelect();
-        }
+        async function saveData() {
+            localStorage.setItem('categories', JSON.stringify(categories));
+            localStorage.setItem('products', JSON.stringify(products));
 
-        async function fetchProducts() {
-            const snapshot = await db.collection('products').get();
-            products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            updateProductsList();
-        }
+            // Salvar categorias no Firestore
+            const categoriesRef = db.collection('categories');
+            categories.forEach(async (category) => {
+                const snapshot = await categoriesRef.where('name', '==', category).get();
+                if (snapshot.empty) {
+                    await categoriesRef.add({ name: category });
+                }
+            });
 
-        async function addCategory(name) {
-            await db.collection('categories').add({ name });
-            fetchCategories();
-        }
-
-        async function addProduct(product) {
-            if (editingProductId) {
-                await db.collection('products').doc(editingProductId).update(product);
-                editingProductId = null;
-            } else {
-                await db.collection('products').add(product);
-            }
-            fetchProducts();
+            // Salvar produtos no Firestore
+            const productsRef = db.collection('products');
+            products.forEach(async (product) => {
+                const snapshot = await productsRef.where('id', '==', product.id).get();
+                if (snapshot.empty) {
+                    await productsRef.add(product);
+                } else {
+                    snapshot.forEach(doc => {
+                        doc.ref.update(product);
+                    });
+                }
+            });
         }
 
         function addExtraItem() {
@@ -167,13 +166,17 @@
         document.getElementById('addCategoryForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const categoryName = document.getElementById('categoryName').value;
-            addCategory(categoryName);
+            categories.push(categoryName);
+            updateCategoriesList();
+            updateCategorySelect();
+            saveData();
             this.reset();
         });
 
         document.getElementById('addProductForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const product = {
+                id: editingProductId || Date.now(),
                 name: document.getElementById('productName').value,
                 price: parseFloat(document.getElementById('productPrice').value),
                 category: document.getElementById('productCategory').value,
@@ -187,7 +190,19 @@
                     price: parseFloat(div.children[1].value)
                 }))
             };
-            addProduct(product);
+
+            if (editingProductId) {
+                const index = products.findIndex(p => p.id === editingProductId);
+                if (index !== -1) {
+                    products[index] = product;
+                }
+                editingProductId = null;
+            } else {
+                products.push(product);
+            }
+
+            updateProductsList();
+            saveData();
             this.reset();
             document.getElementById('extrasContainer').innerHTML = '';
             addExtraItem();
@@ -217,25 +232,21 @@
                     <h3>${product.name}</h3>
                     <p>Preço: R$ ${parseFloat(product.price).toFixed(2)}</p>
                     <p>Categoria: ${product.category}</p>
-                    <button class="edit-btn" onclick="editProduct('${product.id}')">Editar</button>
-                    <button class="delete-btn" onclick="deleteProduct('${product.id}')">Deletar</button>
+                    <button class="edit-btn" onclick="editProduct(${product.id})">Editar</button>
+                    <button class="delete-btn" onclick="deleteProduct(${product.id})">Deletar</button>
                 </div>
             `).join('');
         }
 
-        async function deleteCategory(name) {
-            const snapshot = await db.collection('categories').where('name', '==', name).get();
-            snapshot.forEach(doc => doc.ref.delete());
-            fetchCategories();
+        function deleteCategory(category) {
+            categories = categories.filter(c => c !== category);
+            updateCategoriesList();
+            updateCategorySelect();
+            saveData();
         }
 
-        async function deleteProduct(id) {
-            await db.collection('products').doc(id).delete();
-            fetchProducts();
-        }
-
-        async function editProduct(id) {
-            const product = products.find(p => p.id === id);
+        function editProduct(productId) {
+            const product = products.find(p => p.id === productId);
             if (product) {
                 document.getElementById('productName').value = product.name;
                 document.getElementById('productPrice').value = parseFloat(product.price);
@@ -258,13 +269,21 @@
                     extrasContainer.appendChild(extraDiv);
                 });
 
-                editingProductId = id;
+                editingProductId = productId;
             }
         }
 
-        // Inicializar a exibição das categorias e produtos
-        fetchCategories();
-        fetchProducts();
+        function deleteProduct(productId) {
+            products = products.filter(p => p.id !== productId);
+            updateProductsList();
+            saveData();
+        }
+
+        // Initialize
+        addExtraItem();
+        updateCategoriesList();
+        updateCategorySelect();
+        updateProductsList();
     </script>
 </body>
 </html>
