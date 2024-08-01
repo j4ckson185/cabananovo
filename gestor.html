@@ -134,7 +134,9 @@ function addOrderToColumn(order, columnId) {
     <p><strong>Subtotal:</strong> R$ ${order.subtotal.toFixed(2)}</p>
     <p><strong>Taxa de Entrega:</strong> R$ ${order.deliveryFee.toFixed(2)}</p>
     <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
-    <button class="btn" onclick="advanceOrder(${order.id})">Avançar</button>
+    ${order.status === 'finished' 
+      ? `<button class="btn" onclick="finishOrder(${order.id})">Finalizar</button>` 
+      : `<button class="btn" onclick="advanceOrder(${order.id})">Avançar</button>`}
   `;
   column.appendChild(orderDiv);
 }
@@ -166,15 +168,14 @@ function advanceOrder(orderId) {
   displayOrders();
 }
 
-// Chamada inicial para exibir os pedidos
-displayOrders();
-
-// Função para adicionar novo pedido
-function addNewOrder(order) {
-  orders.push(order);
+function finishOrder(orderId) {
+  orders = orders.filter(o => o.id !== orderId);
   localStorage.setItem('orders', JSON.stringify(orders));
   displayOrders();
 }
+
+// Chamada inicial para exibir os pedidos
+displayOrders();
 
 // Listener para o evento de armazenamento
 window.addEventListener('storage', function(event) {
