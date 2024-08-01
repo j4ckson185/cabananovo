@@ -322,28 +322,19 @@ main {
     const deliveryFee = 3.00;
 
     async function fetchProducts() {
-      try {
-        const snapshot = await db.collection('products').get();
-        products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        console.log('Produtos carregados:', products); // Log para depuração
-        displayProducts(products);
-      } catch (error) {
-        console.error('Erro ao buscar produtos:', error);
-      }
+      const snapshot = await db.collection('products').get();
+      products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      displayProducts(products);
     }
 
     async function fetchCategories() {
-      try {
-        const snapshot = await db.collection('categories').get();
-        const categories = snapshot.docs.map(doc => doc.data().name);
-        const categoriesContainer = document.getElementById('categories');
-        categoriesContainer.innerHTML = categories.map(category => `
-          <button class="category-btn" data-category="${category}">${category}</button>
-        `).join('');
-        categoriesContainer.innerHTML = `<button class="category-btn" data-category="all">Todos</button>` + categoriesContainer.innerHTML;
-      } catch (error) {
-        console.error('Erro ao buscar categorias:', error);
-      }
+      const snapshot = await db.collection('categories').get();
+      const categories = snapshot.docs.map(doc => doc.data().name);
+      const categoriesContainer = document.getElementById('categories');
+      categoriesContainer.innerHTML = categories.map(category => `
+        <button class="category-btn" data-category="${category}">${category}</button>
+      `).join('');
+      categoriesContainer.innerHTML = `<button class="category-btn" data-category="all">Todos</button>` + categoriesContainer.innerHTML;
     }
 
     function filterByCategory(category) {
@@ -354,13 +345,13 @@ main {
     function displayProducts(productsToDisplay = products) {
       const productGrid = document.getElementById('productGrid');
       productGrid.innerHTML = productsToDisplay.map(product => `
-        <div class="product-card" onclick="openProductDetails('${product.id}')">
+        <div class="product-card" onclick="openProductDetails(${product.id})">
           <img src="${product.image}" alt="${product.name}" class="product-image">
           <div class="product-info">
             <h3 class="product-title">${product.name}</h3>
             <p class="product-price">R$ ${parseFloat(product.price).toFixed(2)}</p>
             <p class="product-description">${product.description.substring(0, 100)}...</p>
-            <button class="btn" onclick="openProductDetails('${product.id}', event)">Ver Detalhes</button>
+            <button class="btn" onclick="openProductDetails(${product.id}, event)">Ver Detalhes</button>
           </div>
         </div>
       `).join('');
@@ -370,13 +361,7 @@ main {
       if (event) {
         event.stopPropagation();
       }
-      console.log('Tentando abrir detalhes do produto:', productId);
-      console.log('Lista de produtos carregados:', products);
       const product = products.find(p => p.id === productId);
-      if (!product) {
-        console.error('Produto não encontrado:', productId);
-        return;
-      }
       const modal = document.getElementById('productModal');
       const modalContent = document.getElementById('modalContent');
 
@@ -408,7 +393,7 @@ main {
             `).join('')}
           </div>
         </div>
-        <button id="addToCartBtn" class="btn" onclick="addToCart('${product.id}')">Adicionar ao Carrinho</button>
+        <button id="addToCartBtn" class="btn" onclick="addToCart(${product.id})">Adicionar ao Carrinho</button>
       `;
 
       modal.style.display = "block";
@@ -436,10 +421,6 @@ main {
 
     window.addToCart = function(productId) {
       const product = products.find(p => p.id === productId);
-      if (!product) {
-        console.error('Produto não encontrado:', productId);
-        return;
-      }
       const accompaniments = Array.from(document.querySelectorAll('#accompaniments input[type="checkbox"]:checked')).map(cb => cb.value);
       const extras = Array.from(document.querySelectorAll('#extras input[type="checkbox"]:checked')).map(cb => cb.value);
 
@@ -564,20 +545,13 @@ main {
 
     function addNewOrder(order) {
       // Adicionar pedido no Firestore
-      const orderRef = db.collection('orders').doc(`${order.id}`);
-      orderRef.set(order)
+      db.collection('orders').add(order)
         .then(() => {
           console.log('Pedido adicionado com sucesso!');
         })
         .catch(error => {
           console.error('Erro ao adicionar pedido: ', error);
         });
-
-      // Trigger the storage event manually to notify the gestor page
-      const event = new Event('storage');
-      event.key = 'orders';
-      event.newValue = JSON.stringify(orders);
-      window.dispatchEvent(event);
     }
 
     document.getElementById('checkoutForm').addEventListener('submit', function(e) {
@@ -616,7 +590,7 @@ main {
 
       // Enviar pedido para o gestor de pedidos
       const order = {
-        id: Date.now().toString(),
+        id: Date.now(),
         name: name,
         address: address,
         phone: phone,
