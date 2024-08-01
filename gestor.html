@@ -108,8 +108,27 @@ main {
   </div>
 </main>
 
+<!-- Adicione o Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script>
-let orders = JSON.parse(localStorage.getItem('orders')) || [];
+  // Configuração do Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
+    authDomain: "cabana-8d55e.firebaseapp.com",
+    databaseURL: "https://cabana-8d55e-default-rtdb.firebaseio.com",
+    projectId: "cabana-8d55e",
+    storageBucket: "cabana-8d55e.appspot.com",
+    messagingSenderId: "706144237954",
+    appId: "1:706144237954:web:345c10370972486afc779b",
+    measurementId: "G-96Y337GYT8"
+  };
+
+  // Inicialize o Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+let orders = [];
 
 function addOrderToColumn(order, columnId) {
   const column = document.getElementById(columnId);
@@ -164,26 +183,19 @@ function advanceOrder(orderId) {
   } else if (order.status === 'delivery') {
     order.status = 'finished';
   }
-  localStorage.setItem('orders', JSON.stringify(orders));
-  displayOrders();
+  db.collection('orders').doc(order.id).update({ status: order.status });
 }
 
 function finishOrder(orderId) {
-  orders = orders.filter(o => o.id !== orderId);
-  localStorage.setItem('orders', JSON.stringify(orders));
-  displayOrders();
+  db.collection('orders').doc(orderId).delete();
 }
 
-// Chamada inicial para exibir os pedidos
-displayOrders();
-
-// Listener para o evento de armazenamento
-window.addEventListener('storage', function(event) {
-  if (event.key === 'orders') {
-    orders = JSON.parse(event.newValue);
-    displayOrders();
-  }
+// Listener para o Firestore
+db.collection('orders').onSnapshot(snapshot => {
+  orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  displayOrders();
 });
+
 </script>
 </body>
 </html>
