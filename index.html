@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/png" href="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg">
+<link rel="icon" type="image/png" href="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg">  
 <title>Cabana Açaí</title>
 <style>
 :root {
@@ -638,7 +638,7 @@ main {
     window.dispatchEvent(event);
   }
 
-  document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+  document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
     const name = document.getElementById('name').value;
@@ -688,6 +688,15 @@ main {
       status: 'preparing'
     };
     addNewOrder(order);
+
+    // Enviar pedido para o servidor para impressão
+    await fetch('http://localhost:3000/print-order', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(order)
+    });
 
     // Redirecionar para o WhatsApp
     window.location.href = `https://wa.me/5584988731028?text=${encodeURIComponent(message)}`;
