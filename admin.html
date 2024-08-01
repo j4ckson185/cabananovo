@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Administração - Cabana Açaí</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        form {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        input[type="text"], input[type="number"], textarea, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #333;
+            color: #fff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #444;
+        }
+        #productsList, #categoriesList {
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .product-item, .category-item {
+            background: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .edit-btn, .delete-btn {
+            margin-left: 10px;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .edit-btn {
+            background: #4CAF50;
+            color: white;
+        }
+        .delete-btn {
+            background: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Painel de Administração - Cabana Açaí</h1>
+
+    <h2>Adicionar Categoria</h2>
+    <form id="addCategoryForm">
+        <input type="text" id="categoryName" placeholder="Nome da Categoria" required>
+        <button type="submit">Adicionar Categoria</button>
+    </form>
+
+    <h2>Adicionar Produto</h2>
+    <form id="addProductForm">
+        <input type="text" id="productName" placeholder="Nome do Produto" required>
+        <input type="number" id="productPrice" placeholder="Preço" step="0.01" required>
+        <select id="productCategory" required>
+            <!-- Categories will be added here dynamically -->
+        </select>
+        <textarea id="productDescription" placeholder="Descrição do Produto" required></textarea>
+        <input type="text" id="productImage" placeholder="URL da Imagem do Produto" required>
+        <input type="number" id="minAccompaniments" placeholder="Mínimo de Acompanhamentos" required>
+        <input type="number" id="maxAccompaniments" placeholder="Máximo de Acompanhamentos" required>
+        <textarea id="accompaniments" placeholder="Acompanhamentos (um por linha)" required></textarea>
+        <div id="extrasContainer">
+            <!-- Extra items will be added here dynamically -->
+        </div>
+        <button type="button" onclick="addExtraItem()">Adicionar Item Extra</button>
+        <button type="submit">Adicionar Produto</button>
+    </form>
+
+    <h2>Categorias</h2>
+    <div id="categoriesList"></div>
+
+    <h2>Produtos</h2>
+    <div id="productsList"></div>
+
+    <script>
+        let categories = JSON.parse(localStorage.getItem('categories')) || [];
+        let products = JSON.parse(localStorage.getItem('products')) || [];
+        let editingProductId = null;
+
+        function saveData() {
+            localStorage.setItem('categories', JSON.stringify(categories));
+            localStorage.setItem('products', JSON.stringify(products));
+        }
+
+        function addExtraItem() {
+            const extrasContainer = document.getElementById('extrasContainer');
+            const extraDiv = document.createElement('div');
+            extraDiv.innerHTML = `
+                <input type="text" placeholder="Nome do Item Extra" required>
+                <input type="number" placeholder="Preço do Item Extra" step="0.01" required>
+                <button type="button" onclick="this.parentElement.remove()">Remover</button>
+            `;
+            extrasContainer.appendChild(extraDiv);
+        }
+
+        document.getElementById('addCategoryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const categoryName = document.getElementById('categoryName').value;
+            categories.push(categoryName);
+            updateCategoriesList();
+            updateCategorySelect();
+            saveData();
+            this.reset();
+        });
+
+        document.getElementById('addProductForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const product = {
+                id: editingProductId || Date.now(),
+                name: document.getElementById('productName').value,
+                price: parseFloat(document.getElementById('productPrice').value),
+                category: document.getElementById('productCategory').value,
+                description: document.getElementById('productDescription').value,
+                image: document.getElementById('productImage').value,
+                minAccompaniments: parseInt(document.getElementById('minAccompaniments').value),
+                maxAccompaniments: parseInt(document.getElementById('maxAccompaniments').value),
+                accompaniments: document.getElementById('accompaniments').value.split('\n'),
+                extras: Array.from(document.getElementById('extrasContainer').children).map(div => ({
+                    name: div.children[0].value,
+                    price: parseFloat(div.children[1].value)
+                }))
+            };
+
+            if (editingProductId) {
+                const index = products.findIndex(p => p.id === editingProductId);
+                if (index !== -1) {
+                    products[index] = product;
+                }
+                editingProductId = null;
+            } else {
+                products.push(product);
+            }
+
+            updateProductsList();
+            saveData();
+            this.reset();
+            document.getElementById('extrasContainer').innerHTML = '';
+            addExtraItem();
+        });
+
+        function updateCategoriesList() {
+            const categoriesList = document.getElementById('categoriesList');
+            categoriesList.innerHTML = categories.map(category => `
+                <div class="category-item">
+                    ${category}
+                    <button class="delete-btn" onclick="deleteCategory('${category}')">Deletar</button>
+                </div>
+            `).join('');
+        }
+
+        function updateCategorySelect() {
+            const categorySelect = document.getElementById('productCategory');
+            categorySelect.innerHTML = categories.map(category => `
+                <option value="${category}">${category}</option>
+            `).join('');
+        }
+
+        function updateProductsList() {
+            const productsList = document.getElementById('productsList');
+            productsList.innerHTML = products.map(product => `
+                <div class="product-item">
+                    <h3>${product.name}</h3>
+                    <p>Preço: R$ ${parseFloat(product.price).toFixed(2)}</p>
+                    <p>Categoria: ${product.category}</p>
+                    <button class="edit-btn" onclick="editProduct(${product.id})">Editar</button>
+                    <button class="delete-btn" onclick="deleteProduct(${product.id})">Deletar</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteCategory(category) {
+            categories = categories.filter(c => c !== category);
+            updateCategoriesList();
+            updateCategorySelect();
+            saveData();
+        }
+
+        function editProduct(productId) {
+            const product = products.find(p => p.id === productId);
+            if (product) {
+                document.getElementById('productName').value = product.name;
+                document.getElementById('productPrice').value = parseFloat(product.price);
+                document.getElementById('productCategory').value = product.category;
+                document.getElementById('productDescription').value = product.description;
+                document.getElementById('productImage').value = product.image;
+                document.getElementById('minAccompaniments').value = product.minAccompaniments;
+                document.getElementById('maxAccompaniments').value = product.maxAccompaniments;
+                document.getElementById('accompaniments').value = product.accompaniments.join('\n');
+                
+                const extrasContainer = document.getElementById('extrasContainer');
+                extrasContainer.innerHTML = '';
+                product.extras.forEach(extra => {
+                    const extraDiv = document.createElement('div');
+                    extraDiv.innerHTML = `
+                        <input type="text" value="${extra.name}" required>
+                        <input type="number" value="${parseFloat(extra.price)}" step="0.01" required>
+                        <button type="button" onclick="this.parentElement.remove()">Remover</button>
+                    `;
+                    extrasContainer.appendChild(extraDiv);
+                });
+
+                editingProductId = productId;
+            }
+        }
+
+        function deleteProduct(productId) {
+            products = products.filter(p => p.id !== productId);
+            updateProductsList();
+            saveData();
+        }
+
+        // Initialize
+        addExtraItem();
+        updateCategoriesList();
+        updateCategorySelect();
+        updateProductsList();
+    </script>
+</body>
+</html>

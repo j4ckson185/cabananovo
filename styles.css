@@ -1,0 +1,48 @@
+/* Add your styles here */
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+}
+
+.app {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+header img {
+    width: 100px;
+    margin-right: 20px;
+}
+
+.menu-item, .cart-item, .order-card {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.cart-total, .delivery-fee {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.order-columns {
+    display: flex;
+    justify-content: space-between;
+}
+
+.order-column {
+    flex: 1;
+    margin: 0 10px;
+}
+
+/* Add more styles as needed */
