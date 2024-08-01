@@ -345,13 +345,13 @@ main {
     function displayProducts(productsToDisplay = products) {
       const productGrid = document.getElementById('productGrid');
       productGrid.innerHTML = productsToDisplay.map(product => `
-        <div class="product-card" onclick="openProductDetails(${product.id})">
+        <div class="product-card" onclick="openProductDetails('${product.id}')">
           <img src="${product.image}" alt="${product.name}" class="product-image">
           <div class="product-info">
             <h3 class="product-title">${product.name}</h3>
             <p class="product-price">R$ ${parseFloat(product.price).toFixed(2)}</p>
             <p class="product-description">${product.description.substring(0, 100)}...</p>
-            <button class="btn" onclick="openProductDetails(${product.id}, event)">Ver Detalhes</button>
+            <button class="btn" onclick="openProductDetails('${product.id}', event)">Ver Detalhes</button>
           </div>
         </div>
       `).join('');
@@ -393,7 +393,7 @@ main {
             `).join('')}
           </div>
         </div>
-        <button id="addToCartBtn" class="btn" onclick="addToCart(${product.id})">Adicionar ao Carrinho</button>
+        <button id="addToCartBtn" class="btn" onclick="addToCart('${product.id}')">Adicionar ao Carrinho</button>
       `;
 
       modal.style.display = "block";
@@ -545,13 +545,20 @@ main {
 
     function addNewOrder(order) {
       // Adicionar pedido no Firestore
-      db.collection('orders').add(order)
+      const orderRef = db.collection('orders').doc(`${order.id}`);
+      orderRef.set(order)
         .then(() => {
           console.log('Pedido adicionado com sucesso!');
         })
         .catch(error => {
           console.error('Erro ao adicionar pedido: ', error);
         });
+
+      // Trigger the storage event manually to notify the gestor page
+      const event = new Event('storage');
+      event.key = 'orders';
+      event.newValue = JSON.stringify(orders);
+      window.dispatchEvent(event);
     }
 
     document.getElementById('checkoutForm').addEventListener('submit', function(e) {
@@ -590,7 +597,7 @@ main {
 
       // Enviar pedido para o gestor de pedidos
       const order = {
-        id: Date.now(),
+        id: Date.now().toString(),
         name: name,
         address: address,
         phone: phone,
