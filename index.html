@@ -323,7 +323,7 @@ main {
 
     async function fetchProducts() {
       const snapshot = await db.collection('products').get();
-      products = snapshot.docs.map(doc => doc.data());
+      products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       displayProducts(products);
     }
 
@@ -332,9 +332,9 @@ main {
       const categories = snapshot.docs.map(doc => doc.data().name);
       const categoriesContainer = document.getElementById('categories');
       categoriesContainer.innerHTML = categories.map(category => `
-        <button class="category-btn" onclick="filterByCategory('${category}')">${category}</button>
+        <button class="category-btn" data-category="${category}">${category}</button>
       `).join('');
-      categoriesContainer.innerHTML = `<button class="category-btn" onclick="filterByCategory('all')">Todos</button>` + categoriesContainer.innerHTML;
+      categoriesContainer.innerHTML = `<button class="category-btn" data-category="all">Todos</button>` + categoriesContainer.innerHTML;
     }
 
     function filterByCategory(category) {
@@ -544,15 +544,14 @@ main {
     }
 
     function addNewOrder(order) {
-      let orders = JSON.parse(localStorage.getItem('orders')) || [];
-      orders.push(order);
-      localStorage.setItem('orders', JSON.stringify(orders));
-
-      // Trigger the storage event manually to notify the gestor page
-      const event = new Event('storage');
-      event.key = 'orders';
-      event.newValue = JSON.stringify(orders);
-      window.dispatchEvent(event);
+      // Adicionar pedido no Firestore
+      db.collection('orders').add(order)
+        .then(() => {
+          console.log('Pedido adicionado com sucesso!');
+        })
+        .catch(error => {
+          console.error('Erro ao adicionar pedido: ', error);
+        });
     }
 
     document.getElementById('checkoutForm').addEventListener('submit', function(e) {
@@ -651,6 +650,13 @@ main {
     // Inicializa a exibição de categorias e produtos
     fetchCategories();
     fetchProducts();
+
+    document.getElementById('categories').addEventListener('click', function(event) {
+      if (event.target.classList.contains('category-btn')) {
+        const category = event.target.getAttribute('data-category');
+        filterByCategory(category);
+      }
+    });
   });
 </script>
 </body>
