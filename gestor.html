@@ -190,7 +190,7 @@ main {
       } else if (order.status === 'delivery') {
         order.status = 'finished';
       }
-      db.collection('orders').doc(order.id.toString()).update({ status: order.status })
+      db.collection('orders').doc(orderId.toString()).update({ status: order.status })
         .then(() => {
           console.log('Status do pedido atualizado com sucesso!');
           displayOrders();
