@@ -180,7 +180,7 @@ main {
     window.advanceOrder = function(orderId) {
       console.log('Tentando avançar pedido:', orderId);
       console.log('Pedidos disponíveis:', orders);
-      const order = orders.find(o => o.id.toString() === orderId.toString());
+      const order = orders.find(o => o.id === orderId);
       if (!order) {
         console.error('Pedido não encontrado:', orderId);
         return;
