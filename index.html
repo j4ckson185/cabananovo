@@ -370,6 +370,8 @@ main {
       if (event) {
         event.stopPropagation();
       }
+      console.log('Tentando abrir detalhes do produto:', productId);
+      console.log('Lista de produtos carregados:', products);
       const product = products.find(p => p.id === productId);
       if (!product) {
         console.error('Produto não encontrado:', productId);
