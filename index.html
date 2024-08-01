@@ -601,21 +601,30 @@ main {
     message += `\nTotal: R$ ${(cart.reduce((sum, item) => sum + item.totalPrice, 0) + deliveryFee).toFixed(2)}`;
 
     // Enviar pedido para o gestor de pedidos
-    const order = {
-      id: Date.now(),
-      name: name,
-      address: address,
-      phone: phone,
-      paymentMethod: paymentMethod,
-      changeNeeded: changeNeeded,
-      changeAmount: changeAmount,
-      items: cart,
-      subtotal: cart.reduce((sum, item) => sum + item.totalPrice, 0),
-      deliveryFee: deliveryFee,
-      total: cart.reduce((sum, item) => sum + item.totalPrice, 0) + deliveryFee,
-      status: 'preparing'
+<script>
+  document.querySelector('button').addEventListener('click', function() {
+    const nome = document.querySelector('input[placeholder="Nome:"]').value;
+    const endereco = document.querySelector('input[placeholder="Endereço:"]').value;
+    const telefone = document.querySelector('input[placeholder="Telefone:"]').value;
+    const metodoPagamento = document.querySelector('input[name="pagamento"]:checked').value;
+    const precisaTroco = document.querySelector('input[name="troco"]:checked').value;
+    const troco = document.querySelector('input[placeholder="Quanto de troco?"]').value;
+
+    const pedido = {
+      nome,
+      endereco,
+      telefone,
+      metodoPagamento,
+      precisaTroco,
+      troco,
+      status: 'Em preparo',
+      timestamp: new Date().getTime()
     };
-    addNewOrder(order);
+
+    // Salvar o pedido no localStorage
+    const pedidos = JSON.parse(localStorage.getItem('pedidos') || '[]');
+    pedidos.push(pedido);
+    localStorage.setItem('pedidos', JSON.stringify(pedidos));
 
     // Redirecionar para o WhatsApp
     window.location.href = `https://wa.me/5584988731028?text=${encodeURIComponent(message)}`;
