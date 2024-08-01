@@ -121,9 +121,22 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        let categories = JSON.parse(localStorage.getItem('categories')) || [];
-        let products = JSON.parse(localStorage.getItem('products')) || [];
+        let categories = [];
+        let products = [];
         let editingProductId = null;
+
+        async function fetchCategories() {
+            const snapshot = await db.collection('categories').get();
+            categories = snapshot.docs.map(doc => doc.data().name);
+            updateCategoriesList();
+            updateCategorySelect();
+        }
+
+        async function fetchProducts() {
+            const snapshot = await db.collection('products').get();
+            products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            updateProductsList();
+        }
 
         function saveData() {
             localStorage.setItem('categories', JSON.stringify(categories));
@@ -273,24 +286,8 @@
             db.collection('products').doc(productId.toString()).delete();
         }
 
-        async function fetchCategories() {
-            const snapshot = await db.collection('categories').get();
-            categories = snapshot.docs.map(doc => doc.data().name);
-            updateCategoriesList();
-            updateCategorySelect();
-        }
-
-        async function fetchProducts() {
-            const snapshot = await db.collection('products').get();
-            products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            updateProductsList();
-        }
-
         // Initialize
         addExtraItem();
-        updateCategoriesList();
-        updateCategorySelect();
-        updateProductsList();
         fetchCategories();
         fetchProducts();
     </script>
