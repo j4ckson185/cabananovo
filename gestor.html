@@ -176,32 +176,13 @@ function addNewOrder(order) {
   displayOrders();
 }
 
-// Exemplo de pedido (substituir com os pedidos reais)
-const exampleOrder = {
-  id: Date.now(),
-  name: 'João Silva',
-  address: 'Rua Exemplo, 123',
-  phone: '84999999999',
-  paymentMethod: 'Dinheiro',
-  changeNeeded: 'Sim',
-  changeAmount: '50.00',
-  items: [
-    {
-      name: 'Açaí Médio',
-      totalPrice: 15.00,
-      accompaniments: ['Granola', 'Banana'],
-      extras: ['Leite Condensado']
-    }
-  ],
-  subtotal: 15.00,
-  deliveryFee: 3.00,
-  total: 18.00,
-  status: 'preparing'
-};
-
-// Adiciona o exemplo de pedido ao iniciar (remover isso no uso real)
-addNewOrder(exampleOrder);
-
+// Listener para o evento de armazenamento
+window.addEventListener('storage', function(event) {
+  if (event.key === 'orders') {
+    orders = JSON.parse(event.newValue);
+    displayOrders();
+  }
+});
 </script>
 </body>
 </html>
