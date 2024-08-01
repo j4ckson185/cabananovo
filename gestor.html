@@ -178,19 +178,26 @@ main {
     }
 
     window.advanceOrder = function(orderId) {
-      const order = orders.find(o => o.id === orderId);
-      if (order) {
-        if (order.status === 'preparing') {
-          order.status = 'delivery';
-        } else if (order.status === 'delivery') {
-          order.status = 'finished';
+      const orderRef = db.collection('orders').doc(orderId);
+      orderRef.get().then(doc => {
+        if (doc.exists) {
+          const order = doc.data();
+          if (order.status === 'preparing') {
+            order.status = 'delivery';
+          } else if (order.status === 'delivery') {
+            order.status = 'finished';
+          }
+          orderRef.update({ status: order.status });
         }
-        db.collection('orders').doc(orderId).update({ status: order.status });
-      }
+      }).catch(error => {
+        console.error("Error updating document: ", error);
+      });
     }
 
     window.finishOrder = function(orderId) {
-      db.collection('orders').doc(orderId).delete();
+      db.collection('orders').doc(orderId).delete().catch(error => {
+        console.error("Error removing document: ", error);
+      });
     }
 
     // Listener para o Firestore
