@@ -297,11 +297,38 @@ main {
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
 <script>
-// Carrega os produtos do localStorage
-const products = JSON.parse(localStorage.getItem('products')) || [];
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
+  authDomain: "cabana-8d55e.firebaseapp.com",
+  databaseURL: "https://cabana-8d55e-default-rtdb.firebaseio.com",
+  projectId: "cabana-8d55e",
+  storageBucket: "cabana-8d55e.appspot.com",
+  messagingSenderId: "706144237954",
+  appId: "1:706144237954:web:345c10370972486afc779b",
+  measurementId: "G-96Y337GYT8"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+let products = [];
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
 const deliveryFee = 3.00;
+
+function fetchProducts() {
+  db.collection('products').get().then((querySnapshot) => {
+    querySnapshot.forEach((doc) => {
+      products.push({ id: doc.id, ...doc.data() });
+    });
+    displayCategories();
+    displayProducts();
+  });
+}
 
 function getUniqueCategories() {
   return [...new Set(products.map(product => product.category))];
@@ -644,8 +671,7 @@ document.querySelectorAll('.close').forEach(closeBtn => {
 }
 
 // Inicializa a exibição de categorias e produtos
-displayCategories();
-displayProducts();
+fetchProducts();
 </script>
 </body>
 </html>
