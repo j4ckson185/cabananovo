@@ -1,103 +1,86 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestor de Pedidos - Cabana Açaí</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f0f0f0;
-        }
-        header {
-            background-color: #4a0e4e;
-            color: white;
-            text-align: center;
-            padding: 1rem;
-        }
-        main {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-            display: flex;
-            justify-content: space-between;
-        }
-        .column {
-            flex: 1;
-            margin: 0 1rem;
-            background-color: white;
-            border-radius: 5px;
-            padding: 1rem;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        h2 {
-            margin-top: 0;
-            color: #4a0e4e;
-        }
-        .pedido {
-            background-color: #f9f9f9;
-            border-radius: 5px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-        .pedido p {
-            margin: 0.5rem 0;
-        }
-        button {
-            background-color: #4a0e4e;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-right: 0.5rem;
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <h1>Gestor de Pedidos - Cabana Açaí</h1>
-    </header>
-    <main>
-        <div class="column">
-            <h2>Em preparo</h2>
-            <div id="em-preparo"></div>
-        </div>
-        <div class="column">
-            <h2>Saiu pra entrega</h2>
-            <div id="saiu-para-entrega"></div>
-        </div>
-        <div class="column">
-            <h2>Finalizado</h2>
-            <div id="finalizado"></div>
-        </div>
-    </main>
-    <script>
-        function atualizarPedidos() {
-            const pedidos = JSON.parse(localStorage.getItem('pedidos') || '[]');
-            const emPreparo = document.querySelector('#em-preparo');
-            const saiuParaEntrega = document.querySelector('#saiu-para-entrega');
-            const finalizado = document.querySelector('#finalizado');
+<script>
+  // Configuração do Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
+    authDomain: "cabana-8d55e.firebaseapp.com",
+    databaseURL: "https://cabana-8d55e-default-rtdb.firebaseio.com",
+    projectId: "cabana-8d55e",
+    storageBucket: "cabana-8d55e.appspot.com",
+    messagingSenderId: "706144237954",
+    appId: "1:706144237954:web:345c10370972486afc779b",
+    measurementId: "G-96Y337GYT8"
+  };
 
-            emPreparo.innerHTML = '';
-            saiuParaEntrega.innerHTML = '';
-            finalizado.innerHTML = '';
+  // Inicialize o Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-            pedidos.forEach((pedido, index) => {
-                const pedidoElement = document.createElement('div');
-                pedidoElement.className = 'pedido';
-                pedidoElement.innerHTML = `
-                    <p><strong>Nome:</strong> ${pedido.nome}</p>
-                    <p><strong>Endereço:</strong> ${pedido.endereco}</p>
-                    <p><strong>Telefone:</strong> ${pedido.telefone}</p>
-                    <p><strong>Método de Pagamento:</strong> ${pedido.metodoPagamento}</p>
-                    <p><strong>Precisa de Troco:</strong> ${pedido.precisaTroco}</p>
-                    ${pedido.precisaTroco === 'Sim' ? `<p><strong>Troco:</strong> R$ ${pedido.troco}</p>` : ''}
-                    <p><strong>Itens:</strong></p>
-                    <ul>
-                        ${pedido.itens.map(item => `<li>${item.name} - R$ ${item.price.toFixed(2)}</li>`).join('')}
-                    </ul>
-                    <p><strong>Total:</strong> R$ ${pedido.itens.reduce((total, item) => total + item.price, 0).toFixed(2)}</p>
-                    <button onclick="
+let orders = [];
+
+function addOrderToColumn(order, columnId) {
+  const column = document.getElementById(columnId);
+  const orderDiv = document.createElement('div');
+  orderDiv.className = 'order';
+  orderDiv.innerHTML = `
+    <h3>Pedido #${order.id}</h3>
+    <p><strong>Nome:</strong> ${order.name}</p>
+    <p><strong>Endereço:</strong> ${order.address}</p>
+    <p><strong>Telefone:</strong> ${order.phone}</p>
+    <p><strong>Método de Pagamento:</strong> ${order.paymentMethod}</p>
+    ${order.changeNeeded ? `<p><strong>Precisa de troco:</strong> ${order.changeNeeded}</p>` : ''}
+    ${order.changeAmount ? `<p><strong>Quanto de troco:</strong> R$ ${parseFloat(order.changeAmount).toFixed(2)}</p>` : ''}
+    <p><strong>Itens do Pedido:</strong></p>
+    <ul>
+      ${order.items.map(item => `
+        <li>${item.name} - R$ ${item.totalPrice.toFixed(2)}</li>
+        ${item.accompaniments.length > 0 ? `<p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>` : ''}
+        ${item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+      `).join('')}
+    </ul>
+    <p><strong>Subtotal:</strong> R$ ${order.subtotal.toFixed(2)}</p>
+    <p><strong>Taxa de Entrega:</strong> R$ ${order.deliveryFee.toFixed(2)}</p>
+    <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
+    ${order.status === 'finished' 
+      ? `<button class="btn" onclick="finishOrder(${order.id})">Finalizar</button>` 
+      : `<button class="btn" onclick="advanceOrder(${order.id})">Avançar</button>`}
+  `;
+  column.appendChild(orderDiv);
+}
+
+function displayOrders() {
+  document.getElementById('preparingColumn').innerHTML = '<h2>Em preparo</h2>';
+  document.getElementById('deliveryColumn').innerHTML = '<h2>Saiu pra entrega</h2>';
+  document.getElementById('finishedColumn').innerHTML = '<h2>Finalizado</h2>';
+
+  orders.forEach(order => {
+    if (order.status === 'preparing') {
+      addOrderToColumn(order, 'preparingColumn');
+    } else if (order.status === 'delivery') {
+      addOrderToColumn(order, 'deliveryColumn');
+    } else if (order.status === 'finished') {
+      addOrderToColumn(order, 'finishedColumn');
+    }
+  });
+}
+
+function advanceOrder(orderId) {
+  const order = orders.find(o => o.id === orderId);
+  if (order.status === 'preparing') {
+    order.status = 'delivery';
+  } else if (order.status === 'delivery') {
+    order.status = 'finished';
+  }
+  db.collection('orders').doc(order.id).update({ status: order.status });
+}
+
+function finishOrder(orderId) {
+  db.collection('orders').doc(orderId).delete();
+}
+
+// Listener para o Firestore
+db.collection('orders').onSnapshot(snapshot => {
+  orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  displayOrders();
+});
+
+</script>
