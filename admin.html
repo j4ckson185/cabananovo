@@ -102,8 +102,8 @@
     <div id="productsList"></div>
 
     <!-- Adicione o Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script>
         // Configuração do Firebase
         const firebaseConfig = {
@@ -125,31 +125,9 @@
         let products = JSON.parse(localStorage.getItem('products')) || [];
         let editingProductId = null;
 
-        async function saveData() {
+        function saveData() {
             localStorage.setItem('categories', JSON.stringify(categories));
             localStorage.setItem('products', JSON.stringify(products));
-
-            // Salvar categorias no Firestore
-            const categoriesRef = db.collection('categories');
-            categories.forEach(async (category) => {
-                const snapshot = await categoriesRef.where('name', '==', category).get();
-                if (snapshot.empty) {
-                    await categoriesRef.add({ name: category });
-                }
-            });
-
-            // Salvar produtos no Firestore
-            const productsRef = db.collection('products');
-            products.forEach(async (product) => {
-                const snapshot = await productsRef.where('id', '==', product.id).get();
-                if (snapshot.empty) {
-                    await productsRef.add(product);
-                } else {
-                    snapshot.forEach(doc => {
-                        doc.ref.update(product);
-                    });
-                }
-            });
         }
 
         function addExtraItem() {
@@ -163,17 +141,21 @@
             extrasContainer.appendChild(extraDiv);
         }
 
-        document.getElementById('addCategoryForm').addEventListener('submit', function(e) {
+        document.getElementById('addCategoryForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const categoryName = document.getElementById('categoryName').value;
             categories.push(categoryName);
             updateCategoriesList();
             updateCategorySelect();
             saveData();
+
+            // Adiciona a categoria ao Firestore
+            await db.collection('categories').add({ name: categoryName });
+
             this.reset();
         });
 
-        document.getElementById('addProductForm').addEventListener('submit', function(e) {
+        document.getElementById('addProductForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const product = {
                 id: editingProductId || Date.now(),
@@ -203,6 +185,10 @@
 
             updateProductsList();
             saveData();
+
+            // Adiciona o produto ao Firestore
+            await db.collection('products').doc(product.id.toString()).set(product);
+
             this.reset();
             document.getElementById('extrasContainer').innerHTML = '';
             addExtraItem();
@@ -243,6 +229,11 @@
             updateCategoriesList();
             updateCategorySelect();
             saveData();
+
+            // Remove a categoria do Firestore
+            db.collection('categories').where('name', '==', category).get().then(snapshot => {
+                snapshot.forEach(doc => doc.ref.delete());
+            });
         }
 
         function editProduct(productId) {
@@ -277,6 +268,22 @@
             products = products.filter(p => p.id !== productId);
             updateProductsList();
             saveData();
+
+            // Remove o produto do Firestore
+            db.collection('products').doc(productId.toString()).delete();
+        }
+
+        async function fetchCategories() {
+            const snapshot = await db.collection('categories').get();
+            categories = snapshot.docs.map(doc => doc.data().name);
+            updateCategoriesList();
+            updateCategorySelect();
+        }
+
+        async function fetchProducts() {
+            const snapshot = await db.collection('products').get();
+            products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            updateProductsList();
         }
 
         // Initialize
@@ -284,6 +291,8 @@
         updateCategoriesList();
         updateCategorySelect();
         updateProductsList();
+        fetchCategories();
+        fetchProducts();
     </script>
 </body>
 </html>
