@@ -197,5 +197,57 @@ db.collection('orders').onSnapshot(snapshot => {
 });
 
 </script>
+  <script>
+  function atualizarPedidos() {
+    const pedidos = JSON.parse(localStorage.getItem('pedidos') || '[]');
+    const emPreparo = document.querySelector('#em-preparo');
+    const saiuParaEntrega = document.querySelector('#saiu-para-entrega');
+    const finalizado = document.querySelector('#finalizado');
+
+    emPreparo.innerHTML = '';
+    saiuParaEntrega.innerHTML = '';
+    finalizado.innerHTML = '';
+
+    pedidos.forEach((pedido, index) => {
+      const pedidoElement = document.createElement('div');
+      pedidoElement.innerHTML = `
+        <p>Nome: ${pedido.nome}</p>
+        <p>Endereço: ${pedido.endereco}</p>
+        <p>Telefone: ${pedido.telefone}</p>
+        <p>Método de Pagamento: ${pedido.metodoPagamento}</p>
+        <p>Precisa de Troco: ${pedido.precisaTroco}</p>
+        <p>Troco: ${pedido.troco}</p>
+        <button onclick="atualizarStatus(${index}, 'Em preparo')">Em preparo</button>
+        <button onclick="atualizarStatus(${index}, 'Saiu pra entrega')">Saiu pra entrega</button>
+        <button onclick="atualizarStatus(${index}, 'Finalizado')">Finalizado</button>
+      `;
+
+      switch(pedido.status) {
+        case 'Em preparo':
+          emPreparo.appendChild(pedidoElement);
+          break;
+        case 'Saiu pra entrega':
+          saiuParaEntrega.appendChild(pedidoElement);
+          break;
+        case 'Finalizado':
+          finalizado.appendChild(pedidoElement);
+          break;
+      }
+    });
+  }
+
+  function atualizarStatus(index, novoStatus) {
+    const pedidos = JSON.parse(localStorage.getItem('pedidos') || '[]');
+    pedidos[index].status = novoStatus;
+    localStorage.setItem('pedidos', JSON.stringify(pedidos));
+    atualizarPedidos();
+  }
+
+  // Atualizar pedidos a cada 5 segundos
+  setInterval(atualizarPedidos, 5000);
+
+  // Atualizar pedidos imediatamente ao carregar a página
+  atualizarPedidos();
+</script>
 </body>
 </html>
