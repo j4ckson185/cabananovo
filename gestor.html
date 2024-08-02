@@ -219,21 +219,14 @@ main {
   function removeOrder(orderId) {
     console.log('Removendo pedido:', orderId);
     db.collection('orders').doc(orderId).delete().then(() => {
-      console.log('Pedido removido com sucesso!');
-      // Remover pedido da interface
-      const orderElement = document.getElementById(`order-${orderId}`);
-      if (orderElement) {
-        orderElement.remove();
-      }
+      console.log('Pedido removido com sucesso do Firestore!');
       // Atualizar a lista de pedidos na memória
       orders = orders.filter(order => order.id !== orderId);
-      console.log('Pedidos atualizados:', orders);
-      // Adicionar um delay antes de atualizar a interface
-      setTimeout(() => {
-        displayOrders();
-      }, 500);
+      console.log('Pedidos atualizados na memória:', orders);
+      // Atualizar a interface
+      displayOrders();
     }).catch((error) => {
-      console.error('Erro ao remover pedido:', error);
+      console.error('Erro ao remover pedido do Firestore:', error);
     });
   }
 
