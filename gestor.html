@@ -153,9 +153,10 @@ main {
       <p><strong>Subtotal:</strong> R$ ${order.subtotal.toFixed(2)}</p>
       <p><strong>Taxa de Entrega:</strong> R$ ${order.deliveryFee.toFixed(2)}</p>
       <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
-      ${order.status === 'finished' 
-        ? `<button class="btn" onclick="finishOrder('${order.id}')">Finalizar</button>` 
-        : `<button class="btn" onclick="advanceOrder('${order.id}')">Avançar</button>`}
+      ${order.status !== 'finished' 
+        ? `<button class="btn" onclick="advanceOrder('${order.id}')">Avançar</button>`
+        : ''}
+      <button class="btn" onclick="removeOrder('${order.id}')">Finalizar</button>
     `;
     column.appendChild(orderDiv);
   }
@@ -204,12 +205,12 @@ main {
     });
   }
 
-  function finishOrder(orderId) {
-    console.log('Finalizando pedido:', orderId);
+  function removeOrder(orderId) {
+    console.log('Removendo pedido:', orderId);
     db.collection('orders').doc(orderId).delete().then(() => {
-      console.log('Pedido finalizado com sucesso!');
+      console.log('Pedido removido com sucesso!');
     }).catch((error) => {
-      console.error('Erro ao finalizar pedido:', error);
+      console.error('Erro ao remover pedido:', error);
     });
   }
 
@@ -221,7 +222,7 @@ main {
 
   // Garantir que as funções estão disponíveis no escopo global
   window.advanceOrder = advanceOrder;
-  window.finishOrder = finishOrder;
+  window.removeOrder = removeOrder;
 
   // Desativar o service worker
   if ('serviceWorker' in navigator) {
