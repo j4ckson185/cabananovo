@@ -223,8 +223,11 @@ main {
       // Atualizar a lista de pedidos na memória
       orders = orders.filter(order => order.id !== orderId);
       console.log('Pedidos atualizados na memória:', orders);
-      // Atualizar a interface
-      displayOrders();
+      // Remover pedido da interface
+      const orderElement = document.getElementById(`order-${orderId}`);
+      if (orderElement) {
+        orderElement.remove();
+      }
     }).catch((error) => {
       console.error('Erro ao remover pedido do Firestore:', error);
     });
