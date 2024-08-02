@@ -188,12 +188,14 @@ main {
         if (order.status === 'preparing') {
           orderRef.update({ status: 'delivery' }).then(() => {
             console.log('Status do pedido atualizado para "delivery".');
+            updateLocalOrder(orderId, 'delivery');
           }).catch(error => {
             console.error('Erro ao atualizar status do pedido:', error);
           });
         } else if (order.status === 'delivery') {
           orderRef.update({ status: 'finished' }).then(() => {
             console.log('Status do pedido atualizado para "finished".');
+            updateLocalOrder(orderId, 'finished');
           }).catch(error => {
             console.error('Erro ao atualizar status do pedido:', error);
           });
@@ -206,6 +208,14 @@ main {
     });
   }
 
+  function updateLocalOrder(orderId, newStatus) {
+    const orderIndex = orders.findIndex(order => order.id === orderId);
+    if (orderIndex !== -1) {
+      orders[orderIndex].status = newStatus;
+      displayOrders();
+    }
+  }
+
   function removeOrder(orderId) {
     console.log('Removendo pedido:', orderId);
     db.collection('orders').doc(orderId).delete().then(() => {
@@ -214,6 +224,7 @@ main {
       document.getElementById(`order-${orderId}`).remove();
       // Atualizar a lista de pedidos na memória
       orders = orders.filter(order => order.id !== orderId);
+      console.log('Pedidos atualizados:', orders);
       // Atualizar a interface
       displayOrders();
     }).catch((error) => {
