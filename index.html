@@ -331,10 +331,10 @@ main {
       const snapshot = await db.collection('categories').get();
       const categories = snapshot.docs.map(doc => doc.data().name);
       const categoriesContainer = document.getElementById('categories');
-      categoriesContainer.innerHTML = categories.map(category => 
+      categoriesContainer.innerHTML = categories.map(category => `
         <button class="category-btn" data-category="${category}">${category}</button>
-      ).join('');
-      categoriesContainer.innerHTML = <button class="category-btn" data-category="all">Todos</button> + categoriesContainer.innerHTML;
+      `).join('');
+      categoriesContainer.innerHTML = `<button class="category-btn" data-category="all">Todos</button>` + categoriesContainer.innerHTML;
     }
 
     function filterByCategory(category) {
@@ -344,17 +344,17 @@ main {
 
     function displayProducts(productsToDisplay = products) {
       const productGrid = document.getElementById('productGrid');
-      productGrid.innerHTML = productsToDisplay.map(product => 
-        <div class="product-card" onclick="openProductDetails(${product.id})">
+      productGrid.innerHTML = productsToDisplay.map(product => `
+        <div class="product-card" onclick="openProductDetails('${product.id}')">
           <img src="${product.image}" alt="${product.name}" class="product-image">
           <div class="product-info">
             <h3 class="product-title">${product.name}</h3>
             <p class="product-price">R$ ${parseFloat(product.price).toFixed(2)}</p>
             <p class="product-description">${product.description.substring(0, 100)}...</p>
-            <button class="btn" onclick="openProductDetails(${product.id}, event)">Ver Detalhes</button>
+            <button class="btn" onclick="openProductDetails('${product.id}', event)">Ver Detalhes</button>
           </div>
         </div>
-      ).join('');
+      `).join('');
     }
 
     window.openProductDetails = function(productId, event) {
@@ -362,10 +362,14 @@ main {
         event.stopPropagation();
       }
       const product = products.find(p => p.id === productId);
+      if (!product) {
+        console.error('Produto não encontrado:', productId);
+        return;
+      }
       const modal = document.getElementById('productModal');
       const modalContent = document.getElementById('modalContent');
 
-      modalContent.innerHTML = 
+      modalContent.innerHTML = `
         <h2>${product.name}</h2>
         <img src="${product.image}" alt="${product.name}" style="width:100%; max-height:300px; object-fit:cover;">
         <p>${product.description}</p>
@@ -373,28 +377,28 @@ main {
         <div class="extras-list">
           <h3>Acompanhamentos (escolha de ${product.minAccompaniments} a ${product.maxAccompaniments}):</h3>
           <div class="checkbox-list" id="accompaniments">
-            ${product.accompaniments.map((item, index) => 
+            ${product.accompaniments.map((item, index) => `
               <div class="checkbox-item">
                 <input type="checkbox" id="acc${index}" name="accompaniment" value="${item}">
                 <label for="acc${index}">${item}</label>
               </div>
-            ).join('')}
+            `).join('')}
           </div>
           <p id="accompanimentError" class="error-message"></p>
         </div>
         <div class="extras-list">
           <h3>Itens Extras:</h3>
           <div class="checkbox-list" id="extras">
-            ${product.extras.map((item, index) => 
+            ${product.extras.map((item, index) => `
               <div class="checkbox-item">
                 <input type="checkbox" id="extra${index}" name="extra" value="${item.name}">
                 <label for="extra${index}">${item.name} - R$ ${parseFloat(item.price).toFixed(2)}</label>
               </div>
-            ).join('')}
+            `).join('')}
           </div>
         </div>
-        <button id="addToCartBtn" class="btn" onclick="addToCart(${product.id})">Adicionar ao Carrinho</button>
-      ;
+        <button id="addToCartBtn" class="btn" onclick="addToCart('${product.id}')">Adicionar ao Carrinho</button>
+      `;
 
       modal.style.display = "block";
 
@@ -412,7 +416,7 @@ main {
 
       if (checkedAccompaniments.length < product.minAccompaniments || checkedAccompaniments.length > product.maxAccompaniments) {
         addToCartBtn.disabled = true;
-        errorMessage.textContent = Selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos;
+        errorMessage.textContent = `Selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos`;
       } else {
         addToCartBtn.disabled = false;
         errorMessage.textContent = '';
@@ -421,11 +425,15 @@ main {
 
     window.addToCart = function(productId) {
       const product = products.find(p => p.id === productId);
+      if (!product) {
+        console.error('Produto não encontrado:', productId);
+        return;
+      }
       const accompaniments = Array.from(document.querySelectorAll('#accompaniments input[type="checkbox"]:checked')).map(cb => cb.value);
       const extras = Array.from(document.querySelectorAll('#extras input[type="checkbox"]:checked')).map(cb => cb.value);
 
       if (accompaniments.length < product.minAccompaniments || accompaniments.length > product.maxAccompaniments) {
-        alert(Por favor, selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos.);
+        alert(`Por favor, selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos.`);
         return;
       }
 
@@ -460,7 +468,7 @@ main {
       const cartContent = document.getElementById('cartContent');
       const cartTotal = document.getElementById('cartTotal');
 
-      cartContent.innerHTML = cart.map(item => 
+      cartContent.innerHTML = cart.map(item => `
         <div class="cart-item">
           <div class="cart-item-info">
             <h3>${item.name}</h3>
@@ -470,10 +478,10 @@ main {
           </div>
           <span class="cart-item-remove" onclick="removeFromCart(${item.id})">🗑️</span>
         </div>
-      ).join('');
+      `).join('');
 
       const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-      cartTotal.innerHTML = <h3>Total: R$ ${total.toFixed(2)}</h3>;
+      cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
 
       modal.style.display = "block";
     }
@@ -497,18 +505,18 @@ main {
       let total = 0;
 
       cart.forEach(item => {
-        summaryHTML += 
+        summaryHTML += `
           <p>${item.name} - R$ ${item.totalPrice.toFixed(2)}</p>
           <p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>
           <p>Extras: ${item.extras.join(', ')}</p>
           <hr>
-        ;
+        `;
         total += item.totalPrice;
       });
 
-      summaryHTML += <h4>Subtotal: R$ ${total.toFixed(2)}</h4>;
-      summaryHTML += <h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>;
-      summaryHTML += <h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>;
+      summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
+      summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
+      summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
       orderSummary.innerHTML = summaryHTML;
 
       // Exibir o modal de checkout
@@ -545,13 +553,20 @@ main {
 
     function addNewOrder(order) {
       // Adicionar pedido no Firestore
-      db.collection('orders').add(order)
+      const orderRef = db.collection('orders').doc(`${order.id}`);
+      orderRef.set(order)
         .then(() => {
           console.log('Pedido adicionado com sucesso!');
         })
         .catch(error => {
           console.error('Erro ao adicionar pedido: ', error);
         });
+
+      // Trigger the storage event manually to notify the gestor page
+      const event = new Event('storage');
+      event.key = 'orders';
+      event.newValue = JSON.stringify(orders);
+      window.dispatchEvent(event);
     }
 
     document.getElementById('checkoutForm').addEventListener('submit', function(e) {
@@ -565,32 +580,32 @@ main {
       const changeAmount = document.getElementById('changeAmount') ? document.getElementById('changeAmount').value : '';
 
       // Construir mensagem de WhatsApp
-      let message = Pedido confirmado!\nNome: ${name}\nEndereço: ${address}\nTelefone: ${phone}\nMétodo de Pagamento: ${paymentMethod};
+      let message = `Pedido confirmado!\nNome: ${name}\nEndereço: ${address}\nTelefone: ${phone}\nMétodo de Pagamento: ${paymentMethod}`;
       if (paymentMethod === 'cash') {
-        message += \nPrecisa de troco: ${changeNeeded};
+        message += `\nPrecisa de troco: ${changeNeeded}`;
         if (changeNeeded === 'yes') {
-          message += \nQuanto de troco: R$ ${parseFloat(changeAmount).toFixed(2)};
+          message += `\nQuanto de troco: R$ ${parseFloat(changeAmount).toFixed(2)}`;
         }
       }
 
       // Adicionar itens do pedido à mensagem
-      message += \n\nItens do Pedido:\n;
+      message += `\n\nItens do Pedido:\n`;
       cart.forEach(item => {
-        message += \n${item.name} - R$ ${item.totalPrice.toFixed(2)};
+        message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
         if (item.accompaniments.length > 0) {
-          message += \nAcompanhamentos: ${item.accompaniments.join(', ')};
+          message += `\nAcompanhamentos: ${item.accompaniments.join(', ')}`;
         }
         if (item.extras.length > 0) {
-          message += \nExtras: ${item.extras.join(', ')};
+          message += `\nExtras: ${item.extras.join(', ')}`;
         }
       });
-      message += \n\nSubtotal: R$ ${cart.reduce((sum, item) => sum + item.totalPrice, 0).toFixed(2)};
-      message += \nTaxa de Entrega: R$ ${deliveryFee.toFixed(2)};
-      message += \nTotal: R$ ${(cart.reduce((sum, item) => sum + item.totalPrice, 0) + deliveryFee).toFixed(2)};
+      message += `\n\nSubtotal: R$ ${cart.reduce((sum, item) => sum + item.totalPrice, 0).toFixed(2)}`;
+      message += `\nTaxa de Entrega: R$ ${deliveryFee.toFixed(2)}`;
+      message += `\nTotal: R$ ${(cart.reduce((sum, item) => sum + item.totalPrice, 0) + deliveryFee).toFixed(2)}`;
 
       // Enviar pedido para o gestor de pedidos
       const order = {
-        id: Date.now(),
+        id: Date.now().toString(),
         name: name,
         address: address,
         phone: phone,
@@ -606,7 +621,7 @@ main {
       addNewOrder(order);
 
       // Redirecionar para o WhatsApp
-      window.location.href = https://wa.me/5584988731028?text=${encodeURIComponent(message)};
+      window.location.href = `https://wa.me/5584988731028?text=${encodeURIComponent(message)}`;
 
       // Limpar o carrinho e redefinir a forma de pagamento após a confirmação do pedido
       cart = [];
