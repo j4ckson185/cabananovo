@@ -134,6 +134,7 @@ main {
     const column = document.getElementById(columnId);
     const orderDiv = document.createElement('div');
     orderDiv.className = 'order';
+    orderDiv.id = `order-${order.id}`;
     orderDiv.innerHTML = `
       <h3>Pedido #${order.id}</h3>
       <p><strong>Nome:</strong> ${order.name}</p>
@@ -209,6 +210,10 @@ main {
     console.log('Removendo pedido:', orderId);
     db.collection('orders').doc(orderId).delete().then(() => {
       console.log('Pedido removido com sucesso!');
+      // Remover pedido da interface
+      document.getElementById(`order-${orderId}`).remove();
+      // Atualizar a lista de pedidos na memória
+      orders = orders.filter(order => order.id !== orderId);
     }).catch((error) => {
       console.error('Erro ao remover pedido:', error);
     });
@@ -217,7 +222,7 @@ main {
   db.collection('orders').onSnapshot((snapshot) => {
     orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     console.log('Pedidos recebidos:', orders);
-    displayOrders(orders);
+    displayOrders();
   });
 
   // Garantir que as funções estão disponíveis no escopo global
