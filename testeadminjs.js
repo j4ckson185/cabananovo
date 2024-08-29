@@ -1,3 +1,4 @@
+// Configuração do Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
     authDomain: "cabana-8d55e.firebaseapp.com",
@@ -9,58 +10,44 @@ const firebaseConfig = {
     measurementId: "G-96Y337GYT8"
 };
 
+// Inicialize o Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 let categories = [];
 let products = [];
-let customers = [];
 let editingProductId = null;
 
+// Funções para buscar dados do Firestore
 async function fetchCategories() {
-    const response = await fetch('/api/categories');
-    return await response.json();
+    const snapshot = await db.collection('categories').get();
+    categories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    updateCategoriesList();
+    updateCategorySelect();
 }
 
 async function fetchProducts() {
-    try {
-        const snapshot = await db.collection('products').get();
-        products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        updateProductsList();
-    } catch (error) {
-        console.error("Erro ao buscar produtos:", error);
-    }
-}
-
-async function fetchCustomers() {
-    try {
-        const snapshot = await db.collection('customers').get();
-        customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        updateCustomersList();
-    } catch (error) {
-        console.error("Erro ao buscar clientes:", error);
-    }
+    const snapshot = await db.collection('products').get();
+    products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    updateProductsList();
 }
 
 async function fetchHours() {
-    try {
-        const doc = await db.collection('settings').doc('hours').get();
-        if (doc.exists) {
-            const hours = doc.data();
-            for (const day in hours) {
-                if (hours.hasOwnProperty(day)) {
-                    const element = document.getElementById(day);
-                    if (element) {
-                        element.value = hours[day];
-                    }
+    const doc = await db.collection('settings').doc('hours').get();
+    if (doc.exists) {
+        const hours = doc.data();
+        for (const day in hours) {
+            if (hours.hasOwnProperty(day)) {
+                const element = document.getElementById(day);
+                if (element) {
+                    element.value = hours[day];
                 }
             }
         }
-    } catch (error) {
-        console.error("Erro ao buscar horários:", error);
     }
 }
 
+// Event Listeners
 document.getElementById('hoursForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const hours = {
@@ -79,37 +66,16 @@ document.getElementById('hoursForm').addEventListener('submit', async function(e
         sundayOpen: document.getElementById('sundayOpen').value,
         sundayClose: document.getElementById('sundayClose').value,
     };
-    try {
-        await db.collection('settings').doc('hours').set(hours);
-        alert('Horários de funcionamento salvos com sucesso!');
-    } catch (error) {
-        console.error("Erro ao salvar horários:", error);
-        alert('Erro ao salvar horários. Por favor, tente novamente.');
-    }
+    await db.collection('settings').doc('hours').set(hours);
+    alert('Horários de funcionamento salvos com sucesso!');
 });
-
-function addExtraItem() {
-    const extrasContainer = document.getElementById('extrasContainer');
-    const extraDiv = document.createElement('div');
-    extraDiv.innerHTML = `
-        <input type="text" placeholder="Nome do Item Extra" required>
-        <input type="number" placeholder="Preço do Item Extra" step="0.01" required>
-        <button type="button" onclick="this.parentElement.remove()">Remover</button>
-    `;
-    extrasContainer.appendChild(extraDiv);
-}
 
 document.getElementById('addCategoryForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const categoryName = document.getElementById('categoryName').value;
-    try {
-        await db.collection('categories').add({ name: categoryName });
-        alert('Categoria adicionada com sucesso!');
-        fetchCategories();
-    } catch (error) {
-        console.error("Erro ao adicionar categoria:", error);
-        alert('Erro ao adicionar categoria. Por favor, tente novamente.');
-    }
+    await db.collection('categories').add({ name: categoryName });
+    alert('Categoria adicionada com sucesso!');
+    fetchCategories();
 });
 
 document.getElementById('addProductForm').addEventListener('submit', async function(e) {
@@ -129,24 +95,31 @@ document.getElementById('addProductForm').addEventListener('submit', async funct
         }))
     };
 
-    try {
-        if (editingProductId) {
-            await db.collection('products').doc(editingProductId).update(product);
-            editingProductId = null;
-            alert('Produto atualizado com sucesso!');
-        } else {
-            await db.collection('products').add(product);
-            alert('Produto adicionado com sucesso!');
-        }
-        this.reset();
-        document.getElementById('extrasContainer').innerHTML = '';
-        addExtraItem();
-        fetchProducts();
-    } catch (error) {
-        console.error("Erro ao adicionar/atualizar produto:", error);
-        alert('Erro ao adicionar/atualizar produto. Por favor, tente novamente.');
+    if (editingProductId) {
+        await db.collection('products').doc(editingProductId).update(product);
+        editingProductId = null;
+    } else {
+        await db.collection('products').add(product);
     }
+
+    alert(editingProductId ? 'Produto atualizado com sucesso!' : 'Produto adicionado com sucesso!');
+    this.reset();
+    document.getElementById('extrasContainer').innerHTML = '';
+    addExtraItem();
+    fetchProducts();
 });
+
+// Funções auxiliares
+function addExtraItem() {
+    const extrasContainer = document.getElementById('extrasContainer');
+    const extraDiv = document.createElement('div');
+    extraDiv.innerHTML = `
+        <input type="text" placeholder="Nome do Item Extra" required>
+        <input type="number" placeholder="Preço do Item Extra" step="0.01" required>
+        <button type="button" onclick="this.parentElement.remove()">Remover</button>
+    `;
+    extrasContainer.appendChild(extraDiv);
+}
 
 function updateCategoriesList() {
     const categoriesList = document.getElementById('categoriesList');
@@ -178,32 +151,14 @@ function updateProductsList() {
     `).join('');
 }
 
-function updateCustomersList() {
-    const customersList = document.getElementById('customersList');
-    customersList.innerHTML = customers.map(customer => `
-        <div class="customer-item">
-            <h3>${customer.name}</h3>
-            <p>WhatsApp: ${customer.phone}</p>
-            <p>Pontos Fidelidade: ${customer.orderCount || 0}</p>
-            <input type="number" id="loyaltyPoints-${customer.id}" value="${customer.orderCount || 0}">
-            <button onclick="updateLoyaltyPoints('${customer.id}')">Atualizar Pontos</button>
-        </div>
-    `).join('');
-}
-
 async function deleteCategory(categoryId) {
     if (confirm('Tem certeza que deseja deletar esta categoria?')) {
-        try {
-            await db.collection('categories').doc(categoryId).delete();
-            fetchCategories();
-        } catch (error) {
-            console.error("Erro ao deletar categoria:", error);
-            alert('Erro ao deletar categoria. Por favor, tente novamente.');
-        }
+        await db.collection('categories').doc(categoryId).delete();
+        fetchCategories();
     }
 }
 
-async function editProduct(productId) {
+function editProduct(productId) {
     const product = products.find(p => p.id === productId);
     if (product) {
         document.getElementById('productName').value = product.name;
@@ -232,33 +187,98 @@ async function editProduct(productId) {
 
 async function deleteProduct(productId) {
     if (confirm('Tem certeza que deseja deletar este produto?')) {
+        await db.collection('products').doc(productId).delete();
+        fetchProducts();
+    }
+}
+
+// Funções para gerenciar clientes e fidelidade
+async function fetchCustomers() {
+    const snapshot = await db.collection('customers').get();
+    const customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    updateCustomersList(customers);
+}
+
+function updateCustomersList(customers) {
+    const customersList = document.getElementById('customersList');
+    customersList.innerHTML = customers.map(customer => `
+        <div class="customer-item">
+            <p><strong>Nome:</strong> ${customer.name}</p>
+            <p><strong>WhatsApp:</strong> ${customer.phone}</p>
+            <p><strong>Pontos Fidelidade:</strong> ${customer.orderCount || 0}</p>
+            <button onclick="updateLoyaltyPoints('${customer.id}')">Alterar Pontuação</button>
+        </div>
+    `).join('');
+}
+
+async function updateLoyaltyPoints(customerId) {
+    const newPoints = prompt("Digite a nova pontuação de fidelidade:");
+    if (newPoints !== null) {
         try {
-            await db.collection('products').doc(productId).delete();
-            fetchProducts();
+            await db.collection('customers').doc(customerId).update({
+                orderCount: parseInt(newPoints)
+            });
+            alert("Pontuação atualizada com sucesso!");
+            fetchCustomers();
         } catch (error) {
-            console.error("Erro ao deletar produto:", error);
-            alert('Erro ao deletar produto. Por favor, tente novamente.');
+            console.error("Erro ao atualizar pontuação:", error);
+            alert("Erro ao atualizar pontuação. Por favor, tente novamente.");
         }
     }
 }
 
-async function updateLoyaltyPoints(customerId) {
-    const newPoints = document.getElementById(`loyaltyPoints-${customerId}`).value;
-    try {
-        await db.collection('customers').doc(customerId).update({
-            orderCount: parseInt(newPoints)
-        });
-        alert('Pontos de fidelidade atualizados com sucesso!');
-        fetchCustomers();
-    } catch (error) {
-        console.error("Erro ao atualizar pontos de fidelidade:", error);
-        alert('Erro ao atualizar pontos de fidelidade. Por favor, tente novamente.');
-    }
-}
-
-// Initialize
-addExtraItem();
+// Inicialização
 fetchCategories();
 fetchProducts();
-fetchCustomers();
 fetchHours();
+fetchCustomers();
+
+// Verificar status da loja
+function checkStoreStatus() {
+    const now = new Date();
+    const day = now.getDay();
+    const time = now.getHours() * 60 + now.getMinutes();
+
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const currentDay = days[day];
+
+    db.collection('settings').doc('hours').get().then((doc) => {
+        if (doc.exists) {
+            const hours = doc.data();
+            const openTime = timeToMinutes(hours[currentDay + 'Open']);
+            const closeTime = timeToMinutes(hours[currentDay + 'Close']);
+
+            const isOpen = time >= openTime && time < closeTime;
+            updateStoreStatus(isOpen);
+        }
+    }).catch((error) => {
+        console.error("Erro ao verificar status da loja:", error);
+    });
+}
+
+function timeToMinutes(timeString) {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    return hours * 60 + minutes;
+}
+
+function updateStoreStatus(isOpen) {
+    const statusElement = document.createElement('div');
+    statusElement.id = 'storeStatus';
+    statusElement.textContent = isOpen ? 'ABERTA' : 'FECHADA';
+    statusElement.style.backgroundColor = isOpen ? '#4CAF50' : '#f44336';
+    statusElement.style.color = 'white';
+    statusElement.style.padding = '10px';
+    statusElement.style.textAlign = 'center';
+    statusElement.style.fontWeight = 'bold';
+
+    const header = document.querySelector('header');
+    const existingStatus = document.getElementById('storeStatus');
+    if (existingStatus) {
+        header.removeChild(existingStatus);
+    }
+    header.appendChild(statusElement);
+}
+
+// Verificar status da loja a cada minuto
+setInterval(checkStoreStatus, 60000);
+checkStoreStatus(); // Verificar imediatamente ao carregar a página
