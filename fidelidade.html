@@ -86,7 +86,7 @@
                     customerElement.className = 'customer-item';
                     customerElement.innerHTML = `
                         <h2>${customer.name || 'Nome não fornecido'}</h2>
-                        <p>WhatsApp: ${customer.customerPhone || 'Não fornecido'}</p>
+                        <p>WhatsApp: ${doc.id}</p>
                         <p>Pontos de Fidelidade: <span id="points-${doc.id}">${customer.orderCount || 0}</span></p>
                         <div class="edit-form">
                             <input type="number" id="edit-points-${doc.id}" value="${customer.orderCount || 0}" min="0">
