@@ -18,14 +18,8 @@ let customers = [];
 let editingProductId = null;
 
 async function fetchCategories() {
-    try {
-        const snapshot = await db.collection('categories').get();
-        categories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        updateCategoriesList();
-        updateCategorySelect();
-    } catch (error) {
-        console.error("Erro ao buscar categorias:", error);
-    }
+    const response = await fetch('/api/categories');
+    return await response.json();
 }
 
 async function fetchProducts() {
