@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Administração - Cabana Açaí</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        form {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        input[type="text"], input[type="number"], input[type="time"], textarea, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #333;
+            color: #fff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #444;
+        }
+        #productsList, #categoriesList, #customersList {
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .product-item, .category-item, .customer-item {
+            background: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .edit-btn, .delete-btn {
+            margin-left: 10px;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .edit-btn {
+            background: #4CAF50;
+            color: white;
+        }
+        .delete-btn {
+            background: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Painel de Administração - Cabana Açaí</h1>
+    
+    <h2>Configurar Horário de Funcionamento</h2>
+    <form id="hoursForm">
+        <div>
+            <label for="monday">Segunda-feira:</label>
+            <input type="time" id="mondayOpen" required> às <input type="time" id="mondayClose" required>
+        </div>
+        <div>
+            <label for="tuesday">Terça-feira:</label>
+            <input type="time" id="tuesdayOpen" required> às <input type="time" id="tuesdayClose" required>
+        </div>
+        <div>
+            <label for="wednesday">Quarta-feira:</label>
+            <input type="time" id="wednesdayOpen" required> às <input type="time" id="wednesdayClose" required>
+        </div>
+        <div>
+            <label for="thursday">Quinta-feira:</label>
+            <input type="time" id="thursdayOpen" required> às <input type="time" id="thursdayClose" required>
+        </div>
+        <div>
+            <label for="friday">Sexta-feira:</label>
+            <input type="time" id="fridayOpen" required> às <input type="time" id="fridayClose" required>
+        </div>
+        <div>
+            <label for="saturday">Sábado:</label>
+            <input type="time" id="saturdayOpen" required> às <input type="time" id="saturdayClose" required>
+        </div>
+        <div>
+            <label for="sunday">Domingo:</label>
+            <input type="time" id="sundayOpen" required> às <input type="time" id="sundayClose" required>
+        </div>
+        <button type="submit">Salvar Horários</button>
+    </form>
+
+    <h2>Adicionar Categoria</h2>
+    <form id="addCategoryForm">
+        <input type="text" id="categoryName" placeholder="Nome da Categoria" required>
+        <button type="submit">Adicionar Categoria</button>
+    </form>
+
+    <h2>Adicionar Produto</h2>
+    <form id="addProductForm">
+        <input type="text" id="productName" placeholder="Nome do Produto" required>
+        <input type="number" id="productPrice" placeholder="Preço" step="0.01" required>
+        <select id="productCategory" required>
+            <!-- Categories will be added here dynamically -->
+        </select>
+        <textarea id="productDescription" placeholder="Descrição do Produto" required></textarea>
+        <input type="text" id="productImage" placeholder="URL da Imagem do Produto" required>
+        <input type="number" id="minAccompaniments" placeholder="Mínimo de Acompanhamentos" required>
+        <input type="number" id="maxAccompaniments" placeholder="Máximo de Acompanhamentos" required>
+        <textarea id="accompaniments" placeholder="Acompanhamentos (um por linha)" required></textarea>
+        <div id="extrasContainer">
+            <!-- Extra items will be added here dynamically -->
+        </div>
+        <button type="button" onclick="addExtraItem()">Adicionar Item Extra</button>
+        <button type="submit">Adicionar Produto</button>
+    </form>
+
+    <h2>Categorias</h2>
+    <div id="categoriesList"></div>
+
+    <h2>Produtos</h2>
+    <div id="productsList"></div>
+
+    <h2>Clientes</h2>
+    <div id="customersList"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
