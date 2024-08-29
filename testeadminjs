@@ -1,3 +1,4 @@
+// Configuração do Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
     authDomain: "cabana-8d55e.firebaseapp.com",
@@ -9,14 +10,15 @@ const firebaseConfig = {
     measurementId: "G-96Y337GYT8"
 };
 
+// Inicialize o Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 let categories = [];
 let products = [];
-let customers = [];
 let editingProductId = null;
 
+// Funções para buscar dados do Firestore
 async function fetchCategories() {
     const snapshot = await db.collection('categories').get();
     categories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -30,24 +32,22 @@ async function fetchProducts() {
     updateProductsList();
 }
 
-async function fetchCustomers() {
-    const snapshot = await db.collection('customers').get();
-    customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    updateCustomersList();
-}
-
 async function fetchHours() {
     const doc = await db.collection('settings').doc('hours').get();
     if (doc.exists) {
         const hours = doc.data();
         for (const day in hours) {
             if (hours.hasOwnProperty(day)) {
-                document.getElementById(day).value = hours[day];
+                const element = document.getElementById(day);
+                if (element) {
+                    element.value = hours[day];
+                }
             }
         }
     }
 }
 
+// Event Listeners
 document.getElementById('hoursForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const hours = {
@@ -69,17 +69,6 @@ document.getElementById('hoursForm').addEventListener('submit', async function(e
     await db.collection('settings').doc('hours').set(hours);
     alert('Horários de funcionamento salvos com sucesso!');
 });
-
-function addExtraItem() {
-    const extrasContainer = document.getElementById('extrasContainer');
-    const extraDiv = document.createElement('div');
-    extraDiv.innerHTML = `
-        <input type="text" placeholder="Nome do Item Extra" required>
-        <input type="number" placeholder="Preço do Item Extra" step="0.01" required>
-        <button type="button" onclick="this.parentElement.remove()">Remover</button>
-    `;
-    extrasContainer.appendChild(extraDiv);
-}
 
 document.getElementById('addCategoryForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -120,6 +109,18 @@ document.getElementById('addProductForm').addEventListener('submit', async funct
     fetchProducts();
 });
 
+// Funções auxiliares
+function addExtraItem() {
+    const extrasContainer = document.getElementById('extrasContainer');
+    const extraDiv = document.createElement('div');
+    extraDiv.innerHTML = `
+        <input type="text" placeholder="Nome do Item Extra" required>
+        <input type="number" placeholder="Preço do Item Extra" step="0.01" required>
+        <button type="button" onclick="this.parentElement.remove()">Remover</button>
+    `;
+    extrasContainer.appendChild(extraDiv);
+}
+
 function updateCategoriesList() {
     const categoriesList = document.getElementById('categoriesList');
     categoriesList.innerHTML = categories.map(category => `
@@ -150,19 +151,6 @@ function updateProductsList() {
     `).join('');
 }
 
-function updateCustomersList() {
-    const customersList = document.getElementById('customersList');
-    customersList.innerHTML = customers.map(customer => `
-        <div class="customer-item">
-            <h3>${customer.name}</h3>
-            <p>WhatsApp: ${customer.phone}</p>
-            <p>Pontos Fidelidade: ${customer.orderCount || 0}</p>
-            <input type="number" id="loyaltyPoints-${customer.id}" value="${customer.orderCount || 0}">
-            <button onclick="updateLoyaltyPoints('${customer.id}')">Atualizar Pontos</button>
-        </div>
-    `).join('');
-}
-
 async function deleteCategory(categoryId) {
     if (confirm('Tem certeza que deseja deletar esta categoria?')) {
         await db.collection('categories').doc(categoryId).delete();
@@ -170,7 +158,7 @@ async function deleteCategory(categoryId) {
     }
 }
 
-async function editProduct(productId) {
+function editProduct(productId) {
     const product = products.find(p => p.id === productId);
     if (product) {
         document.getElementById('productName').value = product.name;
@@ -204,20 +192,11 @@ async function deleteProduct(productId) {
     }
 }
 
-async function updateLoyaltyPoints(customerId) {
-    const newPoints = prompt("Digite a nova pontuação de fidelidade:");
-    if (newPoints !== null) {
-        try {
-            await db.collection('customers').doc(customerId).update({
-                orderCount: parseInt(newPoints)
-            });
-            alert("Pontuação atualizada com sucesso!");
-            fetchCustomers();
-        } catch (error) {
-            console.error("Erro ao atualizar pontuação:", error);
-            alert("Erro ao atualizar pontuação. Por favor, tente novamente.");
-        }
-    }
+// Funções para gerenciar clientes e fidelidade
+async function fetchCustomers() {
+    const snapshot = await db.collection('customers').get();
+    const customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    updateCustomersList(customers);
 }
 
 function updateCustomersList(customers) {
@@ -232,16 +211,19 @@ function updateCustomersList(customers) {
     `).join('');
 }
 
-async function fetchCustomers() {
-    try {
-        const snapshot = await db.collection('customers').get();
-        const customers = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
-        updateCustomersList(customers);
-    } catch (error) {
-        console.error("Erro ao buscar clientes:", error);
+async function updateLoyaltyPoints(customerId) {
+    const newPoints = prompt("Digite a nova pontuação de fidelidade:");
+    if (newPoints !== null) {
+        try {
+            await db.collection('customers').doc(customerId).update({
+                orderCount: parseInt(newPoints)
+            });
+            alert("Pontuação atualizada com sucesso!");
+            fetchCustomers();
+        } catch (error) {
+            console.error("Erro ao atualizar pontuação:", error);
+            alert("Erro ao atualizar pontuação. Por favor, tente novamente.");
+        }
     }
 }
 
