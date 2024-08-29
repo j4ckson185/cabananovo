@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Programa de Fidelidade - Cabana Açaí</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,24 +20,34 @@
             max-width: 800px;
             margin: 0 auto;
         }
-        .customer-card {
+        .customer-item {
             background-color: #fff;
             border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
             padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .customer-name {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #4a0e4e;
-        }
-        .customer-phone {
-            color: #666;
-        }
-        .customer-points {
-            font-weight: bold;
+        .customer-item h2 {
+            margin-top: 0;
             color: #8e44ad;
+        }
+        .edit-form {
+            margin-top: 10px;
+        }
+        .edit-form input {
+            width: 60px;
+            padding: 5px;
+        }
+        .edit-form button {
+            background-color: #4a0e4e;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        .edit-form button:hover {
+            background-color: #8e44ad;
         }
     </style>
 </head>
@@ -47,6 +55,8 @@
     <h1>Programa de Fidelidade - Cabana Açaí</h1>
     <div id="customerList"></div>
 
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script>
         // Configuração do Firebase
         const firebaseConfig = {
@@ -60,36 +70,52 @@
             measurementId: "G-96Y337GYT8"
         };
 
-        // Inicializar Firebase
+        // Inicialize o Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Função para buscar e exibir clientes
-        async function fetchAndDisplayCustomers() {
-            try {
-                const customersSnapshot = await db.collection('customers').get();
-                const customerList = document.getElementById('customerList');
-                customerList.innerHTML = ''; // Limpar lista existente
+        // Função para buscar e exibir os clientes
+        function fetchAndDisplayCustomers() {
+            const customerList = document.getElementById('customerList');
+            customerList.innerHTML = ''; // Limpa a lista antes de adicionar os clientes
 
-                customersSnapshot.forEach(doc => {
+            db.collection('customers').get().then((querySnapshot) => {
+                querySnapshot.forEach((doc) => {
                     const customer = doc.data();
-                    const customerCard = document.createElement('div');
-                    customerCard.className = 'customer-card';
-                    customerCard.innerHTML = `
-                        <div class="customer-name">${customer.name}</div>
-                        <div class="customer-phone">WhatsApp: ${customer.phone}</div>
-                        <div class="customer-points">Pontos de Fidelidade: ${customer.orderCount || 0}</div>
+                    const customerElement = document.createElement('div');
+                    customerElement.className = 'customer-item';
+                    customerElement.innerHTML = `
+                        <h2>${customer.name || 'Nome não fornecido'}</h2>
+                        <p>WhatsApp: ${customer.phone || 'Não fornecido'}</p>
+                        <p>Pontos de Fidelidade: <span id="points-${doc.id}">${customer.orderCount || 0}</span></p>
+                        <div class="edit-form">
+                            <input type="number" id="edit-points-${doc.id}" value="${customer.orderCount || 0}" min="0">
+                            <button onclick="updatePoints('${doc.id}')">Atualizar Pontos</button>
+                        </div>
                     `;
-                    customerList.appendChild(customerCard);
+                    customerList.appendChild(customerElement);
                 });
-            } catch (error) {
-                console.error("Erro ao buscar clientes:", error);
-                document.getElementById('customerList').innerHTML = '<p>Erro ao carregar clientes. Por favor, tente novamente mais tarde.</p>';
-            }
+            }).catch((error) => {
+                console.error("Erro ao buscar clientes: ", error);
+            });
         }
 
-        // Chamar a função quando a página carregar
-        document.addEventListener('DOMContentLoaded', fetchAndDisplayCustomers);
+        // Função para atualizar os pontos de fidelidade
+        function updatePoints(customerId) {
+            const newPoints = document.getElementById(`edit-points-${customerId}`).value;
+            db.collection('customers').doc(customerId).update({
+                orderCount: parseInt(newPoints)
+            }).then(() => {
+                document.getElementById(`points-${customerId}`).textContent = newPoints;
+                alert('Pontos atualizados com sucesso!');
+            }).catch((error) => {
+                console.error("Erro ao atualizar pontos: ", error);
+                alert('Erro ao atualizar pontos. Por favor, tente novamente.');
+            });
+        }
+
+        // Carrega os clientes quando a página é aberta
+        fetchAndDisplayCustomers();
     </script>
 </body>
 </html>
