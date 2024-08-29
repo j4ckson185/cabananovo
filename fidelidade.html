@@ -16,9 +16,23 @@
             color: #4a0e4e;
             text-align: center;
         }
-        #customerList {
+        #loginForm, #contentArea {
             max-width: 800px;
             margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        #contentArea {
+            display: none;
+        }
+        #searchBox {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
         .customer-item {
             background-color: #fff;
@@ -38,7 +52,7 @@
             width: 60px;
             padding: 5px;
         }
-        .edit-form button {
+        .edit-form button, #loginButton {
             background-color: #4a0e4e;
             color: white;
             border: none;
@@ -46,14 +60,31 @@
             cursor: pointer;
             border-radius: 3px;
         }
-        .edit-form button:hover {
+        .edit-form button:hover, #loginButton:hover {
             background-color: #8e44ad;
+        }
+        #password {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
     <h1>Programa de Fidelidade - Cabana Açaí</h1>
-    <div id="customerList"></div>
+    
+    <div id="loginForm">
+        <h2>Login</h2>
+        <input type="password" id="password" placeholder="Senha (4 dígitos)" maxlength="4">
+        <button id="loginButton" onclick="login()">Entrar</button>
+    </div>
+
+    <div id="contentArea">
+        <input type="text" id="searchBox" placeholder="Buscar por nome ou número">
+        <div id="customerList"></div>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
@@ -74,29 +105,48 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        let allCustomers = [];
+
+        function login() {
+            const password = document.getElementById('password').value;
+            if (password === '1801') {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('contentArea').style.display = 'block';
+                fetchAndDisplayCustomers();
+            } else {
+                alert('Senha incorreta!');
+            }
+        }
+
         // Função para buscar e exibir os clientes
         function fetchAndDisplayCustomers() {
-            const customerList = document.getElementById('customerList');
-            customerList.innerHTML = ''; // Limpa a lista antes de adicionar os clientes
-
             db.collection('customers').get().then((querySnapshot) => {
-                querySnapshot.forEach((doc) => {
-                    const customer = doc.data();
-                    const customerElement = document.createElement('div');
-                    customerElement.className = 'customer-item';
-                    customerElement.innerHTML = `
-                        <h2>${customer.name || 'Nome não fornecido'}</h2>
-                        <p>WhatsApp: ${doc.id}</p>
-                        <p>Pontos de Fidelidade: <span id="points-${doc.id}">${customer.orderCount || 0}</span></p>
-                        <div class="edit-form">
-                            <input type="number" id="edit-points-${doc.id}" value="${customer.orderCount || 0}" min="0">
-                            <button onclick="updatePoints('${doc.id}')">Atualizar Pontos</button>
-                        </div>
-                    `;
-                    customerList.appendChild(customerElement);
-                });
+                allCustomers = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                displayCustomers(allCustomers);
             }).catch((error) => {
                 console.error("Erro ao buscar clientes: ", error);
+            });
+        }
+
+        function displayCustomers(customers) {
+            const customerList = document.getElementById('customerList');
+            customerList.innerHTML = '';
+            customers.forEach(customer => {
+                const customerElement = document.createElement('div');
+                customerElement.className = 'customer-item';
+                customerElement.innerHTML = `
+                    <h2>${customer.name || 'Nome não fornecido'}</h2>
+                    <p>WhatsApp: ${customer.id}</p>
+                    <p>Pontos de Fidelidade: <span id="points-${customer.id}">${customer.orderCount || 0}</span></p>
+                    <div class="edit-form">
+                        <input type="number" id="edit-points-${customer.id}" value="${customer.orderCount || 0}" min="0">
+                        <button onclick="updatePoints('${customer.id}')">Atualizar Pontos</button>
+                    </div>
+                `;
+                customerList.appendChild(customerElement);
             });
         }
 
@@ -114,8 +164,18 @@
             });
         }
 
-        // Carrega os clientes quando a página é aberta
-        fetchAndDisplayCustomers();
+        // Função de busca
+        function searchCustomers() {
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            const filteredCustomers = allCustomers.filter(customer => 
+                (customer.name && customer.name.toLowerCase().includes(searchTerm)) || 
+                customer.id.includes(searchTerm)
+            );
+            displayCustomers(filteredCustomers);
+        }
+
+        // Adicionar evento de busca
+        document.getElementById('searchBox').addEventListener('input', searchCustomers);
     </script>
 </body>
 </html>
