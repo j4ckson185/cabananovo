@@ -479,8 +479,6 @@ main {
       const categories = snapshot.docs.map(doc => doc.data().name);
       const categoriesContainer = document.getElementById('categories');
       categoriesContainer.innerHTML = `
-        <button class="btn" onclick="openMyOrders()">Meus Pedidos</button>
-        <button class="btn" onclick="showLoyaltyRules()">Programa Fidelidade</button>
         <button class="category-btn" data-category="all">Todos</button>
         ${categories.map(category => `
           <button class="category-btn" data-category="${category}">${category}</button>
