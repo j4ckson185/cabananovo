@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programa de Fidelidade - Cabana Açaí</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #4a0e4e;
+            text-align: center;
+        }
+        #customerList {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .customer-card {
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            padding: 15px;
+        }
+        .customer-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #4a0e4e;
+        }
+        .customer-phone {
+            color: #666;
+        }
+        .customer-points {
+            font-weight: bold;
+            color: #8e44ad;
+        }
+    </style>
+</head>
+<body>
+    <h1>Programa de Fidelidade - Cabana Açaí</h1>
+    <div id="customerList"></div>
+
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
+            authDomain: "cabana-8d55e.firebaseapp.com",
+            databaseURL: "https://cabana-8d55e-default-rtdb.firebaseio.com",
+            projectId: "cabana-8d55e",
+            storageBucket: "cabana-8d55e.appspot.com",
+            messagingSenderId: "706144237954",
+            appId: "1:706144237954:web:345c10370972486afc779b",
+            measurementId: "G-96Y337GYT8"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Função para buscar e exibir clientes
+        async function fetchAndDisplayCustomers() {
+            try {
+                const customersSnapshot = await db.collection('customers').get();
+                const customerList = document.getElementById('customerList');
+                customerList.innerHTML = ''; // Limpar lista existente
+
+                customersSnapshot.forEach(doc => {
+                    const customer = doc.data();
+                    const customerCard = document.createElement('div');
+                    customerCard.className = 'customer-card';
+                    customerCard.innerHTML = `
+                        <div class="customer-name">${customer.name}</div>
+                        <div class="customer-phone">WhatsApp: ${customer.phone}</div>
+                        <div class="customer-points">Pontos de Fidelidade: ${customer.orderCount || 0}</div>
+                    `;
+                    customerList.appendChild(customerCard);
+                });
+            } catch (error) {
+                console.error("Erro ao buscar clientes:", error);
+                document.getElementById('customerList').innerHTML = '<p>Erro ao carregar clientes. Por favor, tente novamente mais tarde.</p>';
+            }
+        }
+
+        // Chamar a função quando a página carregar
+        document.addEventListener('DOMContentLoaded', fetchAndDisplayCustomers);
+    </script>
+</body>
+</html>
