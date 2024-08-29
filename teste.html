@@ -244,6 +244,7 @@ main {
 }
 .input-icon input {
   padding-left: 35px;
+  text-align: center;
 }
 #checkoutForm {
   margin-top: 20px;
@@ -266,6 +267,9 @@ main {
   border-radius: 4px;
   padding: 10px;
   margin-top: 10px;
+}
+.required-field {
+  color: red;
 }
 </style>
 </head>
@@ -316,15 +320,6 @@ main {
     </form>
   </div>
 </div>
-<div id="customerConfirmationModal" class="modal">
-  <div class="modal-content">
-    <span class="close">&times;</span>
-    <h2>Confirmar Dados</h2>
-    <div id="customerConfirmationContent"></div>
-    <button class="btn" onclick="editCustomerInfo()">Editar Informações</button>
-    <button class="btn" onclick="confirmCustomerInfo()">Confirmar</button>
-  </div>
-</div>
 <div id="checkoutModal" class="modal">
   <div class="modal-content">
     <span class="close">&times;</span>
@@ -337,17 +332,17 @@ main {
         </select>
         <button type="button" class="btn" onclick="showNewAddressForm()">Cadastrar Novo Endereço</button>
         <div id="newAddressForm" style="display: none;">
-          <label for="street">Rua:</label>
+          <label for="street">Rua: <span class="required-field">*</span></label>
           <input type="text" id="street" required>
-          <label for="number">Número:</label>
+          <label for="number">Número: <span class="required-field">*</span></label>
           <input type="text" id="number" required>
           <label for="complement">Complemento:</label>
           <input type="text" id="complement">
-          <label for="neighborhood">Bairro:</label>
+          <label for="neighborhood">Bairro: <span class="required-field">*</span></label>
           <input type="text" id="neighborhood" required>
-          <label for="city">Cidade:</label>
+          <label for="city">Cidade: <span class="required-field">*</span></label>
           <input type="text" id="city" required>
-          <label for="state">Estado:</label>
+          <label for="state">Estado: <span class="required-field">*</span></label>
           <input type="text" id="state" required>
           <button type="button" class="btn" onclick="saveNewAddress()">Salvar Endereço</button>
         </div>
@@ -681,8 +676,15 @@ main {
         state: document.getElementById('state').value
       };
       
-      if (!newAddress.street || !newAddress.number || !newAddress.neighborhood || !newAddress.city || !newAddress.state) {
-        alert('Por favor, preencha todos os campos obrigatórios do endereço.');
+      let missingFields = [];
+      if (!newAddress.street) missingFields.push('Rua');
+      if (!newAddress.number) missingFields.push('Número');
+      if (!newAddress.neighborhood) missingFields.push('Bairro');
+      if (!newAddress.city) missingFields.push('Cidade');
+      if (!newAddress.state) missingFields.push('Estado');
+      
+      if (missingFields.length > 0) {
+        alert(`Por favor, preencha os seguintes campos obrigatórios: ${missingFields.join(', ')}`);
         return;
       }
 
@@ -709,12 +711,16 @@ main {
     document.getElementById('checkoutForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const selectedAddressIndex = document.getElementById('savedAddresses').value;
-      const address = savedAddresses[selectedAddressIndex];
+      if (selectedAddressIndex === "") {
+        alert("Por favor, selecione um endereço de entrega.");
+        return;
+      }
+const selectedAddress = savedAddresses[selectedAddressIndex];
       const paymentMethod = document.getElementById('paymentMethod').value;
       const changeNeeded = document.getElementById('changeNeeded').value;
       const changeAmount = document.getElementById('changeAmount').value;
 
-// Construir mensagem de WhatsApp
+      // Construir mensagem de WhatsApp
       let message = `Pedido confirmado!\n`;
       message += `Nome: ${customerInfo.name}\n`;
       message += `WhatsApp: ${customerInfo.phone}\n`;
