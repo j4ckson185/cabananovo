@@ -4,12 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cabana Açaí</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
 <style>
 :root {
   --primary-color: #4a0e4e;
   --secondary-color: #8e44ad;
   --background-color: #f5f5f5;
   --text-color: #333;
+  --accent-color: #e74c3c;
 }
 body {
   font-family: 'Arial', sans-serif;
@@ -204,6 +206,44 @@ main {
   color: red;
   margin-top: 10px;
 }
+#customerIdentificationForm {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+#customerIdentificationForm h2 {
+  color: var(--primary-color);
+  margin-bottom: 20px;
+}
+#customerIdentificationForm label {
+  display: block;
+  margin-top: 10px;
+  color: var(--secondary-color);
+}
+#customerIdentificationForm input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+#customerIdentificationForm .btn {
+  margin-top: 20px;
+  width: 100%;
+}
+.input-icon {
+  position: relative;
+}
+.input-icon i {
+  position: absolute;
+  left: 10px;
+  top: 12px;
+  color: var(--secondary-color);
+}
+.input-icon input {
+  padding-left: 35px;
+}
 #checkoutForm {
   margin-top: 20px;
 }
@@ -261,25 +301,18 @@ main {
 <div id="customerIdentificationModal" class="modal">
   <div class="modal-content">
     <span class="close">&times;</span>
-    <h2>Identificação do Cliente</h2>
     <form id="customerIdentificationForm">
-      <label for="customerPhone">Número de WhatsApp (com DDD):</label>
-      <input type="tel" id="customerPhone" required>
-      <label for="customerName">Nome:</label>
-      <input type="text" id="customerName" required>
-      <label for="customerLastName">Sobrenome:</label>
-      <input type="text" id="customerLastName" required>
+      <h2><i class="fas fa-user"></i> Identificação do Cliente</h2>
+      <div class="input-icon">
+        <i class="fas fa-user"></i>
+        <input type="text" id="customerName" placeholder="Nome Completo" required>
+      </div>
+      <div class="input-icon">
+        <i class="fab fa-whatsapp"></i>
+        <input type="tel" id="customerPhone" placeholder="WhatsApp (com DDD)" required>
+      </div>
       <button type="submit" class="btn">Avançar</button>
     </form>
-  </div>
-</div>
-<div id="customerConfirmationModal" class="modal">
-  <div class="modal-content">
-    <span class="close">&times;</span>
-    <h2>Confirmar Dados</h2>
-    <div id="customerConfirmationContent"></div>
-    <button class="btn" onclick="editCustomerInfo()">Editar Informações</button>
-    <button class="btn" onclick="confirmCustomerInfo()">Confirmar</button>
   </div>
 </div>
 <div id="checkoutModal" class="modal">
@@ -309,28 +342,30 @@ main {
           <button type="button" class="btn" onclick="saveNewAddress()">Salvar Endereço</button>
         </div>
       </div>
-      <label for="paymentMethod">Método de Pagamento:</label>
-      <select id="paymentMethod" required onchange="handlePaymentChange()">
-        <option value="money">Dinheiro</option>
-        <option value="card">Cartão na entrega</option>
-        <option value="pix">PIX</option>
-      </select>
-      <div id="moneyChange" style="display:none;">
-        <label for="changeNeeded">Precisa de troco?</label>
-        <select id="changeNeeded" onchange="handleChangeNeeded()">
-          <option value="no">Não</option>
-          <option value="yes">Sim</option>
+      <div id="paymentSection" style="display: none;">
+        <label for="paymentMethod">Método de Pagamento:</label>
+        <select id="paymentMethod" required onchange="handlePaymentChange()">
+          <option value="money">Dinheiro</option>
+          <option value="card">Cartão na entrega</option>
+          <option value="pix">PIX</option>
         </select>
-        <div id="changeAmountDiv" style="display:none;">
-          <label for="changeAmount">Troco para quanto?</label>
-          <input type="number" id="changeAmount" min="0" step="0.01">
+        <div id="moneyChange" style="display:none;">
+          <label for="changeNeeded">Precisa de troco?</label>
+          <select id="changeNeeded" onchange="handleChangeNeeded()">
+            <option value="no">Não</option>
+            <option value="yes">Sim</option>
+          </select>
+          <div id="changeAmountDiv" style="display:none;">
+            <label for="changeAmount">Troco para quanto?</label>
+            <input type="number" id="changeAmount" min="0" step="0.01">
+          </div>
+        </div>
+        <div id="pixInfo" style="display:none;">
+          <p>Chave PIX: 84 9 8873-1028</p>
+          <p>Após o envio do PIX, favor enviar o comprovante para o WhatsApp 84 9 8767-3202</p>
         </div>
       </div>
-      <div id="pixInfo" style="display:none;">
-        <p>Chave PIX: 84 9 8873-1028</p>
-        <p>Após o envio do PIX, favor enviar o comprovante para o WhatsApp 84 9 8767-3202</p>
-      </div>
-      <button type="submit" class="btn">Fazer Pedido</button>
+      <button type="submit" class="btn" id="submitOrderBtn" style="display: none;">Fazer Pedido</button>
     </form>
     <div id="orderSummary"></div>
     <div id="loyaltyInfo" class="loyalty-info"></div>
@@ -352,7 +387,7 @@ main {
 </script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    // Configuração do Firebase
+// Configuração do Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
       authDomain: "cabana-8d55e.firebaseapp.com",
@@ -389,446 +424,486 @@ main {
       categoriesContainer.innerHTML = `<button class="category-btn" data-category="all">Todos</button>` + categoriesContainer.innerHTML;
     }
 
-function filterByCategory(category) {
-  const filteredProducts = category === 'all' ? products : products.filter(product => product.category === category);
-  displayProducts(filteredProducts);
-}
-
-function displayProducts(productsToDisplay = products) {
-  const productGrid = document.getElementById('productGrid');
-  productGrid.innerHTML = productsToDisplay.map(product => `
-    <div class="product-card" onclick="openProductDetails(${product.id})">
-      <img src="${product.image}" alt="${product.name}" class="product-image">
-      <div class="product-info">
-        <h3 class="product-title">${product.name}</h3>
-        <p class="product-price">R$ ${parseFloat(product.price).toFixed(2)}</p>
-        <p class="product-description">${product.description.substring(0, 100)}...</p>
-        <button class="btn" onclick="openProductDetails(${product.id}, event)">Ver Detalhes</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-window.openProductDetails = function(productId, event) {
-  if (event) {
-    event.stopPropagation();
-  }
-  const product = products.find(p => p.id === productId);
-  const modal = document.getElementById('productModal');
-  const modalContent = document.getElementById('modalContent');
-  modalContent.innerHTML = `
-    <h2>${product.name}</h2>
-    <img src="${product.image}" alt="${product.name}" style="width:100%; max-height:300px; object-fit:cover;">
-    <p>${product.description}</p>
-    <p class="product-price">Preço: R$ ${parseFloat(product.price).toFixed(2)}</p>
-    <div class="extras-list">
-      <h3>Acompanhamentos (escolha de ${product.minAccompaniments} a ${product.maxAccompaniments}):</h3>
-      <div class="checkbox-list" id="accompaniments">
-        ${product.accompaniments.map((item, index) => `
-          <div class="checkbox-item">
-            <input type="checkbox" id="acc${index}" name="accompaniment" value="${item}">
-            <label for="acc${index}">${item}</label>
-          </div>
-        `).join('')}
-      </div>
-      <p id="accompanimentError" class="error-message"></p>
-    </div>
-    <div class="extras-list">
-      <h3>Itens Extras:</h3>
-      <div class="checkbox-list" id="extras">
-        ${product.extras.map((item, index) => `
-          <div class="checkbox-item">
-            <input type="checkbox" id="extra${index}" name="extra" value="${item.name}">
-            <label for="extra${index}">${item.name} - R$ ${parseFloat(item.price).toFixed(2)}</label>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-    <button id="addToCartBtn" class="btn" onclick="addToCart(${product.id})">Adicionar ao Carrinho</button>
-  `;
-  modal.style.display = "block";
-  // Adicionar validação para acompanhamentos
-  const accCheckboxes = document.querySelectorAll('#accompaniments input[type="checkbox"]');
-  accCheckboxes.forEach(checkbox => {
-    checkbox.addEventListener('change', () => validateAccompaniments(product));
-  });
-}
-
-function validateAccompaniments(product) {
-  const checkedAccompaniments = document.querySelectorAll('#accompaniments input[type="checkbox"]:checked');
-  const addToCartBtn = document.getElementById('addToCartBtn');
-  const errorMessage = document.getElementById('accompanimentError');
-  if (checkedAccompaniments.length < product.minAccompaniments || checkedAccompaniments.length > product.maxAccompaniments) {
-    addToCartBtn.disabled = true;
-    errorMessage.textContent = `Selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos`;
-  } else {
-    addToCartBtn.disabled = false;
-    errorMessage.textContent = '';
-  }
-}
-
-window.addToCart = function(productId) {
-  const product = products.find(p => p.id === productId);
-  const accompaniments = Array.from(document.querySelectorAll('#accompaniments input[type="checkbox"]:checked')).map(cb => cb.value);
-  const extras = Array.from(document.querySelectorAll('#extras input[type="checkbox"]:checked')).map(cb => cb.value);
-  if (accompaniments.length < product.minAccompaniments || accompaniments.length > product.maxAccompaniments) {
-    alert(`Por favor, selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos.`);
-    return;
-  }
-  const cartItem = {
-    id: Date.now(),
-    productId: product.id,
-    name: product.name,
-    price: product.price,
-    accompaniments: accompaniments,
-    extras: extras,
-    totalPrice: calculateTotalPrice(product, extras)
-  };
-  cart.push(cartItem);
-  localStorage.setItem('cart', JSON.stringify(cart));
-  openCart(); // Abre o carrinho após adicionar o produto
-}
-
-function calculateTotalPrice(product, selectedExtras) {
-  let total = product.price;
-  selectedExtras.forEach(extraName => {
-    const extra = product.extras.find(e => e.name === extraName);
-    if (extra) {
-      total += extra.price;
+    function filterByCategory(category) {
+      const filteredProducts = category === 'all' ? products : products.filter(product => product.category === category);
+      displayProducts(filteredProducts);
     }
-  });
-  return total;
-}
 
-window.openCart = function() {
-  const modal = document.getElementById('cartModal');
-  const cartContent = document.getElementById('cartContent');
-  const cartTotal = document.getElementById('cartTotal');
-  cartContent.innerHTML = cart.map(item => `
-    <div class="cart-item">
-      <div class="cart-item-info">
-        <h3>${item.name}</h3>
-        <p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>
-        <p>Extras: ${item.extras.join(', ')}</p>
-        <p>Preço: R$ ${item.totalPrice.toFixed(2)}</p>
-      </div>
-      <span class="cart-item-remove" onclick="removeFromCart(${item.id})">🗑️</span>
-    </div>
-  `).join('');
-  const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-  cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
-  modal.style.display = "block";
-}
+    function displayProducts(productsToDisplay = products) {
+      const productGrid = document.getElementById('productGrid');
+      productGrid.innerHTML = productsToDisplay.map(product => `
+        <div class="product-card" onclick="openProductDetails(${product.id})">
+          <img src="${product.image}" alt="${product.name}" class="product-image">
+          <div class="product-info">
+            <h3 class="product-title">${product.name}</h3>
+            <p class="product-price">R$ ${parseFloat(product.price).toFixed(2)}</p>
+            <p class="product-description">${product.description.substring(0, 100)}...</p>
+            <button class="btn" onclick="openProductDetails(${product.id}, event)">Ver Detalhes</button>
+          </div>
+        </div>
+      `).join('');
+    }
 
-window.continueShopping = function() {
-  document.getElementById('cartModal').style.display = "none";
-}
+    window.openProductDetails = function(productId, event) {
+      if (event) {
+        event.stopPropagation();
+      }
+      const product = products.find(p => p.id === productId);
+      const modal = document.getElementById('productModal');
+      const modalContent = document.getElementById('modalContent');
+      modalContent.innerHTML = `
+        <h2>${product.name}</h2>
+        <img src="${product.image}" alt="${product.name}" style="width:100%; max-height:300px; object-fit:cover;">
+        <p>${product.description}</p>
+        <p class="product-price">Preço: R$ ${parseFloat(product.price).toFixed(2)}</p>
+        <div class="extras-list">
+          <h3>Acompanhamentos (escolha de ${product.minAccompaniments} a ${product.maxAccompaniments}):</h3>
+          <div class="checkbox-list" id="accompaniments">
+            ${product.accompaniments.map((item, index) => `
+              <div class="checkbox-item">
+                <input type="checkbox" id="acc${index}" name="accompaniment" value="${item}">
+                <label for="acc${index}">${item}</label>
+              </div>
+            `).join('')}
+          </div>
+          <p id="accompanimentError" class="error-message"></p>
+        </div>
+        <div class="extras-list">
+          <h3>Itens Extras:</h3>
+          <div class="checkbox-list" id="extras">
+            ${product.extras.map((item, index) => `
+              <div class="checkbox-item">
+                <input type="checkbox" id="extra${index}" name="extra" value="${item.name}">
+                <label for="extra${index}">${item.name} - R$ ${parseFloat(item.price).toFixed(2)}</label>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <button id="addToCartBtn" class="btn" onclick="addToCart(${product.id})">Adicionar ao Carrinho</button>
+      `;
+      modal.style.display = "block";
+      // Adicionar validação para acompanhamentos
+      const accCheckboxes = document.querySelectorAll('#accompaniments input[type="checkbox"]');
+      accCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => validateAccompaniments(product));
+      });
+    }
 
-window.removeFromCart = function(itemId) {
-  cart = cart.filter(item => item.id !== itemId);
-  localStorage.setItem('cart', JSON.stringify(cart));
-  openCart(); // Atualiza a exibição do carrinho
-}
+    function validateAccompaniments(product) {
+      const checkedAccompaniments = document.querySelectorAll('#accompaniments input[type="checkbox"]:checked');
+      const addToCartBtn = document.getElementById('addToCartBtn');
+      const errorMessage = document.getElementById('accompanimentError');
+      if (checkedAccompaniments.length < product.minAccompaniments || checkedAccompaniments.length > product.maxAccompaniments) {
+        addToCartBtn.disabled = true;
+        errorMessage.textContent = `Selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos`;
+      } else {
+        addToCartBtn.disabled = false;
+        errorMessage.textContent = '';
+      }
+    }
 
-window.openCustomerIdentification = function() {
-  document.getElementById('cartModal').style.display = "none";
-  const modal = document.getElementById('customerIdentificationModal');
-  modal.style.display = "block";
+    window.addToCart = function(productId) {
+      const product = products.find(p => p.id === productId);
+      const accompaniments = Array.from(document.querySelectorAll('#accompaniments input[type="checkbox"]:checked')).map(cb => cb.value);
+      const extras = Array.from(document.querySelectorAll('#extras input[type="checkbox"]:checked')).map(cb => cb.value);
+      if (accompaniments.length < product.minAccompaniments || accompaniments.length > product.maxAccompaniments) {
+        alert(`Por favor, selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos.`);
+        return;
+      }
+      const cartItem = {
+        id: Date.now(),
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        accompaniments: accompaniments,
+        extras: extras,
+        totalPrice: calculateTotalPrice(product, extras)
+      };
+      cart.push(cartItem);
+      localStorage.setItem('cart', JSON.stringify(cart));
+      openCart(); // Abre o carrinho após adicionar o produto
+    }
 
-  // Preencher informações do cliente se já existirem
-  const phone = localStorage.getItem('customerPhone');
-  if (phone) {
-    document.getElementById('customerPhone').value = phone;
-    document.getElementById('customerName').value = localStorage.getItem('customerName') || '';
-    document.getElementById('customerLastName').value = localStorage.getItem('customerLastName') || '';
-  }
-}
+    function calculateTotalPrice(product, selectedExtras) {
+      let total = product.price;
+      selectedExtras.forEach(extraName => {
+        const extra = product.extras.find(e => e.name === extraName);
+        if (extra) {
+          total += extra.price;
+        }
+      });
+      return total;
+    }
 
-document.getElementById('customerIdentificationForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  const phone = document.getElementById('customerPhone').value;
-  const name = document.getElementById('customerName').value;
-  const lastName = document.getElementById('customerLastName').value;
+    window.openCart = function() {
+      const modal = document.getElementById('cartModal');
+      const cartContent = document.getElementById('cartContent');
+      const cartTotal = document.getElementById('cartTotal');
+      cartContent.innerHTML = cart.map(item => `
+        <div class="cart-item">
+          <div class="cart-item-info">
+            <h3>${item.name}</h3>
+            <p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>
+            <p>Extras: ${item.extras.join(', ')}</p>
+            <p>Preço: R$ ${item.totalPrice.toFixed(2)}</p>
+          </div>
+          <span class="cart-item-remove" onclick="removeFromCart(${item.id})">🗑️</span>
+        </div>
+      `).join('');
+      const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+      cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
+      modal.style.display = "block";
+    }
 
-  customerInfo = { phone, name, lastName };
+    window.continueShopping = function() {
+      document.getElementById('cartModal').style.display = "none";
+    }
 
-  // Salvar informações do cliente
-  localStorage.setItem('customerPhone', phone);
-  localStorage.setItem('customerName', name);
-  localStorage.setItem('customerLastName', lastName);
+    window.removeFromCart = function(itemId) {
+      cart = cart.filter(item => item.id !== itemId);
+      localStorage.setItem('cart', JSON.stringify(cart));
+      openCart(); // Atualiza a exibição do carrinho
+    }
 
-  // Fechar modal de identificação e abrir modal de confirmação
-  document.getElementById('customerIdentificationModal').style.display = "none";
-  openCustomerConfirmation();
-});
+    window.openCustomerIdentification = function() {
+      document.getElementById('cartModal').style.display = "none";
+      const modal = document.getElementById('customerIdentificationModal');
+      modal.style.display = "block";
 
-function openCustomerConfirmation() {
-  const modal = document.getElementById('customerConfirmationModal');
-  const content = document.getElementById('customerConfirmationContent');
-  content.innerHTML = `
-    <p><strong>Telefone:</strong> ${customerInfo.phone}</p>
-    <p><strong>Nome:</strong> ${customerInfo.name} ${customerInfo.lastName}</p>
-  `;
-  modal.style.display = "block";
+      // Preencher informações do cliente se já existirem
+      const phone = localStorage.getItem('customerPhone');
+      if (phone) {
+        document.getElementById('customerPhone').value = phone;
+        document.getElementById('customerName').value = localStorage.getItem('customerName') || '';
+      }
+    }
 
-  // Buscar número de pedidos do cliente (simulado aqui)
-  fetchCustomerOrderCount(customerInfo.phone);
-}
+    document.getElementById('customerIdentificationForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const phone = document.getElementById('customerPhone').value;
+      const name = document.getElementById('customerName').value;
 
-function fetchCustomerOrderCount(phone) {
-  // Simulação de busca do número de pedidos
-  // Em uma implementação real, isso seria uma consulta ao banco de dados
-  const orderCount = Math.floor(Math.random() * 15); // 0 a 14 pedidos
-  updateLoyaltyInfo(orderCount);
-}
+      customerInfo = { phone, name };
 
-function updateLoyaltyInfo(orderCount) {
-  const loyaltyInfo = document.getElementById('loyaltyInfo');
-  loyaltyInfo.style.display = "block";
+      // Salvar informações do cliente
+      localStorage.setItem('customerPhone', phone);
+      localStorage.setItem('customerName', name);
 
-  if (orderCount >= 10) {
-    loyaltyInfo.innerHTML = '<strong>Parabéns!</strong> Você tem direito a 50% de desconto no Açaí de 1 Litro ou qualquer Combo da loja!';
-  } else {
-    const ordersToDiscount = 10 - orderCount;
-    loyaltyInfo.innerHTML = `Você está a ${ordersToDiscount} ${ordersToDiscount === 1 ? 'pedido' : 'pedidos'} de ganhar 50% de desconto no Açaí de 1 Litro ou qualquer Combo da loja!`;
-  }
-}
+      // Fechar modal de identificação e abrir modal de confirmação
+      document.getElementById('customerIdentificationModal').style.display = "none";
+      openCustomerConfirmation();
+    });
 
-window.editCustomerInfo = function() {
-  document.getElementById('customerConfirmationModal').style.display = "none";
-  openCustomerIdentification();
-}
+    function openCustomerConfirmation() {
+      const modal = document.getElementById('customerConfirmationModal');
+      const content = document.getElementById('customerConfirmationContent');
+      content.innerHTML = `
+        <p><strong>Telefone:</strong> ${customerInfo.phone}</p>
+        <p><strong>Nome:</strong> ${customerInfo.name}</p>
+      `;
+      modal.style.display = "block";
 
-window.confirmCustomerInfo = function() {
-  document.getElementById('customerConfirmationModal').style.display = "none";
-  openCheckout();
-}
+      // Buscar número de pedidos do cliente
+      fetchCustomerOrderCount(customerInfo.phone);
+    }
 
-window.openCheckout = function() {
-  const checkoutModal = document.getElementById('checkoutModal');
-  const orderSummary = document.getElementById('orderSummary');
+    function fetchCustomerOrderCount(phone) {
+      db.collection('customers').doc(phone).get().then((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+          updateLoyaltyInfo(data.orderCount || 0);
+        } else {
+          updateLoyaltyInfo(0);
+        }
+      }).catch((error) => {
+        console.log("Error getting customer info:", error);
+        updateLoyaltyInfo(0);
+      });
+    }
 
-  // Carregar endereços salvos
-  loadSavedAddresses();
+    function updateLoyaltyInfo(orderCount) {
+      const loyaltyInfo = document.getElementById('loyaltyInfo');
+      loyaltyInfo.style.display = "block";
 
-  // Exibir resumo do pedido
-  let summaryHTML = '<h3>Resumo do Pedido:</h3>';
-  let total = 0;
-  cart.forEach(item => {
-    summaryHTML += `
-      <p>${item.name} - R$ ${item.totalPrice.toFixed(2)}</p>
-      <p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>
-      <p>Extras: ${item.extras.join(', ')}</p>
-      <hr>
-    `;
-    total += item.totalPrice;
-  });
-  summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
-  summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
-  summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
-  orderSummary.innerHTML = summaryHTML;
+      if (orderCount >= 10) {
+        loyaltyInfo.innerHTML = '<strong>Parabéns!</strong> Você tem direito a 50% de desconto no Açaí de 1 Litro ou qualquer Combo da loja!';
+      } else {
+        const ordersToDiscount = 10 - orderCount;
+        loyaltyInfo.innerHTML = `Você está a ${ordersToDiscount} ${ordersToDiscount === 1 ? 'pedido' : 'pedidos'} de ganhar 50% de desconto no Açaí de 1 Litro ou qualquer Combo da loja!`;
+      }
+    }
 
-  // Exibir o modal de checkout
-  checkoutModal.style.display = "block";
-}
+    window.editCustomerInfo = function() {
+      document.getElementById('customerConfirmationModal').style.display = "none";
+      openCustomerIdentification();
+    }
 
-function loadSavedAddresses() {
-  // Simulação de carregamento de endereços salvos
-  // Em uma implementação real, isso seria uma consulta ao banco de dados
-  savedAddresses = JSON.parse(localStorage.getItem('savedAddresses')) || [];
-  const select = document.getElementById('savedAddresses');
-  select.innerHTML = '<option value="">Selecione um endereço salvo ou cadastre um novo</option>';
-  savedAddresses.forEach((address, index) => {
-    select.innerHTML += `<option value="${index}">${address.street}, ${address.number} - ${address.neighborhood}</option>`;
-  });
-}
+    window.confirmCustomerInfo = function() {
+      document.getElementById('customerConfirmationModal').style.display = "none";
+      openCheckout();
+    }
 
-window.handleSavedAddressChange = function() {
-  const selectedIndex = document.getElementById('savedAddresses').value;
-  if (selectedIndex !== "") {
-    const address = savedAddresses[selectedIndex];
-    document.getElementById('street').value = address.street;
-    document.getElementById('number').value = address.number;
-    document.getElementById('complement').value = address.complement || '';
-    document.getElementById('neighborhood').value = address.neighborhood;
-    document.getElementById('city').value = address.city;
-    document.getElementById('state').value = address.state;
-  }
-}
+    window.openCheckout = function() {
+      const checkoutModal = document.getElementById('checkoutModal');
+      const orderSummary = document.getElementById('orderSummary');
 
-window.showNewAddressForm = function() {
-  document.getElementById('newAddressForm').style.display = 'block';
-}
+      // Carregar endereços salvos
+      loadSavedAddresses();
+
+      // Exibir resumo do pedido
+      let summaryHTML = '<h3>Resumo do Pedido:</h3>';
+      let total = 0;
+      cart.forEach(item => {
+        summaryHTML += `
+          <p>${item.name} - R$ ${item.totalPrice.toFixed(2)}</p>
+          <p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>
+          <p>Extras: ${item.extras.join(', ')}</p>
+          <hr>
+        `;
+        total += item.totalPrice;
+      });
+      summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
+      summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
+      summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
+      orderSummary.innerHTML = summaryHTML;
+
+      // Desabilitar opções de pagamento e botão de finalizar pedido
+      document.getElementById('paymentMethod').disabled = true;
+      document.getElementById('finalizePedidoBtn').disabled = true;
+
+      // Exibir o modal de checkout
+      checkoutModal.style.display = "block";
+    }
+
+    function loadSavedAddresses() {
+      // Carregar endereços salvos do localStorage
+      savedAddresses = JSON.parse(localStorage.getItem('savedAddresses')) || [];
+      const select = document.getElementById('savedAddresses');
+      select.innerHTML = '<option value="">Selecione um endereço salvo ou cadastre um novo</option>';
+      savedAddresses.forEach((address, index) => {
+        select.innerHTML += `<option value="${index}">${address.street}, ${address.number} - ${address.neighborhood}</option>`;
+      });
+    }
+
+    window.handleSavedAddressChange = function() {
+      const selectedIndex = document.getElementById('savedAddresses').value;
+      if (selectedIndex !== "") {
+        const address = savedAddresses[selectedIndex];
+        document.getElementById('street').value = address.street;
+        document.getElementById('number').value = address.number;
+        document.getElementById('complement').value = address.complement || '';
+        document.getElementById('neighborhood').value = address.neighborhood;
+        document.getElementById('city').value = address.city;
+        document.getElementById('state').value = address.state;
+        
+        // Habilitar opções de pagamento e botão de finalizar pedido
+        document.getElementById('paymentMethod').disabled = false;
+        document.getElementById('finalizePedidoBtn').disabled = false;
+      } else {
+        // Desabilitar opções de pagamento e botão de finalizar pedido
+        document.getElementById('paymentMethod').disabled = true;
+        document.getElementById('finalizePedidoBtn').disabled = true;
+      }
+    }
+
+    window.showNewAddressForm = function() {
+      document.getElementById('newAddressForm').style.display = 'block';
+    }
 
 window.saveNewAddress = function() {
-  const newAddress = {
-    street: document.getElementById('street').value,
-    number: document.getElementById('number').value,
-    complement: document.getElementById('complement').value,
-    neighborhood: document.getElementById('neighborhood').value,
-    city: document.getElementById('city').value,
-    state: document.getElementById('state').value
-  };
-  savedAddresses.push(newAddress);
-  localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
-  loadSavedAddresses();
-  alert('Novo endereço salvo com sucesso!');
-}
-
-window.handlePaymentChange = function() {
-  const paymentMethod = document.getElementById('paymentMethod').value;
-  document.getElementById('moneyChange').style.display = paymentMethod === 'money' ? 'block' : 'none';
-  document.getElementById('pixInfo').style.display = paymentMethod === 'pix' ? 'block' : 'none';
-}
-
-window.handleChangeNeeded = function() {
-  const changeNeeded = document.getElementById('changeNeeded').value;
-  document.getElementById('changeAmountDiv').style.display = changeNeeded === 'yes' ? 'block' : 'none';
-}
-
-document.getElementById('checkoutForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  const selectedAddressIndex = document.getElementById('savedAddresses').value;
-  const address = selectedAddressIndex !== "" ? savedAddresses[selectedAddressIndex] : {
-    street: document.getElementById('street').value,
-    number: document.getElementById('number').value,
-    complement: document.getElementById('complement').value,
-    neighborhood: document.getElementById('neighborhood').value,
-    city: document.getElementById('city').value,
-    state: document.getElementById('state').value
-  };
-  const paymentMethod = document.getElementById('paymentMethod').value;
-  const changeNeeded = document.getElementById('changeNeeded').value;
-  const changeAmount = document.getElementById('changeAmount').value;
-
-// Construir mensagem de WhatsApp
-    let message = `Pedido confirmado!\n`;
-    message += `Nome: ${customerInfo.name} ${customerInfo.lastName}\n`;
-    message += `WhatsApp: ${customerInfo.phone}\n`;
-    message += `Endereço: ${selectedAddress}\n`;
-    message += `Método de Pagamento: ${getPaymentMethodText(paymentMethod)}\n`;
-    if (paymentMethod === 'money') {
-      message += `Precisa de troco: ${changeNeeded === 'yes' ? 'Sim' : 'Não'}\n`;
-      if (changeNeeded === 'yes') {
-        message += `Troco para: R$ ${parseFloat(changeAmount).toFixed(2)}\n`;
+      const newAddress = {
+        street: document.getElementById('street').value,
+        number: document.getElementById('number').value,
+        complement: document.getElementById('complement').value,
+        neighborhood: document.getElementById('neighborhood').value,
+        city: document.getElementById('city').value,
+        state: document.getElementById('state').value
+      };
+      
+      if (!newAddress.street || !newAddress.number || !newAddress.neighborhood || !newAddress.city || !newAddress.state) {
+        alert('Por favor, preencha todos os campos obrigatórios do endereço.');
+        return;
       }
-    }
-    
-    // Adicionar itens do pedido à mensagem
-    message += `\nItens do Pedido:\n`;
-    cart.forEach(item => {
-      message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
-      if (item.accompaniments.length > 0) {
-        message += `\nAcompanhamentos: ${item.accompaniments.join(', ')}`;
-      }
-      if (item.extras.length > 0) {
-        message += `\nExtras: ${item.extras.join(', ')}`;
-      }
-    });
-    
-    message += `\n\nSubtotal: R$ ${cart.reduce((sum, item) => sum + item.totalPrice, 0).toFixed(2)}`;
-    message += `\nTaxa de Entrega: R$ ${deliveryFee.toFixed(2)}`;
-    message += `\nTotal: R$ ${(cart.reduce((sum, item) => sum + item.totalPrice, 0) + deliveryFee).toFixed(2)}`;
-    
-    // Adicionar informação sobre o programa de fidelidade
-    message += `\n\nEste é o ${getOrderNumberText(orderCount + 1)} pedido do cliente.`;
-    if (orderCount >= 9) {
-      message += `\nCliente tem direito ao desconto de fidelidade!`;
-    } else {
-      message += `\nFaltam ${10 - (orderCount + 1)} pedidos para o próximo desconto de fidelidade.`;
+
+      savedAddresses.push(newAddress);
+      localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
+      loadSavedAddresses();
+      alert('Novo endereço salvo com sucesso!');
+      document.getElementById('newAddressForm').style.display = 'none';
+      document.getElementById('paymentSection').style.display = 'block';
+      document.getElementById('submitOrderBtn').style.display = 'block';
     }
 
-    // Enviar pedido para o gestor de pedidos
-    const order = {
-      id: Date.now(),
-      customerName: `${customerInfo.name} ${customerInfo.lastName}`,
-      customerPhone: customerInfo.phone,
-      address: selectedAddress,
-      paymentMethod: paymentMethod,
-      changeNeeded: changeNeeded,
-      changeAmount: changeAmount,
-      items: cart,
-      subtotal: cart.reduce((sum, item) => sum + item.totalPrice, 0),
-      deliveryFee: deliveryFee,
-      total: cart.reduce((sum, item) => sum + item.totalPrice, 0) + deliveryFee,
-      status: 'preparing',
-      orderCount: orderCount + 1
-    };
+    window.handlePaymentChange = function() {
+      const paymentMethod = document.getElementById('paymentMethod').value;
+      document.getElementById('moneyChange').style.display = paymentMethod === 'money' ? 'block' : 'none';
+      document.getElementById('pixInfo').style.display = paymentMethod === 'pix' ? 'block' : 'none';
+    }
 
-    // Adicionar pedido ao Firestore
-    db.collection('orders').add(order)
-      .then(() => {
-        console.log('Pedido adicionado com sucesso!');
-        // Atualizar a contagem de pedidos do cliente
-        db.collection('customers').doc(customerInfo.phone).set({
-          name: customerInfo.name,
-          lastName: customerInfo.lastName,
-          orderCount: orderCount + 1
-        }, { merge: true });
-      })
-      .catch(error => {
-        console.error('Erro ao adicionar pedido: ', error);
+    window.handleChangeNeeded = function() {
+      const changeNeeded = document.getElementById('changeNeeded').value;
+      document.getElementById('changeAmountDiv').style.display = changeNeeded === 'yes' ? 'block' : 'none';
+    }
+
+    document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const selectedAddressIndex = document.getElementById('savedAddresses').value;
+      let selectedAddress;
+      if (selectedAddressIndex !== "") {
+        selectedAddress = savedAddresses[selectedAddressIndex];
+      } else {
+        selectedAddress = {
+          street: document.getElementById('street').value,
+          number: document.getElementById('number').value,
+          complement: document.getElementById('complement').value,
+          neighborhood: document.getElementById('neighborhood').value,
+          city: document.getElementById('city').value,
+          state: document.getElementById('state').value
+        };
+      }
+      const paymentMethod = document.getElementById('paymentMethod').value;
+      const changeNeeded = document.getElementById('changeNeeded').value;
+      const changeAmount = document.getElementById('changeAmount').value;
+
+      // Construir mensagem de WhatsApp
+      let message = `Pedido confirmado!\n`;
+      message += `Nome: ${customerInfo.name}\n`;
+      message += `WhatsApp: ${customerInfo.phone}\n`;
+      message += `Endereço: ${selectedAddress.street}, ${selectedAddress.number}, ${selectedAddress.neighborhood}, ${selectedAddress.city} - ${selectedAddress.state}\n`;
+      if (selectedAddress.complement) {
+        message += `Complemento: ${selectedAddress.complement}\n`;
+      }
+      message += `Método de Pagamento: ${getPaymentMethodText(paymentMethod)}\n`;
+      if (paymentMethod === 'money') {
+        message += `Precisa de troco: ${changeNeeded === 'yes' ? 'Sim' : 'Não'}\n`;
+        if (changeNeeded === 'yes') {
+          message += `Troco para: R$ ${parseFloat(changeAmount).toFixed(2)}\n`;
+        }
+      }
+      
+      // Adicionar itens do pedido à mensagem
+      message += `\nItens do Pedido:\n`;
+      cart.forEach(item => {
+        message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
+        if (item.accompaniments.length > 0) {
+          message += `\nAcompanhamentos: ${item.accompaniments.join(', ')}`;
+        }
+        if (item.extras.length > 0) {
+          message += `\nExtras: ${item.extras.join(', ')}`;
+        }
       });
+      
+      message += `\n\nSubtotal: R$ ${cart.reduce((sum, item) => sum + item.totalPrice, 0).toFixed(2)}`;
+      message += `\nTaxa de Entrega: R$ ${deliveryFee.toFixed(2)}`;
+      message += `\nTotal: R$ ${(cart.reduce((sum, item) => sum + item.totalPrice, 0) + deliveryFee).toFixed(2)}`;
+      
+      // Enviar pedido para o gestor de pedidos
+      const order = {
+        id: Date.now(),
+        customerName: customerInfo.name,
+        customerPhone: customerInfo.phone,
+        address: selectedAddress,
+        paymentMethod: paymentMethod,
+        changeNeeded: changeNeeded,
+        changeAmount: changeAmount,
+        items: cart,
+        subtotal: cart.reduce((sum, item) => sum + item.totalPrice, 0),
+        deliveryFee: deliveryFee,
+        total: cart.reduce((sum, item) => sum + item.totalPrice, 0) + deliveryFee,
+        status: 'preparing',
+        createdAt: new Date()
+      };
 
-    // Redirecionar para o WhatsApp
-    window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
+      // Adicionar pedido ao Firestore
+      db.collection('orders').add(order)
+        .then(() => {
+          console.log('Pedido adicionado com sucesso!');
+          // Atualizar a contagem de pedidos do cliente
+          db.collection('customers').doc(customerInfo.phone).get()
+            .then((doc) => {
+              let orderCount = 0;
+              if (doc.exists) {
+                orderCount = doc.data().orderCount || 0;
+              }
+              orderCount++;
+              
+              db.collection('customers').doc(customerInfo.phone).set({
+                name: customerInfo.name,
+                orderCount: orderCount
+              }, { merge: true });
 
-    // Limpar o carrinho e redefinir a forma de pagamento após a confirmação do pedido
-    cart = [];
-    localStorage.setItem('cart', JSON.stringify(cart));
-    document.getElementById('paymentMethod').value = 'money';
-    handlePaymentChange();
+              // Adicionar informação sobre o programa de fidelidade
+              message += `\n\nEste é o ${getOrderNumberText(orderCount)} pedido do cliente.`;
+              if (orderCount >= 10) {
+                message += `\nCliente tem direito ao desconto de fidelidade!`;
+              } else {
+                message += `\nFaltam ${10 - orderCount} pedidos para o próximo desconto de fidelidade.`;
+              }
 
-    // Fechar o modal de checkout
-    document.getElementById('checkoutModal').style.display = "none";
-  });
+              // Redirecionar para o WhatsApp
+              window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
+            });
+        })
+        .catch(error => {
+          console.error('Erro ao adicionar pedido: ', error);
+        });
 
-  // Funções auxiliares
-  function getPaymentMethodText(method) {
-    switch(method) {
-      case 'money': return 'Dinheiro';
-      case 'card': return 'Cartão na entrega';
-      case 'pix': return 'PIX';
-      default: return method;
-    }
-  }
+      // Limpar o carrinho e redefinir a forma de pagamento após a confirmação do pedido
+      cart = [];
+      localStorage.setItem('cart', JSON.stringify(cart));
+      document.getElementById('paymentMethod').value = 'money';
+      handlePaymentChange();
 
-  function getOrderNumberText(number) {
-    const specialCases = ['primeiro', 'segundo', 'terceiro', 'quarto', 'quinto'];
-    return specialCases[number - 1] || `${number}º`;
-  }
-
-  // Adicionando a função de fechar para todos os modais
-  document.querySelectorAll('.close').forEach(closeBtn => {
-    closeBtn.onclick = function() {
-      this.closest('.modal').style.display = "none";
-    }
-  });
-
-  function closeAllModals() {
-    document.querySelectorAll('.modal').forEach(modal => {
-      modal.style.display = "none";
+      // Fechar o modal de checkout
+      document.getElementById('checkoutModal').style.display = "none";
     });
-  }
 
-  // Fecha o modal quando o usuário clica fora dele
-  window.onclick = function(event) {
-    if (event.target.classList.contains('modal')) {
-      closeAllModals();
+    // Funções auxiliares
+    function getPaymentMethodText(method) {
+      switch(method) {
+        case 'money': return 'Dinheiro';
+        case 'card': return 'Cartão na entrega';
+        case 'pix': return 'PIX';
+        default: return method;
+      }
     }
-  }
 
-  // Inicializa a exibição de categorias e produtos
-  fetchCategories();
-  fetchProducts();
-
-  document.getElementById('categories').addEventListener('click', function(event) {
-    if (event.target.classList.contains('category-btn')) {
-      const category = event.target.getAttribute('data-category');
-      filterByCategory(category);
+    function getOrderNumberText(number) {
+      const specialCases = ['primeiro', 'segundo', 'terceiro', 'quarto', 'quinto'];
+      return specialCases[number - 1] || `${number}º`;
     }
+
+    // Adicionando a função de fechar para todos os modais
+    document.querySelectorAll('.close').forEach(closeBtn => {
+      closeBtn.onclick = function() {
+        this.closest('.modal').style.display = "none";
+      }
+    });
+
+    function closeAllModals() {
+      document.querySelectorAll('.modal').forEach(modal => {
+        modal.style.display = "none";
+      });
+    }
+
+    // Fecha o modal quando o usuário clica fora dele
+    window.onclick = function(event) {
+      if (event.target.classList.contains('modal')) {
+        closeAllModals();
+      }
+    }
+
+    // Inicializa a exibição de categorias e produtos
+    fetchCategories();
+    fetchProducts();
+
+    document.getElementById('categories').addEventListener('click', function(event) {
+      if (event.target.classList.contains('category-btn')) {
+        const category = event.target.getAttribute('data-category');
+        filterByCategory(category);
+      }
+    });
   });
-});
 </script>
 </body>
 </html>
