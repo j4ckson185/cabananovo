@@ -51,6 +51,14 @@ main {
   margin: 2em auto;
   padding: 0 20px;
 }
+.user-options {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1em;
+}
+.user-options .btn {
+  margin: 0 0.5em;
+}
 .categories, .product-grid {
   margin-bottom: 2em;
 }
@@ -271,17 +279,6 @@ main {
 .required-field {
   color: red;
 }
-.my-orders-btn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background-color: var(--primary-color);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 50px;
-  text-decoration: none;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
 #myOrdersModal .modal-content {
   max-width: 800px;
 }
@@ -316,6 +313,10 @@ main {
   <div class="cart-icon" onclick="openCart()">🛒</div>
 </header>
 <main>
+  <div class="user-options">
+    <button class="btn" onclick="openMyOrders()">Meus Pedidos</button>
+    <button class="btn" onclick="showLoyaltyRules()">Programa Fidelidade</button>
+  </div>
   <div class="categories" id="categories"></div>
   <div class="product-grid" id="productGrid"></div>
 </main>
@@ -402,20 +403,20 @@ main {
           <p>Após o envio do PIX, favor enviar o comprovante para o WhatsApp 84 9 8767-3202</p>
         </div>
       </div>
-<button type="submit" class="btn" id="submitOrderBtn" style="display: none;">Fazer Pedido</button>
+      <button type="submit" class="btn" id="submitOrderBtn" style="display: none;">Fazer Pedido</button>
     </form>
     <div id="orderSummary"></div>
     <div id="loyaltyInfo" class="loyalty-info"></div>
-    <button id="loyaltyDetailsBtn" class="btn" onclick="showLoyaltyDetails()" style="display: none;">Saiba mais sobre o Programa de Fidelidade</button>
   </div>
 </div>
-<div id="loyaltyDetailsModal" class="modal">
+<div id="loyaltyRulesModal" class="modal">
   <div class="modal-content">
     <span class="close">&times;</span>
     <h2>Programa de Fidelidade</h2>
-    <p>Regras do programa:</p>
     <ul>
       <li>Os pedidos só serão contabilizados após serem recebidos pela loja no WhatsApp.</li>
+      <li>Os pedidos também serão contabilizados dentro da janela do WhatsApp do cliente.</li>
+      <li>Se o mesmo cliente fizer pedidos com números de WhatsApp diferentes, os pontos Fidelidade serão somados no novo número que o cliente está utilizando para compra.</li>
       <li>Você será encaminhado com os detalhes do pedido para o WhatsApp da loja após finalizar o pedido.</li>
       <li>Após 10 pedidos pagos e finalizados, você terá direito a 50% de desconto em um pedido.</li>
       <li>Pedidos cancelados não são contabilizados.</li>
@@ -427,13 +428,7 @@ main {
   <div class="modal-content">
     <span class="close">&times;</span>
     <h2>Meus Pedidos</h2>
-    <div class="input-icon">
-      <i class="fab fa-whatsapp"></i>
-      <input type="tel" id="myOrdersPhone" placeholder="WhatsApp (com DDD)" required>
-    </div>
-    <button class="btn" onclick="fetchMyOrders()">Ver Meus Pedidos</button>
-    <div id="myOrdersList"></div>
-    <div id="myLoyaltyInfo"></div>
+    <div id="ordersList"></div>
   </div>
 </div>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -483,10 +478,14 @@ main {
       const snapshot = await db.collection('categories').get();
       const categories = snapshot.docs.map(doc => doc.data().name);
       const categoriesContainer = document.getElementById('categories');
-      categoriesContainer.innerHTML = categories.map(category => `
-        <button class="category-btn" data-category="${category}">${category}</button>
-      `).join('');
-      categoriesContainer.innerHTML = `<button class="category-btn" data-category="all">Todos</button>` + categoriesContainer.innerHTML;
+      categoriesContainer.innerHTML = `
+        <button class="btn" onclick="openMyOrders()">Meus Pedidos</button>
+        <button class="btn" onclick="showLoyaltyRules()">Programa Fidelidade</button>
+        <button class="category-btn" data-category="all">Todos</button>
+        ${categories.map(category => `
+          <button class="category-btn" data-category="${category}">${category}</button>
+        `).join('')}
+      `;
     }
 
     function filterByCategory(category) {
@@ -718,7 +717,7 @@ main {
       document.getElementById('paymentSection').style.display = 'none';
       document.getElementById('submitOrderBtn').style.display = 'none';
 
-// Exibir o modal de checkout
+      // Exibir o modal de checkout
       checkoutModal.style.display = "block";
     }
 
@@ -935,15 +934,29 @@ main {
 
     // Função para mostrar as regras do programa de fidelidade
     window.showLoyaltyRules = function() {
-      alert(`Regras do Programa de Fidelidade:
-
-1. O pedido só será contabilizado após ser recebido por nossa loja no WhatsApp.
-2. Após finalizar o pedido, você será encaminhado para nosso WhatsApp com os detalhes do pedido.
-3. Você terá 50% de desconto após 10 pedidos pagos e finalizados.
-4. Pedidos cancelados não são contabilizados.
-5. Se você cancelar um pedido pelo WhatsApp, a loja fará a subtração dos pontos do seu programa de fidelidade.
-
-Aproveite nossos deliciosos açaís e acumule pontos!`);
+      const modal = document.createElement('div');
+      modal.className = 'modal';
+      modal.innerHTML = `
+        <div class="modal-content">
+          <span class="close">&times;</span>
+          <h2>Programa de Fidelidade</h2>
+          <p>Regras do programa:</p>
+          <ul>
+            <li>Os pedidos só serão contabilizados após serem recebidos pela loja no WhatsApp.</li>
+            <li>Você será encaminhado com os detalhes do pedido para o WhatsApp da loja após finalizar o pedido.</li>
+            <li>Após 10 pedidos pagos e finalizados, você terá direito a 50% de desconto em um pedido.</li>
+            <li>Pedidos cancelados não são contabilizados.</li>
+            <li>Se você cancelar um pedido pelo WhatsApp, a loja fará a subtração dos pontos do seu programa de fidelidade.</li>
+            <li>Os pedidos serão contabilizados também dentro da janela do WhatsApp do cliente.</li>
+            <li>Se o mesmo cliente fizer pedido com números de WhatsApp diferentes, os pontos Fidelidade serão somados no novo número que o cliente está utilizando para compra.</li>
+          </ul>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      modal.style.display = 'block';
+      modal.querySelector('.close').onclick = function() {
+        modal.style.display = 'none';
+      }
     }
 
     // Adicionando a função de fechar para todos os modais
@@ -1018,16 +1031,8 @@ Aproveite nossos deliciosos açaís e acumule pontos!`);
       `;
     }
 
-    // Adicionar botão "Meus Pedidos"
-    const myOrdersBtn = document.createElement('a');
-    myOrdersBtn.href = '#';
-    myOrdersBtn.className = 'my-orders-btn';
-    myOrdersBtn.textContent = 'Meus Pedidos';
-    myOrdersBtn.onclick = openMyOrders;
-    document.body.appendChild(myOrdersBtn);
-
     // Função para abrir o modal "Meus Pedidos"
-    function openMyOrders() {
+    window.openMyOrders = function() {
       const phone = prompt("Por favor, digite seu número de WhatsApp com DDD:");
       if (phone) {
         db.collection('orders').where('customerPhone', '==', phone).get()
@@ -1042,31 +1047,117 @@ Aproveite nossos deliciosos açaís e acumule pontos!`);
                 ordersHTML += `
                   <li class="order-item">
                     <p><strong>Data:</strong> ${order.createdAt.toDate().toLocaleString()}</p>
+                    <p><strong>Detalhes do Pedido:</strong></p>
+                    <ul>
+                      ${order.items.map(item => `
+                        <li>${item.name} - R$ ${item.totalPrice.toFixed(2)}</li>
+                      `).join('')}
+                    </ul>
                     <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
-                    <p><strong>Status:</strong> ${order.status}</p>
+                    <p><strong>Detalhes do Pedido:</strong> ${order.items.map(item => `${item.name} (${item.accompaniments.join(', ')})${item.extras.length > 0 ? ` + Extras: ${item.extras.join(', ')}` : ''}`).join(', ')}</p>
+                    <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Este Pedido</button>
                   </li>
                 `;
               });
               ordersHTML += '</ul>';
             }
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.innerHTML = `
-              <div class="modal-content">
-                <span class="close">&times;</span>
-                ${ordersHTML}
-              </div>
-            `;
-            document.body.appendChild(modal);
-            modal.style.display = 'block';
-            modal.querySelector('.close').onclick = function() {
-              modal.style.display = 'none';
-            }
+            document.getElementById('ordersList').innerHTML = ordersHTML;
           })
           .catch((error) => {
             console.log("Erro ao buscar pedidos:", error);
           });
       }
+    }
+
+    window.repeatOrder = function(orderId) {
+      db.collection('orders').doc(orderId).get()
+        .then((doc) => {
+          if (doc.exists) {
+            const order = doc.data();
+            cart = order.items;
+            localStorage.setItem('cart', JSON.stringify(cart));
+            openCart();
+          }
+        })
+        .catch((error) => {
+          console.log("Erro ao repetir pedido:", error);
+        });
+    }
+
+    window.showLoyaltyRules = function() {
+      document.getElementById('loyaltyRulesModal').style.display = 'block';
+    }
+
+    // Adicionando a função de fechar para todos os modais
+    document.querySelectorAll('.close').forEach(closeBtn => {
+      closeBtn.onclick = function() {
+        this.closest('.modal').style.display = "none";
+      }
+    });
+
+    function closeAllModals() {
+      document.querySelectorAll('.modal').forEach(modal => {
+        modal.style.display = "none";
+      });
+    }
+
+    // Fecha o modal quando o usuário clica fora dele
+    window.onclick = function(event) {
+      if (event.target.classList.contains('modal')) {
+        closeAllModals();
+      }
+    }
+
+    // Inicializa a exibição de categorias e produtos
+    fetchCategories();
+    fetchProducts();
+
+    document.getElementById('categories').addEventListener('click', function(event) {
+      if (event.target.classList.contains('category-btn')) {
+        const category = event.target.getAttribute('data-category');
+        filterByCategory(category);
+      }
+    });
+
+    // Função para carregar os dados do cliente
+    function loadCustomerData(phone) {
+      db.collection('customers').doc(phone).get()
+        .then((doc) => {
+          if (doc.exists) {
+            const data = doc.data();
+            document.getElementById('customerName').value = data.name;
+            savedAddresses = data.addresses || [];
+            loadSavedAddresses();
+            updateLoyaltyInfo(data.orderCount || 0);
+          } else {
+            updateLoyaltyInfo(0);
+          }
+        })
+        .catch((error) => {
+          console.log("Erro ao carregar dados do cliente:", error);
+        });
+    }
+
+    // Atualizar a função de identificação do cliente
+    document.getElementById('customerPhone').addEventListener('blur', function() {
+      const phone = this.value;
+      if (phone) {
+        loadCustomerData(phone);
+      }
+    });
+
+    // Função para atualizar as informações de fidelidade
+    function updateLoyaltyInfo(orderCount) {
+      const loyaltyInfo = document.getElementById('loyaltyInfo');
+      loyaltyInfo.innerHTML = `
+        <h3>Programa de Fidelidade</h3>
+        <p>Você já realizou ${orderCount} ${orderCount === 1 ? 'pedido' : 'pedidos'}.</p>
+        ${orderCount >= 10 ? 
+          '<p><strong>Parabéns!</strong> Você tem direito a 50% de desconto no seu próximo pedido!</p>' :
+          `<p>Faltam ${10 - orderCount} ${10 - orderCount === 1 ? 'pedido' : 'pedidos'} para você ganhar 50% de desconto!</p>`
+        }
+        <p>Lembre-se: O pedido só será contabilizado após ser recebido por nossa loja no WhatsApp.</p>
+      `;
     }
   });
 </script>
