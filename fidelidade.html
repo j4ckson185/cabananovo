@@ -96,7 +96,7 @@
                     customerCard.className = 'customer-card';
                     customerCard.innerHTML = `
                         <div class="customer-name">${customer.name}</div>
-                        <div class="customer-phone">WhatsApp: ${customer.phone || 'Não fornecido'}</div>
+                        <div class="customer-phone">WhatsApp: ${customerPhone || 'Não fornecido'}</div>
                         <div class="customer-points">Pontos de Fidelidade: <span id="points-${doc.id}">${customer.orderCount || 0}</span></div>
                         <div class="edit-points">
                             <input type="number" id="edit-points-${doc.id}" value="${customer.orderCount || 0}" min="0">
