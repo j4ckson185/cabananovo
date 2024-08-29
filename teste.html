@@ -732,6 +732,24 @@ window.saveNewAddress = function() {
 
 window.handlePaymentChange = function() {
 const paymentMethod = document.getElementById('paymentMethod').value;
+  document.getElementById('moneyChange').style.display = paymentMethod === 'money' ? 'block' : 'none';
+  document.getElementById('pixInfo').style.display = paymentMethod === 'pix' ? 'block' : 'none';
+}
+
+window.handleChangeNeeded = function() {
+  const changeNeeded = document.getElementById('changeNeeded').value;
+  document.getElementById('changeAmountDiv').style.display = changeNeeded === 'yes' ? 'block' : 'none';
+}
+
+document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const selectedAddressIndex = document.getElementById('savedAddresses').value;
+  if (selectedAddressIndex === "") {
+    alert("Por favor, selecione um endereço de entrega.");
+    return;
+  }
+  const selectedAddress = savedAddresses[selectedAddressIndex];
+  const paymentMethod = document.getElementById('paymentMethod').value;
   const changeNeeded = document.getElementById('changeNeeded').value;
   const changeAmount = document.getElementById('changeAmount').value;
 
@@ -800,8 +818,7 @@ const paymentMethod = document.getElementById('paymentMethod').value;
       
       return db.collection('customers').doc(customerInfo.phone).set({
         name: customerInfo.name,
-        orderCount: orderCount,
-        addresses: firebase.firestore.FieldValue.arrayUnion(selectedAddress)
+        orderCount: orderCount
       }, { merge: true });
     })
     .then(() => {
@@ -880,30 +897,6 @@ document.getElementById('categories').addEventListener('click', function(event) 
   if (event.target.classList.contains('category-btn')) {
     const category = event.target.getAttribute('data-category');
     filterByCategory(category);
-  }
-});
-
-// Função para carregar os dados do cliente
-function loadCustomerData(phone) {
-  db.collection('customers').doc(phone).get()
-    .then((doc) => {
-      if (doc.exists) {
-        const data = doc.data();
-        document.getElementById('customerName').value = data.name;
-        savedAddresses = data.addresses || [];
-        loadSavedAddresses();
-      }
-    })
-    .catch((error) => {
-      console.log("Erro ao carregar dados do cliente:", error);
-    });
-}
-
-// Atualizar a função de identificação do cliente
-document.getElementById('customerPhone').addEventListener('blur', function() {
-  const phone = this.value;
-  if (phone) {
-    loadCustomerData(phone);
   }
 });
 
