@@ -238,7 +238,8 @@ main {
 .input-icon i {
   position: absolute;
   left: 10px;
-  top: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--secondary-color);
 }
 .input-icon input {
@@ -313,6 +314,15 @@ main {
       </div>
       <button type="submit" class="btn">Avançar</button>
     </form>
+  </div>
+</div>
+<div id="customerConfirmationModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Confirmar Dados</h2>
+    <div id="customerConfirmationContent"></div>
+    <button class="btn" onclick="editCustomerInfo()">Editar Informações</button>
+    <button class="btn" onclick="confirmCustomerInfo()">Confirmar</button>
   </div>
 </div>
 <div id="checkoutModal" class="modal">
@@ -589,61 +599,12 @@ main {
       localStorage.setItem('customerPhone', phone);
       localStorage.setItem('customerName', name);
 
-      // Fechar modal de identificação e abrir modal de confirmação
+      // Fechar modal de identificação e abrir modal de checkout
       document.getElementById('customerIdentificationModal').style.display = "none";
-      openCustomerConfirmation();
+      openCheckout();
     });
 
-    function openCustomerConfirmation() {
-      const modal = document.getElementById('customerConfirmationModal');
-      const content = document.getElementById('customerConfirmationContent');
-      content.innerHTML = `
-        <p><strong>Telefone:</strong> ${customerInfo.phone}</p>
-        <p><strong>Nome:</strong> ${customerInfo.name}</p>
-      `;
-      modal.style.display = "block";
-
-      // Buscar número de pedidos do cliente
-      fetchCustomerOrderCount(customerInfo.phone);
-    }
-
-    function fetchCustomerOrderCount(phone) {
-      db.collection('customers').doc(phone).get().then((doc) => {
-        if (doc.exists) {
-          const data = doc.data();
-          updateLoyaltyInfo(data.orderCount || 0);
-        } else {
-          updateLoyaltyInfo(0);
-        }
-      }).catch((error) => {
-        console.log("Error getting customer info:", error);
-        updateLoyaltyInfo(0);
-      });
-    }
-
-    function updateLoyaltyInfo(orderCount) {
-      const loyaltyInfo = document.getElementById('loyaltyInfo');
-      loyaltyInfo.style.display = "block";
-
-      if (orderCount >= 10) {
-        loyaltyInfo.innerHTML = '<strong>Parabéns!</strong> Você tem direito a 50% de desconto no Açaí de 1 Litro ou qualquer Combo da loja!';
-      } else {
-        const ordersToDiscount = 10 - orderCount;
-        loyaltyInfo.innerHTML = `Você está a ${ordersToDiscount} ${ordersToDiscount === 1 ? 'pedido' : 'pedidos'} de ganhar 50% de desconto no Açaí de 1 Litro ou qualquer Combo da loja!`;
-      }
-    }
-
-    window.editCustomerInfo = function() {
-      document.getElementById('customerConfirmationModal').style.display = "none";
-      openCustomerIdentification();
-    }
-
-    window.confirmCustomerInfo = function() {
-      document.getElementById('customerConfirmationModal').style.display = "none";
-      openCheckout();
-    }
-
-    window.openCheckout = function() {
+    function openCheckout() {
       const checkoutModal = document.getElementById('checkoutModal');
       const orderSummary = document.getElementById('orderSummary');
 
@@ -668,8 +629,8 @@ main {
       orderSummary.innerHTML = summaryHTML;
 
       // Desabilitar opções de pagamento e botão de finalizar pedido
-      document.getElementById('paymentMethod').disabled = true;
-      document.getElementById('finalizePedidoBtn').disabled = true;
+      document.getElementById('paymentSection').style.display = 'none';
+      document.getElementById('submitOrderBtn').style.display = 'none';
 
       // Exibir o modal de checkout
       checkoutModal.style.display = "block";
@@ -697,12 +658,12 @@ main {
         document.getElementById('state').value = address.state;
         
         // Habilitar opções de pagamento e botão de finalizar pedido
-        document.getElementById('paymentMethod').disabled = false;
-        document.getElementById('finalizePedidoBtn').disabled = false;
+        document.getElementById('paymentSection').style.display = 'block';
+        document.getElementById('submitOrderBtn').style.display = 'block';
       } else {
         // Desabilitar opções de pagamento e botão de finalizar pedido
-        document.getElementById('paymentMethod').disabled = true;
-        document.getElementById('finalizePedidoBtn').disabled = true;
+        document.getElementById('paymentSection').style.display = 'none';
+        document.getElementById('submitOrderBtn').style.display = 'none';
       }
     }
 
@@ -710,7 +671,7 @@ main {
       document.getElementById('newAddressForm').style.display = 'block';
     }
 
-window.saveNewAddress = function() {
+    window.saveNewAddress = function() {
       const newAddress = {
         street: document.getElementById('street').value,
         number: document.getElementById('number').value,
@@ -748,24 +709,12 @@ window.saveNewAddress = function() {
     document.getElementById('checkoutForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const selectedAddressIndex = document.getElementById('savedAddresses').value;
-      let selectedAddress;
-      if (selectedAddressIndex !== "") {
-        selectedAddress = savedAddresses[selectedAddressIndex];
-      } else {
-        selectedAddress = {
-          street: document.getElementById('street').value,
-          number: document.getElementById('number').value,
-          complement: document.getElementById('complement').value,
-          neighborhood: document.getElementById('neighborhood').value,
-          city: document.getElementById('city').value,
-          state: document.getElementById('state').value
-        };
-      }
+      const address = savedAddresses[selectedAddressIndex];
       const paymentMethod = document.getElementById('paymentMethod').value;
       const changeNeeded = document.getElementById('changeNeeded').value;
       const changeAmount = document.getElementById('changeAmount').value;
 
-      // Construir mensagem de WhatsApp
+// Construir mensagem de WhatsApp
       let message = `Pedido confirmado!\n`;
       message += `Nome: ${customerInfo.name}\n`;
       message += `WhatsApp: ${customerInfo.phone}\n`;
@@ -819,43 +768,51 @@ window.saveNewAddress = function() {
         .then(() => {
           console.log('Pedido adicionado com sucesso!');
           // Atualizar a contagem de pedidos do cliente
-          db.collection('customers').doc(customerInfo.phone).get()
-            .then((doc) => {
-              let orderCount = 0;
-              if (doc.exists) {
-                orderCount = doc.data().orderCount || 0;
-              }
-              orderCount++;
-              
-              db.collection('customers').doc(customerInfo.phone).set({
-                name: customerInfo.name,
-                orderCount: orderCount
-              }, { merge: true });
+          return db.collection('customers').doc(customerInfo.phone).get();
+        })
+        .then((doc) => {
+          let orderCount = 0;
+          if (doc.exists) {
+            orderCount = doc.data().orderCount || 0;
+          }
+          orderCount++;
+          
+          return db.collection('customers').doc(customerInfo.phone).set({
+            name: customerInfo.name,
+            orderCount: orderCount
+          }, { merge: true });
+        })
+        .then(() => {
+          // Buscar a contagem atualizada de pedidos
+          return db.collection('customers').doc(customerInfo.phone).get();
+        })
+        .then((doc) => {
+          if (doc.exists) {
+            const orderCount = doc.data().orderCount;
+            // Adicionar informação sobre o programa de fidelidade
+            message += `\n\nEste é o ${getOrderNumberText(orderCount)} pedido do cliente.`;
+            if (orderCount >= 10) {
+              message += `\nCliente tem direito ao desconto de fidelidade!`;
+            } else {
+              message += `\nFaltam ${10 - orderCount} pedidos para o próximo desconto de fidelidade.`;
+            }
+          }
 
-              // Adicionar informação sobre o programa de fidelidade
-              message += `\n\nEste é o ${getOrderNumberText(orderCount)} pedido do cliente.`;
-              if (orderCount >= 10) {
-                message += `\nCliente tem direito ao desconto de fidelidade!`;
-              } else {
-                message += `\nFaltam ${10 - orderCount} pedidos para o próximo desconto de fidelidade.`;
-              }
+          // Redirecionar para o WhatsApp
+          window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
 
-              // Redirecionar para o WhatsApp
-              window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
-            });
+          // Limpar o carrinho e redefinir a forma de pagamento após a confirmação do pedido
+          cart = [];
+          localStorage.setItem('cart', JSON.stringify(cart));
+          document.getElementById('paymentMethod').value = 'money';
+          handlePaymentChange();
+
+          // Fechar o modal de checkout
+          document.getElementById('checkoutModal').style.display = "none";
         })
         .catch(error => {
           console.error('Erro ao adicionar pedido: ', error);
         });
-
-      // Limpar o carrinho e redefinir a forma de pagamento após a confirmação do pedido
-      cart = [];
-      localStorage.setItem('cart', JSON.stringify(cart));
-      document.getElementById('paymentMethod').value = 'money';
-      handlePaymentChange();
-
-      // Fechar o modal de checkout
-      document.getElementById('checkoutModal').style.display = "none";
     });
 
     // Funções auxiliares
