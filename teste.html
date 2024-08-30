@@ -1064,18 +1064,63 @@
                 `;
             }
 
-            window.openMyOrders = function() {
-                const modal = document.getElementById('myOrdersModal');
-                const content = document.getElementById('myOrdersContent');
-                content.innerHTML = `
-                    <h3>Insira seu número de WhatsApp para ver seus pedidos:</h3>
-                    <input type="tel" id="orderPhoneInput" placeholder="WhatsApp (com DDD)" required>
-                    <button class="btn" onclick="fetchMyOrders()">Buscar Pedidos</button>
-                    <div id="ordersList"></div>
+window.openMyOrders = function() {
+      const phone = prompt("Por favor, digite seu número de WhatsApp com DDD:");
+      if (phone) {
+        db.collection('orders').where('customerPhone', '==', phone).get()
+          .then((querySnapshot) => {
+            let ordersHTML = '<h2>Meus Pedidos</h2>';
+            if (querySnapshot.empty) {
+              ordersHTML += '<p>Você ainda não fez nenhum pedido.</p>';
+            } else {
+              ordersHTML += '<ul class="order-list">';
+              querySnapshot.forEach((doc) => {
+                const order = doc.data();
+                ordersHTML += `
+                  <li class="order-item">
+                    <p><strong>Data:</strong> ${order.createdAt.toDate().toLocaleString()}</p>
+                    <p><strong>Detalhes do Pedido:</strong></p>
+                    <ul>
+                      ${order.items.map(item => `
+                        <li>${item.name} - R$ ${item.totalPrice.toFixed(2)}</li>
+                      `).join('')}
+                    </ul>
+                    <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
+                    <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Pedido</button>
+                  </li>
                 `;
-                modal.style.display = "block";
+              }); CopyRetryClaude’s response was limited as it hit the maximum length allowed at this time. Claude does not have the ability to run the code it generates yet.Jcortou. reenvie a partir desta linha:
+                    <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>EditEntendido. Vou continuar a partir da linha mencionada:
+htmlCopy                    <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
+                    <p><strong>Detalhes do Pedido:</strong> ${order.items.map(item => `${item.name} (${item.accompaniments.join(', ')})${item.extras.length > 0 ? ` + Extras: ${item.extras.join(', ')}` : ''}`).join(', ')}</p>
+                    <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Este Pedido</button>
+                  </li>
+                `;
+              });
+              ordersHTML += '</ul>';
             }
+            document.getElementById('ordersList').innerHTML = ordersHTML;
+          })
+          .catch((error) => {
+            console.log("Erro ao buscar pedidos:", error);
+          });
+      }
+    }
 
+    window.repeatOrder = function(orderId) {
+      db.collection('orders').doc(orderId).get()
+        .then((doc) => {
+          if (doc.exists) {
+            const order = doc.data();
+            cart = order.items;
+            localStorage.setItem('cart', JSON.stringify(cart));
+            openCart();
+          }
+        })
+        .catch((error) => {
+          console.log("Erro ao repetir pedido:", error);
+        });
+    }
             window.fetchMyOrders = function() {
                 const phone = document.getElementById('orderPhoneInput').value;
                 if (!phone) {
