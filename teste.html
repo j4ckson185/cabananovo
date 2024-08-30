@@ -244,7 +244,6 @@
         }
         .input-icon input {
             padding-left: 35px;
-            text-align: center;
         }
         #checkoutForm {
             margin-top: 20px;
@@ -376,7 +375,7 @@
         .user-options .btn {
             margin: 0 10px;
         }
-        #virtualAssistant {
+        #monteCombo {
             position: fixed;
             bottom: 20px;
             right: 20px;
@@ -387,7 +386,7 @@
             cursor: pointer;
             z-index: 1000;
         }
-        #assistantModal {
+        #comboBuilderModal {
             display: none;
             position: fixed;
             z-index: 1001;
@@ -398,7 +397,7 @@
             overflow: auto;
             background-color: rgba(0,0,0,0.4);
         }
-        #assistantModal .modal-content {
+        #comboBuilderModal .modal-content {
             background-color: #fefefe;
             margin: 10% auto;
             padding: 20px;
@@ -407,7 +406,7 @@
             max-width: 600px;
             border-radius: 8px;
         }
-        #assistantChat {
+        #comboBuilderChat {
             height: 300px;
             overflow-y: auto;
             border: 1px solid #ddd;
@@ -452,7 +451,7 @@
     <div id="cartModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h2>Seu Carrinho</h2>
+<h2>Seu Carrinho</h2>
             <div id="cartContent"></div>
             <div id="cartTotal"></div>
             <button class="btn" onclick="openCustomerIdentification()">Finalizar Pedido</button>
@@ -487,7 +486,7 @@
                         <option value="">Selecione um endereço salvo ou cadastre um novo</option>
                     </select>
                     <button type="button" class="btn" onclick="showNewAddressForm()">Cadastrar Novo Endereço</button>
-<div id="newAddressForm" style="display: none;">
+                    <div id="newAddressForm" style="display: none;">
                         <label for="street">Rua: <span class="required-field">*</span></label>
                         <input type="text" id="street" required>
                         <label for="number">Número: <span class="required-field">*</span></label>
@@ -539,13 +538,6 @@
             </div>
         </div>
     </div>
-    <div id="comboModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Monte seu Combo</h2>
-            <div id="comboBuilder"></div>
-        </div>
-    </div>
     <div id="myOrdersModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
@@ -560,32 +552,20 @@
             <div id="loyaltyProgramContent"></div>
         </div>
     </div>
-    <div id="virtualAssistant" onclick="openAssistant()">
-        Assistente Virtual 🤖
+    <div id="monteCombo" onclick="openComboBuilder()">
+        Monte seu Combo 🍨
     </div>
-    <div id="assistantModal" class="modal">
+    <div id="comboBuilderModal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeAssistant()">&times;</span>
-            <h2>Assistente Virtual</h2>
-            <div id="assistantChat"></div>
+            <span class="close" onclick="closeComboBuilder()">&times;</span>
+            <h2>Monte seu Combo</h2>
+            <div id="comboBuilderChat"></div>
             <input type="text" id="userInput" placeholder="Digite sua mensagem...">
             <button id="sendMessage" onclick="sendMessage()">Enviar</button>
         </div>
     </div>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script>
-        window.embeddedChatbotConfig = {
-            chatbotId: "PpgNSIgeYN1FCucFGP4w3",
-            domain: "www.chatbase.co"
-        }
-    </script>
-    <script
-        src="https://www.chatbase.co/embed.min.js"
-        chatbotId="PpgNSIgeYN1FCucFGP4w3"
-        domain="www.chatbase.co"
-        defer>
-    </script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Configuração do Firebase
@@ -607,6 +587,7 @@
             const deliveryFee = 3.00;
             let customerInfo = {};
             let savedAddresses = [];
+
             // Dados dos itens extras
             const extraItems = [
                 { name: "Ovomaltine", price: 1.99, image: "https://images.tcdn.com.br/img/img_prod/919170/ovomaltine_flocos_extra_crocante_750g_425_1_e9d3c08b8341c4e7818b1759c877a213.jpg" },
@@ -628,11 +609,23 @@
                 { name: "Combo 2 de 1 Litro", price: 49.99, maxAccompaniments: 8 }
             ];
 
+            // Sabores de açaí e creme
+            const flavors = [
+                { name: "Açaí Tradicional", type: "açaí" },
+                { name: "Açaí com Guaraná", type: "açaí" },
+                { name: "Creme de Ninho", type: "creme" },
+                { name: "Creme de Ovomaltine", type: "creme" },
+                { name: "Creme de Maracujá", type: "creme" },
+                { name: "Creme de Amendoim", type: "creme" },
+                { name: "Creme de Cupuaçu", type: "creme" }
+            ];
+
             async function fetchProducts() {
                 const snapshot = await db.collection('products').get();
                 products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 displayProducts(products);
             }
+
             async function fetchCategories() {
                 const snapshot = await db.collection('categories').get();
                 const categories = snapshot.docs.map(doc => doc.data().name);
@@ -650,6 +643,7 @@
                 allButton.onclick = () => filterByCategory('all');
                 categoriesContainer.insertBefore(allButton, categoriesContainer.firstChild);
             }
+
             function filterByCategory(category) {
                 const buttons = document.querySelectorAll('.category-btn');
                 buttons.forEach(btn => btn.classList.remove('active'));
@@ -657,6 +651,7 @@
                 const filteredProducts = category === 'all' ? products : products.filter(product => product.category === category);
                 displayProducts(filteredProducts);
             }
+
             function displayProducts(productsToDisplay = products) {
                 const productGrid = document.getElementById('productGrid');
                 productGrid.innerHTML = productsToDisplay.map(product => `
@@ -671,6 +666,7 @@
                     </div>
                 `).join('');
             }
+
             window.openProductDetails = function(productId, event) {
                 if (event) {
                     event.stopPropagation();
@@ -684,7 +680,7 @@
                     <p>${product.description}</p>
                     <p class="product-price">Preço: R$ ${parseFloat(product.price).toFixed(2)}</p>
                     <div class="extras-list">
-                        <h3>Acompanhamentos (escolha de ${product.minAccompaniments} a ${product.maxAccompaniments}):</h3>
+  <h3>Acompanhamentos (escolha de ${product.minAccompaniments} a ${product.maxAccompaniments}):</h3>
                         <div class="checkbox-list" id="accompaniments">
                             ${product.accompaniments.map((item, index) => `
                                 <div class="checkbox-item">
@@ -715,6 +711,7 @@
                     checkbox.addEventListener('change', () => validateAccompaniments(product));
                 });
             }
+
             function validateAccompaniments(product) {
                 const checkedAccompaniments = document.querySelectorAll('#accompaniments input[type="checkbox"]:checked');
                 const addToCartBtn = document.getElementById('addToCartBtn');
@@ -727,6 +724,7 @@
                     errorMessage.textContent = '';
                 }
             }
+
             window.addToCart = function(productId) {
                 const product = products.find(p => p.id === productId);
                 const accompaniments = Array.from(document.querySelectorAll('#accompaniments input[type="checkbox"]:checked')).map(cb => cb.value);
@@ -748,6 +746,7 @@
                 localStorage.setItem('cart', JSON.stringify(cart));
                 openCart();
             }
+
             function calculateTotalPrice(product, selectedExtras) {
                 let total = product.price;
                 selectedExtras.forEach(extraName => {
@@ -758,6 +757,7 @@
                 });
                 return total;
             }
+
             window.openCart = function() {
                 const modal = document.getElementById('cartModal');
                 const cartContent = document.getElementById('cartContent');
@@ -777,14 +777,17 @@
                 cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
                 modal.style.display = "block";
             }
+
             window.continueShopping = function() {
                 document.getElementById('cartModal').style.display = "none";
             }
+
             window.removeFromCart = function(itemId) {
                 cart = cart.filter(item => item.id !== itemId);
                 localStorage.setItem('cart', JSON.stringify(cart));
                 openCart();
             }
+
             window.openCustomerIdentification = function() {
                 document.getElementById('cartModal').style.display = "none";
                 const modal = document.getElementById('customerIdentificationModal');
@@ -796,6 +799,7 @@
                     loadCustomerData(phone);
                 }
             }
+
             function loadCustomerData(phone) {
                 db.collection('customers').doc(phone).get().then((doc) => {
                     if (doc.exists) {
@@ -817,6 +821,7 @@
                     updateLoyaltyInfo(0);
                 });
             }
+
             document.getElementById('customerIdentificationForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 const phone = document.getElementById('customerPhone').value;
@@ -834,6 +839,7 @@
                     console.error("Error saving customer data: ", error);
                 });
             });
+
             function openCheckout() {
                 const checkoutModal = document.getElementById('checkoutModal');
                 const orderSummary = document.getElementById('orderSummary');
@@ -844,6 +850,7 @@
                 checkoutModal.style.display = "block";
                 displayExtraItems();
             }
+
             function loadSavedAddresses() {
                 const select = document.getElementById('savedAddresses');
                 select.innerHTML = '<option value="">Selecione um endereço salvo ou cadastre um novo</option>';
@@ -851,6 +858,7 @@
                     select.innerHTML += `<option value="${index}">${address.street}, ${address.number} - ${address.neighborhood}</option>`;
                 });
             }
+
             window.handleSavedAddressChange = function() {
                 const selectedIndex = document.getElementById('savedAddresses').value;
                 if (selectedIndex !== "") {
@@ -869,9 +877,11 @@
                     document.getElementById('submitOrderBtn').style.display = 'none';
                 }
             }
+
             window.showNewAddressForm = function() {
                 document.getElementById('newAddressForm').style.display = 'block';
             }
+
             window.saveNewAddress = function() {
                 const newAddress = {
                     street: document.getElementById('street').value,
@@ -908,15 +918,18 @@
                     console.error("Error updating addresses: ", error);
                 });
             }
+
             window.handlePaymentChange = function() {
                 const paymentMethod = document.getElementById('paymentMethod').value;
                 document.getElementById('moneyChange').style.display = paymentMethod === 'money' ? 'block' : 'none';
                 document.getElementById('pixInfo').style.display = paymentMethod === 'pix' ? 'block' : 'none';
             }
+
             window.handleChangeNeeded = function() {
                 const changeNeeded = document.getElementById('changeNeeded').value;
                 document.getElementById('changeAmountDiv').style.display = changeNeeded === 'yes' ? 'block' : 'none';
             }
+
             function displayExtraItems() {
                 const extraItemsContainer = document.getElementById('extraItems');
                 extraItemsContainer.innerHTML = extraItems.map(item => `
@@ -927,10 +940,12 @@
                     </div>
                 `).join('');
             }
+
             window.toggleExtraItem = function(element, itemName) {
                 element.classList.toggle('selected');
                 updateOrderSummary();
             }
+
             function updateOrderSummary() {
                 const orderSummary = document.getElementById('orderSummary');
                 let summaryHTML = '<h3>Resumo do Pedido:</h3>';
@@ -960,6 +975,7 @@
                 summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
                 orderSummary.innerHTML = summaryHTML;
             }
+
             document.getElementById('checkoutForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 const selectedAddressIndex = document.getElementById('savedAddresses').value;
@@ -978,7 +994,7 @@
                 if (selectedAddress.complement) {
                     message += `Complemento: ${selectedAddress.complement}\n`;
                 }
-                message += `Método de Pagamento: ${getPaymentMethodText(paymentMethod)}\n`;
+ message += `Método de Pagamento: ${getPaymentMethodText(paymentMethod)}\n`;
                 if (paymentMethod === 'money') {
                     message += `Precisa de troco: ${changeNeeded === 'yes' ? 'Sim' : 'Não'}\n`;
                     if (changeNeeded === 'yes') {
@@ -1073,6 +1089,7 @@
                         console.error('Erro ao adicionar pedido: ', error);
                     });
             });
+
             function getPaymentMethodText(method) {
                 switch(method) {
                     case 'money': return 'Dinheiro';
@@ -1081,10 +1098,12 @@
                     default: return method;
                 }
             }
+
             function getOrderNumberText(number) {
                 const specialCases = ['primeiro', 'segundo', 'terceiro', 'quarto', 'quinto'];
                 return specialCases[number - 1] || `${number}º`;
             }
+
             function updateLoyaltyInfo(orderCount) {
                 const loyaltyInfo = document.getElementById('loyaltyInfo');
                 loyaltyInfo.innerHTML = `
@@ -1097,6 +1116,7 @@
                     <p>Lembre-se: O pedido só será contabilizado após ser recebido por nossa loja no WhatsApp.</p>
                 `;
             }
+
             window.openMyOrders = function() {
                 const modal = document.getElementById('myOrdersModal');
                 const content = document.getElementById('myOrdersContent');
@@ -1108,6 +1128,7 @@
                 `;
                 modal.style.display = "block";
             }
+
             window.fetchMyOrders = function() {
                 const phone = document.getElementById('orderPhoneInput').value;
                 if (!phone) {
@@ -1143,6 +1164,7 @@
                         alert("Ocorreu um erro ao buscar seus pedidos. Por favor, tente novamente.");
                     });
             }
+
             window.repeatOrder = function(orderId) {
                 db.collection('orders').doc(orderId).get()
                     .then((doc) => {
@@ -1162,6 +1184,7 @@
                         alert("Ocorreu um erro ao repetir o pedido. Por favor, tente novamente.");
                     });
             }
+
             window.openLoyaltyProgram = function() {
                 const modal = document.getElementById('loyaltyProgramModal');
                 const content = document.getElementById('loyaltyProgramContent');
@@ -1180,6 +1203,7 @@
                 `;
                 modal.style.display = "block";
             }
+
             window.checkLoyaltyPoints = function() {
                 const phone = document.getElementById('loyaltyPhoneInput').value;
                 if (!phone) {
@@ -1207,45 +1231,30 @@
                         alert("Ocorreu um erro ao verificar seus pontos. Por favor, tente novamente.");
                     });
             }
-            document.querySelectorAll('.close').forEach(closeBtn => {
-                closeBtn.onclick = function() {
-                    this.closest('.modal').style.display = "none";
-                }
-            });
-            function closeAllModals() {
-                document.querySelectorAll('.modal').forEach(modal => {
-                    modal.style.display = "none";
-                });
-            }
-            window.onclick = function(event) {
-                if (event.target.classList.contains('modal')) {
-                    closeAllModals();
-                }
-            }
 
-            // Funções para o assistente virtual
+            // Funções para o assistente de montagem de combo
             let currentCombo = null;
             let currentStep = 0;
-            const steps = ['combo', 'accompaniments1', 'accompaniments2', 'extras'];
+            const steps = ['combo', 'flavor1', 'accompaniments1', 'flavor2', 'accompaniments2', 'extras'];
 
-            window.openAssistant = function() {
-                document.getElementById('assistantModal').style.display = 'block';
+            window.openComboBuilder = function() {
+                document.getElementById('comboBuilderModal').style.display = 'block';
                 startComboBuilder();
             }
 
-            window.closeAssistant = function() {
-                document.getElementById('assistantModal').style.display = 'none';
+            window.closeComboBuilder = function() {
+                document.getElementById('comboBuilderModal').style.display = 'none';
                 resetComboBuilder();
             }
 
             function startComboBuilder() {
                 currentStep = 0;
-                updateAssistantChat("Olá! Vamos montar seu combo de açaí? Escolha uma das opções abaixo:");
+                updateAssistantChat("Olá, tudo bem? Sou um robô, mas irei te ajudar a escolher seu Combo, ok? :) Vamos começar! Escolha uma das opções abaixo:");
                 displayComboOptions();
             }
 
             function displayComboOptions() {
-                const comboBuilder = document.getElementById('assistantChat');
+                const comboBuilder = document.getElementById('comboBuilderChat');
                 comboBuilder.innerHTML += `
                     <div class="combo-options">
                         ${combos.map(combo => `
@@ -1261,12 +1270,33 @@
             window.selectCombo = function(comboName) {
                 currentCombo = combos.find(combo => combo.name === comboName);
                 currentStep++;
-                updateAssistantChat(`Ótima escolha! Agora, vamos escolher os acompanhamentos para o primeiro açaí do ${currentCombo.name}.`);
-                displayAccompaniments(1);
+                updateAssistantChat(`Ótima escolha! Agora, vamos escolher o sabor para o primeiro açaí do ${currentCombo.name}.`);
+                displayFlavors(1);
+            }
+
+            function displayFlavors(acaiNumber) {
+                const comboBuilder = document.getElementById('comboBuilderChat');
+                comboBuilder.innerHTML += `
+                    <div class="combo-items">
+                        ${flavors.map(flavor => `
+                            <div class="combo-item" onclick="selectFlavor('${flavor.name}', ${acaiNumber})">
+                                <p>${flavor.name}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                updateComboSummary();
+            }
+
+            window.selectFlavor = function(flavorName, acaiNumber) {
+                currentCombo[`flavor${acaiNumber}`] = flavorName;
+                currentStep++;
+                updateAssistantChat(`Sabor ${flavorName} selecionado para o açaí ${acaiNumber}. Agora, vamos escolher os acompanhamentos.`);
+                displayAccompaniments(acaiNumber);
             }
 
             function displayAccompaniments(acaiNumber) {
-                const comboBuilder = document.getElementById('assistantChat');
+                const comboBuilder = document.getElementById('comboBuilderChat');
                 comboBuilder.innerHTML += `
                     <div class="combo-items">
                         ${extraItems.map(item => `
@@ -1295,8 +1325,8 @@
                 if (currentCombo[`accompaniments${acaiNumber}`].length === currentCombo.maxAccompaniments) {
                     if (acaiNumber === 1) {
                         currentStep++;
-                        updateAssistantChat("Ótimo! Agora vamos escolher os acompanhamentos para o segundo açaí.");
-                        displayAccompaniments(2);
+                        updateAssistantChat("Ótimo! Agora vamos escolher o sabor para o segundo açaí.");
+                        displayFlavors(2);
                     } else {
                         currentStep++;
                         updateAssistantChat("Perfeito! Agora vamos escolher os itens extras, se desejar.");
@@ -1306,7 +1336,7 @@
             }
 
             function displayExtras() {
-                const comboBuilder = document.getElementById('assistantChat');
+                const comboBuilder = document.getElementById('comboBuilderChat');
                 comboBuilder.innerHTML += `
                     <div class="combo-items">
                         ${extraItems.map(item => `
@@ -1336,7 +1366,7 @@
                 const summary = getComboSummary();
                 updateAssistantChat(summary);
                 updateAssistantChat("Deseja adicionar este combo ao carrinho?");
-                document.getElementById('assistantChat').innerHTML += `
+                document.getElementById('comboBuilderChat').innerHTML += `
                     <button class="btn" onclick="addComboToCart()">Adicionar ao Carrinho</button>
                     <button class="btn" onclick="resetComboBuilder()">Montar Novo Combo</button>
                 `;
@@ -1344,8 +1374,10 @@
 
             function getComboSummary() {
                 let summary = `${currentCombo.name}\n`;
-                summary += `Açaí 1: ${currentCombo.accompaniments1.join(', ')}\n`;
-                summary += `Açaí 2: ${currentCombo.accompaniments2.join(', ')}\n`;
+                summary += `Açaí 1: ${currentCombo.flavor1}\n`;
+                summary += `Acompanhamentos: ${currentCombo.accompaniments1.join(', ')}\n`;
+                summary += `Açaí 2: ${currentCombo.flavor2}\n`;
+                summary += `Acompanhamentos: ${currentCombo.accompaniments2.join(', ')}\n`;
                 if (currentCombo.extras && currentCombo.extras.length > 0) {
                     summary += `Itens Extras: ${currentCombo.extras.join(', ')}\n`;
                 }
@@ -1367,7 +1399,9 @@
                     id: Date.now(),
                     name: currentCombo.name,
                     price: currentCombo.price,
+                    flavor1: currentCombo.flavor1,
                     accompaniments1: currentCombo.accompaniments1,
+                    flavor2: currentCombo.flavor2,
                     accompaniments2: currentCombo.accompaniments2,
                     extras: currentCombo.extras || [],
                     totalPrice: calculateComboTotal()
@@ -1381,7 +1415,7 @@
             function resetComboBuilder() {
                 currentCombo = null;
                 currentStep = 0;
-                document.getElementById('assistantChat').innerHTML = '';
+                document.getElementById('comboBuilderChat').innerHTML = '';
                 startComboBuilder();
             }
 
@@ -1389,11 +1423,17 @@
                 const summary = document.getElementById('comboSummary');
                 if (currentCombo) {
                     let summaryHTML = `<h3>${currentCombo.name}</h3>`;
+                    if (currentCombo.flavor1) {
+                        summaryHTML += `<p>Açaí 1: ${currentCombo.flavor1}</p>`;
+                    }
                     if (currentCombo.accompaniments1) {
-                        summaryHTML += `<p>Açaí 1: ${currentCombo.accompaniments1.join(', ')}</p>`;
+                        summaryHTML += `<p>Acompanhamentos 1: ${currentCombo.accompaniments1.join(', ')}</p>`;
+                    }
+                    if (currentCombo.flavor2) {
+                        summaryHTML += `<p>Açaí 2: ${currentCombo.flavor2}</p>`;
                     }
                     if (currentCombo.accompaniments2) {
-                        summaryHTML += `<p>Açaí 2: ${currentCombo.accompaniments2.join(', ')}</p>`;
+                        summaryHTML += `<p>Acompanhamentos 2: ${currentCombo.accompaniments2.join(', ')}</p>`;
                     }
                     if (currentCombo.extras) {
                         summaryHTML += `<p>Extras: ${currentCombo.extras.join(', ')}</p>`;
@@ -1407,7 +1447,7 @@
             }
 
             function updateAssistantChat(message) {
-                const chat = document.getElementById('assistantChat');
+                const chat = document.getElementById('comboBuilderChat');
                 chat.innerHTML += `<p>${message}</p>`;
                 chat.scrollTop = chat.scrollHeight;
             }
@@ -1417,35 +1457,66 @@
                 const message = userInput.value.trim();
                 if (message) {
                     updateAssistantChat(`Você: ${message}`);
-                    // Aqui você pode adicionar lógica para processar a mensagem do usuário
-                    // Por exemplo, responder a perguntas específicas sobre o combo
                     respondToUserMessage(message);
                     userInput.value = '';
                 }
             }
 
             function respondToUserMessage(message) {
-                // Lógica simples para responder a mensagens do usuário
                 const lowerMessage = message.toLowerCase();
-                if (lowerMessage.includes('preço') || lowerMessage.includes('valor')) {
-                    updateAssistantChat("Assistente: Os preços dos nossos combos são:\n" +
+                if (lowerMessage.includes('olá') || lowerMessage.includes('oi') || lowerMessage.includes('bom dia') || lowerMessage.includes('boa tarde') || lowerMessage.includes('boa noite')) {
+                    updateAssistantChat("Olá, tudo bem? Sou um robô, mas irei te ajudar a escolher seu Combo, ok? :)");
+                } else if (lowerMessage.includes('escolher')) {
+                    updateAssistantChat("Claro! Você pode escolher os acompanhamentos para cada açaí do seu combo. " + 
+                        "O número máximo de acompanhamentos varia de acordo com o tamanho do combo:\n" +
+                        "- Combo 2 de 300ml: até 3 acompanhamentos por açaí\n" +
+                        "- Combo 2 de 500ml: até 4 acompanhamentos por açaí\n" +
+                        "- Combo 2 de 1 Litro: até 8 acompanhamentos por açaí\n" +
+                        "Você pode escolher apenas Açaí puro ou Açaí com Creme. Que tipo de combo você gostaria de montar?");
+                } else if (lowerMessage.includes('preço') || lowerMessage.includes('valor')) {
+                    updateAssistantChat("Os preços dos nossos combos são:\n" +
                         combos.map(combo => `${combo.name}: R$ ${combo.price.toFixed(2)}`).join('\n'));
                 } else if (lowerMessage.includes('acompanhamento') || lowerMessage.includes('adicional')) {
-                    updateAssistantChat("Assistente: Nossos acompanhamentos incluem: " + 
+                    updateAssistantChat("Nossos acompanhamentos incluem: " + 
                         extraItems.map(item => item.name).join(', ') + 
-                        ". Você pode escolher até " + currentCombo.maxAccompaniments + 
-                        " acompanhamentos por açaí no seu combo.");
+                        ". O número máximo de acompanhamentos depende do tamanho do combo que você escolher.");
                 } else if (lowerMessage.includes('extra')) {
-                    updateAssistantChat("Assistente: Todos os itens extras custam R$ 1,99 cada. Você pode adicionar quantos quiser ao seu combo!");
+                    updateAssistantChat("Todos os itens extras custam R$ 1,99 cada. Você pode adicionar quantos quiser ao seu combo!");
+                } else if (lowerMessage.includes('sabor')) {
+                    updateAssistantChat("Temos os seguintes sabores disponíveis:\n" +
+                        "Açaí: Açaí Tradicional, Açaí com Guaraná\n" +
+                        "Cremes: Ninho, Ovomaltine, Maracujá, Amendoim, Cupuaçu\n" +
+                        "Você pode escolher até 2 opções de sabores para cada açaí do seu combo.");
+                } else if (lowerMessage.includes('creme')) {
+                    updateAssistantChat("Sim, você pode escolher apenas creme se preferir! Temos os seguintes sabores de creme disponíveis: Ninho, Ovomaltine, Maracujá, Amendoim e Cupuaçu. Você pode escolher até 2 opções de sabores para cada açaí do seu combo.");
                 } else if (lowerMessage.includes('ajuda') || lowerMessage.includes('como')) {
-                    updateAssistantChat("Assistente: Para montar seu combo, siga estas etapas:\n" +
+                    updateAssistantChat("Para montar seu combo, siga estas etapas:\n" +
                         "1. Escolha o tamanho do combo\n" +
-                        "2. Selecione os acompanhamentos para cada açaí\n" +
-                        "3. Adicione itens extras se desejar\n" +
-                        "4. Finalize seu combo e adicione ao carrinho\n" +
+                        "2. Selecione o sabor para cada açaí (até 2 opções)\n" +
+                        "3. Escolha os acompanhamentos para cada açaí\n" +
+                        "4. Adicione itens extras se desejar\n" +
+                        "5. Finalize seu combo e adicione ao carrinho\n" +
                         "Se tiver dúvidas específicas, é só perguntar!");
                 } else {
-                    updateAssistantChat("Assistente: Desculpe, não entendi sua pergunta. Posso ajudar com informações sobre preços, acompanhamentos, itens extras ou como montar seu combo. Pode reformular sua pergunta?");
+                    updateAssistantChat("Desculpe, não entendi sua pergunta. Para obter ajuda sobre assuntos específicos, você pode perguntar sobre preços, sabores, acompanhamentos, itens extras ou como montar seu combo. Se precisar de mais assistência, por favor, entre em contato com nosso suporte através do chat no ícone flutuante do cardápio digital.");
+                }
+            }
+
+            document.querySelectorAll('.close').forEach(closeBtn => {
+                closeBtn.onclick = function() {
+                    this.closest('.modal').style.display = "none";
+                }
+            });
+
+            function closeAllModals() {
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.style.display = "none";
+                });
+            }
+
+            window.onclick = function(event) {
+                if (event.target.classList.contains('modal')) {
+                    closeAllModals();
                 }
             }
 
