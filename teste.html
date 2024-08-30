@@ -498,13 +498,19 @@
             <div id="comboBuilder"></div>
         </div>
     </div>
-    <div id="myOrdersModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Meus Pedidos</h2>
-            <div id="myOrdersContent"></div>
-        </div>
+<div id="myOrdersModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Meus Pedidos</h2>
+    <div class="input-icon">
+      <i class="fab fa-whatsapp"></i>
+      <input type="tel" id="myOrdersPhone" placeholder="WhatsApp (com DDD)" required>
     </div>
+    <button class="btn" onclick="fetchMyOrders()">Ver Meus Pedidos</button>
+    <div id="myOrdersList"></div>
+    <div id="myLoyaltyInfo"></div>
+  </div>
+</div>
     <div id="loyaltyProgramModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
