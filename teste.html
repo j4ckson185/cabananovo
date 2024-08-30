@@ -12,6 +12,9 @@
             --background-color: #f5f5f5;
             --text-color: #333;
             --accent-color: #e74c3c;
+            --acai-purple: #4B0082;
+            --acai-pink: #FF69B4;
+            --acai-green: #32CD32;
         }
         body {
             font-family: 'Arial', sans-serif;
@@ -21,7 +24,7 @@
             color: var(--text-color);
         }
         header {
-            background-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--acai-purple), var(--acai-pink));
             color: white;
             padding: 1em 0;
             text-align: center;
@@ -45,6 +48,7 @@
             position: absolute;
             right: 20px;
             top: 20px;
+            color: white;
         }
         main {
             max-width: 1200px;
@@ -94,11 +98,11 @@
         .product-title {
             margin: 0;
             font-size: 1.2em;
-            color: var(--primary-color);
+            color: var(--acai-purple);
         }
         .product-price {
             font-weight: bold;
-            color: var(--secondary-color);
+            color: var(--acai-pink);
             margin-top: 0.5em;
         }
         .product-description {
@@ -109,7 +113,7 @@
         .btn {
             display: inline-block;
             padding: 0.5em 1em;
-            background-color: var(--primary-color);
+            background-color: var(--acai-purple);
             color: white;
             text-decoration: none;
             border-radius: 4px;
@@ -118,7 +122,7 @@
             cursor: pointer;
         }
         .btn:hover {
-            background-color: var(--secondary-color);
+            background-color: var(--acai-pink);
         }
         .btn:disabled {
             background-color: #cccccc;
@@ -138,11 +142,11 @@
         }
         .modal-content {
             background-color: #fefefe;
-            margin: 15% auto;
+            margin: 5% auto;
             padding: 20px;
             border: 1px solid #888;
-            width: 80%;
-            max-width: 600px;
+            width: 90%;
+            max-width: 800px;
             border-radius: 8px;
         }
         .close {
@@ -163,6 +167,7 @@
         }
         .extras-list h3 {
             margin-bottom: 0.5em;
+            color: var(--acai-purple);
         }
         .extras-list ul {
             list-style-type: none;
@@ -199,11 +204,11 @@
             flex-grow: 1;
         }
         .cart-item-remove {
-            color: red;
+            color: var(--accent-color);
             cursor: pointer;
         }
         .error-message {
-            color: red;
+            color: var(--accent-color);
             margin-top: 10px;
         }
         #customerIdentificationForm {
@@ -213,13 +218,13 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         #customerIdentificationForm h2 {
-            color: var(--primary-color);
+            color: var(--acai-purple);
             margin-bottom: 20px;
         }
         #customerIdentificationForm label {
             display: block;
             margin-top: 10px;
-            color: var(--secondary-color);
+            color: var(--acai-pink);
         }
         #customerIdentificationForm input {
             width: 100%;
@@ -240,7 +245,7 @@
             left: 10px;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--secondary-color);
+            color: var(--acai-pink);
         }
         .input-icon input {
             padding-left: 35px;
@@ -251,6 +256,7 @@
         #checkoutForm label {
             display: block;
             margin-top: 10px;
+            color: var(--acai-purple);
         }
         #checkoutForm input, #checkoutForm textarea, #checkoutForm select {
             width: 100%;
@@ -259,16 +265,19 @@
         }
         #orderSummary {
             margin-top: 20px;
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
         }
         .loyalty-info {
             background-color: #e8f5e9;
-            border: 1px solid #4caf50;
+            border: 1px solid var(--acai-green);
             border-radius: 4px;
             padding: 10px;
             margin-top: 10px;
         }
         .required-field {
-            color: red;
+            color: var(--accent-color);
         }
         .extras-suggestion {
             background-color: #f0e6ff;
@@ -277,7 +286,7 @@
             margin-top: 20px;
         }
         .extras-suggestion h3 {
-            color: #4a0e4e;
+            color: var(--acai-purple);
             margin-bottom: 15px;
             text-align: center;
         }
@@ -288,7 +297,7 @@
         }
         .extra-item {
             background-color: white;
-            border: 2px solid #8e44ad;
+            border: 2px solid var(--acai-pink);
             border-radius: 8px;
             padding: 10px;
             text-align: center;
@@ -305,35 +314,58 @@
         .extra-item p {
             margin: 5px 0;
             font-size: 0.9em;
+            color: var(--acai-purple);
         }
         .extra-item.selected {
             background-color: #e6e6fa;
-            border-color: #4a0e4e;
+            border-color: var(--acai-purple);
             transform: scale(1.05);
         }
-        #comboModal .modal-content {
-            max-width: 800px;
+        #comboBuilderModal .modal-content {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        #comboBuilderChat {
+            width: 60%;
+            height: 500px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        #comboDynamicSummary {
+            width: 35%;
+            height: 500px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 8px;
         }
         .combo-step {
             margin-bottom: 20px;
         }
-        .combo-options {
+        .combo-options, .flavor-options, .accompaniment-options {
             display: flex;
-            justify-content: space-around;
             flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
         }
-        .combo-option {
+        .combo-option, .flavor-option, .accompaniment-option {
             background-color: #fff;
-            border: 2px solid #8e44ad;
+            border: 2px solid var(--acai-pink);
             border-radius: 8px;
             padding: 15px;
             margin: 10px;
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        .combo-option:hover, .combo-option.selected {
+        .combo-option:hover, .flavor-option:hover, .accompaniment-option:hover,
+        .combo-option.selected, .flavor-option.selected, .accompaniment-option.selected {
             background-color: #e6e6fa;
-            border-color: #4a0e4e;
+            border-color: var(--acai-purple);
             transform: scale(1.05);
         }
         .combo-items {
@@ -358,7 +390,7 @@
             margin-bottom: 10px;
         }
         .combo-item.selected {
-            border-color: #4a0e4e;
+            border-color: var(--acai-purple);
             background-color: #e6e6fa;
         }
         #comboSummary {
@@ -379,52 +411,12 @@
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background-color: var(--primary-color);
+            background-color: var(--acai-purple);
             color: white;
             padding: 10px 20px;
             border-radius: 20px;
             cursor: pointer;
             z-index: 1000;
-        }
-        #comboBuilderModal {
-            display: none;
-            position: fixed;
-            z-index: 1001;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.4);
-        }
-        #comboBuilderModal .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 90%;
-            max-width: 800px;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-        }
-        #comboBuilderChat {
-            width: 60%;
-            height: 500px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin-bottom: 10px;
-        }
-        #comboDynamicSummary {
-            width: 35%;
-            height: 500px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            padding: 10px;
-            background-color: #f0f0f0;
-            border-radius: 8px;
         }
         #userInput {
             width: 80%;
@@ -434,6 +426,15 @@
         #sendMessage {
             width: 18%;
             padding: 10px;
+        }
+        .back-button {
+            background-color: var(--acai-green);
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -445,7 +446,7 @@
             <h4>Quarta à Domingo</h4>
             <p>12:30h as 22:30h</p>
         </div>
-        <div class="cart-icon" onclick="openCart()">🛒</div>
+<div class="cart-icon" onclick="openCart()">🛒</div>
     </header>
     <main>
         <div class="user-options">
@@ -571,6 +572,7 @@
     <div id="comboBuilderModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeComboBuilder()">&times;</span>
+            <button class="back-button" onclick="goBackInComboBuilder()">Voltar</button>
             <div id="comboBuilderChat"></div>
             <div id="comboSummary">
                 <h3>Detalhes do seu Combo</h3>
@@ -683,7 +685,7 @@
             `).join('');
         }
 
-        window.openProductDetails = function(productId, event) {
+window.openProductDetails = function(productId, event) {
             if (event) {
                 event.stopPropagation();
             }
@@ -999,7 +1001,7 @@
                 alert("Por favor, selecione um endereço de entrega.");
                 return;
             }
-            const selectedAddress = savedAddresses[selectedAddressIndex];
+const selectedAddress = savedAddresses[selectedAddressIndex];
             const paymentMethod = document.getElementById('paymentMethod').value;
             const changeNeeded = document.getElementById('changeNeeded').value;
             const changeAmount = document.getElementById('changeAmount').value;
@@ -1018,7 +1020,7 @@
                 }
             }
             
-message += `\nItens do Pedido:\n`;
+            message += `\nItens do Pedido:\n`;
             cart.forEach(item => {
                 message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
                 if (item.accompaniments.length > 0) {
@@ -1252,6 +1254,7 @@ message += `\nItens do Pedido:\n`;
         let currentCombo = null;
         let currentStep = 'combo';
         let currentAcai = 1;
+        let comboHistory = [];
 
         window.openComboBuilder = function() {
             document.getElementById('comboBuilderModal').style.display = 'block';
@@ -1290,6 +1293,7 @@ message += `\nItens do Pedido:\n`;
             updateAssistantChat(`Ótima escolha! Agora, vamos escolher os sabores para o primeiro açaí do ${currentCombo.name}.`);
             displayFlavorOptions();
             updateComboDynamicSummary();
+            comboHistory.push('combo');
         }
 
         function displayFlavorOptions() {
@@ -1305,273 +1309,817 @@ message += `\nItens do Pedido:\n`;
             `;
         }
 
-        window.selectFlavor = function(flavorName) {
-            if (currentAcai === 1) {
-                currentCombo.acai1.flavors.push(flavorName);
-            } else {
-                currentCombo.acai2.flavors.push(flavorName);
-            }
+window.selectFlavor = function(flavorName) {
+    if (currentAcai === 1) {
+        currentCombo.acai1.flavors.push(flavorName);
+    } else {
+        currentCombo.acai2.flavors.push(flavorName);
+    }
 
-            updateAssistantChat(`Sabor ${flavorName} selecionado para o açaí ${currentAcai}.`);
+    updateAssistantChat(`Sabor ${flavorName} selecionado para o açaí ${currentAcai}.`);
 
-            if ((currentAcai === 1 && currentCombo.acai1.flavors.length < 2) || 
-                (currentAcai === 2 && currentCombo.acai2.flavors.length < 2)) {
-                updateAssistantChat("Deseja escolher mais um sabor ou prosseguir para os acompanhamentos?");
-                displayOptions(["Escolher outro sabor", "Prosseguir para acompanhamentos"]);
-            } else {
-                currentStep = 'accompaniment';
-                displayAccompanimentOptions();
-            }
-            updateComboDynamicSummary();
-        }
+    if ((currentAcai === 1 && currentCombo.acai1.flavors.length < 2) || 
+        (currentAcai === 2 && currentCombo.acai2.flavors.length < 2)) {
+        updateAssistantChat("Deseja escolher mais um sabor ou prosseguir para os acompanhamentos?");
+        displayOptions(["Escolher outro sabor", "Prosseguir para acompanhamentos"]);
+    } else {
+        currentStep = 'accompaniment';
+        displayAccompanimentOptions();
+    }
+    updateComboDynamicSummary();
+    comboHistory.push('flavor');
+}
 
 function displayAccompanimentOptions() {
-            updateAssistantChat(`Agora, vamos escolher os acompanhamentos para o açaí ${currentAcai}. Você pode escolher até ${currentCombo.maxAccompaniments}:`);
-            const comboBuilder = document.getElementById('comboBuilderChat');
-            comboBuilder.innerHTML += `
-                <div class="accompaniment-options">
-                    ${extraItems.map(acc => `
-                        <div class="accompaniment-option" onclick="selectAccompaniment('${acc.name}')">
-                            <p>${acc.name}</p>
-                        </div>
-                    `).join('')}
+    updateAssistantChat(`Agora, vamos escolher os acompanhamentos para o açaí ${currentAcai}. Você pode escolher até ${currentCombo.maxAccompaniments}:`);
+    const comboBuilder = document.getElementById('comboBuilderChat');
+    comboBuilder.innerHTML += `
+        <div class="accompaniment-options">
+            ${extraItems.map(acc => `
+                <div class="accompaniment-option" onclick="selectAccompaniment('${acc.name}')">
+                    <img src="${acc.image}" alt="${acc.name}">
+                    <p>${acc.name}</p>
                 </div>
-            `;
+            `).join('')}
+        </div>
+    `;
+}
+
+window.selectAccompaniment = function(accName) {
+    if (currentAcai === 1) {
+        if (currentCombo.acai1.accompaniments.length < currentCombo.maxAccompaniments) {
+            currentCombo.acai1.accompaniments.push(accName);
+            updateAssistantChat(`${accName} adicionado ao açaí 1.`);
+        } else {
+            updateAssistantChat(`Você já selecionou o máximo de acompanhamentos para o açaí 1.`);
         }
-
-        window.selectAccompaniment = function(accName) {
-            if (currentAcai === 1) {
-                if (currentCombo.acai1.accompaniments.length < currentCombo.maxAccompaniments) {
-                    currentCombo.acai1.accompaniments.push(accName);
-                    updateAssistantChat(`${accName} adicionado ao açaí 1.`);
-                } else {
-                    updateAssistantChat(`Você já selecionou o máximo de acompanhamentos para o açaí 1.`);
-                }
-            } else {
-                if (currentCombo.acai2.accompaniments.length < currentCombo.maxAccompaniments) {
-                    currentCombo.acai2.accompaniments.push(accName);
-                    updateAssistantChat(`${accName} adicionado ao açaí 2.`);
-                } else {
-                    updateAssistantChat(`Você já selecionou o máximo de acompanhamentos para o açaí 2.`);
-                }
-            }
-
-            if ((currentAcai === 1 && currentCombo.acai1.accompaniments.length === currentCombo.maxAccompaniments) ||
-                (currentAcai === 2 && currentCombo.acai2.accompaniments.length === currentCombo.maxAccompaniments)) {
-                if (currentAcai === 1) {
-                    currentAcai = 2;
-                    currentStep = 'flavor';
-                    updateAssistantChat("Ótimo! Agora vamos escolher os sabores para o segundo açaí.");
-                    displayFlavorOptions();
-                } else {
-                    updateAssistantChat("Perfeito! Você completou seu combo. Deseja finalizar o pedido ou adicionar itens extras?");
-                    displayOptions(["Finalizar pedido", "Adicionar extras"]);
-                }
-            }
-            updateComboDynamicSummary();
+    } else {
+        if (currentCombo.acai2.accompaniments.length < currentCombo.maxAccompaniments) {
+            currentCombo.acai2.accompaniments.push(accName);
+            updateAssistantChat(`${accName} adicionado ao açaí 2.`);
+        } else {
+            updateAssistantChat(`Você já selecionou o máximo de acompanhamentos para o açaí 2.`);
         }
+    }
 
-        function displayOptions(options) {
-            const comboBuilder = document.getElementById('comboBuilderChat');
-            comboBuilder.innerHTML += `
-                <div class="options">
-                    ${options.map(option => `
-                        <button class="btn" onclick="handleOption('${option}')">${option}</button>
-                    `).join('')}
+    if ((currentAcai === 1 && currentCombo.acai1.accompaniments.length === currentCombo.maxAccompaniments) ||
+        (currentAcai === 2 && currentCombo.acai2.accompaniments.length === currentCombo.maxAccompaniments)) {
+        if (currentAcai === 1) {
+            currentAcai = 2;
+            currentStep = 'flavor';
+            updateAssistantChat("Ótimo! Agora vamos escolher os sabores para o segundo açaí.");
+            displayFlavorOptions();
+        } else {
+            updateAssistantChat("Perfeito! Você completou seu combo. Deseja finalizar o pedido ou adicionar itens extras?");
+            displayOptions(["Finalizar pedido", "Adicionar extras"]);
+        }
+    }
+    updateComboDynamicSummary();
+    comboHistory.push('accompaniment');
+}
+
+function displayOptions(options) {
+    const comboBuilder = document.getElementById('comboBuilderChat');
+    comboBuilder.innerHTML += `
+        <div class="options">
+            ${options.map(option => `
+                <button class="btn" onclick="handleOption('${option}')">${option}</button>
+            `).join('')}
+        </div>
+    `;
+}
+
+function handleOption(option) {
+    switch(option) {
+        case "Escolher outro sabor":
+            displayFlavorOptions();
+            break;
+        case "Prosseguir para acompanhamentos":
+            currentStep = 'accompaniment';
+            displayAccompanimentOptions();
+            break;
+        case "Finalizar pedido":
+            finalizePedido();
+            break;
+        case "Adicionar extras":
+            displayExtrasOptions();
+            break;
+    }
+}
+
+function displayExtrasOptions() {
+    updateAssistantChat("Escolha os itens extras que deseja adicionar ao seu combo:");
+    const comboBuilder = document.getElementById('comboBuilderChat');
+    comboBuilder.innerHTML += `
+        <div class="extras-options">
+            ${extraItems.map(extra => `
+                <div class="extra-option" onclick="addExtra('${extra.name}')">
+                    <img src="${extra.image}" alt="${extra.name}">
+                    <p>${extra.name} - R$ 1,99</p>
                 </div>
-            `;
-        }
+            `).join('')}
+        </div>
+        <button class="btn" onclick="finalizePedido()">Finalizar Pedido</button>
+    `;
+}
 
-        function handleOption(option) {
-            switch(option) {
-                case "Escolher outro sabor":
-                    displayFlavorOptions();
-                    break;
-                case "Prosseguir para acompanhamentos":
-                    currentStep = 'accompaniment';
-                    displayAccompanimentOptions();
-                    break;
-                case "Finalizar pedido":
-                    finalizePedido();
-                    break;
-                case "Adicionar extras":
-                    displayExtrasOptions();
-                    break;
-            }
-        }
+function addExtra(extraName) {
+    if (!currentCombo.extras) {
+        currentCombo.extras = [];
+    }
+    currentCombo.extras.push(extraName);
+    updateAssistantChat(`${extraName} adicionado como extra.`);
+    updateComboDynamicSummary();
+    comboHistory.push('extras');
+}
 
-        function displayExtrasOptions() {
-            updateAssistantChat("Escolha os itens extras que deseja adicionar ao seu combo:");
-            const comboBuilder = document.getElementById('comboBuilderChat');
-            comboBuilder.innerHTML += `
-                <div class="extras-options">
-                    ${extraItems.map(extra => `
-                        <div class="extra-option" onclick="addExtra('${extra.name}')">
-                            <p>${extra.name} - R$ 1,99</p>
-                        </div>
-                    `).join('')}
-                </div>
-                <button class="btn" onclick="finalizePedido()">Finalizar Pedido</button>
-            `;
-        }
+function finalizePedido() {
+    updateAssistantChat("Seu combo está pronto! Aqui está o resumo final:");
+    const summary = getComboSummary();
+    updateAssistantChat(summary);
+    updateAssistantChat("Deseja adicionar este combo ao carrinho?");
+    displayOptions(["Adicionar ao Carrinho", "Montar Novo Combo"]);
+}
 
-        function addExtra(extraName) {
-            if (!currentCombo.extras) {
+function getComboSummary() {
+    let summary = `${currentCombo.name}\n`;
+    summary += `Açaí 1: ${currentCombo.acai1.flavors.join(', ')}\n`;
+    summary += `Acompanhamentos: ${currentCombo.acai1.accompaniments.join(', ')}\n`;
+    summary += `Açaí 2: ${currentCombo.acai2.flavors.join(', ')}\n`;
+    summary += `Acompanhamentos: ${currentCombo.acai2.accompaniments.join(', ')}\n`;
+    if (currentCombo.extras && currentCombo.extras.length > 0) {
+        summary += `Itens Extras: ${currentCombo.extras.join(', ')}\n`;
+    }
+    const total = calculateComboTotal();
+    summary += `Total: R$ ${total.toFixed(2)}`;
+    return summary;
+}
+
+function calculateComboTotal() {
+    let total = currentCombo.price;
+    if (currentCombo.extras) {
+        total += currentCombo.extras.length * 1.99;
+    }
+    return total;
+}
+
+function updateComboDynamicSummary() {
+    const summaryDiv = document.getElementById('comboDynamicSummary');
+    let summaryHTML = `<h4>${currentCombo.name}</h4>`;
+    summaryHTML += `<p><strong>Açaí 1:</strong> ${currentCombo.acai1.flavors.join(', ') || 'Não selecionado'}</p>`;
+    summaryHTML += `<p><strong>Acompanhamentos 1:</strong> ${currentCombo.acai1.accompaniments.join(', ') || 'Nenhum'}</p>`;
+    summaryHTML += `<p><strong>Açaí 2:</strong> ${currentCombo.acai2.flavors.join(', ') || 'Não selecionado'}</p>`;
+    summaryHTML += `<p><strong>Acompanhamentos 2:</strong> ${currentCombo.acai2.accompaniments.join(', ') || 'Nenhum'}</p>`;
+    if (currentCombo.extras && currentCombo.extras.length > 0) {
+        summaryHTML += `<p><strong>Extras:</strong> ${currentCombo.extras.join(', ')}</p>`;
+    }
+    summaryHTML += `<p><strong>Total:</strong> R$ ${calculateComboTotal().toFixed(2)}</p>`;
+    summaryDiv.innerHTML = summaryHTML;
+}
+
+function addComboToCart() {
+    const comboItem = {
+        id: Date.now(),
+        name: currentCombo.name,
+        price: currentCombo.price,
+        acai1: currentCombo.acai1,
+        acai2: currentCombo.acai2,
+        extras: currentCombo.extras || [],
+        totalPrice: calculateComboTotal()
+    };
+    cart.push(comboItem);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateAssistantChat("Combo adicionado ao carrinho com sucesso!");
+    openCart();
+    resetComboBuilder();
+}
+
+function resetComboBuilder() {
+    currentCombo = null;
+    currentStep = 'combo';
+    currentAcai = 1;
+    comboHistory = [];
+    document.getElementById('comboBuilderChat').innerHTML = '';
+    document.getElementById('comboDynamicSummary').innerHTML = '';
+    startComboBuilder();
+}
+
+function updateAssistantChat(message) {
+    const chat = document.getElementById('comboBuilderChat');
+    chat.innerHTML += `<p>${message}</p>`;
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function sendMessage() {
+    const userInput = document.getElementById('userInput');
+    const message = userInput.value.trim();
+    if (message) {
+        updateAssistantChat(`Você: ${message}`);
+        respondToUserMessage(message);
+        userInput.value = '';
+    }
+}
+
+function respondToUserMessage(message) {
+    const lowerMessage = message.toLowerCase();
+    if (lowerMessage.includes('olá') || lowerMessage.includes('oi') || lowerMessage.includes('bom dia') || lowerMessage.includes('boa tarde') || lowerMessage.includes('boa noite')) {
+        updateAssistantChat("Olá, tudo bem? Sou um robô, mas irei te ajudar a escolher seu Combo, ok? :)");
+    } else if (lowerMessage.includes('escolher')) {
+        updateAssistantChat("Claro! Você pode escolher os acompanhamentos para cada açaí do seu combo. " + 
+            "O número máximo de acompanhamentos varia de acordo com o tamanho do combo:\n" +
+            "- Combo 2 de 300ml: até 3 acompanhamentos por açaí\n" +
+            "- Combo 2 de 500ml: até 4 acompanhamentos por açaí\n" +
+            "- Combo 2 de 1 Litro: até 8 acompanhamentos por açaí\n" +
+            "Você pode escolher apenas Açaí puro ou Açaí com Creme. Que tipo de combo você gostaria de montar?");
+        displayComboOptions();
+    } else if (lowerMessage.includes('preço') || lowerMessage.includes('valor')) {
+        updateAssistantChat("Os preços dos nossos combos são:\n" +
+            combos.map(combo => `${combo.name}: R$ ${combo.price.toFixed(2)}`).join('\n'));
+    } else if (lowerMessage.includes('acompanhamento') || lowerMessage.includes('adicional')) {
+        updateAssistantChat("Nossos acompanhamentos incluem: " + 
+            extraItems.map(item => item.name).join(', ') + 
+            ". O número máximo de acompanhamentos depende do tamanho do combo que você escolher.");
+    } else if (lowerMessage.includes('extra')) {
+        updateAssistantChat("Todos os itens extras custam R$ 1,99 cada. Você pode adicionar quantos quiser ao seu combo!");
+    } else if (lowerMessage.includes('sabor')) {
+        updateAssistantChat("Temos os seguintes sabores disponíveis:\n" +
+            flavors.map(f => f.name).join(', ') + "\n" +
+            "Você pode escolher até 2 opções de sabores para cada açaí do seu combo.");
+    } else if (lowerMessage.includes('creme')) {
+        updateAssistantChat("Sim, você pode escolher apenas creme se preferir! Temos os seguintes sabores de creme disponíveis: " + 
+            flavors.filter(f => f.type === 'creme').map(f => f.name).join(', ') + 
+            ". Você pode escolher até 2 opções de sabores para cada açaí do seu combo.");
+    } else if (lowerMessage.includes('ajuda') || lowerMessage.includes('como')) {
+        updateAssistantChat("Para montar seu combo, siga estas etapas:\n" +
+            "1. Escolha o tamanho do combo\n" +
+            "2. Selecione o sabor para cada açaí (até 2 opções)\n" +
+            "3. Escolha os acompanhamentos para cada açaí\n" +
+            "4. Adicione itens extras se desejar\n" +
+            "5. Finalize seu combo e adicione ao carrinho\n" +
+            "Se tiver dúvidas específicas, é só perguntar!");
+    } else {
+        updateAssistantChat("Desculpe, não entendi sua pergunta. Para obter ajuda sobre assuntos específicos, você pode perguntar sobre preços, sabores, acompanhamentos, itens extras ou como montar seu combo. Se precisar de mais assistência, por favor, entre em contato com nosso suporte através do chat no ícone flutuante do cardápio digital.");
+    }
+}
+
+function goBackInComboBuilder() {
+    if (comboHistory.length > 1) {
+        comboHistory.pop(); // Remove o passo atual
+        const lastStep = comboHistory[comboHistory.length - 1];
+        switch (lastStep) {
+            case 'combo':
+                resetComboBuilder();
+                break;
+            case 'flavor':
+                currentStep = 'flavor';
+                if (currentAcai === 2) {
+                    currentAcai = 1;
+                }
+                currentCombo.acai1.flavors = [];
+                currentCombo.acai2.flavors = [];
+                displayFlavorOptions();
+                break;
+            case 'accompaniment':
+                currentStep = 'accompaniment';
+                if (currentAcai === 2) {
+                    currentCombo.acai2.accompaniments = [];
+                } else {
+                    currentCombo.acai1.accompaniments = [];
+                }
+                displayAccompanimentOptions();
+                break;
+            case 'extras':
                 currentCombo.extras = [];
-            }
-            currentCombo.extras.push(extraName);
-            updateAssistantChat(`${extraName} adicionado como extra.`);
-            updateComboDynamicSummary();
+                displayExtrasOptions();
+                break;
         }
+        updateComboDynamicSummary();
+    } else {
+        updateAssistantChat("Você já está no início do processo de montagem do combo.");
+    }
+}
 
-        function finalizePedido() {
-            updateAssistantChat("Seu combo está pronto! Aqui está o resumo final:");
-            const summary = getComboSummary();
-            updateAssistantChat(summary);
-            updateAssistantChat("Deseja adicionar este combo ao carrinho?");
-            displayOptions(["Adicionar ao Carrinho", "Montar Novo Combo"]);
+document.querySelectorAll('.close').forEach(closeBtn => {
+    closeBtn.onclick = function() {
+        this.closest('.modal').style.display = "none";
+    }
+});
+
+function closeAllModals() {
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.style.display = "none";
+    });
+}
+
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        closeAllModals();
+    }
+}
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', function () {
+    fetchCategories();
+    fetchProducts();
+    loadDataFromLocalStorage();
+    updateCartIcon();
+});
+
+function loadDataFromLocalStorage() {
+    const storedCart = localStorage.getItem('cart');
+    if (storedCart) {
+        cart = JSON.parse(storedCart);
+    }
+
+    const storedCustomerInfo = localStorage.getItem('customerInfo');
+    if (storedCustomerInfo) {
+        customerInfo = JSON.parse(storedCustomerInfo);
+    }
+
+    const storedSavedAddresses = localStorage.getItem('savedAddresses');
+    if (storedSavedAddresses) {
+        savedAddresses = JSON.parse(storedSavedAddresses);
+    }
+}
+
+function saveDataToLocalStorage() {
+    localStorage.setItem('cart', JSON.stringify(cart));
+    localStorage.setItem('customerInfo', JSON.stringify(customerInfo));
+    localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
+}
+
+function updateLocalStorage() {
+    saveDataToLocalStorage();
+    updateCartIcon();
+}
+
+window.addToCart = function(productId) {
+    const product = products.find(p => p.id === productId);
+    const accompaniments = Array.from(document.querySelectorAll('#accompaniments input[type="checkbox"]:checked')).map(cb => cb.value);
+    const extras = Array.from(document.querySelectorAll('#extras input[type="checkbox"]:checked')).map(cb => cb.value);
+    if (accompaniments.length < product.minAccompaniments || accompaniments.length > product.maxAccompaniments) {
+        alert(`Por favor, selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos.`);
+        return;
+    }
+    const cartItem = {
+        id: Date.now(),
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        accompaniments: accompaniments,
+        extras: extras,
+        totalPrice: calculateTotalPrice(product, extras)
+    };
+    cart.push(cartItem);
+    updateLocalStorage();
+    openCart();
+}
+
+window.removeFromCart = function(itemId) {
+    cart = cart.filter(item => item.id !== itemId);
+    updateLocalStorage();
+    openCart();
+}
+
+function updateCartIcon() {
+    const cartIconElement = document.querySelector('.cart-icon');
+    if (cart.length > 0) {
+        cartIconElement.textContent = `🛒 (${cart.length})`;
+    } else {
+        cartIconElement.textContent = '🛒';
+    }
+}
+
+function updateCart() {
+    updateCartIcon();
+    updateLocalStorage();
+}
+
+window.openCart = function() {
+    const modal = document.getElementById('cartModal');
+    const cartContent = document.getElementById('cartContent');
+    const cartTotal = document.getElementById('cartTotal');
+    cartContent.innerHTML = cart.map(item => `
+        <div class="cart-item">
+            <div class="cart-item-info">
+                <h3>${item.name}</h3>
+                <p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>
+                <p>Extras: ${item.extras.join(', ')}</p>
+                <p>Preço: R$ ${item.totalPrice.toFixed(2)}</p>
+            </div>
+            <span class="cart-item-remove" onclick="removeFromCart(${item.id})">🗑️</span>
+        </div>
+    `).join('');
+    const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+    cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
+    modal.style.display = "block";
+}
+
+window.continueShopping = function() {
+    document.getElementById('cartModal').style.display = "none";
+}
+
+window.openCustomerIdentification = function() {
+    document.getElementById('cartModal').style.display = "none";
+    const modal = document.getElementById('customerIdentificationModal');
+    modal.style.display = "block";
+    const phone = localStorage.getItem('customerPhone');
+    if (phone) {
+        document.getElementById('customerPhone').value = phone;
+        document.getElementById('customerName').value = localStorage.getItem('customerName') || '';
+        loadCustomerData(phone);
+    }
+}
+
+document.getElementById('customerIdentificationForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const phone = document.getElementById('customerPhone').value;
+    const name = document.getElementById('customerName').value;
+    customerInfo = { phone, name };
+    localStorage.setItem('customerPhone', phone);
+    localStorage.setItem('customerName', name);
+    db.collection('customers').doc(phone).set({
+        name: name,
+        addresses: savedAddresses
+    }, { merge: true }).then(() => {
+        document.getElementById('customerIdentificationModal').style.display = "none";
+        openCheckout();
+    }).catch((error) => {
+        console.error("Error saving customer data: ", error);
+    });
+});
+
+function openCheckout() {
+    const checkoutModal = document.getElementById('checkoutModal');
+    const orderSummary = document.getElementById('orderSummary');
+    loadSavedAddresses();
+    updateOrderSummary();
+    document.getElementById('paymentSection').style.display = 'none';
+    document.getElementById('submitOrderBtn').style.display = 'none';
+    checkoutModal.style.display = "block";
+    displayExtraItems();
+}
+
+document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    // ... (código existente para processar o pedido)
+    updateLocalStorage();
+});
+
+window.openComboBuilder = function() {
+    document.getElementById('comboBuilderModal').style.display = 'block';
+    startComboBuilder();
+}
+
+window.closeComboBuilder = function() {
+    document.getElementById('comboBuilderModal').style.display = 'none';
+    resetComboBuilder();
+}
+
+function startComboBuilder() {
+    updateAssistantChat("Olá! Vamos montar seu combo de açaí? Escolha uma das opções abaixo:");
+    displayComboOptions();
+}
+
+function displayComboOptions() {
+    const comboBuilder = document.getElementById('comboBuilderChat');
+    comboBuilder.innerHTML += `
+        <div class="combo-options">
+            ${combos.map(combo => `
+                <div class="combo-option" onclick="selectCombo('${combo.name}')">
+                    <h3>${combo.name}</h3>
+                    <p>R$ ${combo.price.toFixed(2)}</p>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+window.selectCombo = function(comboName) {
+    currentCombo = combos.find(combo => combo.name === comboName);
+    currentCombo.acai1 = { flavors: [], accompaniments: [] };
+    currentCombo.acai2 = { flavors: [], accompaniments: [] };
+    currentStep = 'flavor';
+    updateAssistantChat(`Ótima escolha! Agora, vamos escolher os sabores para o primeiro açaí do ${currentCombo.name}.`);
+    displayFlavorOptions();
+    updateComboDynamicSummary();
+    comboHistory.push('combo');
+}
+
+function displayFlavorOptions() {
+    const comboBuilder = document.getElementById('comboBuilderChat');
+    comboBuilder.innerHTML += `
+        <div class="flavor-options">
+            ${flavors.map(flavor => `
+                <div class="flavor-option" onclick="selectFlavor('${flavor.name}')">
+                    <p>${flavor.name}</p>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+window.selectFlavor = function(flavorName) {
+    if (currentAcai === 1) {
+        currentCombo.acai1.flavors.push(flavorName);
+    } else {
+        currentCombo.acai2.flavors.push(flavorName);
+    }
+
+    updateAssistantChat(`Sabor ${flavorName} selecionado para o açaí ${currentAcai}.`);
+
+    if ((currentAcai === 1 && currentCombo.acai1.flavors.length < 2) || 
+        (currentAcai === 2 && currentCombo.acai2.flavors.length < 2)) {
+        updateAssistantChat("Deseja escolher mais um sabor ou prosseguir para os acompanhamentos?");
+        displayOptions(["Escolher outro sabor", "Prosseguir para acompanhamentos"]);
+    } else {
+        currentStep = 'accompaniment';
+        displayAccompanimentOptions();
+    }
+    updateComboDynamicSummary();
+    comboHistory.push('flavor');
+}
+
+function displayAccompanimentOptions() {
+    updateAssistantChat(`Agora, vamos escolher os acompanhamentos para o açaí ${currentAcai}. Você pode escolher até ${currentCombo.maxAccompaniments}:`);
+    const comboBuilder = document.getElementById('comboBuilderChat');
+    comboBuilder.innerHTML += `
+        <div class="accompaniment-options">
+            ${extraItems.map(acc => `
+                <div class="accompaniment-option" onclick="selectAccompaniment('${acc.name}')">
+                    <img src="${acc.image}" alt="${acc.name}">
+                    <p>${acc.name}</p>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+window.selectAccompaniment = function(accName) {
+    if (currentAcai === 1) {
+        if (currentCombo.acai1.accompaniments.length < currentCombo.maxAccompaniments) {
+            currentCombo.acai1.accompaniments.push(accName);
+            updateAssistantChat(`${accName} adicionado ao açaí 1.`);
+        } else {
+            updateAssistantChat(`Você já selecionou o máximo de acompanhamentos para o açaí 1.`);
         }
-
-        function getComboSummary() {
-            let summary = `${currentCombo.name}\n`;
-            summary += `Açaí 1: ${currentCombo.acai1.flavors.join(', ')}\n`;
-            summary += `Acompanhamentos: ${currentCombo.acai1.accompaniments.join(', ')}\n`;
-            summary += `Açaí 2: ${currentCombo.acai2.flavors.join(', ')}\n`;
-            summary += `Acompanhamentos: ${currentCombo.acai2.accompaniments.join(', ')}\n`;
-            if (currentCombo.extras && currentCombo.extras.length > 0) {
-                summary += `Itens Extras: ${currentCombo.extras.join(', ')}\n`;
-            }
-            const total = calculateComboTotal();
-            summary += `Total: R$ ${total.toFixed(2)}`;
-            return summary;
+    } else {
+        if (currentCombo.acai2.accompaniments.length < currentCombo.maxAccompaniments) {
+            currentCombo.acai2.accompaniments.push(accName);
+            updateAssistantChat(`${accName} adicionado ao açaí 2.`);
+        } else {
+            updateAssistantChat(`Você já selecionado o máximo de acompanhamentos para o açaí 2.`);
         }
+    }
 
-        function calculateComboTotal() {
-            let total = currentCombo.price;
-            if (currentCombo.extras) {
-                total += currentCombo.extras.length * 1.99;
-            }
-            return total;
+    if ((currentAcai === 1 && currentCombo.acai1.accompaniments.length === currentCombo.maxAccompaniments) ||
+        (currentAcai === 2 && currentCombo.acai2.accompaniments.length === currentCombo.maxAccompaniments)) {
+        if (currentAcai === 1) {
+            currentAcai = 2;
+            currentStep = 'flavor';
+            updateAssistantChat("Ótimo! Agora vamos escolher os sabores para o segundo açaí.");
+            displayFlavorOptions();
+        } else {
+            updateAssistantChat("Perfeito! Você completou seu combo. Deseja finalizar o pedido ou adicionar itens extras?");
+            displayOptions(["Finalizar pedido", "Adicionar extras"]);
         }
+    }
+    updateComboDynamicSummary();
+    comboHistory.push('accompaniment');
+}
 
-        function updateComboDynamicSummary() {
-            const summaryDiv = document.getElementById('comboDynamicSummary');
-            let summaryHTML = `<h4>${currentCombo.name}</h4>`;
-            summaryHTML += `<p><strong>Açaí 1:</strong> ${currentCombo.acai1.flavors.join(', ') || 'Não selecionado'}</p>`;
-            summaryHTML += `<p><strong>Acompanhamentos 1:</strong> ${currentCombo.acai1.accompaniments.join(', ') || 'Nenhum'}</p>`;
-            summaryHTML += `<p><strong>Açaí 2:</strong> ${currentCombo.acai2.flavors.join(', ') || 'Não selecionado'}</p>`;
-            summaryHTML += `<p><strong>Acompanhamentos 2:</strong> ${currentCombo.acai2.accompaniments.join(', ') || 'Nenhum'}</p>`;
-            if (currentCombo.extras && currentCombo.extras.length > 0) {
-                summaryHTML += `<p><strong>Extras:</strong> ${currentCombo.extras.join(', ')}</p>`;
-            }
-            summaryHTML += `<p><strong>Total:</strong> R$ ${calculateComboTotal().toFixed(2)}</p>`;
-            summaryDiv.innerHTML = summaryHTML;
+function displayOptions(options) {
+    const comboBuilder = document.getElementById('comboBuilderChat');
+    comboBuilder.innerHTML += `
+        <div class="options">
+            ${options.map(option => `
+                <button class="btn" onclick="handleOption('${option}')">${option}</button>
+            `).join('')}
+        </div>
+    `;
+}
+
+function handleOption(option) {
+    switch(option) {
+        case "Escolher outro sabor":
+            displayFlavorOptions();
+            break;
+        case "Prosseguir para acompanhamentos":
+            currentStep = 'accompaniment';
+            displayAccompanimentOptions();
+            break;
+        case "Finalizar pedido":
+            finalizePedido();
+            break;
+        case "Adicionar extras":
+            displayExtrasOptions();
+            break;
+    }
+}
+
+function displayExtrasOptions() {
+    updateAssistantChat("Escolha os itens extras que deseja adicionar ao seu combo:");
+    const comboBuilder = document.getElementById('comboBuilderChat');
+    comboBuilder.innerHTML += `
+        <div class="extras-options">
+            ${extraItems.map(extra => `
+                <div class="extra-option" onclick="addExtra('${extra.name}')">
+                    <img src="${extra.image}" alt="${extra.name}">
+                    <p>${extra.name} - R$ 1,99</p>
+                </div>
+            `).join('')}
+        </div>
+        <button class="btn" onclick="finalizePedido()">Finalizar Pedido</button>
+    `;
+}
+
+function addExtra(extraName) {
+    if (!currentCombo.extras) {
+        currentCombo.extras = [];
+    }
+    currentCombo.extras.push(extraName);
+    updateAssistantChat(`${extraName} adicionado como extra.`);
+    updateComboDynamicSummary();
+    comboHistory.push('extras');
+}
+
+function finalizePedido() {
+    updateAssistantChat("Seu combo está pronto! Aqui está o resumo final:");
+    const summary = getComboSummary();
+    updateAssistantChat(summary);
+    updateAssistantChat("Deseja adicionar este combo ao carrinho?");
+    displayOptions(["Adicionar ao Carrinho", "Montar Novo Combo"]);
+}
+
+function getComboSummary() {
+    let summary = `${currentCombo.name}\n`;
+    summary += `Açaí 1: ${currentCombo.acai1.flavors.join(', ')}\n`;
+    summary += `Acompanhamentos: ${currentCombo.acai1.accompaniments.join(', ')}\n`;
+    summary += `Açaí 2: ${currentCombo.acai2.flavors.join(', ')}\n`;
+    summary += `Acompanhamentos: ${currentCombo.acai2.accompaniments.join(', ')}\n`;
+    if (currentCombo.extras && currentCombo.extras.length > 0) {
+        summary += `Itens Extras: ${currentCombo.extras.join(', ')}\n`;
+    }
+    const total = calculateComboTotal();
+    summary += `Total: R$ ${total.toFixed(2)}`;
+    return summary;
+}
+
+function calculateComboTotal() {
+    let total = currentCombo.price;
+    if (currentCombo.extras) {
+        total += currentCombo.extras.length * 1.99;
+    }
+    return total;
+}
+
+function updateComboDynamicSummary() {
+    const summaryDiv = document.getElementById('comboDynamicSummary');
+    let summaryHTML = `<h4>${currentCombo.name}</h4>`;
+    summaryHTML += `<p><strong>Açaí 1:</strong> ${currentCombo.acai1.flavors.join(', ') || 'Não selecionado'}</p>`;
+    summaryHTML += `<p><strong>Acompanhamentos 1:</strong> ${currentCombo.acai1.accompaniments.join(', ') || 'Nenhum'}</p>`;
+    summaryHTML += `<p><strong>Açaí 2:</strong> ${currentCombo.acai2.flavors.join(', ') || 'Não selecionado'}</p>`;
+    summaryHTML += `<p><strong>Acompanhamentos 2:</strong> ${currentCombo.acai2.accompaniments.join(', ') || 'Nenhum'}</p>`;
+    if (currentCombo.extras && currentCombo.extras.length > 0) {
+        summaryHTML += `<p><strong>Extras:</strong> ${currentCombo.extras.join(', ')}</p>`;
+    }
+    summaryHTML += `<p><strong>Total:</strong> R$ ${calculateComboTotal().toFixed(2)}</p>`;
+    summaryDiv.innerHTML = summaryHTML;
+}
+
+function addComboToCart() {
+    const comboItem = {
+        id: Date.now(),
+        name: currentCombo.name,
+        price: currentCombo.price,
+        acai1: currentCombo.acai1,
+        acai2: currentCombo.acai2,
+        extras: currentCombo.extras || [],
+        totalPrice: calculateComboTotal()
+    };
+    cart.push(comboItem);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateAssistantChat("Combo adicionado ao carrinho com sucesso!");
+    openCart();
+    resetComboBuilder();
+}
+
+function resetComboBuilder() {
+    currentCombo = null;
+    currentStep = 'combo';
+    currentAcai = 1;
+    comboHistory = [];
+    document.getElementById('comboBuilderChat').innerHTML = '';
+    document.getElementById('comboDynamicSummary').innerHTML = '';
+    startComboBuilder();
+}
+
+function updateAssistantChat(message) {
+    const chat = document.getElementById('comboBuilderChat');
+    chat.innerHTML += `<p>${message}</p>`;
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function sendMessage() {
+    const userInput = document.getElementById('userInput');
+    const message = userInput.value.trim();
+    if (message) {
+        updateAssistantChat(`Você: ${message}`);
+        respondToUserMessage(message);
+        userInput.value = '';
+    }
+}
+
+function respondToUserMessage(message) {
+    const lowerMessage = message.toLowerCase();
+    if (lowerMessage.includes('olá') || lowerMessage.includes('oi') || lowerMessage.includes('bom dia') || lowerMessage.includes('boa tarde') || lowerMessage.includes('boa noite')) {
+        updateAssistantChat("Olá, tudo bem? Sou um robô, mas irei te ajudar a escolher seu Combo, ok? :)");
+    } else if (lowerMessage.includes('escolher')) {
+        updateAssistantChat("Claro! Você pode escolher os acompanhamentos para cada açaí do seu combo. " + 
+            "O número máximo de acompanhamentos varia de acordo com o tamanho do combo:\n" +
+            "- Combo 2 de 300ml: até 3 acompanhamentos por açaí\n" +
+            "- Combo 2 de 500ml: até 4 acompanhamentos por açaí\n" +
+            "- Combo 2 de 1 Litro: até 8 acompanhamentos por açaí\n" +
+            "Você pode escolher apenas Açaí puro ou Açaí com Creme. Que tipo de combo você gostaria de montar?");
+        displayComboOptions();
+    } else if (lowerMessage.includes('preço') || lowerMessage.includes('valor')) {
+        updateAssistantChat("Os preços dos nossos combos são:\n" +
+            combos.map(combo => `${combo.name}: R$ ${combo.price.toFixed(2)}`).join('\n'));
+    } else if (lowerMessage.includes('acompanhamento') || lowerMessage.includes('adicional')) {
+        updateAssistantChat("Nossos acompanhamentos incluem: " + 
+            extraItems.map(item => item.name).join(', ') + 
+            ". O número máximo de acompanhamentos depende do tamanho do combo que você escolher.");
+    } else if (lowerMessage.includes('extra')) {
+        updateAssistantChat("Todos os itens extras custam R$ 1,99 cada. Você pode adicionar quantos quiser ao seu combo!");
+    } else if (lowerMessage.includes('sabor')) {
+        updateAssistantChat("Temos os seguintes sabores disponíveis:\n" +
+            flavors.map(f => f.name).join(', ') + "\n" +
+            "Você pode escolher até 2 opções de sabores para cada açaí do seu combo.");
+    } else if (lowerMessage.includes('creme')) {
+        updateAssistantChat("Sim, você pode escolher apenas creme se preferir! Temos os seguintes sabores de creme disponíveis: " + 
+            flavors.filter(f => f.type === 'creme').map(f => f.name).join(', ') + 
+            ". Você pode escolher até 2 opções de sabores para cada açaí do seu combo.");
+    } else if (lowerMessage.includes('ajuda') || lowerMessage.includes('como')) {
+        updateAssistantChat("Para montar seu combo, siga estas etapas:\n" +
+            "1. Escolha o tamanho do combo\n" +
+            "2. Selecione o sabor para cada açaí (até 2 opções)\n" +
+            "3. Escolha os acompanhamentos para cada açaí\n" +
+            "4. Adicione itens extras se desejar\n" +
+            "5. Finalize seu combo e adicione ao carrinho\n" +
+            "Se tiver dúvidas específicas, é só perguntar!");
+    } else {
+        updateAssistantChat("Desculpe, não entendi sua pergunta. Para obter ajuda sobre assuntos específicos, você pode perguntar sobre preços, sabores, acompanhamentos, itens extras ou como montar seu combo. Se precisar de mais assistência, por favor, entre em contato com nosso suporte através do chat no ícone flutuante do cardápio digital.");
+    }
+}
+
+function goBackInComboBuilder() {
+    if (comboHistory.length > 1) {
+        comboHistory.pop(); // Remove o passo atual
+        const lastStep = comboHistory[comboHistory.length - 1];
+        switch (lastStep) {
+            case 'combo':
+                resetComboBuilder();
+                break;
+            case 'flavor':
+                currentStep = 'flavor';
+                if (currentAcai === 2) {
+                    currentAcai = 1;
+                }
+                currentCombo.acai1.flavors = [];
+                currentCombo.acai2.flavors = [];
+                displayFlavorOptions();
+                break;
+            case 'accompaniment':
+                currentStep = 'accompaniment';
+                if (currentAcai === 2) {
+                    currentCombo.acai2.accompaniments = [];
+                } else {
+                    currentCombo.acai1.accompaniments = [];
+                }
+                displayAccompanimentOptions();
+                break;
+            case 'extras':
+                currentCombo.extras = [];
+                displayExtrasOptions();
+                break;
         }
+        updateComboDynamicSummary();
+    } else {
+        updateAssistantChat("Você já está no início do processo de montagem do combo.");
+    }
+}
 
-        function addComboToCart() {
-            const comboItem = {
-                id: Date.now(),
-                name: currentCombo.name,
-                price: currentCombo.price,
-                acai1: currentCombo.acai1,
-                acai2: currentCombo.acai2,
-                extras: currentCombo.extras || [],
-                totalPrice: calculateComboTotal()
-            };
-            cart.push(comboItem);
-            localStorage.setItem('cart', JSON.stringify(cart));
-            updateAssistantChat("Combo adicionado ao carrinho com sucesso!");
-            resetComboBuilder();
-        }
+// Event Listeners
+document.getElementById('monteCombo').addEventListener('click', openComboBuilder);
+document.querySelector('.back-button').addEventListener('click', goBackInComboBuilder);
+document.getElementById('sendMessage').addEventListener('click', sendMessage);
 
-        function resetComboBuilder() {
-            currentCombo = null;
-            currentStep = 'combo';
-            currentAcai = 1;
-            document.getElementById('comboBuilderChat').innerHTML = '';
-            document.getElementById('comboDynamicSummary').innerHTML = '';
-            startComboBuilder();
-        }
+// Inicialização
+document.addEventListener('DOMContentLoaded', function () {
+    fetchCategories();
+    fetchProducts();
+    loadDataFromLocalStorage();
+    updateCartIcon();
+});
 
-        function updateAssistantChat(message) {
-            const chat = document.getElementById('comboBuilderChat');
-            chat.innerHTML += `<p>${message}</p>`;
-            chat.scrollTop = chat.scrollHeight;
-        }
-
-        function sendMessage() {
-            const userInput = document.getElementById('userInput');
-            const message = userInput.value.trim();
-            if (message) {
-                updateAssistantChat(`Você: ${message}`);
-                respondToUserMessage(message);
-                userInput.value = '';
-            }
-        }
-
-        function respondToUserMessage(message) {
-            const lowerMessage = message.toLowerCase();
-            if (lowerMessage.includes('olá') || lowerMessage.includes('oi') || lowerMessage.includes('bom dia') || lowerMessage.includes('boa tarde') || lowerMessage.includes('boa noite')) {
-                updateAssistantChat("Olá, tudo bem? Sou um robô, mas irei te ajudar a escolher seu Combo, ok? :)");
-            } else if (lowerMessage.includes('escolher')) {
-                updateAssistantChat("Claro! Você pode escolher os acompanhamentos para cada açaí do seu combo. " + 
-                    "O número máximo de acompanhamentos varia de acordo com o tamanho do combo:\n" +
-                    "- Combo 2 de 300ml: até 3 acompanhamentos por açaí\n" +
-                    "- Combo 2 de 500ml: até 4 acompanhamentos por açaí\n" +
-                    "- Combo 2 de 1 Litro: até 8 acompanhamentos por açaí\n" +
-                    "Você pode escolher apenas Açaí puro ou Açaí com Creme. Que tipo de combo você gostaria de montar?");
-                displayComboOptions();
-            } else if (lowerMessage.includes('preço') || lowerMessage.includes('valor')) {
-                updateAssistantChat("Os preços dos nossos combos são:\n" +
-                    combos.map(combo => `${combo.name}: R$ ${combo.price.toFixed(2)}`).join('\n'));
-            } else if (lowerMessage.includes('acompanhamento') || lowerMessage.includes('adicional')) {
-                updateAssistantChat("Nossos acompanhamentos incluem: " + 
-                    extraItems.map(item => item.name).join(', ') + 
-                    ". O número máximo de acompanhamentos depende do tamanho do combo que você escolher.");
-            } else if (lowerMessage.includes('extra')) {
-                updateAssistantChat("Todos os itens extras custam R$ 1,99 cada. Você pode adicionar quantos quiser ao seu combo!");
-            } else if (lowerMessage.includes('sabor')) {
-                updateAssistantChat("Temos os seguintes sabores disponíveis:\n" +
-                    flavors.map(f => f.name).join(', ') + "\n" +
-                    "Você pode escolher até 2 opções de sabores para cada açaí do seu combo.");
-            } else if (lowerMessage.includes('creme')) {
-                updateAssistantChat("Sim, você pode escolher apenas creme se preferir! Temos os seguintes sabores de creme disponíveis: " + 
-                    flavors.filter(f => f.type === 'creme').map(f => f.name).join(', ') + 
-                    ". Você pode escolher até 2 opções de sabores para cada açaí do seu combo.");
-            } else if (lowerMessage.includes('ajuda') || lowerMessage.includes('como')) {
-                updateAssistantChat("Para montar seu combo, siga estas etapas:\n" +
-                    "1. Escolha o tamanho do combo\n" +
-                    "2. Selecione o sabor para cada açaí (até 2 opções)\n" +
-                    "3. Escolha os acompanhamentos para cada açaí\n" +
-                    "4. Adicione itens extras se desejar\n" +
-                    "5. Finalize seu combo e adicione ao carrinho\n" +
-                    "Se tiver dúvidas específicas, é só perguntar!");
-            } else {
-                updateAssistantChat("Desculpe, não entendi sua pergunta. Para obter ajuda sobre assuntos específicos, você pode perguntar sobre preços, sabores, acompanhamentos, itens extras ou como montar seu combo. Se precisar de mais assistência, por favor, entre em contato com nosso suporte através do chat no ícone flutuante do cardápio digital.");
-            }
-        }
-
-        document.querySelectorAll('.close').forEach(closeBtn => {
-            closeBtn.onclick = function() {
-                this.closest('.modal').style.display = "none";
-            }
-        });
-
-        function closeAllModals() {
-            document.querySelectorAll('.modal').forEach(modal => {
-                modal.style.display = "none";
-            });
-        }
-
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                closeAllModals();
-            }
-        }
-
-        // Inicialização
-        fetchCategories();
-        fetchProducts();
-    </script>
-</body>
-</html>
+console.log('Script carregado e pronto para uso!');
