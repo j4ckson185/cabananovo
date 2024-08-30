@@ -254,154 +254,330 @@ main {
     <button id="confirmComboBtn" class="btn" style="display: none;">Confirmar Combo</button>
   </div>
 </div>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
+  // Configuração do Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
+    authDomain: "cabana-8d55e.firebaseapp.com",
+    databaseURL: "https://cabana-8d55e-default-rtdb.firebaseio.com",
+    projectId: "cabana-8d55e",
+    storageBucket: "cabana-8d55e.appspot.com",
+    messagingSenderId: "706144237954",
+    appId: "1:706144237954:web:345c10370972486afc779b",
+    measurementId: "G-96Y337GYT8"
+  };
+  // Inicialize o Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  let products = [];
+  let cart = JSON.parse(localStorage.getItem('cart')) || [];
+  const deliveryFee = 3.00;
+  let customerInfo = {};
+  let savedAddresses = [];
+
+  // Dados dos itens extras
+  const extraItems = [
+    { name: "Ovomaltine", price: 1.99, image: "https://images.tcdn.com.br/img/img_prod/919170/ovomaltine_flocos_extra_crocante_750g_425_1_e9d3c08b8341c4e7818b1759c877a213.jpg" },
+    { name: "Amendoim", price: 1.99, image: "https://cdn.entrypoint.directory/assets/39790/produtos/3053/xerem-amendoim-secundaria-relva-verde-500g.jpg" },
+    { name: "Granola", price: 1.99, image: "https://jardimdaservas.com.br/wp-content/uploads/2023/05/GRANOLAAAIGUARANEMEL-1.jpg" },
+    { name: "Chocoball", price: 1.99, image: "https://lojasantoantonio.vtexassets.com/arquivos/ids/156826/562-Choco-Power-Ball-Mini-Preto-e-Branco-500G-MAVALERIO.jpg?v=637254329101230000" },
+    { name: "M&M", price: 1.99, image: "https://static.welban.com.br/public/welban/imagens/produtos/confete-de-chocolate-colorido-500g-chococandy-dori-64029a15a016e.jpg" },
+    { name: "Côco Ralado", price: 1.99, image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_Mt3NOWlBbg-Yv0ttYPiXwNdMIxdh1aSuxJOIg50WN-1FOjiagSbr7MDjQf9OE0b2hnU&usqp=CAU" },
+    { name: "Leite em pó", price: 1.99, image: "https://acougueamigos.com/cdn/shop/products/acougue-amigos_1_27.jpg?v=1615589403" },
+    { name: "Leite condensado", price: 1.99, image: "https://static.escolakids.uol.com.br/conteudo_legenda/07795c263fc55bd57242ef71ae55cee8.jpg" },
+    { name: "Calda de Morango", price: 1.99, image: "https://i.ytimg.com/vi/3K6gWHdjyUU/maxresdefault.jpg" },
+    { name: "Calda de Chocolate", price: 1.99, image: "https://img.cybercook.com.br/receitas/53/calda-de-chocolate.jpeg" }
+  ];
+
+  async function fetchProducts() {
+    const snapshot = await db.collection('products').get();
+    products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    displayProducts(products);
+  }
+
+  async function fetchCategories() {
+    const snapshot = await db.collection('categories').get();
+    const categories = snapshot.docs.map(doc => doc.data().name);
     const categoriesContainer = document.getElementById('categories');
-    const comboBuilderModal = document.getElementById('comboBuilderModal');
-    const comboSteps = document.getElementById('comboSteps');
-    const nextStepBtn = document.getElementById('nextStepBtn');
-    const confirmComboBtn = document.getElementById('confirmComboBtn');
-    let comboStepIndex = 0;
-    let selectedCombo = {};
-    const combos = [
-      { name: 'Combo 2 Açaís ou Cremes 300ml', price: 20.00, maxAccompaniments: 3 },
-      { name: 'Combo 2 Açaís ou Cremes 500ml', price: 26.99, maxAccompaniments: 4 },
-      { name: 'Combo 2 Açaís ou Cremes 1 Litro', price: 49.99, maxAccompaniments: 8 }
-    ];
-
-    const categories = ['Todos', 'Categoria 1', 'Categoria 2', 'Categoria 3']; // Substitua pelos nomes das suas categorias
     categoriesContainer.innerHTML = categories.map(category => `
-      <button class="category-btn" onclick="filterByCategory('${category.toLowerCase()}')">${category}</button>
+      <button class="category-btn" onclick="filterByCategory('${category}')">${category}</button>
     `).join('');
+    categoriesContainer.innerHTML = `<button class="category-btn" onclick="filterByCategory('all')">Todos</button>` + categoriesContainer.innerHTML;
+  }
 
-    function filterByCategory(category) {
-      const productGrid = document.getElementById('productGrid');
-      const filteredProducts = category === 'todos' ? products : products.filter(product => product.category.toLowerCase() === category);
-      displayProducts(filteredProducts);
-    }
+  function filterByCategory(category) {
+    const filteredProducts = category === 'all' ? products : products.filter(product => product.category === category);
+    displayProducts(filteredProducts);
+  }
 
-    // Função para exibir produtos
-    function displayProducts(productsToDisplay = products) {
-      const productGrid = document.getElementById('productGrid');
-      productGrid.innerHTML = productsToDisplay.map(product => `
-        <div class="product-card" onclick="openProductDetails(${product.id})">
-          <img src="${product.image}" alt="${product.name}" class="product-image">
-          <div class="product-info">
-            <h3 class="product-title">${product.name}</h3>
-            <p class="product-price">R$ ${parseFloat(product.price).toFixed(2)}</p>
-            <p class="product-description">${product.description.substring(0, 100)}...</p>
-          </div>
+  function displayProducts(productsToDisplay = products) {
+    const productGrid = document.getElementById('productGrid');
+    productGrid.innerHTML = productsToDisplay.map(product => `
+      <div class="product-card" onclick="openProductDetails(${product.id})">
+        <img src="${product.image}" alt="${product.name}" class="product-image">
+        <div class="product-info">
+          <h3 class="product-title">${product.name}</h3>
+          <p class="product-price">R$ ${parseFloat(product.price).toFixed(2)}</p>
+          <p class="product-description">${product.description.substring(0, 100)}...</p>
+          <button class="btn" onclick="openProductDetails(${product.id}, event)">Ver Detalhes</button>
         </div>
-      `).join('');
-    }
+      </div>
+    `).join('');
+  }
 
-    function startComboBuilder() {
-      comboStepIndex = 0;
-      selectedCombo = {};
-      showComboStep();
-      comboBuilderModal.style.display = 'block';
+  window.openProductDetails = function(productId, event) {
+    if (event) {
+      event.stopPropagation();
     }
+    const product = products.find(p => p.id === productId);
+    const modal = document.getElementById('productModal');
+    const modalContent = document.getElementById('modalContent');
+    modalContent.innerHTML = `
+      <h2>${product.name}</h2>
+      <img src="${product.image}" alt="${product.name}" style="width:100%; max-height:300px; object-fit:cover;">
+      <p>${product.description}</p>
+      <p class="product-price">Preço: R$ ${parseFloat(product.price).toFixed(2)}</p>
+      <div class="extras-list">
+        <h3>Acompanhamentos (escolha de ${product.minAccompaniments} a ${product.maxAccompaniments}):</h3>
+        <div class="checkbox-list" id="accompaniments">
+          ${product.accompaniments.map((item, index) => `
+            <div class="checkbox-item">
+              <input type="checkbox" id="acc${index}" name="accompaniment" value="${item}">
+              <label for="acc${index}">${item}</label>
+            </div>
+          `).join('')}
+        </div>
+        <p id="accompanimentError" class="error-message"></p>
+      </div>
+      <div class="extras-list">
+        <h3>Itens Extras:</h3>
+        <div class="checkbox-list" id="extras">
+          ${extraItems.map((item, index) => `
+            <div class="checkbox-item">
+              <input type="checkbox" id="extra${index}" name="extra" value="${item.name}">
+              <label for="extra${index}">${item.name} - R$ ${parseFloat(item.price).toFixed(2)}</label>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <button id="addToCartBtn" class="btn" onclick="addToCart(${product.id})">Adicionar ao Carrinho</button>
+    `;
+    modal.style.display = "block";
+    const accCheckboxes = document.querySelectorAll('#accompaniments input[type="checkbox"]');
+    accCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', () => validateAccompaniments(product));
+    });
+  }
 
-    function showComboStep() {
-      comboSteps.innerHTML = '';
-      nextStepBtn.style.display = 'block';
-      confirmComboBtn.style.display = 'none';
-      if (comboStepIndex === 0) {
-        comboSteps.innerHTML = combos.map((combo, index) => `
-          <button class="btn" onclick="selectCombo(${index})">${combo.name} - R$ ${combo.price.toFixed(2)}</button>
-        `).join('');
-      } else if (comboStepIndex === 1) {
-        comboSteps.innerHTML = `
-          <h3>Selecione até ${selectedCombo.maxAccompaniments} acompanhamentos por açaí</h3>
-          ${createAccompanimentsSelection()}
-        `;
-      } else if (comboStepIndex === 2) {
-        comboSteps.innerHTML = `
-          <h3>Selecione itens extras (R$ 1,99 cada)</h3>
-          ${createExtrasSelection()}
-        `;
+  function validateAccompaniments(product) {
+    const checkedAccompaniments = document.querySelectorAll('#accompaniments input[type="checkbox"]:checked');
+    const addToCartBtn = document.getElementById('addToCartBtn');
+    const errorMessage = document.getElementById('accompanimentError');
+    if (checkedAccompaniments.length < product.minAccompaniments || checkedAccompaniments.length > product.maxAccompaniments) {
+      addToCartBtn.disabled = true;
+      errorMessage.textContent = `Selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos`;
+    } else {
+      addToCartBtn.disabled = false;
+      errorMessage.textContent = '';
+    }
+  }
+
+  window.addToCart = function(productId) {
+    const product = products.find(p => p.id === productId);
+    const accompaniments = Array.from(document.querySelectorAll('#accompaniments input[type="checkbox"]:checked')).map(cb => cb.value);
+    const extras = Array.from(document.querySelectorAll('#extras input[type="checkbox"]:checked')).map(cb => cb.value);
+    if (accompaniments.length < product.minAccompaniments || accompaniments.length > product.maxAccompaniments) {
+      alert(`Por favor, selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos.`);
+      return;
+    }
+    const cartItem = {
+      id: Date.now(),
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      accompaniments: accompaniments,
+      extras: extras,
+      totalPrice: calculateTotalPrice(product, extras)
+    };
+    cart.push(cartItem);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    openCart();
+  }
+
+  function calculateTotalPrice(product, selectedExtras) {
+    let total = product.price;
+    selectedExtras.forEach(extraName => {
+      const extra = extraItems.find(e => e.name === extraName);
+      if (extra) {
+        total += extra.price;
+      }
+    });
+    return total;
+  }
+
+  window.openCart = function() {
+    const modal = document.getElementById('cartModal');
+    const cartContent = document.getElementById('cartContent');
+    const cartTotal = document.getElementById('cartTotal');
+    cartContent.innerHTML = cart.map(item => `
+      <div class="cart-item">
+        <div class="cart-item-info">
+          <h3>${item.name}</h3>
+          <p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>
+          <p>Extras: ${item.extras.join(', ')}</p>
+          <p>Preço: R$ ${item.totalPrice.toFixed(2)}</p>
+        </div>
+        <span class="cart-item-remove" onclick="removeFromCart(${item.id})">🗑️</span>
+      </div>
+    `).join('');
+    const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+    cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
+    modal.style.display = "block";
+  }
+
+  window.continueShopping = function() {
+    document.getElementById('cartModal').style.display = "none";
+  }
+
+  window.removeFromCart = function(itemId) {
+    cart = cart.filter(item => item.id !== itemId);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    openCart();
+  }
+
+  window.openCustomerIdentification = function() {
+    document.getElementById('cartModal').style.display = "none";
+    const modal = document.getElementById('customerIdentificationModal');
+    modal.style.display = "block";
+
+    const phone = localStorage.getItem('customerPhone');
+    if (phone) {
+      document.getElementById('customerPhone').value = phone;
+      document.getElementById('customerName').value = localStorage.getItem('customerName') || '';
+      loadCustomerData(phone);
+    }
+  }
+
+  function loadCustomerData(phone) {
+    db.collection('customers').doc(phone).get().then((doc) => {
+      if (doc.exists) {
+        const data = doc.data();
+        customerInfo = {
+          name: data.name,
+          phone: phone,
+          addresses: data.addresses || []
+        };
+        document.getElementById('customerName').value = data.name;
+        savedAddresses = data.addresses || [];
+        localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
+        updateLoyaltyInfo(data.orderCount || 0);
       } else {
-        confirmComboBtn.style.display = 'block';
-        nextStepBtn.style.display = 'none';
+        updateLoyaltyInfo(0);
       }
-    }
+    }).catch((error) => {
+      console.log("Error getting customer data:", error);
+      updateLoyaltyInfo(0);
+    });
+  }
 
-    function selectCombo(index) {
-      selectedCombo = combos[index];
-      comboStepIndex++;
-      showComboStep();
-    }
+  function startComboBuilder() {
+    comboStepIndex = 0;
+    selectedCombo = {};
+    showComboStep();
+    document.getElementById('comboBuilderModal').style.display = 'block';
+  }
 
-    function createAccompanimentsSelection() {
-      // Suponha que estes são seus acompanhamentos; substitua pelos seus
-      const accompaniments = ['Granola', 'Amendoim', 'Leite em pó', 'Calda de Morango', 'Calda de Chocolate'];
-      return accompaniments.map(acc => `
-        <label class="checkbox-item">
-          <input type="checkbox" name="accompaniments" value="${acc}">
-          ${acc}
-        </label>
+  function showComboStep() {
+    comboSteps.innerHTML = '';
+    nextStepBtn.style.display = 'block';
+    confirmComboBtn.style.display = 'none';
+    if (comboStepIndex === 0) {
+      comboSteps.innerHTML = combos.map((combo, index) => `
+        <button class="btn" onclick="selectCombo(${index})">${combo.name} - R$ ${combo.price.toFixed(2)}</button>
       `).join('');
+    } else if (comboStepIndex === 1) {
+      comboSteps.innerHTML = `
+        <h3>Selecione até ${selectedCombo.maxAccompaniments} acompanhamentos por açaí</h3>
+        ${createAccompanimentsSelection()}
+      `;
+    } else if (comboStepIndex === 2) {
+      comboSteps.innerHTML = `
+        <h3>Selecione itens extras (R$ 1,99 cada)</h3>
+        ${createExtrasSelection()}
+      `;
+    } else {
+      confirmComboBtn.style.display = 'block';
+      nextStepBtn.style.display = 'none';
     }
+  }
 
-    function createExtrasSelection() {
-      // Utiliza os extras já definidos
-      const extraItems = [
-        { name: "Ovomaltine", price: 1.99, image: "https://images.tcdn.com.br/img/img_prod/919170/ovomaltine_flocos_extra_crocante_750g_425_1_e9d3c08b8341c4e7818b1759c877a213.jpg" },
-        { name: "Amendoim", price: 1.99, image: "https://cdn.entrypoint.directory/assets/39790/produtos/3053/xerem-amendoim-secundaria-relva-verde-500g.jpg" },
-        { name: "Granola", price: 1.99, image: "https://jardimdaservas.com.br/wp-content/uploads/2023/05/GRANOLAAAIGUARANEMEL-1.jpg" },
-        { name: "Chocoball", price: 1.99, image: "https://lojasantoantonio.vtexassets.com/arquivos/ids/156826/562-Choco-Power-Ball-Mini-Preto-e-Branco-500G-MAVALERIO.jpg?v=637254329101230000" },
-        { name: "M&M", price: 1.99, image: "https://static.welban.com.br/public/welban/imagens/produtos/confete-de-chocolate-colorido-500g-chococandy-dori-64029a15a016e.jpg" },
-        { name: "Côco Ralado", price: 1.99, image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_Mt3NOWlBbg-Yv0ttYPiXwNdMIxdh1aSuxJOIg50WN-1FOjiagSbr7MDjQf9OE0b2hnU&usqp=CAU" },
-        { name: "Leite em pó", price: 1.99, image: "https://acougueamigos.com/cdn/shop/products/acougue-amigos_1_27.jpg?v=1615589403" },
-        { name: "Leite condensado", price: 1.99, image: "https://static.escolakids.uol.com.br/conteudo_legenda/07795c263fc55bd57242ef71ae55cee8.jpg" },
-        { name: "Calda de Morango", price: 1.99, image: "https://i.ytimg.com/vi/3K6gWHdjyUU/maxresdefault.jpg" },
-        { name: "Calda de Chocolate", price: 1.99, image: "https://img.cybercook.com.br/receitas/53/calda-de-chocolate.jpeg" }
-      ];
-      return extraItems.map(item => `
-        <div class="extra-item" onclick="toggleExtraItem(this, '${item.name}', ${item.price})">
-          <img src="${item.image}" alt="${item.name}" style="width: 60px; height: 60px; border-radius: 50%;">
-          <p>${item.name}</p>
-          <p>R$ ${item.price.toFixed(2)}</p>
-        </div>
-      `).join('');
-    }
+  function selectCombo(index) {
+    selectedCombo = combos[index];
+    comboStepIndex++;
+    showComboStep();
+  }
 
-    window.toggleExtraItem = function(element, itemName, itemPrice) {
-      element.classList.toggle('selected');
-      updateComboPrice(itemPrice, element.classList.contains('selected'));
-    }
+  function createAccompanimentsSelection() {
+    const accompaniments = ['Granola', 'Amendoim', 'Leite em pó', 'Calda de Morango', 'Calda de Chocolate'];
+    return accompaniments.map(acc => `
+      <label class="checkbox-item">
+        <input type="checkbox" name="accompaniments" value="${acc}">
+        ${acc}
+      </label>
+    `).join('');
+  }
 
-    function updateComboPrice(price, isAdding) {
-      const comboPriceElement = document.getElementById('comboPrice');
-      const currentPrice = parseFloat(comboPriceElement.textContent.replace('R$', '').trim());
-      const newPrice = isAdding ? currentPrice + price : currentPrice - price;
-      comboPriceElement.textContent = `R$ ${newPrice.toFixed(2)}`;
-    }
+  function createExtrasSelection() {
+    return extraItems.map(item => `
+      <div class="extra-item" onclick="toggleExtraItem(this, '${item.name}', ${item.price})">
+        <img src="${item.image}" alt="${item.name}" style="width: 60px; height: 60px; border-radius: 50%;">
+        <p>${item.name}</p>
+        <p>R$ ${item.price.toFixed(2)}</p>
+      </div>
+    `).join('');
+  }
 
-    nextStepBtn.addEventListener('click', () => {
-      comboStepIndex++;
-      showComboStep();
-    });
+  window.toggleExtraItem = function(element, itemName, itemPrice) {
+    element.classList.toggle('selected');
+    updateComboPrice(itemPrice, element.classList.contains('selected'));
+  }
 
-    confirmComboBtn.addEventListener('click', () => {
-      alert('Combo confirmado! Adicionando ao carrinho...');
-      comboBuilderModal.style.display = 'none';
-    });
+  function updateComboPrice(price, isAdding) {
+    const comboPriceElement = document.getElementById('comboPrice');
+    const currentPrice = parseFloat(comboPriceElement.textContent.replace('R$', '').trim());
+    const newPrice = isAdding ? currentPrice + price : currentPrice - price;
+    comboPriceElement.textContent = `R$ ${newPrice.toFixed(2)}`;
+  }
 
-    document.querySelectorAll('.close').forEach(closeBtn => {
-      closeBtn.onclick = function() {
-        this.closest('.modal').style.display = "none";
-      }
-    });
+  nextStepBtn.addEventListener('click', () => {
+    comboStepIndex++;
+    showComboStep();
+  });
 
-    window.onclick = function(event) {
-      if (event.target.classList.contains('modal')) {
-        document.querySelectorAll('.modal').forEach(modal => {
-          modal.style.display = "none";
-        });
-      }
+  confirmComboBtn.addEventListener('click', () => {
+    alert('Combo confirmado! Adicionando ao carrinho...');
+    document.getElementById('comboBuilderModal').style.display = 'none';
+  });
+
+  document.querySelectorAll('.close').forEach(closeBtn => {
+    closeBtn.onclick = function() {
+      this.closest('.modal').style.display = "none";
     }
   });
+
+  window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+      document.querySelectorAll('.modal').forEach(modal => {
+        modal.style.display = "none";
+      });
+    }
+  }
+
+  fetchCategories();
+  fetchProducts();
 </script>
 </body>
 </html>
