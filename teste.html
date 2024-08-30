@@ -1092,8 +1092,8 @@
                                 ordersHtml += `
                                     <div class="order-item">
                                         <p>Data: ${order.createdAt.toDate().toLocaleString()}</p>
+                                        <p>Itens: ${order.items}</p>
                                         <p>Total: R$ ${order.total.toFixed(2)}</p>
-                                        <p>Status: ${order.status}</p>
                                         <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Pedido</button>
                                     </div>
                                 `;
