@@ -422,7 +422,7 @@
                 </div>
                 <div class="input-icon">
                     <i class="fab fa-whatsapp"></i>
-                    <input type="tel" id="telefone" placeholder="WhatsApp (com DDD)" required>
+                    <input type="tel" id="customerPhone" placeholder="WhatsApp (com DDD)" required>
                 </div>
                 <button type="submit" class="btn">Avançar</button>
             </form>
@@ -739,9 +739,9 @@
                 document.getElementById('cartModal').style.display = "none";
                 const modal = document.getElementById('customerIdentificationModal');
                 modal.style.display = "block";
-                const phone = localStorage.getItem('telefone');
+                const phone = localStorage.getItem('customerPhone');
                 if (phone) {
-                    document.getElementById('telefone').value = phone;
+                    document.getElementById('customerPhone').value = phone;
                     document.getElementById('customerName').value = localStorage.getItem('customerName') || '';
                     loadCustomerData(phone);
                 }
@@ -771,10 +771,10 @@
 
             document.getElementById('customerIdentificationForm').addEventListener('submit', function(e) {
                 e.preventDefault();
-                const phone = document.getElementById('telefone').value;
+                const phone = document.getElementById('customerPhone').value;
                 const name = document.getElementById('customerName').value;
                 customerInfo = { phone, name };
-                localStorage.setItem('telefone', phone);
+                localStorage.setItem('customerPhone', phone);
                 localStorage.setItem('customerName', name);
                 db.collection('customers').doc(phone).set({
                     name: name,
@@ -1209,7 +1209,7 @@ window.fetchMyOrders = function() {
     }
 
     // Atualizar a função de identificação do cliente
-    document.getElementById('telefone').addEventListener('blur', function() {
+    document.getElementById('customerPhone').addEventListener('blur', function() {
       const phone = this.value;
       if (phone) {
         loadCustomerData(phone);
