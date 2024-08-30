@@ -1282,21 +1282,21 @@
             showFlavorSelection();
         }
 
-        function showFlavorSelection() {
-            const flavorSelection = document.getElementById('flavorSelection');
-            flavorSelection.innerHTML = `
-                <h3>Escolha até 2 sabores para cada açaí:</h3>
-                <div class="combo-items">
-                    ${acaiFlavors.map(flavor => `
-                        <div class="combo-item" onclick="toggleFlavor('${flavor}')">
-                            <p>${flavor}</p>
-                        </div>
-                    `).join('')}
+function showFlavorSelection() {
+    const flavorSelection = document.getElementById('flavorSelection');
+    flavorSelection.innerHTML = `
+        <h3>Escolha até 2 sabores para cada açaí:</h3>
+        <div class="combo-items">
+            ${acaiFlavors.map(flavor => `
+                <div class="combo-item" onclick="toggleFlavor('${flavor}')">
+                    <p>${flavor}</p>
                 </div>
-                <button class="btn" onclick="showAccompanimentSelection()">Próximo</button>
-            `;
-            flavorSelection.style.display = 'block';
-        }
+            `).join('')}
+        </div>
+        <button class="btn" onclick="showAccompanimentSelection()">Próximo</button>
+    `;
+    flavorSelection.style.display = 'block';
+}
 
         window.toggleFlavor = function(flavor) {
             const index = selectedFlavors.indexOf(flavor);
@@ -1322,27 +1322,27 @@
             });
         }
 
-        function showAccompanimentSelection() {
-            if (selectedFlavors.length === 0) {
-                alert("Por favor, selecione pelo menos um sabor.");
-                return;
-            }
-            const accompanimentSelection = document.getElementById('accompanimentSelection');
-            accompanimentSelection.innerHTML = `
-<h3>Escolha até ${currentCombo.maxAccompaniments} acompanhamentos para cada açaí:</h3>
-                <div class="combo-items">
-                    ${extraItems.map(item => `
-                        <div class="combo-item" onclick="toggleAccompaniment('${item.name}')">
-                            <img src="${item.image}" alt="${item.name}">
-                            <p>${item.name}</p>
-                        </div>
-                    `).join('')}
+window.showAccompanimentSelection = function() {
+    if (selectedFlavors.length === 0) {
+        alert("Por favor, selecione pelo menos um sabor.");
+        return;
+    }
+    const accompanimentSelection = document.getElementById('accompanimentSelection');
+    accompanimentSelection.innerHTML = `
+        <h3>Escolha até ${currentCombo.maxAccompaniments} acompanhamentos para cada açaí:</h3>
+        <div class="combo-items">
+            ${extraItems.map(item => `
+                <div class="combo-item" onclick="toggleAccompaniment('${item.name}')">
+                    <img src="${item.image}" alt="${item.name}">
+                    <p>${item.name}</p>
                 </div>
-                <button class="btn" onclick="showExtraItemsSelection()">Próximo</button>
-            `;
-            accompanimentSelection.style.display = 'block';
-        }
-
+            `).join('')}
+        </div>
+        <button class="btn" onclick="showExtraItemsSelection()">Próximo</button>
+    `;
+    accompanimentSelection.style.display = 'block';
+    document.getElementById('flavorSelection').style.display = 'none';
+}
         window.toggleAccompaniment = function(accompaniment) {
             const index = selectedAccompaniments.indexOf(accompaniment);
             if (index > -1) {
