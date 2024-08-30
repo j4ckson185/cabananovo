@@ -376,6 +376,53 @@
         .user-options .btn {
             margin: 0 10px;
         }
+        #virtualAssistant {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+        #assistantModal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        #assistantModal .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 8px;
+        }
+        #assistantChat {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        #userInput {
+            width: 80%;
+            padding: 10px;
+            margin-right: 10px;
+        }
+        #sendMessage {
+            width: 18%;
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
@@ -416,7 +463,7 @@
         <div class="modal-content">
             <span class="close">&times;</span>
     <form id="customerIdentificationForm">
-      <h2><i class="fas fa-user"></i> Identificação do Cliente</h2>
+      <h2><i class="fas fa-user"></i> Identifique-se</h2>
       <div class="input-icon">
         <i class="fas fa-user"></i>
         <input type="text" id="customerName" placeholder="Nome Completo" required>
@@ -513,6 +560,18 @@
             <div id="loyaltyProgramContent"></div>
         </div>
     </div>
+    <div id="virtualAssistant" onclick="openAssistant()">
+        Assistente Virtual 🤖
+    </div>
+    <div id="assistantModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAssistant()">&times;</span>
+            <h2>Assistente Virtual</h2>
+            <div id="assistantChat"></div>
+            <input type="text" id="userInput" placeholder="Digite sua mensagem...">
+            <button id="sendMessage" onclick="sendMessage()">Enviar</button>
+        </div>
+    </div>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script>
@@ -562,12 +621,18 @@
                 { name: "Calda de Chocolate", price: 1.99, image: "https://img.cybercook.com.br/receitas/53/calda-de-chocolate.jpeg" }
             ];
 
+            // Dados dos combos
+            const combos = [
+                { name: "Combo 2 de 300ml", price: 20.00, maxAccompaniments: 3 },
+                { name: "Combo 2 de 500ml", price: 26.99, maxAccompaniments: 4 },
+                { name: "Combo 2 de 1 Litro", price: 49.99, maxAccompaniments: 8 }
+            ];
+
             async function fetchProducts() {
                 const snapshot = await db.collection('products').get();
                 products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 displayProducts(products);
             }
-
             async function fetchCategories() {
                 const snapshot = await db.collection('categories').get();
                 const categories = snapshot.docs.map(doc => doc.data().name);
@@ -585,7 +650,6 @@
                 allButton.onclick = () => filterByCategory('all');
                 categoriesContainer.insertBefore(allButton, categoriesContainer.firstChild);
             }
-
             function filterByCategory(category) {
                 const buttons = document.querySelectorAll('.category-btn');
                 buttons.forEach(btn => btn.classList.remove('active'));
@@ -593,7 +657,6 @@
                 const filteredProducts = category === 'all' ? products : products.filter(product => product.category === category);
                 displayProducts(filteredProducts);
             }
-
             function displayProducts(productsToDisplay = products) {
                 const productGrid = document.getElementById('productGrid');
                 productGrid.innerHTML = productsToDisplay.map(product => `
@@ -608,7 +671,6 @@
                     </div>
                 `).join('');
             }
-
             window.openProductDetails = function(productId, event) {
                 if (event) {
                     event.stopPropagation();
@@ -653,7 +715,6 @@
                     checkbox.addEventListener('change', () => validateAccompaniments(product));
                 });
             }
-
             function validateAccompaniments(product) {
                 const checkedAccompaniments = document.querySelectorAll('#accompaniments input[type="checkbox"]:checked');
                 const addToCartBtn = document.getElementById('addToCartBtn');
@@ -666,7 +727,6 @@
                     errorMessage.textContent = '';
                 }
             }
-
             window.addToCart = function(productId) {
                 const product = products.find(p => p.id === productId);
                 const accompaniments = Array.from(document.querySelectorAll('#accompaniments input[type="checkbox"]:checked')).map(cb => cb.value);
@@ -688,7 +748,6 @@
                 localStorage.setItem('cart', JSON.stringify(cart));
                 openCart();
             }
-
             function calculateTotalPrice(product, selectedExtras) {
                 let total = product.price;
                 selectedExtras.forEach(extraName => {
@@ -699,7 +758,6 @@
                 });
                 return total;
             }
-
             window.openCart = function() {
                 const modal = document.getElementById('cartModal');
                 const cartContent = document.getElementById('cartContent');
@@ -719,17 +777,14 @@
                 cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
                 modal.style.display = "block";
             }
-
             window.continueShopping = function() {
                 document.getElementById('cartModal').style.display = "none";
             }
-
             window.removeFromCart = function(itemId) {
                 cart = cart.filter(item => item.id !== itemId);
                 localStorage.setItem('cart', JSON.stringify(cart));
                 openCart();
             }
-
             window.openCustomerIdentification = function() {
                 document.getElementById('cartModal').style.display = "none";
                 const modal = document.getElementById('customerIdentificationModal');
@@ -741,7 +796,6 @@
                     loadCustomerData(phone);
                 }
             }
-
             function loadCustomerData(phone) {
                 db.collection('customers').doc(phone).get().then((doc) => {
                     if (doc.exists) {
@@ -763,7 +817,6 @@
                     updateLoyaltyInfo(0);
                 });
             }
-
             document.getElementById('customerIdentificationForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 const phone = document.getElementById('customerPhone').value;
@@ -781,7 +834,6 @@
                     console.error("Error saving customer data: ", error);
                 });
             });
-
             function openCheckout() {
                 const checkoutModal = document.getElementById('checkoutModal');
                 const orderSummary = document.getElementById('orderSummary');
@@ -792,7 +844,6 @@
                 checkoutModal.style.display = "block";
                 displayExtraItems();
             }
-
             function loadSavedAddresses() {
                 const select = document.getElementById('savedAddresses');
                 select.innerHTML = '<option value="">Selecione um endereço salvo ou cadastre um novo</option>';
@@ -800,7 +851,6 @@
                     select.innerHTML += `<option value="${index}">${address.street}, ${address.number} - ${address.neighborhood}</option>`;
                 });
             }
-
             window.handleSavedAddressChange = function() {
                 const selectedIndex = document.getElementById('savedAddresses').value;
                 if (selectedIndex !== "") {
@@ -819,11 +869,9 @@
                     document.getElementById('submitOrderBtn').style.display = 'none';
                 }
             }
-
             window.showNewAddressForm = function() {
                 document.getElementById('newAddressForm').style.display = 'block';
             }
-
             window.saveNewAddress = function() {
                 const newAddress = {
                     street: document.getElementById('street').value,
@@ -860,18 +908,15 @@
                     console.error("Error updating addresses: ", error);
                 });
             }
-
             window.handlePaymentChange = function() {
                 const paymentMethod = document.getElementById('paymentMethod').value;
                 document.getElementById('moneyChange').style.display = paymentMethod === 'money' ? 'block' : 'none';
                 document.getElementById('pixInfo').style.display = paymentMethod === 'pix' ? 'block' : 'none';
             }
-
             window.handleChangeNeeded = function() {
                 const changeNeeded = document.getElementById('changeNeeded').value;
                 document.getElementById('changeAmountDiv').style.display = changeNeeded === 'yes' ? 'block' : 'none';
             }
-
             function displayExtraItems() {
                 const extraItemsContainer = document.getElementById('extraItems');
                 extraItemsContainer.innerHTML = extraItems.map(item => `
@@ -882,12 +927,10 @@
                     </div>
                 `).join('');
             }
-
             window.toggleExtraItem = function(element, itemName) {
                 element.classList.toggle('selected');
                 updateOrderSummary();
             }
-
             function updateOrderSummary() {
                 const orderSummary = document.getElementById('orderSummary');
                 let summaryHTML = '<h3>Resumo do Pedido:</h3>';
@@ -917,7 +960,6 @@
                 summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
                 orderSummary.innerHTML = summaryHTML;
             }
-
             document.getElementById('checkoutForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 const selectedAddressIndex = document.getElementById('savedAddresses').value;
@@ -1031,7 +1073,6 @@
                         console.error('Erro ao adicionar pedido: ', error);
                     });
             });
-
             function getPaymentMethodText(method) {
                 switch(method) {
                     case 'money': return 'Dinheiro';
@@ -1040,12 +1081,10 @@
                     default: return method;
                 }
             }
-
             function getOrderNumberText(number) {
                 const specialCases = ['primeiro', 'segundo', 'terceiro', 'quarto', 'quinto'];
                 return specialCases[number - 1] || `${number}º`;
             }
-
             function updateLoyaltyInfo(orderCount) {
                 const loyaltyInfo = document.getElementById('loyaltyInfo');
                 loyaltyInfo.innerHTML = `
@@ -1058,7 +1097,6 @@
                     <p>Lembre-se: O pedido só será contabilizado após ser recebido por nossa loja no WhatsApp.</p>
                 `;
             }
-
             window.openMyOrders = function() {
                 const modal = document.getElementById('myOrdersModal');
                 const content = document.getElementById('myOrdersContent');
@@ -1070,7 +1108,6 @@
                 `;
                 modal.style.display = "block";
             }
-
             window.fetchMyOrders = function() {
                 const phone = document.getElementById('orderPhoneInput').value;
                 if (!phone) {
@@ -1106,7 +1143,6 @@
                         alert("Ocorreu um erro ao buscar seus pedidos. Por favor, tente novamente.");
                     });
             }
-
             window.repeatOrder = function(orderId) {
                 db.collection('orders').doc(orderId).get()
                     .then((doc) => {
@@ -1126,7 +1162,6 @@
                         alert("Ocorreu um erro ao repetir o pedido. Por favor, tente novamente.");
                     });
             }
-
             window.openLoyaltyProgram = function() {
                 const modal = document.getElementById('loyaltyProgramModal');
                 const content = document.getElementById('loyaltyProgramContent');
@@ -1145,7 +1180,6 @@
                 `;
                 modal.style.display = "block";
             }
-
             window.checkLoyaltyPoints = function() {
                 const phone = document.getElementById('loyaltyPhoneInput').value;
                 if (!phone) {
@@ -1173,22 +1207,245 @@
                         alert("Ocorreu um erro ao verificar seus pontos. Por favor, tente novamente.");
                     });
             }
-
             document.querySelectorAll('.close').forEach(closeBtn => {
                 closeBtn.onclick = function() {
                     this.closest('.modal').style.display = "none";
                 }
             });
-
             function closeAllModals() {
                 document.querySelectorAll('.modal').forEach(modal => {
                     modal.style.display = "none";
                 });
             }
-
             window.onclick = function(event) {
                 if (event.target.classList.contains('modal')) {
                     closeAllModals();
+                }
+            }
+
+            // Funções para o assistente virtual
+            let currentCombo = null;
+            let currentStep = 0;
+            const steps = ['combo', 'accompaniments1', 'accompaniments2', 'extras'];
+
+            window.openAssistant = function() {
+                document.getElementById('assistantModal').style.display = 'block';
+                startComboBuilder();
+            }
+
+            window.closeAssistant = function() {
+                document.getElementById('assistantModal').style.display = 'none';
+                resetComboBuilder();
+            }
+
+            function startComboBuilder() {
+                currentStep = 0;
+                updateAssistantChat("Olá! Vamos montar seu combo de açaí? Escolha uma das opções abaixo:");
+                displayComboOptions();
+            }
+
+            function displayComboOptions() {
+                const comboBuilder = document.getElementById('assistantChat');
+                comboBuilder.innerHTML += `
+                    <div class="combo-options">
+                        ${combos.map(combo => `
+                            <div class="combo-option" onclick="selectCombo('${combo.name}')">
+                                <h3>${combo.name}</h3>
+                                <p>R$ ${combo.price.toFixed(2)}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            window.selectCombo = function(comboName) {
+                currentCombo = combos.find(combo => combo.name === comboName);
+                currentStep++;
+                updateAssistantChat(`Ótima escolha! Agora, vamos escolher os acompanhamentos para o primeiro açaí do ${currentCombo.name}.`);
+                displayAccompaniments(1);
+            }
+
+            function displayAccompaniments(acaiNumber) {
+                const comboBuilder = document.getElementById('assistantChat');
+                comboBuilder.innerHTML += `
+                    <div class="combo-items">
+                        ${extraItems.map(item => `
+                            <div class="combo-item" onclick="selectAccompaniment('${item.name}', ${acaiNumber})">
+                                <img src="${item.image}" alt="${item.name}">
+                                <p>${item.name}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                updateComboSummary();
+            }
+
+            window.selectAccompaniment = function(itemName, acaiNumber) {
+                if (!currentCombo[`accompaniments${acaiNumber}`]) {
+                    currentCombo[`accompaniments${acaiNumber}`] = [];
+                }
+                if (currentCombo[`accompaniments${acaiNumber}`].length < currentCombo.maxAccompaniments) {
+                    currentCombo[`accompaniments${acaiNumber}`].push(itemName);
+                    updateAssistantChat(`Adicionado ${itemName} ao açaí ${acaiNumber}.`);
+                } else {
+                    updateAssistantChat(`Você já selecionou o máximo de acompanhamentos para este açaí.`);
+                }
+                updateComboSummary();
+
+                if (currentCombo[`accompaniments${acaiNumber}`].length === currentCombo.maxAccompaniments) {
+                    if (acaiNumber === 1) {
+                        currentStep++;
+                        updateAssistantChat("Ótimo! Agora vamos escolher os acompanhamentos para o segundo açaí.");
+                        displayAccompaniments(2);
+                    } else {
+                        currentStep++;
+                        updateAssistantChat("Perfeito! Agora vamos escolher os itens extras, se desejar.");
+                        displayExtras();
+                    }
+                }
+            }
+
+            function displayExtras() {
+                const comboBuilder = document.getElementById('assistantChat');
+                comboBuilder.innerHTML += `
+                    <div class="combo-items">
+                        ${extraItems.map(item => `
+                            <div class="combo-item" onclick="selectExtra('${item.name}')">
+                                <img src="${item.image}" alt="${item.name}">
+                                <p>${item.name}</p>
+                                <p>R$ ${item.price.toFixed(2)}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="btn" onclick="finishCombo()">Finalizar Combo</button>
+                `;
+                updateComboSummary();
+            }
+
+            window.selectExtra = function(itemName) {
+                if (!currentCombo.extras) {
+                    currentCombo.extras = [];
+                }
+                currentCombo.extras.push(itemName);
+                updateAssistantChat(`Adicionado ${itemName} como item extra.`);
+                updateComboSummary();
+            }
+
+            window.finishCombo = function() {
+                updateAssistantChat("Seu combo está pronto! Aqui está o resumo:");
+                const summary = getComboSummary();
+                updateAssistantChat(summary);
+                updateAssistantChat("Deseja adicionar este combo ao carrinho?");
+                document.getElementById('assistantChat').innerHTML += `
+                    <button class="btn" onclick="addComboToCart()">Adicionar ao Carrinho</button>
+                    <button class="btn" onclick="resetComboBuilder()">Montar Novo Combo</button>
+                `;
+            }
+
+            function getComboSummary() {
+                let summary = `${currentCombo.name}\n`;
+                summary += `Açaí 1: ${currentCombo.accompaniments1.join(', ')}\n`;
+                summary += `Açaí 2: ${currentCombo.accompaniments2.join(', ')}\n`;
+                if (currentCombo.extras && currentCombo.extras.length > 0) {
+                    summary += `Itens Extras: ${currentCombo.extras.join(', ')}\n`;
+                }
+                const total = calculateComboTotal();
+                summary += `Total: R$ ${total.toFixed(2)}`;
+                return summary;
+            }
+
+            function calculateComboTotal() {
+                let total = currentCombo.price;
+                if (currentCombo.extras) {
+                    total += currentCombo.extras.length * 1.99;
+                }
+                return total;
+            }
+
+            window.addComboToCart = function() {
+                const comboItem = {
+                    id: Date.now(),
+                    name: currentCombo.name,
+                    price: currentCombo.price,
+                    accompaniments1: currentCombo.accompaniments1,
+                    accompaniments2: currentCombo.accompaniments2,
+                    extras: currentCombo.extras || [],
+                    totalPrice: calculateComboTotal()
+                };
+                cart.push(comboItem);
+                localStorage.setItem('cart', JSON.stringify(cart));
+                updateAssistantChat("Combo adicionado ao carrinho com sucesso!");
+                resetComboBuilder();
+            }
+
+            function resetComboBuilder() {
+                currentCombo = null;
+                currentStep = 0;
+                document.getElementById('assistantChat').innerHTML = '';
+                startComboBuilder();
+            }
+
+            function updateComboSummary() {
+                const summary = document.getElementById('comboSummary');
+                if (currentCombo) {
+                    let summaryHTML = `<h3>${currentCombo.name}</h3>`;
+                    if (currentCombo.accompaniments1) {
+                        summaryHTML += `<p>Açaí 1: ${currentCombo.accompaniments1.join(', ')}</p>`;
+                    }
+                    if (currentCombo.accompaniments2) {
+                        summaryHTML += `<p>Açaí 2: ${currentCombo.accompaniments2.join(', ')}</p>`;
+                    }
+                    if (currentCombo.extras) {
+                        summaryHTML += `<p>Extras: ${currentCombo.extras.join(', ')}</p>`;
+                    }
+                    const total = calculateComboTotal();
+                    summaryHTML += `<p>Total: R$ ${total.toFixed(2)}</p>`;
+                    summary.innerHTML = summaryHTML;
+                } else {
+                    summary.innerHTML = '';
+                }
+            }
+
+            function updateAssistantChat(message) {
+                const chat = document.getElementById('assistantChat');
+                chat.innerHTML += `<p>${message}</p>`;
+                chat.scrollTop = chat.scrollHeight;
+            }
+
+            window.sendMessage = function() {
+                const userInput = document.getElementById('userInput');
+                const message = userInput.value.trim();
+                if (message) {
+                    updateAssistantChat(`Você: ${message}`);
+                    // Aqui você pode adicionar lógica para processar a mensagem do usuário
+                    // Por exemplo, responder a perguntas específicas sobre o combo
+                    respondToUserMessage(message);
+                    userInput.value = '';
+                }
+            }
+
+            function respondToUserMessage(message) {
+                // Lógica simples para responder a mensagens do usuário
+                const lowerMessage = message.toLowerCase();
+                if (lowerMessage.includes('preço') || lowerMessage.includes('valor')) {
+                    updateAssistantChat("Assistente: Os preços dos nossos combos são:\n" +
+                        combos.map(combo => `${combo.name}: R$ ${combo.price.toFixed(2)}`).join('\n'));
+                } else if (lowerMessage.includes('acompanhamento') || lowerMessage.includes('adicional')) {
+                    updateAssistantChat("Assistente: Nossos acompanhamentos incluem: " + 
+                        extraItems.map(item => item.name).join(', ') + 
+                        ". Você pode escolher até " + currentCombo.maxAccompaniments + 
+                        " acompanhamentos por açaí no seu combo.");
+                } else if (lowerMessage.includes('extra')) {
+                    updateAssistantChat("Assistente: Todos os itens extras custam R$ 1,99 cada. Você pode adicionar quantos quiser ao seu combo!");
+                } else if (lowerMessage.includes('ajuda') || lowerMessage.includes('como')) {
+                    updateAssistantChat("Assistente: Para montar seu combo, siga estas etapas:\n" +
+                        "1. Escolha o tamanho do combo\n" +
+                        "2. Selecione os acompanhamentos para cada açaí\n" +
+                        "3. Adicione itens extras se desejar\n" +
+                        "4. Finalize seu combo e adicione ao carrinho\n" +
+                        "Se tiver dúvidas específicas, é só perguntar!");
+                } else {
+                    updateAssistantChat("Assistente: Desculpe, não entendi sua pergunta. Posso ajudar com informações sobre preços, acompanhamentos, itens extras ou como montar seu combo. Pode reformular sua pergunta?");
                 }
             }
 
