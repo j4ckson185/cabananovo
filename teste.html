@@ -765,11 +765,26 @@
             return total;
         }
 
-        window.openCart = function() {
-            const modal = document.getElementById('cartModal');
-            const cartContent = document.getElementById('cartContent');
-            const cartTotal = document.getElementById('cartTotal');
-            cartContent.innerHTML = cart.map(item => `
+window.openCart = function() {
+    const modal = document.getElementById('cartModal');
+    const cartContent = document.getElementById('cartContent');
+    const cartTotal = document.getElementById('cartTotal');
+    cartContent.innerHTML = cart.map(item => {
+        if (item.acai1) {  // Se for um combo
+            return `
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <h3>${item.name}</h3>
+                        <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                        <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+                        <p>Extras: ${item.extras.length > 0 ? item.extras.join(', ') : 'Nenhum'}</p>
+                        <p>Preço: R$ ${item.totalPrice.toFixed(2)}</p>
+                    </div>
+                    <span class="cart-item-remove" onclick="removeFromCart(${item.id})">🗑️</span>
+                </div>
+            `;
+        } else {  // Se for um item individual
+            return `
                 <div class="cart-item">
                     <div class="cart-item-info">
                         <h3>${item.name}</h3>
@@ -779,11 +794,13 @@
                     </div>
                     <span class="cart-item-remove" onclick="removeFromCart(${item.id})">🗑️</span>
                 </div>
-            `).join('');
-            const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-            cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
-            modal.style.display = "block";
+            `;
         }
+    }).join('');
+    const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+    cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
+    modal.style.display = "block";
+}
 
         window.continueShopping = function() {
             document.getElementById('cartModal').style.display = "none";
@@ -1469,6 +1486,7 @@ window.addComboToCart = function() {
     alert('Combo adicionado ao carrinho!');
     document.getElementById('comboModal').style.display = 'none';
     resetComboBuilder();
+    openCart();  // Abre o carrinho automaticamente após adicionar o combo
 }
 
 window.resetComboBuilder = function() {
