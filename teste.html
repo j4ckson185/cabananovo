@@ -1266,26 +1266,28 @@
             modal.style.display = "block";
         }
 
-        let currentCombo = null;
-        let selectedFlavors = [];
-        let selectedAccompaniments = [];
-        let selectedExtras = [];
+let currentCombo = null;
+let selectedFlavors = [[], []];
+let selectedAccompaniments = [[], []];
+let selectedExtras = [];
+let currentAcaiIndex = 0;
 
-        window.selectCombo = function(comboName) {
-            currentCombo = combos.find(combo => combo.name === comboName);
-            document.querySelectorAll('.combo-option').forEach(option => {
-                option.classList.remove('selected');
-                if (option.textContent.includes(comboName)) {
-                    option.classList.add('selected');
-                }
-            });
-            showFlavorSelection();
+window.selectCombo = function(comboName) {
+    currentCombo = combos.find(combo => combo.name === comboName);
+    document.querySelectorAll('.combo-option').forEach(option => {
+        option.classList.remove('selected');
+        if (option.textContent.includes(comboName)) {
+            option.classList.add('selected');
         }
+    });
+    currentAcaiIndex = 0;
+    showFlavorSelection();
+}
 
 function showFlavorSelection() {
     const flavorSelection = document.getElementById('flavorSelection');
     flavorSelection.innerHTML = `
-        <h3>Escolha até 2 sabores para cada açaí:</h3>
+        <h3>Escolha até 2 sabores para o Açaí ${currentAcaiIndex + 1}:</h3>
         <div class="combo-items">
             ${acaiFlavors.map(flavor => `
                 <div class="combo-item" onclick="toggleFlavor('${flavor}')">
@@ -1296,16 +1298,17 @@ function showFlavorSelection() {
         <button class="btn" onclick="showAccompanimentSelection()">Próximo</button>
     `;
     flavorSelection.style.display = 'block';
+    updateFlavorSelection();
 }
 
 window.toggleFlavor = function(flavor) {
-    const index = selectedFlavors.indexOf(flavor);
+    const index = selectedFlavors[currentAcaiIndex].indexOf(flavor);
     if (index > -1) {
-        selectedFlavors.splice(index, 1);
-    } else if (selectedFlavors.length < 2) {
-        selectedFlavors.push(flavor);
+        selectedFlavors[currentAcaiIndex].splice(index, 1);
+    } else if (selectedFlavors[currentAcaiIndex].length < 2) {
+        selectedFlavors[currentAcaiIndex].push(flavor);
     } else {
-        alert("Você só pode selecionar até 2 sabores.");
+        alert("Você só pode selecionar até 2 sabores por açaí.");
         return;
     }
     updateFlavorSelection();
@@ -1314,7 +1317,7 @@ window.toggleFlavor = function(flavor) {
 function updateFlavorSelection() {
     document.querySelectorAll('#flavorSelection .combo-item').forEach(item => {
         const flavor = item.textContent.trim();
-        if (selectedFlavors.includes(flavor)) {
+        if (selectedFlavors[currentAcaiIndex].includes(flavor)) {
             item.classList.add('selected');
         } else {
             item.classList.remove('selected');
@@ -1323,13 +1326,13 @@ function updateFlavorSelection() {
 }
 
 window.showAccompanimentSelection = function() {
-    if (selectedFlavors.length === 0) {
+    if (selectedFlavors[currentAcaiIndex].length === 0) {
         alert("Por favor, selecione pelo menos um sabor.");
         return;
     }
     const accompanimentSelection = document.getElementById('accompanimentSelection');
     accompanimentSelection.innerHTML = `
-        <h3>Escolha até ${currentCombo.maxAccompaniments} acompanhamentos para cada açaí:</h3>
+        <h3>Escolha até ${currentCombo.maxAccompaniments} acompanhamentos para o Açaí ${currentAcaiIndex + 1}:</h3>
         <div class="combo-items">
             ${extraItems.map(item => `
                 <div class="combo-item" onclick="toggleAccompaniment('${item.name}')">
@@ -1338,20 +1341,21 @@ window.showAccompanimentSelection = function() {
                 </div>
             `).join('')}
         </div>
-        <button class="btn" onclick="showExtraItemsSelection()">Próximo</button>
+        <button class="btn" onclick="nextAcai()">Próximo</button>
     `;
     accompanimentSelection.style.display = 'block';
     document.getElementById('flavorSelection').style.display = 'none';
+    updateAccompanimentSelection();
 }
 
-        window.toggleAccompaniment = function(accompaniment) {
-    const index = selectedAccompaniments.indexOf(accompaniment);
+window.toggleAccompaniment = function(accompaniment) {
+    const index = selectedAccompaniments[currentAcaiIndex].indexOf(accompaniment);
     if (index > -1) {
-        selectedAccompaniments.splice(index, 1);
-    } else if (selectedAccompaniments.length < currentCombo.maxAccompaniments) {
-        selectedAccompaniments.push(accompaniment);
+        selectedAccompaniments[currentAcaiIndex].splice(index, 1);
+    } else if (selectedAccompaniments[currentAcaiIndex].length < currentCombo.maxAccompaniments) {
+        selectedAccompaniments[currentAcaiIndex].push(accompaniment);
     } else {
-        alert(`Você só pode selecionar até ${currentCombo.maxAccompaniments} acompanhamentos.`);
+        alert(`Você só pode selecionar até ${currentCombo.maxAccompaniments} acompanhamentos por açaí.`);
         return;
     }
     updateAccompanimentSelection();
@@ -1360,19 +1364,28 @@ window.showAccompanimentSelection = function() {
 function updateAccompanimentSelection() {
     document.querySelectorAll('#accompanimentSelection .combo-item').forEach(item => {
         const accompaniment = item.querySelector('p').textContent.trim();
-        if (selectedAccompaniments.includes(accompaniment)) {
+        if (selectedAccompaniments[currentAcaiIndex].includes(accompaniment)) {
             item.classList.add('selected');
         } else {
             item.classList.remove('selected');
         }
     });
 }
-        
-window.showExtraItemsSelection = function() {
-    if (selectedAccompaniments.length === 0) {
+
+        window.nextAcai = function() {
+    if (selectedAccompaniments[currentAcaiIndex].length === 0) {
         alert("Por favor, selecione pelo menos um acompanhamento.");
         return;
     }
+    if (currentAcaiIndex === 0) {
+        currentAcaiIndex = 1;
+        showFlavorSelection();
+    } else {
+        showExtraItemsSelection();
+    }
+}
+        
+window.showExtraItemsSelection = function() {
     const extraItemsSelection = document.getElementById('extraItemsSelection');
     extraItemsSelection.innerHTML = `
         <h3>Escolha itens extras (R$ 1,99 cada):</h3>
@@ -1418,47 +1431,58 @@ window.finishCombo = function() {
     document.querySelector('#comboModal .btn[onclick="addComboToCart()"]').style.display = 'block';
 }
 
-        function updateComboSummary() {
-            const comboSummary = document.getElementById('comboSummary');
-            let total = currentCombo.price + (selectedExtras.length * 1.99);
-            comboSummary.innerHTML = `
-                <h3>Resumo do Combo:</h3>
-                <p><strong>Combo:</strong> ${currentCombo.name}</p>
-                <p><strong>Sabores:</strong> ${selectedFlavors.join(', ')}</p>
-                <p><strong>Acompanhamentos:</strong> ${selectedAccompaniments.join(', ')}</p>
-                <p><strong>Extras:</strong> ${selectedExtras.length > 0 ? selectedExtras.join(', ') : 'Nenhum'}</p>
-                <p><strong>Total:</strong> R$ ${total.toFixed(2)}</p>
-            `;
-        }
+function updateComboSummary() {
+    const comboSummary = document.getElementById('comboSummary');
+    let total = currentCombo.price + (selectedExtras.length * 1.99);
+    comboSummary.innerHTML = `
+        <h3>Resumo do Combo:</h3>
+        <p><strong>Combo:</strong> ${currentCombo.name}</p>
+        <p><strong>Açaí 1:</strong></p>
+        <p>Sabores: ${selectedFlavors[0].join(', ')}</p>
+        <p>Acompanhamentos: ${selectedAccompaniments[0].join(', ')}</p>
+        <p><strong>Açaí 2:</strong></p>
+        <p>Sabores: ${selectedFlavors[1].join(', ')}</p>
+        <p>Acompanhamentos: ${selectedAccompaniments[1].join(', ')}</p>
+        <p><strong>Extras:</strong> ${selectedExtras.length > 0 ? selectedExtras.join(', ') : 'Nenhum'}</p>
+        <p><strong>Total:</strong> R$ ${total.toFixed(2)}</p>
+    `;
+}
 
-        window.addComboToCart = function() {
-            const comboItem = {
-                id: Date.now(),
-                name: currentCombo.name,
-                price: currentCombo.price,
-                flavors: selectedFlavors,
-                accompaniments: selectedAccompaniments,
-                extras: selectedExtras,
-                totalPrice: currentCombo.price + (selectedExtras.length * 1.99)
-            };
-            cart.push(comboItem);
-            localStorage.setItem('cart', JSON.stringify(cart));
-            alert('Combo adicionado ao carrinho!');
-            document.getElementById('comboModal').style.display = 'none';
-            resetComboBuilder();
-        }
+window.addComboToCart = function() {
+    const comboItem = {
+        id: Date.now(),
+        name: currentCombo.name,
+        price: currentCombo.price,
+        acai1: {
+            flavors: selectedFlavors[0],
+            accompaniments: selectedAccompaniments[0]
+        },
+        acai2: {
+            flavors: selectedFlavors[1],
+            accompaniments: selectedAccompaniments[1]
+        },
+        extras: selectedExtras,
+        totalPrice: currentCombo.price + (selectedExtras.length * 1.99)
+    };
+    cart.push(comboItem);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    alert('Combo adicionado ao carrinho!');
+    document.getElementById('comboModal').style.display = 'none';
+    resetComboBuilder();
+}
 
-        window.resetComboBuilder = function() {
-            currentCombo = null;
-            selectedFlavors = [];
-            selectedAccompaniments = [];
-            selectedExtras = [];
-            document.getElementById('flavorSelection').style.display = 'none';
-            document.getElementById('accompanimentSelection').style.display = 'none';
-            document.getElementById('extraItemsSelection').style.display = 'none';
-            document.getElementById('comboSummary').innerHTML = '';
-            document.querySelector('#comboModal .btn[onclick="addComboToCart()"]').style.display = 'none';
-        }
+window.resetComboBuilder = function() {
+    currentCombo = null;
+    selectedFlavors = [[], []];
+    selectedAccompaniments = [[], []];
+    selectedExtras = [];
+    currentAcaiIndex = 0;
+    document.getElementById('flavorSelection').style.display = 'none';
+    document.getElementById('accompanimentSelection').style.display = 'none';
+    document.getElementById('extraItemsSelection').style.display = 'none';
+    document.getElementById('comboSummary').innerHTML = '';
+    document.querySelector('#comboModal .btn[onclick="addComboToCart()"]').style.display = 'none';
+}
 
         // Assistente Virtual
         let assistantConversation = [];
