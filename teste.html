@@ -367,6 +367,14 @@
             background-color: #f0f0f0;
             border-radius: 8px;
         }
+        .user-options {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .user-options .btn {
+            margin: 0 10px;
+        }
     </style>
 </head>
 <body>
@@ -380,11 +388,11 @@
         <div class="cart-icon" onclick="openCart()">🛒</div>
     </header>
     <main>
-        <div class="categories" id="categories">
-            <button class="category-btn" onclick="openMyOrders()">Meus Pedidos</button>
-            <button class="category-btn" onclick="openLoyaltyProgram()">Plano Fidelidade</button>
-            <button class="category-btn" onclick="openComboBuilder()">Monte seu Combo</button>
+        <div class="user-options">
+            <button class="btn" onclick="openMyOrders()">Meus Pedidos</button>
+            <button class="btn" onclick="openLoyaltyProgram()">Programa Fidelidade</button>
         </div>
+        <div class="categories" id="categories"></div>
         <div class="product-grid" id="productGrid"></div>
     </main>
     <div id="productModal" class="modal">
@@ -488,6 +496,20 @@
             <span class="close">&times;</span>
             <h2>Monte seu Combo</h2>
             <div id="comboBuilder"></div>
+        </div>
+    </div>
+    <div id="myOrdersModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Meus Pedidos</h2>
+            <div id="myOrdersContent"></div>
+        </div>
+    </div>
+    <div id="loyaltyProgramModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Programa Fidelidade</h2>
+            <div id="loyaltyProgramContent"></div>
         </div>
     </div>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -1036,6 +1058,121 @@
                 `;
             }
 
+            window.openMyOrders = function() {
+                const modal = document.getElementById('myOrdersModal');
+                const content = document.getElementById('myOrdersContent');
+                content.innerHTML = `
+                    <h3>Insira seu número de WhatsApp para ver seus pedidos:</h3>
+                    <input type="tel" id="orderPhoneInput" placeholder="WhatsApp (com DDD)" required>
+                    <button class="btn" onclick="fetchMyOrders()">Buscar Pedidos</button>
+                    <div id="ordersList"></div>
+                `;
+                modal.style.display = "block";
+            }
+
+            window.fetchMyOrders = function() {
+                const phone = document.getElementById('orderPhoneInput').value;
+                if (!phone) {
+                    alert("Por favor, insira seu número de WhatsApp.");
+                    return;
+                }
+                db.collection('orders')
+                    .where('customerPhone', '==', phone)
+                    .orderBy('createdAt', 'desc')
+                    .get()
+                    .then((querySnapshot) => {
+                        const ordersList = document.getElementById('ordersList');
+                        if (querySnapshot.empty) {
+                            ordersList.innerHTML = '<p>Nenhum pedido encontrado para este número.</p>';
+                        } else {
+                            let ordersHtml = '<h3>Seus Pedidos:</h3>';
+                            querySnapshot.forEach((doc) => {
+                                const order = doc.data();
+                                ordersHtml += `
+                                    <div class="order-item">
+                                        <p>Data: ${order.createdAt.toDate().toLocaleString()}</p>
+                                        <p>Total: R$ ${order.total.toFixed(2)}</p>
+                                        <p>Status: ${order.status}</p>
+                                        <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Pedido</button>
+                                    </div>
+                                `;
+                            });
+                            ordersList.innerHTML = ordersHtml;
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Erro ao buscar pedidos: ", error);
+                        alert("Ocorreu um erro ao buscar seus pedidos. Por favor, tente novamente.");
+                    });
+            }
+
+            window.repeatOrder = function(orderId) {
+                db.collection('orders').doc(orderId).get()
+                    .then((doc) => {
+                        if (doc.exists) {
+                            const order = doc.data();
+                            cart = order.items;
+                            localStorage.setItem('cart', JSON.stringify(cart));
+                            alert("Pedido adicionado ao carrinho!");
+                            document.getElementById('myOrdersModal').style.display = "none";
+                            openCart();
+                        } else {
+                            alert("Pedido não encontrado.");
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Erro ao repetir pedido: ", error);
+                        alert("Ocorreu um erro ao repetir o pedido. Por favor, tente novamente.");
+                    });
+            }
+
+            window.openLoyaltyProgram = function() {
+                const modal = document.getElementById('loyaltyProgramModal');
+                const content = document.getElementById('loyaltyProgramContent');
+                content.innerHTML = `
+                    <h3>Programa de Fidelidade Cabana Açaí</h3>
+                    <p>Nosso programa de fidelidade é simples e recompensador:</p>
+                    <ul>
+                        <li>A cada 10 pedidos, você ganha 50% de desconto no próximo!</li>
+                        <li>Os pedidos são contabilizados dentro da janela do WhatsApp do cliente.</li>
+                        <li>Se você fizer pedidos com números de WhatsApp diferentes, os pontos de fidelidade serão somados no novo número que está utilizando para compra.</li>
+                    </ul>
+                    <p>Para verificar seus pontos de fidelidade, insira seu número de WhatsApp:</p>
+                    <input type="tel" id="loyaltyPhoneInput" placeholder="WhatsApp (com DDD)" required>
+                    <button class="btn" onclick="checkLoyaltyPoints()">Verificar Pontos</button>
+                    <div id="loyaltyPoints"></div>
+                `;
+                modal.style.display = "block";
+            }
+
+            window.checkLoyaltyPoints = function() {
+                const phone = document.getElementById('loyaltyPhoneInput').value;
+                if (!phone) {
+                    alert("Por favor, insira seu número de WhatsApp.");
+                    return;
+                }
+                db.collection('customers').doc(phone).get()
+                    .then((doc) => {
+                        const loyaltyPoints = document.getElementById('loyaltyPoints');
+                        if (doc.exists) {
+                            const orderCount = doc.data().orderCount || 0;
+                            loyaltyPoints.innerHTML = `
+                                <p>Você já realizou ${orderCount} ${orderCount === 1 ? 'pedido' : 'pedidos'}.</p>
+                                ${orderCount >= 10 ? 
+                                    '<p><strong>Parabéns!</strong> Você tem direito a 50% de desconto no seu próximo pedido!</p>' :
+                                    `<p>Faltam ${10 - orderCount} ${10 - orderCount === 1 ? 'pedido' : 'pedidos'} para você ganhar 50% de desconto!</p>`
+                                }
+                            `;
+                        } else {
+                            loyaltyPoints.innerHTML = '<p>Nenhum pedido encontrado para este número.</p>';
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Erro ao verificar pontos de fidelidade: ", error);
+                        alert("Ocorreu um erro ao verificar seus pontos. Por favor, tente novamente.");
+                    });
+            }
+
             document.querySelectorAll('.close').forEach(closeBtn => {
                 closeBtn.onclick = function() {
                     this.closest('.modal').style.display = "none";
@@ -1052,194 +1189,6 @@
                 if (event.target.classList.contains('modal')) {
                     closeAllModals();
                 }
-            }
-
-            window.openMyOrders = function() {
-                alert("Funcionalidade 'Meus Pedidos' em desenvolvimento.");
-            }
-
-            window.openLoyaltyProgram = function() {
-                alert("Funcionalidade 'Plano Fidelidade' em desenvolvimento.");
-            }
-
-            window.openComboBuilder = function() {
-                const modal = document.getElementById('comboModal');
-                const comboBuilder = document.getElementById('comboBuilder');
-                comboBuilder.innerHTML = `
-                    <div class="combo-step">
-                        <h3>Escolha seu Combo:</h3>
-                        <div class="combo-options">
-                            <div class="combo-option" onclick="selectCombo('2x300ml')">
-                                <h4>Combo 2 Açaís ou Cremes 300ml</h4>
-                                <p>R$ 20,00</p>
-                                <p>Até 3 acompanhamentos em cada</p>
-                            </div>
-                            <div class="combo-option" onclick="selectCombo('2x500ml')">
-                                <h4>Combo 2 Açaís ou Cremes 500ml</h4>
-                                <p>R$ 26,99</p>
-                                <p>Até 4 acompanhamentos em cada</p>
-                            </div>
-                            <div class="combo-option" onclick="selectCombo('2x1L')">
-                                <h4>Combo 2 Açaís ou Cremes 1 Litro</h4>
-                                <p>R$ 49,99</p>
-                                <p>Até 8 acompanhamentos em cada</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="comboItems" style="display:none;"></div>
-                    <div id="comboSummary"></div>
-                    <button id="addComboToCart" class="btn" style="display:none;" onclick="addComboToCart()">Adicionar Combo ao Carrinho</button>
-                `;
-                modal.style.display = "block";
-            }
-
-            window.selectCombo = function(comboType) {
-                const comboItems = document.getElementById('comboItems');
-                const comboOptions = document.querySelectorAll('.combo-option');
-                comboOptions.forEach(option => option.classList.remove('selected'));
-                event.currentTarget.classList.add('selected');
-
-                let maxAccompaniments;
-                let price;
-                switch(comboType) {
-                    case '2x300ml':
-                        maxAccompaniments = 3;
-                        price = 20.00;
-                        break;
-                    case '2x500ml':
-                        maxAccompaniments = 4;
-                        price = 26.99;
-                        break;
-                    case '2x1L':
-                        maxAccompaniments = 8;
-                        price = 49.99;
-                        break;
-                }
-
-                comboItems.innerHTML = `
-                    <h3>Escolha seus Açaís ou Cremes:</h3>
-                    <div class="combo-items">
-                        ${products.filter(p => p.category === 'Açaí' || p.category === 'Creme').map(product => `
-                            <div class="combo-item" onclick="selectComboItem(this, '${product.name}')">
-                                <img src="${product.image}" alt="${product.name}">
-                                <p>${product.name}</p>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <h3>Escolha seus Acompanhamentos (até ${maxAccompaniments} por açaí):</h3>
-                    <div class="combo-items" id="accompaniments">
-                        ${products.find(p => p.category === 'Açaí').accompaniments.map(acc => `
-                            <div class="combo-item" onclick="selectAccompaniment(this, '${acc}')">
-                                <p>${acc}</p>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <h3>Itens Extras (R$ 1,99 cada):</h3>
-                    <div class="combo-items">
-                        ${extraItems.map(item => `
-                            <div class="combo-item" onclick="selectExtraItem(this, '${item.name}')">
-                                <img src="${item.image}" alt="${item.name}">
-                                <p>${item.name}</p>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-                comboItems.style.display = 'block';
-                document.getElementById('addComboToCart').style.display = 'block';
-                updateComboSummary(comboType, price);
-            }
-
-            let selectedComboItems = [];
-            let selectedAccompaniments = [];
-            let selectedExtras = [];
-
-            window.selectComboItem = function(element, itemName) {
-                if (selectedComboItems.length < 2) {
-                    element.classList.toggle('selected');
-                    if (element.classList.contains('selected')) {
-                        selectedComboItems.push(itemName);
-                    } else {
-                        selectedComboItems = selectedComboItems.filter(item => item !== itemName);
-                    }
-                    updateComboSummary();
-                } else if (!element.classList.contains('selected')) {
-                    alert('Você só pode selecionar 2 itens para o combo.');
-                }
-            }
-
-            window.selectAccompaniment = function(element, accName) {
-                element.classList.toggle('selected');
-                if (element.classList.contains('selected')) {
-                    selectedAccompaniments.push(accName);
-                } else {
-                    selectedAccompaniments = selectedAccompaniments.filter(acc => acc !== accName);
-                }
-                updateComboSummary();
-            }
-
-            window.selectExtraItem = function(element, itemName) {
-                element.classList.toggle('selected');
-                if (element.classList.contains('selected')) {
-                    selectedExtras.push(itemName);
-                } else {
-                    selectedExtras = selectedExtras.filter(item => item !== itemName);
-                }
-                updateComboSummary();
-            }
-
-            function updateComboSummary(comboType, basePrice) {
-                const summary = document.getElementById('comboSummary');
-                let summaryHTML = `<h3>Resumo do Combo:</h3>`;
-                summaryHTML += `<p>Tipo de Combo: ${comboType}</p>`;
-                summaryHTML += `<p>Itens selecionados: ${selectedComboItems.join(', ') || 'Nenhum'}</p>`;
-                summaryHTML += `<p>Acompanhamentos: ${selectedAccompaniments.join(', ') || 'Nenhum'}</p>`;
-                summaryHTML += `<p>Extras: ${selectedExtras.join(', ') || 'Nenhum'}</p>`;
-
-                const extrasTotal = selectedExtras.length * 1.99;
-                const total = basePrice + extrasTotal;
-
-                summaryHTML += `<p>Preço base do combo: R$ ${basePrice.toFixed(2)}</p>`;
-                summaryHTML += `<p>Total de extras: R$ ${extrasTotal.toFixed(2)}</p>`;
-                summaryHTML += `<h4>Total: R$ ${total.toFixed(2)}</h4>`;
-
-                summary.innerHTML = summaryHTML;
-            }
-
-            window.addComboToCart = function() {
-                const selectedCombo = document.querySelector('.combo-option.selected');
-                if (!selectedCombo) {
-                    alert('Por favor, selecione um tipo de combo.');
-                    return;
-                }
-
-                const comboType = selectedCombo.querySelector('h4').textContent;
-                const comboPrice = parseFloat(selectedCombo.querySelector('p').textContent.replace('R$ ', ''));
-
-                if (selectedComboItems.length !== 2) {
-                    alert('Por favor, selecione exatamente 2 itens para o combo.');
-                    return;
-                }
-
-                const cartItem = {
-                    id: Date.now(),
-                    name: comboType,
-                    items: selectedComboItems,
-                    accompaniments: selectedAccompaniments,
-                    extras: selectedExtras,
-                    price: comboPrice,
-                    totalPrice: comboPrice + (selectedExtras.length * 1.99)
-                };
-
-                cart.push(cartItem);
-                localStorage.setItem('cart', JSON.stringify(cart));
-
-                alert('Combo adicionado ao carrinho!');
-                document.getElementById('comboModal').style.display = 'none';
-
-                // Reset selections
-                selectedComboItems = [];
-                selectedAccompaniments = [];
-                selectedExtras = [];
             }
 
             fetchCategories();
