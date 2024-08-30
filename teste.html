@@ -1010,119 +1010,128 @@ function updateOrderSummary() {
     orderSummary.innerHTML = summaryHTML;
 }
 
-        document.getElementById('checkoutForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const selectedAddressIndex = document.getElementById('savedAddresses').value;
-            if (selectedAddressIndex === "") {
-                alert("Por favor, selecione um endereço de entrega.");
-                return;
+document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const selectedAddressIndex = document.getElementById('savedAddresses').value;
+    if (selectedAddressIndex === "") {
+        alert("Por favor, selecione um endereço de entrega.");
+        return;
+    }
+    const selectedAddress = savedAddresses[selectedAddressIndex];
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    const changeNeeded = document.getElementById('changeNeeded').value;
+    const changeAmount = document.getElementById('changeAmount').value;
+    let message = `Pedido confirmado!\n`;
+    message += `Nome: ${customerInfo.name}\n`;
+    message += `WhatsApp: ${customerInfo.phone}\n`;
+    message += `Endereço: ${selectedAddress.street}, ${selectedAddress.number}, ${selectedAddress.neighborhood}, ${selectedAddress.city} - ${selectedAddress.state}\n`;
+    if (selectedAddress.complement) {
+        message += `Complemento: ${selectedAddress.complement}\n`;
+    }
+    message += `Método de Pagamento: ${getPaymentMethodText(paymentMethod)}\n`;
+    if (paymentMethod === 'money') {
+        message += `Precisa de troco: ${changeNeeded === 'yes' ? 'Sim' : 'Não'}\n`;
+        if (changeNeeded === 'yes') {
+            message += `Troco para: R$ ${parseFloat(changeAmount).toFixed(2)}\n`;
+        }
+    }
+    
+    message += `\nItens do Pedido:\n`;
+    cart.forEach(item => {
+        if (item.acai1) {  // Se for um combo
+            message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
+            message += `\nAçaí 1: Sabores: ${item.acai1.flavors.join(', ')}, Acompanhamentos: ${item.acai1.accompaniments.join(', ')}`;
+            message += `\nAçaí 2: Sabores: ${item.acai2.flavors.join(', ')}, Acompanhamentos: ${item.acai2.accompaniments.join(', ')}`;
+            if (item.extras && item.extras.length > 0) {
+                message += `\nExtras: ${item.extras.join(', ')}`;
             }
-            const selectedAddress = savedAddresses[selectedAddressIndex];
-            const paymentMethod = document.getElementById('paymentMethod').value;
-            const changeNeeded = document.getElementById('changeNeeded').value;
-            const changeAmount = document.getElementById('changeAmount').value;
-            let message = `Pedido confirmado!\n`;
-            message += `Nome: ${customerInfo.name}\n`;
-            message += `WhatsApp: ${customerInfo.phone}\n`;
-            message += `Endereço: ${selectedAddress.street}, ${selectedAddress.number}, ${selectedAddress.neighborhood}, ${selectedAddress.city} - ${selectedAddress.state}\n`;
-            if (selectedAddress.complement) {
-                message += `Complemento: ${selectedAddress.complement}\n`;
+        } else {  // Se for um item individual
+            message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
+            if (item.accompaniments && item.accompaniments.length > 0) {
+                message += `\nAcompanhamentos: ${item.accompaniments.join(', ')}`;
             }
-            message += `Método de Pagamento: ${getPaymentMethodText(paymentMethod)}\n`;
-            if (paymentMethod === 'money') {
-                message += `Precisa de troco: ${changeNeeded === 'yes' ? 'Sim' : 'Não'}\n`;
-                if (changeNeeded === 'yes') {
-                    message += `Troco para: R$ ${parseFloat(changeAmount).toFixed(2)}\n`;
-                }
+            if (item.extras && item.extras.length > 0) {
+                message += `\nExtras: ${item.extras.join(', ')}`;
             }
-            
-            message += `\nItens do Pedido:\n`;
-            cart.forEach(item => {
-                message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
-                if (item.accompaniments.length > 0) {
-                    message += `\nAcompanhamentos: ${item.accompaniments.join(', ')}`;
-                }
-                if (item.extras.length > 0) {
-                    message += `\nExtras: ${item.extras.join(', ')}`;
-                }
-            });
-            
-            const selectedExtras = document.querySelectorAll('.extra-item.selected');
-            if (selectedExtras.length > 0) {
-                message += "\n\nItens Extras Adicionais:";
-                selectedExtras.forEach(item => {
-                    const itemName = item.querySelector('p').textContent;
-                    message += `\n- ${itemName} (R$ 1,99)`;
-                });
-            }
-            
-            const subtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-            const extrasTotal = selectedExtras.length * 1.99;
-            const total = subtotal + extrasTotal + deliveryFee;
-            
-            message += `\n\nSubtotal: R$ ${subtotal.toFixed(2)}`;
-            message += `\nExtras Adicionais: R$ ${extrasTotal.toFixed(2)}`;
-            message += `\nTaxa de Entrega: R$ ${deliveryFee.toFixed(2)}`;
-            message += `\nTotal: R$ ${total.toFixed(2)}`;
-            
-            const order = {
-                id: Date.now(),
-                customerName: customerInfo.name,
-                customerPhone: customerInfo.phone,
-                address: selectedAddress,
-                paymentMethod: paymentMethod,
-                changeNeeded: changeNeeded,
-                changeAmount: changeAmount,
-                items: cart,
-                extraItems: Array.from(selectedExtras).map(item => item.querySelector('p').textContent),
-                subtotal: subtotal,
-                extrasTotal: extrasTotal,
-                deliveryFee: deliveryFee,
-                total: total,
-                status: 'preparing',
-                createdAt: new Date()
-            };
-            db.collection('orders').add(order)
-                .then(() => {
-                    console.log('Pedido adicionado com sucesso!');
-                    return db.collection('customers').doc(customerInfo.phone).get();
-                })
-                .then((doc) => {
-                    let orderCount = 0;
-                    if (doc.exists) {
-                        orderCount = doc.data().orderCount || 0;
-                    }
-                    orderCount++;
-                    
-                    return db.collection('customers').doc(customerInfo.phone).set({
-                        name: customerInfo.name,
-                        orderCount: orderCount
-                    }, { merge: true });
-                })
-                .then(() => {
-                    return db.collection('customers').doc(customerInfo.phone).get();
-                })
-                .then((doc) => {
-                    if (doc.exists) {
-                        const orderCount = doc.data().orderCount;
-                        message += `\n\nEste é o ${getOrderNumberText(orderCount)} pedido do cliente.`;
-                        if (orderCount >= 10) {
-                            message += `\nCliente tem direito ao desconto de fidelidade!`;
-                        } else {
-                            message += `\nFaltam ${10 - orderCount} pedidos para o próximo desconto de fidelidade.`;
-                        }
-                    }
-                    window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
-                    cart = [];
-                    localStorage.setItem('cart', JSON.stringify(cart));
-                    document.getElementById('paymentMethod').value = 'card';
-                    handlePaymentChange();
-                    document.getElementById('checkoutModal').style.display = "none";
-                })
-                .catch(error => {
-                    console.error('Erro ao adicionar pedido: ', error);
-                });
+        }
+    });
+    
+    const selectedExtras = document.querySelectorAll('.extra-item.selected');
+    if (selectedExtras.length > 0) {
+        message += "\n\nItens Extras Adicionais:";
+        selectedExtras.forEach(item => {
+            const itemName = item.querySelector('p').textContent;
+            message += `\n- ${itemName} (R$ 1,99)`;
         });
+    }
+    
+    const subtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+    const extrasTotal = selectedExtras.length * 1.99;
+    const total = subtotal + extrasTotal + deliveryFee;
+    
+    message += `\n\nSubtotal: R$ ${subtotal.toFixed(2)}`;
+    message += `\nExtras Adicionais: R$ ${extrasTotal.toFixed(2)}`;
+    message += `\nTaxa de Entrega: R$ ${deliveryFee.toFixed(2)}`;
+    message += `\nTotal: R$ ${total.toFixed(2)}`;
+    
+    const order = {
+        id: Date.now(),
+        customerName: customerInfo.name,
+        customerPhone: customerInfo.phone,
+        address: selectedAddress,
+        paymentMethod: paymentMethod,
+        changeNeeded: changeNeeded,
+        changeAmount: changeAmount,
+        items: cart,
+        extraItems: Array.from(selectedExtras).map(item => item.querySelector('p').textContent),
+        subtotal: subtotal,
+        extrasTotal: extrasTotal,
+        deliveryFee: deliveryFee,
+        total: total,
+        status: 'preparing',
+        createdAt: new Date()
+    };
+    db.collection('orders').add(order)
+        .then(() => {
+            console.log('Pedido adicionado com sucesso!');
+            return db.collection('customers').doc(customerInfo.phone).get();
+        })
+        .then((doc) => {
+            let orderCount = 0;
+            if (doc.exists) {
+                orderCount = doc.data().orderCount || 0;
+            }
+            orderCount++;
+            
+            return db.collection('customers').doc(customerInfo.phone).set({
+                name: customerInfo.name,
+                orderCount: orderCount
+            }, { merge: true });
+        })
+        .then(() => {
+            return db.collection('customers').doc(customerInfo.phone).get();
+        })
+        .then((doc) => {
+            if (doc.exists) {
+                const orderCount = doc.data().orderCount;
+                message += `\n\nEste é o ${getOrderNumberText(orderCount)} pedido do cliente.`;
+                if (orderCount >= 10) {
+                    message += `\nCliente tem direito ao desconto de fidelidade!`;
+                } else {
+                    message += `\nFaltam ${10 - orderCount} pedidos para o próximo desconto de fidelidade.`;
+                }
+            }
+            window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
+            cart = [];
+            localStorage.setItem('cart', JSON.stringify(cart));
+            document.getElementById('paymentMethod').value = 'card';
+            handlePaymentChange();
+            document.getElementById('checkoutModal').style.display = "none";
+        })
+        .catch(error => {
+            console.error('Erro ao adicionar pedido: ', error);
+        });
+});
 
         function getPaymentMethodText(method) {
             switch(method) {
