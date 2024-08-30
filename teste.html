@@ -1343,18 +1343,6 @@ window.showAccompanimentSelection = function() {
     accompanimentSelection.style.display = 'block';
     document.getElementById('flavorSelection').style.display = 'none';
 }
-        window.toggleAccompaniment = function(accompaniment) {
-            const index = selectedAccompaniments.indexOf(accompaniment);
-            if (index > -1) {
-                selectedAccompaniments.splice(index, 1);
-            } else if (selectedAccompaniments.length < currentCombo.maxAccompaniments) {
-                selectedAccompaniments.push(accompaniment);
-            } else {
-                alert(`Você só pode selecionar até ${currentCombo.maxAccompaniments} acompanhamentos.`);
-                return;
-            }
-            updateAccompanimentSelection();
-        }
 
         function updateAccompanimentSelection() {
             document.querySelectorAll('#accompanimentSelection .combo-item').forEach(item => {
@@ -1367,27 +1355,29 @@ window.showAccompanimentSelection = function() {
             });
         }
 
-        function showExtraItemsSelection() {
-            if (selectedAccompaniments.length === 0) {
-                alert("Por favor, selecione pelo menos um acompanhamento.");
-                return;
-            }
-            const extraItemsSelection = document.getElementById('extraItemsSelection');
-            extraItemsSelection.innerHTML = `
-                <h3>Escolha itens extras (R$ 1,99 cada):</h3>
-                <div class="combo-items">
-                    ${extraItems.map(item => `
-                        <div class="combo-item" onclick="toggleExtra('${item.name}')">
-                            <img src="${item.image}" alt="${item.name}">
-                            <p>${item.name}</p>
-                            <p>R$ ${item.price.toFixed(2)}</p>
-                        </div>
-                    `).join('')}
+window.showExtraItemsSelection = function() {
+    if (selectedAccompaniments.length === 0) {
+        alert("Por favor, selecione pelo menos um acompanhamento.");
+        return;
+    }
+    const extraItemsSelection = document.getElementById('extraItemsSelection');
+    extraItemsSelection.innerHTML = `
+        <h3>Escolha itens extras (R$ 1,99 cada):</h3>
+        <div class="combo-items">
+            ${extraItems.map(item => `
+                <div class="combo-item" onclick="toggleExtra('${item.name}')">
+                    <img src="${item.image}" alt="${item.name}">
+                    <p>${item.name}</p>
+                    <p>R$ ${item.price.toFixed(2)}</p>
                 </div>
-                <button class="btn" onclick="finishCombo()">Finalizar Combo</button>
-            `;
-            extraItemsSelection.style.display = 'block';
-        }
+            `).join('')}
+        </div>
+        <button class="btn" onclick="finishCombo()">Finalizar Combo</button>
+    `;
+    extraItemsSelection.style.display = 'block';
+    document.getElementById('accompanimentSelection').style.display = 'none';
+}
+
 
         window.toggleExtra = function(extra) {
             const index = selectedExtras.indexOf(extra);
@@ -1410,10 +1400,10 @@ window.showAccompanimentSelection = function() {
             });
         }
 
-        function finishCombo() {
-            updateComboSummary();
-            document.querySelector('#comboModal .btn[onclick="addComboToCart()"]').style.display = 'block';
-        }
+window.finishCombo = function() {
+    updateComboSummary();
+    document.querySelector('#comboModal .btn[onclick="addComboToCart()"]').style.display = 'block';
+}
 
         function updateComboSummary() {
             const comboSummary = document.getElementById('comboSummary');
