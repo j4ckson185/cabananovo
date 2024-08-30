@@ -1064,48 +1064,61 @@
                 `;
             }
 
-window.openMyOrders = function() {
-      const phone = prompt("Por favor, digite seu número de WhatsApp com DDD:");
-      if (phone) {
-        db.collection('orders').where('customerPhone', '==', phone).get()
-          .then((querySnapshot) => {
-            let ordersHTML = '<h2>Meus Pedidos</h2>';
-            if (querySnapshot.empty) {
-              ordersHTML += '<p>Você ainda não fez nenhum pedido.</p>';
-            } else {
-              ordersHTML += '<ul class="order-list">';
-              querySnapshot.forEach((doc) => {
-                const order = doc.data();
-                ordersHTML += `
-                  <li class="order-item">
-                    <p><strong>Data:</strong> ${order.createdAt.toDate().toLocaleString()}</p>
-                    <p><strong>Detalhes do Pedido:</strong></p>
-                    <ul>
-                      ${order.items.map(item => `
-                        <li>${item.name} - R$ ${item.totalPrice.toFixed(2)}</li>
-                      `).join('')}
-                    </ul>
-                    <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
-                    <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Pedido</button>
-                  </li>
+         window.openMyOrders = function() {
+                const modal = document.getElementById('myOrdersModal');
+                const content = document.getElementById('myOrdersContent');
+                content.innerHTML = `
+                    <h3>Insira seu número de WhatsApp para ver seus pedidos:</h3>
+                    <input type="tel" id="orderPhoneInput" placeholder="WhatsApp (com DDD)" required>
+                    <button class="btn" onclick="fetchMyOrders()">Buscar Pedidos</button>
+                    <div id="ordersList"></div>
                 `;
-              }); CopyRetryClaude’s response was limited as it hit the maximum length allowed at this time. Claude does not have the ability to run the code it generates yet.Jcortou. reenvie a partir desta linha:
-                    <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>EditEntendido. Vou continuar a partir da linha mencionada:
-htmlCopy                    <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
-                    <p><strong>Detalhes do Pedido:</strong> ${order.items.map(item => `${item.name} (${item.accompaniments.join(', ')})${item.extras.length > 0 ? ` + Extras: ${item.extras.join(', ')}` : ''}`).join(', ')}</p>
-                    <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Este Pedido</button>
-                  </li>
-                `;
-              });
-              ordersHTML += '</ul>';
+                modal.style.display = "block";
             }
-            document.getElementById('ordersList').innerHTML = ordersHTML;
-          })
-          .catch((error) => {
-            console.log("Erro ao buscar pedidos:", error);
-          });
-      }
+
+            window.fetchMyOrders = function() {
+    const phone = document.getElementById('orderPhoneInput').value;
+    if (!phone) {
+        alert("Por favor, insira seu número de WhatsApp.");
+        return;
     }
+    const ordersList = document.getElementById('ordersList');
+    ordersList.innerHTML = '<p>Buscando pedidos...</p>';
+
+    db.collection('orders')
+        .where('customerPhone', '==', phone)
+        .get()
+        .then((querySnapshot) => {
+            if (querySnapshot.empty) {
+                ordersList.innerHTML = '<p>Nenhum pedido encontrado para este número.</p>';
+            } else {
+                let ordersHtml = '<h3>Seus Pedidos:</h3>';
+                const orders = [];
+                querySnapshot.forEach((doc) => {
+                    const order = doc.data();
+                    order.id = doc.id;
+                    orders.push(order);
+                });
+                // Ordenar os pedidos por data de criação (mais recente primeiro)
+                orders.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+                orders.forEach((order) => {
+                    ordersHtml += `
+                        <div class="order-item">
+                            <p>Data: ${order.createdAt.toDate().toLocaleString()}</p>
+                            <p>Total: R$ ${order.total.toFixed(2)}</p>
+                            <p>Status: ${order.status}</p>
+                            <button class="btn" onclick="repeatOrder('${order.id}')">Repetir Pedido</button>
+                        </div>
+                    `;
+                });
+                ordersList.innerHTML = ordersHtml;
+            }
+        })
+        .catch((error) => {
+            console.error("Erro ao buscar pedidos: ", error);
+            ordersList.innerHTML = '<p>Ocorreu um erro ao buscar seus pedidos. Por favor, tente novamente.</p>';
+        });
+}
 
     window.repeatOrder = function(orderId) {
       db.collection('orders').doc(orderId).get()
