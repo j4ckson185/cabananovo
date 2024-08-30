@@ -376,46 +376,6 @@
         .user-options .btn {
             margin: 0 10px;
         }
-        /* Estilos adicionais para o assistente virtual */
-        #virtualAssistant {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: var(--primary-color);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-            z-index: 1000;
-        }
-        #assistantModal .modal-content {
-            max-width: 800px;
-            height: 80vh;
-            overflow-y: auto;
-        }
-        .assistant-message, .user-message {
-            margin-bottom: 10px;
-            padding: 10px;
-            border-radius: 10px;
-        }
-        .assistant-message {
-            background-color: #e6e6fa;
-            align-self: flex-start;
-        }
-        .user-message {
-            background-color: #f0f0f0;
-            align-self: flex-end;
-            text-align: right;
-        }
-        #assistantChat {
-            display: flex;
-            flex-direction: column;
-        }
-        #userInput {
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
@@ -553,18 +513,7 @@
         <div id="loyaltyProgramContent"></div>
     </div>
 </div>
-<div id="virtualAssistant" onclick="openAssistant()">
-    🤖 Assistente Virtual
-</div>
-<div id="assistantModal" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <h2>Assistente Virtual</h2>
-        <div id="assistantChat"></div>
-        <input type="text" id="userInput" placeholder="Digite sua mensagem...">
-        <button class="btn" onclick="sendMessage()">Enviar</button>
-    </div>
-</div>
+
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script>
@@ -1520,60 +1469,6 @@ window.resetComboBuilder = function() {
     document.getElementById('comboSummary').innerHTML = '';
     document.querySelector('#comboModal .btn[onclick="addComboToCart()"]').style.display = 'none';
 }
-
-        // Assistente Virtual
-        let assistantConversation = [];
-
-        window.openAssistant = function() {
-            const modal = document.getElementById('assistantModal');
-            modal.style.display = "block";
-            if (assistantConversation.length === 0) {
-                addAssistantMessage("Olá! Eu sou o assistente virtual da Cabana Açaí. Como posso te ajudar hoje?");
-            }
-        }
-
-        function addAssistantMessage(message) {
-            const chat = document.getElementById('assistantChat');
-            chat.innerHTML += `<div class="assistant-message">${message}</div>`;
-            assistantConversation.push({ role: 'assistant', content: message });
-            chat.scrollTop = chat.scrollHeight;
-        }
-
-        function addUserMessage(message) {
-            const chat = document.getElementById('assistantChat');
-            chat.innerHTML += `<div class="user-message">${message}</div>`;
-            assistantConversation.push({ role: 'user', content: message });
-            chat.scrollTop = chat.scrollHeight;
-        }
-
-        window.sendMessage = function() {
-            const userInput = document.getElementById('userInput');
-            const message = userInput.value.trim();
-            if (message) {
-                addUserMessage(message);
-                userInput.value = '';
-                processUserMessage(message);
-            }
-        }
-
-        function processUserMessage(message) {
-            // Lógica simples de processamento de mensagem
-            let response = "Desculpe, não entendi. Pode reformular sua pergunta?";
-
-            if (message.toLowerCase().includes("combo")) {
-                response = "Temos vários combos deliciosos! Você pode montar seu combo clicando no botão 'Montar Combo' na página principal. Lá você pode escolher o tamanho, os sabores, acompanhamentos e extras.";
-            } else if (message.toLowerCase().includes("sabor")) {
-                response = "Nossos sabores incluem: Açaí Tradicional, Creme de Ninho, Creme de Cupuaçu, Creme de Ovomaltine, Creme de Morango, Creme de Maracujá e Creme de Amendoim. Você pode escolher até 2 sabores por açaí!";
-            } else if (message.toLowerCase().includes("entrega")) {
-                response = "Sim, fazemos entrega! A taxa de entrega é de R$ 3,00. Quando você finalizar seu pedido, poderá inserir o endereço de entrega.";
-            } else if (message.toLowerCase().includes("pagamento")) {
-                response = "Aceitamos pagamento em dinheiro, cartão na entrega e PIX. Você pode escolher a forma de pagamento ao finalizar seu pedido.";
-            } else if (message.toLowerCase().includes("fidelidade")) {
-                response = "Temos um ótimo programa de fidelidade! A cada 10 pedidos, você ganha 50% de desconto no próximo. Você pode verificar seus pontos clicando no botão 'Programa Fidelidade' na página principal.";
-            }
-
-            addAssistantMessage(response);
-        }
 
         document.querySelectorAll('.close').forEach(closeBtn => {
             closeBtn.onclick = function() {
