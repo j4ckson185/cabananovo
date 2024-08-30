@@ -272,39 +272,45 @@ main {
   color: red;
 }
 .extras-suggestion {
-  background-color: #f0f0f0;
-  padding: 15px;
+  background-color: #f0e6ff;
+  padding: 20px;
   border-radius: 8px;
   margin-top: 20px;
 }
 .extras-suggestion h3 {
   color: #4a0e4e;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
+  text-align: center;
 }
 .extra-items {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 15px;
 }
 .extra-item {
   background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  border: 2px solid #8e44ad;
+  border-radius: 8px;
   padding: 10px;
   text-align: center;
-  width: calc(20% - 10px);
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 .extra-item img {
-  width: 50px;
-  height: 50px;
+  width: 80px;
+  height: 80px;
   object-fit: cover;
   border-radius: 50%;
-  margin-bottom: 5px;
+  margin-bottom: 10px;
+}
+.extra-item p {
+  margin: 5px 0;
+  font-size: 0.9em;
 }
 .extra-item.selected {
-  border-color: #4a0e4e;
   background-color: #e6e6fa;
+  border-color: #4a0e4e;
+  transform: scale(1.05);
 }
 </style>
 </head>
@@ -458,16 +464,16 @@ main {
 
     // Dados dos itens extras
     const extraItems = [
-      { name: "Ovomaltine", price: 1.99, image: "https://example.com/ovomaltine.jpg" },
-      { name: "Amendoim", price: 1.99, image: "https://example.com/amendoim.jpg" },
-      { name: "Granola", price: 1.99, image: "https://example.com/granola.jpg" },
-      { name: "Chocoball", price: 1.99, image: "https://example.com/chocoball.jpg" },
-      { name: "M&M", price: 1.99, image: "https://example.com/mm.jpg" },
-      { name: "Côco Ralado", price: 1.99, image: "https://example.com/coco.jpg" },
-      { name: "Leite em pó", price: 1.99, image: "https://example.com/leitempo.jpg" },
-      { name: "Leite condensado", price: 1.99, image: "https://example.com/leitecondensado.jpg" },
-      { name: "Calda de Morango", price: 1.99, image: "https://example.com/caldamorango.jpg" },
-      { name: "Calda de Chocolate", price: 1.99, image: "https://example.com/caldachocolate.jpg" }
+      { name: "Ovomaltine", price: 1.99, image: "https://images.tcdn.com.br/img/img_prod/919170/ovomaltine_flocos_extra_crocante_750g_425_1_e9d3c08b8341c4e7818b1759c877a213.jpg" },
+      { name: "Amendoim", price: 1.99, image: "https://cdn.entrypoint.directory/assets/39790/produtos/3053/xerem-amendoim-secundaria-relva-verde-500g.jpg" },
+      { name: "Granola", price: 1.99, image: "https://jardimdaservas.com.br/wp-content/uploads/2023/05/GRANOLAAAIGUARANEMEL-1.jpg" },
+      { name: "Chocoball", price: 1.99, image: "https://lojasantoantonio.vtexassets.com/arquivos/ids/156826/562-Choco-Power-Ball-Mini-Preto-e-Branco-500G-MAVALERIO.jpg?v=637254329101230000" },
+      { name: "M&M", price: 1.99, image: "https://static.welban.com.br/public/welban/imagens/produtos/confete-de-chocolate-colorido-500g-chococandy-dori-64029a15a016e.jpg" },
+      { name: "Côco Ralado", price: 1.99, image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_Mt3NOWlBbg-Yv0ttYPiXwNdMIxdh1aSuxJOIg50WN-1FOjiagSbr7MDjQf9OE0b2hnU&usqp=CAU" },
+      { name: "Leite em pó", price: 1.99, image: "https://acougueamigos.com/cdn/shop/products/acougue-amigos_1_27.jpg?v=1615589403" },
+      { name: "Leite condensado", price: 1.99, image: "https://static.escolakids.uol.com.br/conteudo_legenda/07795c263fc55bd57242ef71ae55cee8.jpg" },
+      { name: "Calda de Morango", price: 1.99, image: "https://i.ytimg.com/vi/3K6gWHdjyUU/maxresdefault.jpg" },
+      { name: "Calda de Chocolate", price: 1.99, image: "https://img.cybercook.com.br/receitas/53/calda-de-chocolate.jpeg" }
     ];
 
     async function fetchProducts() {
