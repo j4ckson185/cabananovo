@@ -1095,8 +1095,7 @@ window.openMyOrders = function() {
       }
     }
 
-
-            window.fetchMyOrders = function() {
+window.fetchMyOrders = function() {
     const phone = document.getElementById('orderPhoneInput').value;
     if (!phone) {
         alert("Por favor, insira seu número de WhatsApp.");
@@ -1106,7 +1105,7 @@ window.openMyOrders = function() {
     ordersList.innerHTML = '<p>Buscando pedidos...</p>';
 
     db.collection('orders')
-        .where('telefone', '==', phone)
+        .where('customerPhone', '==', phone)
         .get()
         .then((querySnapshot) => {
             if (querySnapshot.empty) {
