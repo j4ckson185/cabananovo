@@ -1088,7 +1088,6 @@ window.openMyOrders = function() {
               ordersHTML += '</ul>';
             }
             document.getElementById('ordersList').innerHTML = ordersHTML;
-            document.getElementById('myOrdersModal').style.display = 'block';
           })
           .catch((error) => {
             console.log("Erro ao buscar pedidos:", error);
