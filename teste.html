@@ -244,7 +244,6 @@
         }
         .input-icon input {
             padding-left: 35px;
-            text-align: center;
         }
         #checkoutForm {
             margin-top: 20px;
@@ -376,6 +375,17 @@
         .user-options .btn {
             margin: 0 10px;
         }
+        #orderSummary {
+            text-align: center;
+        }
+        #orderSummary p {
+            margin: 5px 0;
+        }
+        #orderSummary hr {
+            margin: 10px 0;
+            border: none;
+            border-top: 1px solid #ddd;
+        }
     </style>
 </head>
 <body>
@@ -406,30 +416,30 @@
     <div id="cartModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-<h2>Seu Carrinho</h2>
-        <div id="cartContent"></div>
-        <div id="cartTotal"></div>
-        <button class="btn" onclick="openCustomerIdentification()">Finalizar Pedido</button>
-        <button class="btn" onclick="continueShopping()">Continuar Comprando</button>
+            <h2>Seu Carrinho</h2>
+            <div id="cartContent"></div>
+            <div id="cartTotal"></div>
+            <button class="btn" onclick="openCustomerIdentification()">Finalizar Pedido</button>
+            <button class="btn" onclick="continueShopping()">Continuar Comprando</button>
+        </div>
     </div>
-</div>
-<div id="customerIdentificationModal" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-<form id="customerIdentificationForm">
-  <h2><i class="fas fa-user"></i> Identifique-se</h2>
-  <div class="input-icon">
-    <i class="fas fa-user"></i>
-    <input type="text" id="customerName" placeholder="Nome Completo" required>
-  </div>
-  <div class="input-icon">
-    <i class="fab fa-whatsapp"></i>
-    <input type="tel" id="customerPhone" placeholder="WhatsApp (com DDD)" required>
-  </div>
-  <button type="submit" class="btn">Avançar</button>
-</form>
+    <div id="customerIdentificationModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+    <form id="customerIdentificationForm">
+      <h2><i class="fas fa-user"></i> Identifique-se</h2>
+      <div class="input-icon">
+        <i class="fas fa-user"></i>
+        <input type="text" id="customerName" placeholder="Nome Completo" required>
+      </div>
+      <div class="input-icon">
+        <i class="fab fa-whatsapp"></i>
+        <input type="tel" id="customerPhone" placeholder="WhatsApp (com DDD)" required>
+      </div>
+      <button type="submit" class="btn">Avançar</button>
+    </form>
+        </div>
     </div>
-</div>
 <div id="checkoutModal" class="modal">
     <div class="modal-content">
         <span class="close">&times;</span>
@@ -442,49 +452,50 @@
                 </select>
                 <button type="button" class="btn" onclick="showNewAddressForm()">Cadastrar Novo Endereço</button>
                 <div id="newAddressForm" style="display: none;">
-                        <label for="street">Rua: <span class="required-field">*</span></label>
-                        <input type="text" id="street" required>
-                        <label for="number">Número: <span class="required-field">*</span></label>
-                        <input type="text" id="number" required>
-                        <label for="complement">Complemento:</label>
-                        <input type="text" id="complement">
-                        <label for="neighborhood">Bairro: <span class="required-field">*</span></label>
-                        <input type="text" id="neighborhood" required>
-                        <label for="city">Cidade: <span class="required-field">*</span></label>
-                        <input type="text" id="city" required>
-                        <label for="state">Estado: <span class="required-field">*</span></label>
-                        <input type="text" id="state" required>
-                        <button type="button" class="btn" onclick="saveNewAddress()">Salvar Endereço</button>
-                    </div>
+                    <label for="street">Rua: <span class="required-field">*</span></label>
+                    <input type="text" id="street" required>
+                    <label for="number">Número: <span class="required-field">*</span></label>
+                    <input type="text" id="number" required>
+                    <label for="complement">Complemento:</label>
+                    <input type="text" id="complement">
+                    <label for="neighborhood">Bairro: <span class="required-field">*</span></label>
+                    <input type="text" id="neighborhood" required>
+                    <label for="city">Cidade: <span class="required-field">*</span></label>
+                    <input type="text" id="city" required>
+                    <label for="state">Estado: <span class="required-field">*</span></label>
+                    <input type="text" id="state" required>
+                    <button type="button" class="btn" onclick="saveNewAddress()">Salvar Endereço</button>
                 </div>
-                <div id="paymentSection" style="display: none;">
-                    <label for="paymentMethod">Método de Pagamento:</label>
-                    <select id="paymentMethod" required onchange="handlePaymentChange()">
-                        <option value="card">Cartão na entrega</option>
-                        <option value="money">Dinheiro</option>
-                        <option value="pix">PIX</option>
+            </div>
+            <div id="paymentSection" style="display: none;">
+                <label for="paymentMethod">Método de Pagamento:</label>
+                <select id="paymentMethod" required onchange="handlePaymentChange()">
+                    <option value="card">Cartão na entrega</option>
+                    <option value="money">Dinheiro</option>
+                    <option value="pix">PIX</option>
+                </select>
+                <div id="moneyChange" style="display:none;">
+                    <label for="changeNeeded">Precisa de troco?</label>
+                    <select id="changeNeeded" onchange="handleChangeNeeded()">
+                        <option value="no">Não</option>
+                        <option value="yes">Sim</option>
                     </select>
-                    <div id="moneyChange" style="display:none;">
-                        <label for="changeNeeded">Precisa de troco?</label>
-                        <select id="changeNeeded" onchange="handleChangeNeeded()">
-                            <option value="no">Não</option>
-                            <option value="yes">Sim</option>
-                        </select>
-                        <div id="changeAmountDiv" style="display:none;">
-                            <label for="changeAmount">Troco para quanto?</label>
-                            <input type="number" id="changeAmount" min="0" step="0.01">
-                        </div>
-                    </div>
-                    <div id="pixInfo" style="display:none;">
-                        <p>Chave PIX: 84 9 8873-1028</p>
-                        <p>Após o envio do PIX, favor enviar o comprovante para o WhatsApp 84 9 8767-3202</p>
+                    <div id="changeAmountDiv" style="display:none;">
+                        <label for="changeAmount">Troco para quanto?</label>
+                        <input type="number" id="changeAmount" min="0" step="0.01">
                     </div>
                 </div>
-                <button type="submit" class="btn" id="submitOrderBtn" style="display: none;">Fazer Pedido</button>
-            </form>
-            <div id="orderSummary"></div>
-            <div id="loyaltyInfo" class="loyalty-info"></div>
-            <div class="extras-suggestion">
+                <div id="pixInfo" style="display:none;">
+                    <p>Chave PIX: 84 9 8873-1028</p>
+                    <p>Após o envio do PIX, favor enviar o comprovante para o WhatsApp 84 9 8767-3202</p>
+                </div>
+            </div>
+            <button type="submit" class="btn" id="submitOrderBtn" style="display: none;">Fazer Pedido</button>
+        </form>
+        <div id="orderSummary"></div>
+        <div id="loyaltyInfo" class="loyalty-info"></div>
+        
+        <div class="extras-suggestion">
             <h3>Deixe seu açaí mais delicioso e recheado com esses itens extras</h3>
             <div class="extra-items" id="extraItems">
                 <!-- Itens extras serão adicionados aqui via JavaScript -->
@@ -513,7 +524,6 @@
         <div id="loyaltyProgramContent"></div>
     </div>
 </div>
-
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script>
@@ -576,6 +586,12 @@
             "Creme de Morango", "Creme de Maracujá", "Creme de Amendoim"
         ];
 
+        let currentCombo = null;
+        let selectedFlavors = [[], []];
+        let selectedAccompaniments = [[], []];
+        let selectedExtras = [];
+        let currentAcaiIndex = 0;
+
         async function fetchProducts() {
             const snapshot = await db.collection('products').get();
             products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -636,7 +652,7 @@
                 <p>${product.description}</p>
                 <p class="product-price">Preço: R$ ${parseFloat(product.price).toFixed(2)}</p>
                 <div class="extras-list">
-<h3>Acompanhamentos (escolha de ${product.minAccompaniments} a ${product.maxAccompaniments}):</h3>
+                    <h3>Acompanhamentos (escolha de ${product.minAccompaniments} a ${product.maxAccompaniments}):</h3>
                     <div class="checkbox-list" id="accompaniments">
                         ${product.accompaniments.map((item, index) => `
                             <div class="checkbox-item">
@@ -668,324 +684,324 @@
             });
         }
 
-        function validateAccompaniments(product) {
-            const checkedAccompaniments = document.querySelectorAll('#accompaniments input[type="checkbox"]:checked');
-            const addToCartBtn = document.getElementById('addToCartBtn');
-            const errorMessage = document.getElementById('accompanimentError');
-            if (checkedAccompaniments.length < product.minAccompaniments || checkedAccompaniments.length > product.maxAccompaniments) {
-                addToCartBtn.disabled = true;
-                errorMessage.textContent = `Selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos`;
-            } else {
-                addToCartBtn.disabled = false;
-                errorMessage.textContent = '';
+function validateAccompaniments(product) {
+        const checkedAccompaniments = document.querySelectorAll('#accompaniments input[type="checkbox"]:checked');
+        const addToCartBtn = document.getElementById('addToCartBtn');
+        const errorMessage = document.getElementById('accompanimentError');
+        if (checkedAccompaniments.length < product.minAccompaniments || checkedAccompaniments.length > product.maxAccompaniments) {
+            addToCartBtn.disabled = true;
+            errorMessage.textContent = `Selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos`;
+        } else {
+            addToCartBtn.disabled = false;
+            errorMessage.textContent = '';
+        }
+    }
+
+    window.addToCart = function(productId) {
+        const product = products.find(p => p.id === productId);
+        const accompaniments = Array.from(document.querySelectorAll('#accompaniments input[type="checkbox"]:checked')).map(cb => cb.value);
+        const extras = Array.from(document.querySelectorAll('#extras input[type="checkbox"]:checked')).map(cb => cb.value);
+        if (accompaniments.length < product.minAccompaniments || accompaniments.length > product.maxAccompaniments) {
+            alert(`Por favor, selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos.`);
+            return;
+        }
+        const cartItem = {
+            id: Date.now(),
+            productId: product.id,
+            name: product.name,
+            price: product.price,
+            accompaniments: accompaniments,
+            extras: extras,
+            totalPrice: calculateTotalPrice(product, extras)
+        };
+        cart.push(cartItem);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        openCart();
+    }
+
+    function calculateTotalPrice(product, selectedExtras) {
+        let total = product.price;
+        selectedExtras.forEach(extraName => {
+            const extra = product.extras.find(e => e.name === extraName);
+            if (extra) {
+                total += extra.price;
             }
-        }
-
-        window.addToCart = function(productId) {
-            const product = products.find(p => p.id === productId);
-            const accompaniments = Array.from(document.querySelectorAll('#accompaniments input[type="checkbox"]:checked')).map(cb => cb.value);
-            const extras = Array.from(document.querySelectorAll('#extras input[type="checkbox"]:checked')).map(cb => cb.value);
-            if (accompaniments.length < product.minAccompaniments || accompaniments.length > product.maxAccompaniments) {
-                alert(`Por favor, selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos.`);
-                return;
-            }
-            const cartItem = {
-                id: Date.now(),
-                productId: product.id,
-                name: product.name,
-                price: product.price,
-                accompaniments: accompaniments,
-                extras: extras,
-                totalPrice: calculateTotalPrice(product, extras)
-            };
-            cart.push(cartItem);
-            localStorage.setItem('cart', JSON.stringify(cart));
-            openCart();
-        }
-
-        function calculateTotalPrice(product, selectedExtras) {
-            let total = product.price;
-            selectedExtras.forEach(extraName => {
-                const extra = product.extras.find(e => e.name === extraName);
-                if (extra) {
-                    total += extra.price;
-                }
-            });
-            return total;
-        }
-
-window.openCart = function() {
-    const modal = document.getElementById('cartModal');
-    const cartContent = document.getElementById('cartContent');
-    const cartTotal = document.getElementById('cartTotal');
-    cartContent.innerHTML = cart.map(item => {
-        if (item.acai1) {  // Se for um combo
-            return `
-                <div class="cart-item">
-                    <div class="cart-item-info">
-                        <h3>${item.name}</h3>
-                        <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                        <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                        <p>Extras: ${item.extras.length > 0 ? item.extras.join(', ') : 'Nenhum'}</p>
-                        <p>Preço: R$ ${item.totalPrice.toFixed(2)}</p>
-                    </div>
-                    <span class="cart-item-remove" onclick="removeFromCart(${item.id})">🗑️</span>
-                </div>
-            `;
-        } else {  // Se for um item individual
-            return `
-                <div class="cart-item">
-                    <div class="cart-item-info">
-                        <h3>${item.name}</h3>
-                        <p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>
-                        <p>Extras: ${item.extras.join(', ')}</p>
-                        <p>Preço: R$ ${item.totalPrice.toFixed(2)}</p>
-                    </div>
-                    <span class="cart-item-remove" onclick="removeFromCart(${item.id})">🗑️</span>
-                </div>
-            `;
-        }
-    }).join('');
-    const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-    cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
-    modal.style.display = "block";
-}
-
-        window.continueShopping = function() {
-            document.getElementById('cartModal').style.display = "none";
-        }
-
-        window.removeFromCart = function(itemId) {
-            cart = cart.filter(item => item.id !== itemId);
-            localStorage.setItem('cart', JSON.stringify(cart));
-            openCart();
-        }
-
-        window.openCustomerIdentification = function() {
-            document.getElementById('cartModal').style.display = "none";
-            const modal = document.getElementById('customerIdentificationModal');
-            modal.style.display = "block";
-            const phone = localStorage.getItem('customerPhone');
-            if (phone) {
-                document.getElementById('customerPhone').value = phone;
-                document.getElementById('customerName').value = localStorage.getItem('customerName') || '';
-                loadCustomerData(phone);
-            }
-        }
-
-        function loadCustomerData(phone) {
-            db.collection('customers').doc(phone).get().then((doc) => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    customerInfo = {
-                        name: data.name,
-                        phone: phone,
-                        addresses: data.addresses || []
-                    };
-                    document.getElementById('customerName').value = data.name;
-                    savedAddresses = data.addresses || [];
-                    localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
-                    updateLoyaltyInfo(data.orderCount || 0);
-                } else {
-                    updateLoyaltyInfo(0);
-                }
-            }).catch((error) => {
-                console.log("Error getting customer data:", error);
-                updateLoyaltyInfo(0);
-            });
-        }
-
-        document.getElementById('customerIdentificationForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const phone = document.getElementById('customerPhone').value;
-            const name = document.getElementById('customerName').value;
-            customerInfo = { phone, name };
-            localStorage.setItem('customerPhone', phone);
-            localStorage.setItem('customerName', name);
-            db.collection('customers').doc(phone).set({
-                name: name,
-                addresses: savedAddresses
-            }, { merge: true }).then(() => {
-                document.getElementById('customerIdentificationModal').style.display = "none";
-                openCheckout();
-            }).catch((error) => {
-                console.error("Error saving customer data: ", error);
-            });
         });
+        return total;
+    }
 
-        function openCheckout() {
-            const checkoutModal = document.getElementById('checkoutModal');
-            const orderSummary = document.getElementById('orderSummary');
-            loadSavedAddresses();
-            updateOrderSummary();
+    window.openCart = function() {
+        const modal = document.getElementById('cartModal');
+        const cartContent = document.getElementById('cartContent');
+        const cartTotal = document.getElementById('cartTotal');
+        cartContent.innerHTML = cart.map(item => {
+            if (item.acai1) {  // Se for um combo
+                return `
+                    <div class="cart-item">
+                        <div class="cart-item-info">
+                            <h3>${item.name}</h3>
+                            <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                            <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+                            <p>Extras: ${item.extras.length > 0 ? item.extras.join(', ') : 'Nenhum'}</p>
+                            <p>Preço: R$ ${item.totalPrice.toFixed(2)}</p>
+                        </div>
+                        <span class="cart-item-remove" onclick="removeFromCart(${item.id})">🗑️</span>
+                    </div>
+                `;
+            } else {  // Se for um item individual
+                return `
+                    <div class="cart-item">
+                        <div class="cart-item-info">
+                            <h3>${item.name}</h3>
+                            <p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>
+                            <p>Extras: ${item.extras.join(', ')}</p>
+                            <p>Preço: R$ ${item.totalPrice.toFixed(2)}</p>
+                        </div>
+                        <span class="cart-item-remove" onclick="removeFromCart(${item.id})">🗑️</span>
+                    </div>
+                `;
+            }
+        }).join('');
+        const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+        cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
+        modal.style.display = "block";
+    }
+
+    window.continueShopping = function() {
+        document.getElementById('cartModal').style.display = "none";
+    }
+
+    window.removeFromCart = function(itemId) {
+        cart = cart.filter(item => item.id !== itemId);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        openCart();
+    }
+
+    window.openCustomerIdentification = function() {
+        document.getElementById('cartModal').style.display = "none";
+        const modal = document.getElementById('customerIdentificationModal');
+        modal.style.display = "block";
+        const phone = localStorage.getItem('customerPhone');
+        if (phone) {
+            document.getElementById('customerPhone').value = phone;
+            document.getElementById('customerName').value = localStorage.getItem('customerName') || '';
+            loadCustomerData(phone);
+        }
+    }
+
+    function loadCustomerData(phone) {
+        db.collection('customers').doc(phone).get().then((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                customerInfo = {
+                    name: data.name,
+                    phone: phone,
+                    addresses: data.addresses || []
+                };
+                document.getElementById('customerName').value = data.name;
+                savedAddresses = data.addresses || [];
+                localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
+                updateLoyaltyInfo(data.orderCount || 0);
+            } else {
+                updateLoyaltyInfo(0);
+            }
+        }).catch((error) => {
+            console.log("Error getting customer data:", error);
+            updateLoyaltyInfo(0);
+        });
+    }
+
+    document.getElementById('customerIdentificationForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const phone = document.getElementById('customerPhone').value;
+        const name = document.getElementById('customerName').value;
+        customerInfo = { phone, name };
+        localStorage.setItem('customerPhone', phone);
+        localStorage.setItem('customerName', name);
+        db.collection('customers').doc(phone).set({
+            name: name,
+            addresses: savedAddresses
+        }, { merge: true }).then(() => {
+            document.getElementById('customerIdentificationModal').style.display = "none";
+            openCheckout();
+        }).catch((error) => {
+            console.error("Error saving customer data: ", error);
+        });
+    });
+
+    function openCheckout() {
+        const checkoutModal = document.getElementById('checkoutModal');
+        const orderSummary = document.getElementById('orderSummary');
+        loadSavedAddresses();
+        updateOrderSummary();
+        document.getElementById('paymentSection').style.display = 'none';
+        document.getElementById('submitOrderBtn').style.display = 'none';
+        checkoutModal.style.display = "block";
+        displayExtraItems();
+    }
+
+    function loadSavedAddresses() {
+        const select = document.getElementById('savedAddresses');
+        select.innerHTML = '<option value="">Selecione um endereço salvo ou cadastre um novo</option>';
+        savedAddresses.forEach((address, index) => {
+            select.innerHTML += `<option value="${index}">${address.street}, ${address.number} - ${address.neighborhood}</option>`;
+        });
+    }
+
+    window.handleSavedAddressChange = function() {
+        const selectedIndex = document.getElementById('savedAddresses').value;
+        if (selectedIndex !== "") {
+            const address = savedAddresses[selectedIndex];
+            document.getElementById('street').value = address.street;
+            document.getElementById('number').value = address.number;
+            document.getElementById('complement').value = address.complement || '';
+            document.getElementById('neighborhood').value = address.neighborhood;
+            document.getElementById('city').value = address.city;
+            document.getElementById('state').value = address.state;
+            
+            document.getElementById('paymentSection').style.display = 'block';
+            document.getElementById('submitOrderBtn').style.display = 'block';
+        } else {
             document.getElementById('paymentSection').style.display = 'none';
             document.getElementById('submitOrderBtn').style.display = 'none';
-            checkoutModal.style.display = "block";
-            displayExtraItems();
         }
+    }
 
-        function loadSavedAddresses() {
-            const select = document.getElementById('savedAddresses');
-            select.innerHTML = '<option value="">Selecione um endereço salvo ou cadastre um novo</option>';
-            savedAddresses.forEach((address, index) => {
-                select.innerHTML += `<option value="${index}">${address.street}, ${address.number} - ${address.neighborhood}</option>`;
-            });
+    window.showNewAddressForm = function() {
+        document.getElementById('newAddressForm').style.display = 'block';
+    }
+
+    window.saveNewAddress = function() {
+        const newAddress = {
+            street: document.getElementById('street').value,
+            number: document.getElementById('number').value,
+            complement: document.getElementById('complement').value,
+            neighborhood: document.getElementById('neighborhood').value,
+            city: document.getElementById('city').value,
+            state: document.getElementById('state').value
+        };
+        
+        let missingFields = [];
+        if (!newAddress.street) missingFields.push('Rua');
+        if (!newAddress.number) missingFields.push('Número');
+        if (!newAddress.neighborhood) missingFields.push('Bairro');
+        if (!newAddress.city) missingFields.push('Cidade');
+        if (!newAddress.state) missingFields.push('Estado');
+        
+        if (missingFields.length > 0) {
+            alert(`Por favor, preencha os seguintes campos obrigatórios: ${missingFields.join(', ')}`);
+            return;
         }
+        savedAddresses.push(newAddress);
+        localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
+        
+        db.collection('customers').doc(customerInfo.phone).update({
+            addresses: savedAddresses
+        }).then(() => {
+            loadSavedAddresses();
+            alert('Novo endereço salvo com sucesso!');
+            document.getElementById('newAddressForm').style.display = 'none';
+            document.getElementById('paymentSection').style.display = 'block';
+            document.getElementById('submitOrderBtn').style.display = 'block';
+        }).catch((error) => {
+            console.error("Error updating addresses: ", error);
+        });
+    }
 
-        window.handleSavedAddressChange = function() {
-            const selectedIndex = document.getElementById('savedAddresses').value;
-            if (selectedIndex !== "") {
-                const address = savedAddresses[selectedIndex];
-                document.getElementById('street').value = address.street;
-                document.getElementById('number').value = address.number;
-                document.getElementById('complement').value = address.complement || '';
-                document.getElementById('neighborhood').value = address.neighborhood;
-                document.getElementById('city').value = address.city;
-                document.getElementById('state').value = address.state;
-                
-                document.getElementById('paymentSection').style.display = 'block';
-                document.getElementById('submitOrderBtn').style.display = 'block';
-            } else {
-                document.getElementById('paymentSection').style.display = 'none';
-                document.getElementById('submitOrderBtn').style.display = 'none';
+    window.handlePaymentChange = function() {
+        const paymentMethod = document.getElementById('paymentMethod').value;
+        document.getElementById('moneyChange').style.display = paymentMethod === 'money' ? 'block' : 'none';
+        document.getElementById('pixInfo').style.display = paymentMethod === 'pix' ? 'block' : 'none';
+    }
+
+    window.handleChangeNeeded = function() {
+        const changeNeeded = document.getElementById('changeNeeded').value;
+        document.getElementById('changeAmountDiv').style.display = changeNeeded === 'yes' ? 'block' : 'none';
+    }
+
+    function displayExtraItems() {
+        const extraItemsContainer = document.getElementById('extraItems');
+        extraItemsContainer.innerHTML = extraItems.map(item => `
+            <div class="extra-item" onclick="toggleExtraItem(this, '${item.name}')">
+                <img src="${item.image}" alt="${item.name}">
+                <p>${item.name}</p>
+                <p>R$ ${item.price.toFixed(2)}</p>
+            </div>
+        `).join('');
+    }
+
+    window.toggleExtraItem = function(element, itemName) {
+        element.classList.toggle('selected');
+        updateOrderSummary();
+    }
+
+    function updateOrderSummary() {
+        const orderSummary = document.getElementById('orderSummary');
+        let summaryHTML = '<h3>Resumo do Pedido:</h3>';
+        let total = 0;
+        
+        cart.forEach(item => {
+            if (item.acai1) {  // Se for um combo
+                summaryHTML += `
+                    <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
+                    <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                    <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+                    <p>Extras: ${item.extras.length > 0 ? item.extras.join(', ') : 'Nenhum'}</p>
+                    <hr>
+                `;
+            } else {  // Se for um item individual
+                summaryHTML += `
+                    <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
+                    <p>Acompanhamentos: ${item.accompaniments ? item.accompaniments.join(', ') : 'Nenhum'}</p>
+                    <p>Extras: ${item.extras ? item.extras.join(', ') : 'Nenhum'}</p>
+                    <hr>
+                `;
+            }
+            total += item.totalPrice;
+        });
+        
+        const selectedExtras = document.querySelectorAll('.extra-item.selected');
+        let extrasTotal = 0;
+        selectedExtras.forEach(item => {
+            const itemName = item.querySelector('p').textContent;
+            const itemPrice = 1.99;
+            extrasTotal += itemPrice;
+            summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
+        });
+        total += extrasTotal;
+        summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
+        summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
+        summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
+        orderSummary.innerHTML = summaryHTML;
+    }
+
+    document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const selectedAddressIndex = document.getElementById('savedAddresses').value;
+        if (selectedAddressIndex === "") {
+            alert("Por favor, selecione um endereço de entrega.");
+            return;
+        }
+        const selectedAddress = savedAddresses[selectedAddressIndex];
+        const paymentMethod = document.getElementById('paymentMethod').value;
+        const changeNeeded = document.getElementById('changeNeeded').value;
+        const changeAmount = document.getElementById('changeAmount').value;
+        let message = `Pedido confirmado!\n`;
+        message += `Nome: ${customerInfo.name}\n`;
+        message += `WhatsApp: ${customerInfo.phone}\n`;
+        message += `Endereço: ${selectedAddress.street}, ${selectedAddress.number}, ${selectedAddress.neighborhood}, ${selectedAddress.city} - ${selectedAddress.state}\n`;
+        if (selectedAddress.complement) {
+            message += `Complemento: ${selectedAddress.complement}\n`;
+        }
+        message += `Método de Pagamento: ${getPaymentMethodText(paymentMethod)}\n`;
+        if (paymentMethod === 'money') {
+            message += `Precisa de troco: ${changeNeeded === 'yes' ? 'Sim' : 'Não'}\n`;
+            if (changeNeeded === 'yes') {
+                message += `Troco para: R$ ${parseFloat(changeAmount).toFixed(2)}\n`;
             }
         }
-
-        window.showNewAddressForm = function() {
-            document.getElementById('newAddressForm').style.display = 'block';
-        }
-
-        window.saveNewAddress = function() {
-            const newAddress = {
-                street: document.getElementById('street').value,
-                number: document.getElementById('number').value,
-                complement: document.getElementById('complement').value,
-                neighborhood: document.getElementById('neighborhood').value,
-                city: document.getElementById('city').value,
-                state: document.getElementById('state').value
-            };
-            
-            let missingFields = [];
-            if (!newAddress.street) missingFields.push('Rua');
-            if (!newAddress.number) missingFields.push('Número');
-            if (!newAddress.neighborhood) missingFields.push('Bairro');
-            if (!newAddress.city) missingFields.push('Cidade');
-            if (!newAddress.state) missingFields.push('Estado');
-            
-            if (missingFields.length > 0) {
-                alert(`Por favor, preencha os seguintes campos obrigatórios: ${missingFields.join(', ')}`);
-                return;
-            }
-            savedAddresses.push(newAddress);
-            localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
-            
-            db.collection('customers').doc(customerInfo.phone).update({
-                addresses: savedAddresses
-            }).then(() => {
-                loadSavedAddresses();
-                alert('Novo endereço salvo com sucesso!');
-                document.getElementById('newAddressForm').style.display = 'none';
-                document.getElementById('paymentSection').style.display = 'block';
-                document.getElementById('submitOrderBtn').style.display = 'block';
-            }).catch((error) => {
-                console.error("Error updating addresses: ", error);
-            });
-        }
-
-        window.handlePaymentChange = function() {
-            const paymentMethod = document.getElementById('paymentMethod').value;
-            document.getElementById('moneyChange').style.display = paymentMethod === 'money' ? 'block' : 'none';
-            document.getElementById('pixInfo').style.display = paymentMethod === 'pix' ? 'block' : 'none';
-        }
-
-        window.handleChangeNeeded = function() {
-            const changeNeeded = document.getElementById('changeNeeded').value;
-            document.getElementById('changeAmountDiv').style.display = changeNeeded === 'yes' ? 'block' : 'none';
-        }
-
-        function displayExtraItems() {
-            const extraItemsContainer = document.getElementById('extraItems');
-            extraItemsContainer.innerHTML = extraItems.map(item => `
-                <div class="extra-item" onclick="toggleExtraItem(this, '${item.name}')">
-                    <img src="${item.image}" alt="${item.name}">
-                    <p>${item.name}</p>
-                    <p>R$ ${item.price.toFixed(2)}</p>
-                </div>
-            `).join('');
-        }
-
-        window.toggleExtraItem = function(element, itemName) {
-            element.classList.toggle('selected');
-            updateOrderSummary();
-        }
-
-function updateOrderSummary() {
-    const orderSummary = document.getElementById('orderSummary');
-    let summaryHTML = '<h3>Resumo do Pedido:</h3>';
-    let total = 0;
-    
-    cart.forEach(item => {
-        if (item.acai1) {  // Se for um combo
-            summaryHTML += `
-                <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                <p>Extras: ${item.extras.length > 0 ? item.extras.join(', ') : 'Nenhum'}</p>
-                <hr>
-            `;
-        } else {  // Se for um item individual
-            summaryHTML += `
-                <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                <p>Acompanhamentos: ${item.accompaniments ? item.accompaniments.join(', ') : 'Nenhum'}</p>
-                <p>Extras: ${item.extras ? item.extras.join(', ') : 'Nenhum'}</p>
-                <hr>
-            `;
-        }
-        total += item.totalPrice;
-    });
-    
-    const selectedExtras = document.querySelectorAll('.extra-item.selected');
-    let extrasTotal = 0;
-    selectedExtras.forEach(item => {
-        const itemName = item.querySelector('p').textContent;
-        const itemPrice = 1.99;
-        extrasTotal += itemPrice;
-        summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
-    });
-    total += extrasTotal;
-    summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
-    summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
-    summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
-    orderSummary.innerHTML = summaryHTML;
-}
-
-document.getElementById('checkoutForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const selectedAddressIndex = document.getElementById('savedAddresses').value;
-    if (selectedAddressIndex === "") {
-        alert("Por favor, selecione um endereço de entrega.");
-        return;
-    }
-    const selectedAddress = savedAddresses[selectedAddressIndex];
-    const paymentMethod = document.getElementById('paymentMethod').value;
-    const changeNeeded = document.getElementById('changeNeeded').value;
-    const changeAmount = document.getElementById('changeAmount').value;
-    let message = `Pedido confirmado!\n`;
-    message += `Nome: ${customerInfo.name}\n`;
-    message += `WhatsApp: ${customerInfo.phone}\n`;
-    message += `Endereço: ${selectedAddress.street}, ${selectedAddress.number}, ${selectedAddress.neighborhood}, ${selectedAddress.city} - ${selectedAddress.state}\n`;
-    if (selectedAddress.complement) {
-        message += `Complemento: ${selectedAddress.complement}\n`;
-    }
-    message += `Método de Pagamento: ${getPaymentMethodText(paymentMethod)}\n`;
-    if (paymentMethod === 'money') {
-        message += `Precisa de troco: ${changeNeeded === 'yes' ? 'Sim' : 'Não'}\n`;
-        if (changeNeeded === 'yes') {
-            message += `Troco para: R$ ${parseFloat(changeAmount).toFixed(2)}\n`;
-        }
-    }
-    
-    message += `\nItens do Pedido:\n`;
+        
+ message += `\nItens do Pedido:\n`;
     cart.forEach(item => {
         if (item.acai1) {  // Se for um combo
             message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
@@ -1080,418 +1096,410 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         .catch(error => {
             console.error('Erro ao adicionar pedido: ', error);
         });
-});
+    });
 
-        function getPaymentMethodText(method) {
-            switch(method) {
-                case 'money': return 'Dinheiro';
-                case 'card': return 'Cartão na entrega';
-                case 'pix': return 'PIX';
-                default: return method;
+    function getPaymentMethodText(method) {
+        switch(method) {
+            case 'money': return 'Dinheiro';
+            case 'card': return 'Cartão na entrega';
+            case 'pix': return 'PIX';
+            default: return method;
+        }
+    }
+
+    function getOrderNumberText(number) {
+        const specialCases = ['primeiro', 'segundo', 'terceiro', 'quarto', 'quinto'];
+        return specialCases[number - 1] || `${number}º`;
+    }
+
+    function updateLoyaltyInfo(orderCount) {
+        const loyaltyInfo = document.getElementById('loyaltyInfo');
+        loyaltyInfo.innerHTML = `
+            <h3>Programa de Fidelidade</h3>
+            <p>Você já realizou ${orderCount} ${orderCount === 1 ? 'pedido' : 'pedidos'}.</p>
+            ${orderCount >= 10 ? 
+              '<p><strong>Parabéns!</strong> Você tem direito a 50% de desconto no seu próximo pedido!</p>' :
+              `<p>Faltam ${10 - orderCount} ${10 - orderCount === 1 ? 'pedido' : 'pedidos'} para você ganhar 50% de desconto!</p>`
             }
-        }
+            <p>Lembre-se: O pedido só será contabilizado após ser recebido por nossa loja no WhatsApp.</p>
+        `;
+    }
 
-        function getOrderNumberText(number) {
-            const specialCases = ['primeiro', 'segundo', 'terceiro', 'quarto', 'quinto'];
-            return specialCases[number - 1] || `${number}º`;
-        }
+    window.openMyOrders = function() {
+        const modal = document.getElementById('myOrdersModal');
+        const content = document.getElementById('myOrdersContent');
+        content.innerHTML = `
+            <h3>Insira seu número de WhatsApp para ver seus pedidos:</h3>
+            <input type="tel" id="orderPhoneInput" placeholder="WhatsApp (com DDD)" required>
+            <button class="btn" onclick="fetchMyOrders()">Buscar Pedidos</button>
+            <div id="ordersList"></div>
+        `;
+        modal.style.display = "block";
+    }
 
-        function updateLoyaltyInfo(orderCount) {
-            const loyaltyInfo = document.getElementById('loyaltyInfo');
-            loyaltyInfo.innerHTML = `
-                <h3>Programa de Fidelidade</h3>
-                <p>Você já realizou ${orderCount} ${orderCount === 1 ? 'pedido' : 'pedidos'}.</p>
-                ${orderCount >= 10 ? 
-                  '<p><strong>Parabéns!</strong> Você tem direito a 50% de desconto no seu próximo pedido!</p>' :
-                  `<p>Faltam ${10 - orderCount} ${10 - orderCount === 1 ? 'pedido' : 'pedidos'} para você ganhar 50% de desconto!</p>`
-                }
-                <p>Lembre-se: O pedido só será contabilizado após ser recebido por nossa loja no WhatsApp.</p>
-            `;
+    window.fetchMyOrders = function() {
+        const phone = document.getElementById('orderPhoneInput').value;
+        if (!phone) {
+            alert("Por favor, insira seu número de WhatsApp.");
+            return;
         }
-
-        window.openMyOrders = function() {
-            const modal = document.getElementById('myOrdersModal');
-            const content = document.getElementById('myOrdersContent');
-            content.innerHTML = `
-                <h3>Insira seu número de WhatsApp para ver seus pedidos:</h3>
-                <input type="tel" id="orderPhoneInput" placeholder="WhatsApp (com DDD)" required>
-                <button class="btn" onclick="fetchMyOrders()">Buscar Pedidos</button>
-                <div id="ordersList"></div>
-            `;
-            modal.style.display = "block";
-        }
-
-        window.fetchMyOrders = function() {
-            const phone = document.getElementById('orderPhoneInput').value;
-            if (!phone) {
-                alert("Por favor, insira seu número de WhatsApp.");
-                return;
-            }
-            db.collection('orders')
-                .where('customerPhone', '==', phone)
-                .orderBy('createdAt', 'desc')
-                .get()
-                .then((querySnapshot) => {
-                    const ordersList = document.getElementById('ordersList');
-                    if (querySnapshot.empty) {
-                        ordersList.innerHTML = '<p>Nenhum pedido encontrado para este número.</p>';
-                    } else {
-                        let ordersHtml = '<h3>Seus Pedidos:</h3>';
-                        querySnapshot.forEach((doc) => {
-                            const order = doc.data();
-                            ordersHtml += `
-              <div class="order-item">
-                <p><strong>Data:</strong> ${order.createdAt.toDate().toLocaleString()}</p>
-                <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
-                <p><strong>Detalhes do Pedido:</strong> ${order.items.map(item => `${item.name} (${item.accompaniments.join(', ')})${item.extras.length > 0 ? ` + Extras: ${item.extras.join(', ')}` : ''}`).join(', ')}</p>
-                <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Este Pedido</button>
-              </div>
-                            `;
-                        });
-                        ordersList.innerHTML = ordersHtml;
-                    }
-                })
-                .catch((error) => {
-                    console.error("Erro ao buscar pedidos: ", error);
-                    alert("Ocorreu um erro ao buscar seus pedidos. Por favor, tente novamente.");
-                });
-        }
-
-        window.repeatOrder = function(orderId) {
-            db.collection('orders').doc(orderId).get()
-                .then((doc) => {
-                    if (doc.exists) {
+        db.collection('orders')
+            .where('customerPhone', '==', phone)
+            .orderBy('createdAt', 'desc')
+            .get()
+            .then((querySnapshot) => {
+                const ordersList = document.getElementById('ordersList');
+                if (querySnapshot.empty) {
+                    ordersList.innerHTML = '<p>Nenhum pedido encontrado para este número.</p>';
+                } else {
+                    let ordersHtml = '<h3>Seus Pedidos:</h3>';
+                    querySnapshot.forEach((doc) => {
                         const order = doc.data();
-                        cart = order.items;
-                        localStorage.setItem('cart', JSON.stringify(cart));
-                        alert("Pedido adicionado ao carrinho!");
-                        document.getElementById('myOrdersModal').style.display = "none";
-                        openCart();
-                    } else {
-                        alert("Pedido não encontrado.");
-                    }
-                })
-                .catch((error) => {
-                    console.error("Erro ao repetir pedido: ", error);
-                    alert("Ocorreu um erro ao repetir o pedido. Por favor, tente novamente.");
-                });
-        }
-
-        window.openLoyaltyProgram = function() {
-            const modal = document.getElementById('loyaltyProgramModal');
-            const content = document.getElementById('loyaltyProgramContent');
-            content.innerHTML = `
-                <h3>Programa de Fidelidade Cabana Açaí</h3>
-                <p>Nosso programa de fidelidade é simples e recompensador:</p>
-                <ul>
-                    <li>A cada 10 pedidos, você ganha 50% de desconto no próximo!</li>
-                    <li>Os pedidos são contabilizados dentro da janela do WhatsApp do cliente.</li>
-                    <li>Se você fizer pedidos com números de WhatsApp diferentes, os pontos de fidelidade serão somados no novo número que está utilizando para compra.</li>
-                </ul>
-                <p>Para verificar seus pontos de fidelidade, insira seu número de WhatsApp:</p>
-                <input type="tel" id="loyaltyPhoneInput" placeholder="WhatsApp (com DDD)" required>
-                <button class="btn" onclick="checkLoyaltyPoints()">Verificar Pontos</button>
-                <div id="loyaltyPoints"></div>
-            `;
-            modal.style.display = "block";
-        }
-
-        window.checkLoyaltyPoints = function() {
-            const phone = document.getElementById('loyaltyPhoneInput').value;
-            if (!phone) {
-                alert("Por favor, insira seu número de WhatsApp.");
-                return;
-            }
-            db.collection('customers').doc(phone).get()
-                .then((doc) => {
-                    const loyaltyPoints = document.getElementById('loyaltyPoints');
-                    if (doc.exists) {
-                        const orderCount = doc.data().orderCount || 0;
-                        loyaltyPoints.innerHTML = `
-                            <p>Você já realizou ${orderCount} ${orderCount === 1 ? 'pedido' : 'pedidos'}.</p>
-                            ${orderCount >= 10 ? 
-                                '<p><strong>Parabéns!</strong> Você tem direito a 50% de desconto no seu próximo pedido!</p>' :
-                                `<p>Faltam ${10 - orderCount} ${10 - orderCount === 1 ? 'pedido' : 'pedidos'} para você ganhar 50% de desconto!</p>`
-                            }
+                        ordersHtml += `
+          <div class="order-item">
+            <p><strong>Data:</strong> ${order.createdAt.toDate().toLocaleString()}</p>
+            <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
+            <p><strong>Detalhes do Pedido:</strong> ${order.items.map(item => `${item.name} (${item.accompaniments.join(', ')})${item.extras.length > 0 ? ` + Extras: ${item.extras.join(', ')}` : ''}`).join(', ')}</p>
+            <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Este Pedido</button>
+          </div>
                         `;
-                    } else {
-                        loyaltyPoints.innerHTML = '<p>Nenhum pedido encontrado para este número.</p>';
-                    }
-                })
-                .catch((error) => {
-                    console.error("Erro ao verificar pontos de fidelidade: ", error);
-                    alert("Ocorreu um erro ao verificar seus pontos. Por favor, tente novamente.");
-                });
-        }
+                    });
+                    ordersList.innerHTML = ordersHtml;
+                }
+            })
+            .catch((error) => {
+                console.error("Erro ao buscar pedidos: ", error);
+                alert("Ocorreu um erro ao buscar seus pedidos. Por favor, tente novamente.");
+            });
+    }
 
-        // Funções para o sistema de montagem de combos
-        window.openComboBuilder = function() {
-            const modal = document.getElementById('comboModal');
-            const comboBuilder = document.getElementById('comboBuilder');
-            comboBuilder.innerHTML = `
-                <div class="combo-step">
-                    <h3>Escolha seu Combo:</h3>
-                    <div class="combo-options">
-                        ${combos.map(combo => `
-                            <div class="combo-option" onclick="selectCombo('${combo.name}')">
-                                <h4>${combo.name}</h4>
-                                <p>R$ ${combo.price.toFixed(2)}</p>
-                                <p>Até ${combo.maxAccompaniments} acompanhamentos por açaí</p>
-                            </div>
-                        `).join('')}
-                    </div>
+    window.repeatOrder = function(orderId) {
+        db.collection('orders').doc(orderId).get()
+            .then((doc) => {
+                if (doc.exists) {
+                    const order = doc.data();
+                    cart = order.items;
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                    alert("Pedido adicionado ao carrinho!");
+                    document.getElementById('myOrdersModal').style.display = "none";
+                    openCart();
+                } else {
+                    alert("Pedido não encontrado.");
+                }
+            })
+            .catch((error) => {
+                console.error("Erro ao repetir pedido: ", error);
+                alert("Ocorreu um erro ao repetir o pedido. Por favor, tente novamente.");
+            });
+    }
+
+    window.openLoyaltyProgram = function() {
+        const modal = document.getElementById('loyaltyProgramModal');
+        const content = document.getElementById('loyaltyProgramContent');
+        content.innerHTML = `
+            <h3>Programa de Fidelidade Cabana Açaí</h3>
+            <p>Nosso programa de fidelidade é simples e recompensador:</p>
+            <ul>
+                <li>A cada 10 pedidos, você ganha 50% de desconto no próximo!</li>
+                <li>Os pedidos são contabilizados dentro da janela do WhatsApp do cliente.</li>
+                <li>Se você fizer pedidos com números de WhatsApp diferentes, os pontos de fidelidade serão somados no novo número que está utilizando para compra.</li>
+            </ul>
+            <p>Para verificar seus pontos de fidelidade, insira seu número de WhatsApp:</p>
+            <input type="tel" id="loyaltyPhoneInput" placeholder="WhatsApp (com DDD)" required>
+            <button class="btn" onclick="checkLoyaltyPoints()">Verificar Pontos</button>
+            <div id="loyaltyPoints"></div>
+        `;
+        modal.style.display = "block";
+    }
+
+    window.checkLoyaltyPoints = function() {
+        const phone = document.getElementById('loyaltyPhoneInput').value;
+        if (!phone) {
+            alert("Por favor, insira seu número de WhatsApp.");
+            return;
+        }
+        db.collection('customers').doc(phone).get()
+            .then((doc) => {
+                const loyaltyPoints = document.getElementById('loyaltyPoints');
+                if (doc.exists) {
+                    const orderCount = doc.data().orderCount || 0;
+                    loyaltyPoints.innerHTML = `
+                        <p>Você já realizou ${orderCount} ${orderCount === 1 ? 'pedido' : 'pedidos'}.</p>
+                        ${orderCount >= 10 ? 
+                            '<p><strong>Parabéns!</strong> Você tem direito a 50% de desconto no seu próximo pedido!</p>' :
+                            `<p>Faltam ${10 - orderCount} ${10 - orderCount === 1 ? 'pedido' : 'pedidos'} para você ganhar 50% de desconto!</p>`
+                        }
+                    `;
+                } else {
+                    loyaltyPoints.innerHTML = '<p>Nenhum pedido encontrado para este número.</p>';
+                }
+            })
+            .catch((error) => {
+                console.error("Erro ao verificar pontos de fidelidade: ", error);
+                alert("Ocorreu um erro ao verificar seus pontos. Por favor, tente novamente.");
+            });
+    }
+
+    // Funções para o sistema de montagem de combos
+    window.openComboBuilder = function() {
+        const modal = document.getElementById('comboModal');
+        const comboBuilder = document.getElementById('comboBuilder');
+        comboBuilder.innerHTML = `
+            <div class="combo-step">
+                <h3>Escolha seu Combo:</h3>
+                <div class="combo-options">
+                    ${combos.map(combo => `
+                        <div class="combo-option" onclick="selectCombo('${combo.name}')">
+                            <h4>${combo.name}</h4>
+                            <p>R$ ${combo.price.toFixed(2)}</p>
+                            <p>Até ${combo.maxAccompaniments} acompanhamentos por açaí</p>
+                        </div>
+                    `).join('')}
                 </div>
-                <div id="flavorSelection" style="display: none;"></div>
-                <div id="accompanimentSelection" style="display: none;"></div>
-                <div id="extraItemsSelection" style="display: none;"></div>
-                <div id="comboSummary"></div>
-                <button class="btn" onclick="addComboToCart()" style="display: none;">Adicionar ao Carrinho</button>
-                <button class="btn" onclick="resetComboBuilder()">Voltar</button>
-            `;
-            modal.style.display = "block";
-        }
-
-let currentCombo = null;
-let selectedFlavors = [[], []];
-let selectedAccompaniments = [[], []];
-let selectedExtras = [];
-let currentAcaiIndex = 0;
-
-window.selectCombo = function(comboName) {
-    currentCombo = combos.find(combo => combo.name === comboName);
-    document.querySelectorAll('.combo-option').forEach(option => {
-        option.classList.remove('selected');
-        if (option.textContent.includes(comboName)) {
-            option.classList.add('selected');
-        }
-    });
-    currentAcaiIndex = 0;
-    showFlavorSelection();
-}
-
-function showFlavorSelection() {
-    const flavorSelection = document.getElementById('flavorSelection');
-    flavorSelection.innerHTML = `
-        <h3>Escolha até 2 sabores para o Açaí ${currentAcaiIndex + 1}:</h3>
-        <div class="combo-items">
-            ${acaiFlavors.map(flavor => `
-                <div class="combo-item" onclick="toggleFlavor('${flavor}')">
-                    <p>${flavor}</p>
-                </div>
-            `).join('')}
-        </div>
-        <button class="btn" onclick="showAccompanimentSelection()">Próximo</button>
-    `;
-    flavorSelection.style.display = 'block';
-    updateFlavorSelection();
-}
-
-window.toggleFlavor = function(flavor) {
-    const index = selectedFlavors[currentAcaiIndex].indexOf(flavor);
-    if (index > -1) {
-        selectedFlavors[currentAcaiIndex].splice(index, 1);
-    } else if (selectedFlavors[currentAcaiIndex].length < 2) {
-        selectedFlavors[currentAcaiIndex].push(flavor);
-    } else {
-        alert("Você só pode selecionar até 2 sabores por açaí.");
-        return;
+            </div>
+            <div id="flavorSelection" style="display: none;"></div>
+            <div id="accompanimentSelection" style="display: none;"></div>
+            <div id="extraItemsSelection" style="display: none;"></div>
+            <div id="comboSummary"></div>
+            <button class="btn" onclick="addComboToCart()" style="display: none;">Adicionar ao Carrinho</button>
+            <button class="btn" onclick="resetComboBuilder()">Voltar</button>
+        `;
+        modal.style.display = "block";
     }
-    updateFlavorSelection();
-}
-        
-function updateFlavorSelection() {
-    document.querySelectorAll('#flavorSelection .combo-item').forEach(item => {
-        const flavor = item.textContent.trim();
-        if (selectedFlavors[currentAcaiIndex].includes(flavor)) {
-            item.classList.add('selected');
-        } else {
-            item.classList.remove('selected');
-        }
-    });
-}
 
-window.showAccompanimentSelection = function() {
-    if (selectedFlavors[currentAcaiIndex].length === 0) {
-        alert("Por favor, selecione pelo menos um sabor.");
-        return;
-    }
-    const accompanimentSelection = document.getElementById('accompanimentSelection');
-    accompanimentSelection.innerHTML = `
-        <h3>Escolha até ${currentCombo.maxAccompaniments} acompanhamentos para o Açaí ${currentAcaiIndex + 1}:</h3>
-        <div class="combo-items">
-            ${extraItems.map(item => `
-                <div class="combo-item" onclick="toggleAccompaniment('${item.name}')">
-                    <img src="${item.image}" alt="${item.name}">
-                    <p>${item.name}</p>
-                </div>
-            `).join('')}
-        </div>
-        <button class="btn" onclick="nextAcai()">Próximo</button>
-    `;
-    accompanimentSelection.style.display = 'block';
-    document.getElementById('flavorSelection').style.display = 'none';
-    updateAccompanimentSelection();
-}
-
-window.toggleAccompaniment = function(accompaniment) {
-    const index = selectedAccompaniments[currentAcaiIndex].indexOf(accompaniment);
-    if (index > -1) {
-        selectedAccompaniments[currentAcaiIndex].splice(index, 1);
-    } else if (selectedAccompaniments[currentAcaiIndex].length < currentCombo.maxAccompaniments) {
-        selectedAccompaniments[currentAcaiIndex].push(accompaniment);
-    } else {
-        alert(`Você só pode selecionar até ${currentCombo.maxAccompaniments} acompanhamentos por açaí.`);
-        return;
-    }
-    updateAccompanimentSelection();
-}
-
-function updateAccompanimentSelection() {
-    document.querySelectorAll('#accompanimentSelection .combo-item').forEach(item => {
-        const accompaniment = item.querySelector('p').textContent.trim();
-        if (selectedAccompaniments[currentAcaiIndex].includes(accompaniment)) {
-            item.classList.add('selected');
-        } else {
-            item.classList.remove('selected');
-        }
-    });
-}
-
-        window.nextAcai = function() {
-    if (selectedAccompaniments[currentAcaiIndex].length === 0) {
-        alert("Por favor, selecione pelo menos um acompanhamento.");
-        return;
-    }
-    if (currentAcaiIndex === 0) {
-        currentAcaiIndex = 1;
-        showFlavorSelection();
-    } else {
-        showExtraItemsSelection();
-    }
-}
-        
-window.showExtraItemsSelection = function() {
-    const extraItemsSelection = document.getElementById('extraItemsSelection');
-    extraItemsSelection.innerHTML = `
-        <h3>Escolha itens extras (R$ 1,99 cada):</h3>
-        <div class="combo-items">
-            ${extraItems.map(item => `
-                <div class="combo-item" onclick="toggleExtra('${item.name}')">
-                    <img src="${item.image}" alt="${item.name}">
-                    <p>${item.name}</p>
-                    <p>R$ ${item.price.toFixed(2)}</p>
-                </div>
-            `).join('')}
-        </div>
-        <button class="btn" onclick="finishCombo()">Finalizar Combo</button>
-    `;
-    extraItemsSelection.style.display = 'block';
-    document.getElementById('accompanimentSelection').style.display = 'none';
-}
-
-
-window.toggleExtra = function(extra) {
-    const index = selectedExtras.indexOf(extra);
-    if (index > -1) {
-        selectedExtras.splice(index, 1);
-    } else {
-        selectedExtras.push(extra);
-    }
-    updateExtraItemsSelection();
-}
-
-function updateExtraItemsSelection() {
-    document.querySelectorAll('#extraItemsSelection .combo-item').forEach(item => {
-        const extra = item.querySelector('p').textContent.trim();
-        if (selectedExtras.includes(extra)) {
-            item.classList.add('selected');
-        } else {
-            item.classList.remove('selected');
-        }
-    });
-}
-
-window.finishCombo = function() {
-    updateComboSummary();
-    document.querySelector('#comboModal .btn[onclick="addComboToCart()"]').style.display = 'block';
-}
-
-function updateComboSummary() {
-    const comboSummary = document.getElementById('comboSummary');
-    let total = currentCombo.price + (selectedExtras.length * 1.99);
-    comboSummary.innerHTML = `
-        <h3>Resumo do Combo:</h3>
-        <p><strong>Combo:</strong> ${currentCombo.name}</p>
-        <p><strong>Açaí 1:</strong></p>
-        <p>Sabores: ${selectedFlavors[0].join(', ')}</p>
-        <p>Acompanhamentos: ${selectedAccompaniments[0].join(', ')}</p>
-        <p><strong>Açaí 2:</strong></p>
-        <p>Sabores: ${selectedFlavors[1].join(', ')}</p>
-        <p>Acompanhamentos: ${selectedAccompaniments[1].join(', ')}</p>
-        <p><strong>Extras:</strong> ${selectedExtras.length > 0 ? selectedExtras.join(', ') : 'Nenhum'}</p>
-        <p><strong>Total:</strong> R$ ${total.toFixed(2)}</p>
-    `;
-}
-
-window.addComboToCart = function() {
-    const comboItem = {
-        id: Date.now(),
-        name: currentCombo.name,
-        price: currentCombo.price,
-        acai1: {
-            flavors: selectedFlavors[0],
-            accompaniments: selectedAccompaniments[0]
-        },
-        acai2: {
-            flavors: selectedFlavors[1],
-            accompaniments: selectedAccompaniments[1]
-        },
-        extras: selectedExtras,
-        totalPrice: currentCombo.price + (selectedExtras.length * 1.99)
-    };
-    cart.push(comboItem);
-    localStorage.setItem('cart', JSON.stringify(cart));
-    alert('Combo adicionado ao carrinho!');
-    document.getElementById('comboModal').style.display = 'none';
-    resetComboBuilder();
-    openCart();  // Abre o carrinho automaticamente após adicionar o combo
-}
-
-window.resetComboBuilder = function() {
-    currentCombo = null;
-    selectedFlavors = [[], []];
-    selectedAccompaniments = [[], []];
-    selectedExtras = [];
-    currentAcaiIndex = 0;
-    document.getElementById('flavorSelection').style.display = 'none';
-    document.getElementById('accompanimentSelection').style.display = 'none';
-    document.getElementById('extraItemsSelection').style.display = 'none';
-    document.getElementById('comboSummary').innerHTML = '';
-    document.querySelector('#comboModal .btn[onclick="addComboToCart()"]').style.display = 'none';
-}
-
-        document.querySelectorAll('.close').forEach(closeBtn => {
-            closeBtn.onclick = function() {
-                this.closest('.modal').style.display = "none";
+    window.selectCombo = function(comboName) {
+        currentCombo = combos.find(combo => combo.name === comboName);
+        document.querySelectorAll('.combo-option').forEach(option => {
+            option.classList.remove('selected');
+            if (option.textContent.includes(comboName)) {
+                option.classList.add('selected');
             }
         });
+        currentAcaiIndex = 0;
+        showFlavorSelection();
+    }
 
-        function closeAllModals() {
-            document.querySelectorAll('.modal').forEach(modal => {
-                modal.style.display = "none";
-            });
+    function showFlavorSelection() {
+        const flavorSelection = document.getElementById('flavorSelection');
+        flavorSelection.innerHTML = `
+            <h3>Escolha até 2 sabores para o Açaí ${currentAcaiIndex + 1}:</h3>
+            <div class="combo-items">
+                ${acaiFlavors.map(flavor => `
+                    <div class="combo-item" onclick="toggleFlavor('${flavor}')">
+                        <p>${flavor}</p>
+                    </div>
+                `).join('')}
+            </div>
+            <button class="btn" onclick="showAccompanimentSelection()">Próximo</button>
+        `;
+        flavorSelection.style.display = 'block';
+        updateFlavorSelection();
+    }
+
+    window.toggleFlavor = function(flavor) {
+        const index = selectedFlavors[currentAcaiIndex].indexOf(flavor);
+        if (index > -1) {
+            selectedFlavors[currentAcaiIndex].splice(index, 1);
+        } else if (selectedFlavors[currentAcaiIndex].length < 2) {
+            selectedFlavors[currentAcaiIndex].push(flavor);
+        } else {
+            alert("Você só pode selecionar até 2 sabores por açaí.");
+            return;
         }
+        updateFlavorSelection();
+    }
 
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                closeAllModals();
+function updateFlavorSelection() {
+        document.querySelectorAll('#flavorSelection .combo-item').forEach(item => {
+            const flavor = item.textContent.trim();
+            if (selectedFlavors[currentAcaiIndex].includes(flavor)) {
+                item.classList.add('selected');
+            } else {
+                item.classList.remove('selected');
             }
-        }
+        });
+    }
 
-        fetchCategories();
-        fetchProducts();
+    window.showAccompanimentSelection = function() {
+        if (selectedFlavors[currentAcaiIndex].length === 0) {
+            alert("Por favor, selecione pelo menos um sabor.");
+            return;
+        }
+        const accompanimentSelection = document.getElementById('accompanimentSelection');
+        accompanimentSelection.innerHTML = `
+            <h3>Escolha até ${currentCombo.maxAccompaniments} acompanhamentos para o Açaí ${currentAcaiIndex + 1}:</h3>
+            <div class="combo-items">
+                ${extraItems.map(item => `
+                    <div class="combo-item" onclick="toggleAccompaniment('${item.name}')">
+                        <img src="${item.image}" alt="${item.name}">
+                        <p>${item.name}</p>
+                    </div>
+                `).join('')}
+            </div>
+            <button class="btn" onclick="nextAcai()">Próximo</button>
+        `;
+        accompanimentSelection.style.display = 'block';
+        document.getElementById('flavorSelection').style.display = 'none';
+        updateAccompanimentSelection();
+    }
+
+    window.toggleAccompaniment = function(accompaniment) {
+        const index = selectedAccompaniments[currentAcaiIndex].indexOf(accompaniment);
+        if (index > -1) {
+            selectedAccompaniments[currentAcaiIndex].splice(index, 1);
+        } else if (selectedAccompaniments[currentAcaiIndex].length < currentCombo.maxAccompaniments) {
+            selectedAccompaniments[currentAcaiIndex].push(accompaniment);
+        } else {
+            alert(`Você só pode selecionar até ${currentCombo.maxAccompaniments} acompanhamentos por açaí.`);
+            return;
+        }
+        updateAccompanimentSelection();
+    }
+
+    function updateAccompanimentSelection() {
+        document.querySelectorAll('#accompanimentSelection .combo-item').forEach(item => {
+            const accompaniment = item.querySelector('p').textContent.trim();
+            if (selectedAccompaniments[currentAcaiIndex].includes(accompaniment)) {
+                item.classList.add('selected');
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+    }
+
+    window.nextAcai = function() {
+        if (selectedAccompaniments[currentAcaiIndex].length === 0) {
+            alert("Por favor, selecione pelo menos um acompanhamento.");
+            return;
+        }
+        if (currentAcaiIndex === 0) {
+            currentAcaiIndex = 1;
+            showFlavorSelection();
+        } else {
+            showExtraItemsSelection();
+        }
+    }
+
+    window.showExtraItemsSelection = function() {
+        const extraItemsSelection = document.getElementById('extraItemsSelection');
+        extraItemsSelection.innerHTML = `
+            <h3>Escolha itens extras (R$ 1,99 cada):</h3>
+            <div class="combo-items">
+                ${extraItems.map(item => `
+                    <div class="combo-item" onclick="toggleExtra('${item.name}')">
+                        <img src="${item.image}" alt="${item.name}">
+                        <p>${item.name}</p>
+                        <p>R$ ${item.price.toFixed(2)}</p>
+                    </div>
+                `).join('')}
+            </div>
+            <button class="btn" onclick="finishCombo()">Finalizar Combo</button>
+        `;
+        extraItemsSelection.style.display = 'block';
+        document.getElementById('accompanimentSelection').style.display = 'none';
+    }
+
+    window.toggleExtra = function(extra) {
+        const index = selectedExtras.indexOf(extra);
+        if (index > -1) {
+            selectedExtras.splice(index, 1);
+        } else {
+            selectedExtras.push(extra);
+        }
+        updateExtraItemsSelection();
+    }
+
+    function updateExtraItemsSelection() {
+        document.querySelectorAll('#extraItemsSelection .combo-item').forEach(item => {
+            const extra = item.querySelector('p').textContent.trim();
+            if (selectedExtras.includes(extra)) {
+                item.classList.add('selected');
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+    }
+
+    function finishCombo() {
+        updateComboSummary();
+        document.querySelector('#comboModal .btn[onclick="addComboToCart()"]').style.display = 'block';
+    }
+
+    function updateComboSummary() {
+        const comboSummary = document.getElementById('comboSummary');
+        let total = currentCombo.price + (selectedExtras.length * 1.99);
+        comboSummary.innerHTML = `
+            <h3>Resumo do Combo:</h3>
+            <p><strong>Combo:</strong> ${currentCombo.name}</p>
+            <p><strong>Açaí 1:</strong></p>
+            <p>Sabores: ${selectedFlavors[0].join(', ')}</p>
+            <p>Acompanhamentos: ${selectedAccompaniments[0].join(', ')}</p>
+            <p><strong>Açaí 2:</strong></p>
+            <p>Sabores: ${selectedFlavors[1].join(', ')}</p>
+            <p>Acompanhamentos: ${selectedAccompaniments[1].join(', ')}</p>
+            <p><strong>Extras:</strong> ${selectedExtras.length > 0 ? selectedExtras.join(', ') : 'Nenhum'}</p>
+            <p><strong>Total:</strong> R$ ${total.toFixed(2)}</p>
+        `;
+    }
+
+    window.addComboToCart = function() {
+        const comboItem = {
+            id: Date.now(),
+            name: currentCombo.name,
+            price: currentCombo.price,
+            acai1: {
+                flavors: selectedFlavors[0],
+                accompaniments: selectedAccompaniments[0]
+            },
+            acai2: {
+                flavors: selectedFlavors[1],
+                accompaniments: selectedAccompaniments[1]
+            },
+            extras: selectedExtras,
+            totalPrice: currentCombo.price + (selectedExtras.length * 1.99)
+        };
+        cart.push(comboItem);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        alert('Combo adicionado ao carrinho!');
+        document.getElementById('comboModal').style.display = 'none';
+        resetComboBuilder();
+        openCart();  // Abre o carrinho automaticamente após adicionar o combo
+    }
+
+    window.resetComboBuilder = function() {
+        currentCombo = null;
+        selectedFlavors = [[], []];
+        selectedAccompaniments = [[], []];
+        selectedExtras = [];
+        currentAcaiIndex = 0;
+        document.getElementById('flavorSelection').style.display = 'none';
+        document.getElementById('accompanimentSelection').style.display = 'none';
+        document.getElementById('extraItemsSelection').style.display = 'none';
+        document.getElementById('comboSummary').innerHTML = '';
+        document.querySelector('#comboModal .btn[onclick="addComboToCart()"]').style.display = 'none';
+    }
+
+    document.querySelectorAll('.close').forEach(closeBtn => {
+        closeBtn.onclick = function() {
+            this.closest('.modal').style.display = "none";
+        }
     });
+
+    function closeAllModals() {
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.style.display = "none";
+        });
+    }
+
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            closeAllModals();
+        }
+    }
+
+    fetchCategories();
+    fetchProducts();
+});
 </script>
 </body>
 </html>
-</antArtifact>
