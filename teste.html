@@ -1090,12 +1090,12 @@
                             querySnapshot.forEach((doc) => {
                                 const order = doc.data();
                                 ordersHtml += `
-                                    <div class="order-item">
-                                        <p>Data: ${order.createdAt.toDate().toLocaleString()}</p>
-                                        <p>Itens: ${order.items}</p>
-                                        <p>Total: R$ ${order.total.toFixed(2)}</p>
-                                        <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Pedido</button>
-                                    </div>
+            <li class="order-item">
+                    <p><strong>Data:</strong> ${order.createdAt.toDate().toLocaleString()}</p>
+                    <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
+                    <p><strong>Detalhes do Pedido:</strong> ${order.items.map(item => `${item.name} (${item.accompaniments.join(', ')})${item.extras.length > 0 ? ` + Extras: ${item.extras.join(', ')}` : ''}`).join(', ')}</p>
+                    <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Este Pedido</button>
+                  </li>
                                 `;
                             });
                             ordersList.innerHTML = ordersHtml;
