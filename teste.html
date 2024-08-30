@@ -1298,29 +1298,29 @@ function showFlavorSelection() {
     flavorSelection.style.display = 'block';
 }
 
-        window.toggleFlavor = function(flavor) {
-            const index = selectedFlavors.indexOf(flavor);
-            if (index > -1) {
-                selectedFlavors.splice(index, 1);
-            } else if (selectedFlavors.length < 2) {
-                selectedFlavors.push(flavor);
-            } else {
-                alert("Você só pode selecionar até 2 sabores.");
-                return;
-            }
-            updateFlavorSelection();
+window.toggleFlavor = function(flavor) {
+    const index = selectedFlavors.indexOf(flavor);
+    if (index > -1) {
+        selectedFlavors.splice(index, 1);
+    } else if (selectedFlavors.length < 2) {
+        selectedFlavors.push(flavor);
+    } else {
+        alert("Você só pode selecionar até 2 sabores.");
+        return;
+    }
+    updateFlavorSelection();
+}
+        
+function updateFlavorSelection() {
+    document.querySelectorAll('#flavorSelection .combo-item').forEach(item => {
+        const flavor = item.textContent.trim();
+        if (selectedFlavors.includes(flavor)) {
+            item.classList.add('selected');
+        } else {
+            item.classList.remove('selected');
         }
-
-        function updateFlavorSelection() {
-            document.querySelectorAll('#flavorSelection .combo-item').forEach(item => {
-                const flavor = item.textContent.trim();
-                if (selectedFlavors.includes(flavor)) {
-                    item.classList.add('selected');
-                } else {
-                    item.classList.remove('selected');
-                }
-            });
-        }
+    });
+}
 
 window.showAccompanimentSelection = function() {
     if (selectedFlavors.length === 0) {
@@ -1344,17 +1344,30 @@ window.showAccompanimentSelection = function() {
     document.getElementById('flavorSelection').style.display = 'none';
 }
 
-        function updateAccompanimentSelection() {
-            document.querySelectorAll('#accompanimentSelection .combo-item').forEach(item => {
-                const accompaniment = item.querySelector('p').textContent.trim();
-                if (selectedAccompaniments.includes(accompaniment)) {
-                    item.classList.add('selected');
-                } else {
-                    item.classList.remove('selected');
-                }
-            });
-        }
+        window.toggleAccompaniment = function(accompaniment) {
+    const index = selectedAccompaniments.indexOf(accompaniment);
+    if (index > -1) {
+        selectedAccompaniments.splice(index, 1);
+    } else if (selectedAccompaniments.length < currentCombo.maxAccompaniments) {
+        selectedAccompaniments.push(accompaniment);
+    } else {
+        alert(`Você só pode selecionar até ${currentCombo.maxAccompaniments} acompanhamentos.`);
+        return;
+    }
+    updateAccompanimentSelection();
+}
 
+function updateAccompanimentSelection() {
+    document.querySelectorAll('#accompanimentSelection .combo-item').forEach(item => {
+        const accompaniment = item.querySelector('p').textContent.trim();
+        if (selectedAccompaniments.includes(accompaniment)) {
+            item.classList.add('selected');
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+}
+        
 window.showExtraItemsSelection = function() {
     if (selectedAccompaniments.length === 0) {
         alert("Por favor, selecione pelo menos um acompanhamento.");
@@ -1379,26 +1392,26 @@ window.showExtraItemsSelection = function() {
 }
 
 
-        window.toggleExtra = function(extra) {
-            const index = selectedExtras.indexOf(extra);
-            if (index > -1) {
-                selectedExtras.splice(index, 1);
-            } else {
-                selectedExtras.push(extra);
-            }
-            updateExtraItemsSelection();
-        }
+window.toggleExtra = function(extra) {
+    const index = selectedExtras.indexOf(extra);
+    if (index > -1) {
+        selectedExtras.splice(index, 1);
+    } else {
+        selectedExtras.push(extra);
+    }
+    updateExtraItemsSelection();
+}
 
-        function updateExtraItemsSelection() {
-            document.querySelectorAll('#extraItemsSelection .combo-item').forEach(item => {
-                const extra = item.querySelector('p').textContent.trim();
-                if (selectedExtras.includes(extra)) {
-                    item.classList.add('selected');
-                } else {
-                    item.classList.remove('selected');
-                }
-            });
+function updateExtraItemsSelection() {
+    document.querySelectorAll('#extraItemsSelection .combo-item').forEach(item => {
+        const extra = item.querySelector('p').textContent.trim();
+        if (selectedExtras.includes(extra)) {
+            item.classList.add('selected');
+        } else {
+            item.classList.remove('selected');
         }
+    });
+}
 
 window.finishCombo = function() {
     updateComboSummary();
