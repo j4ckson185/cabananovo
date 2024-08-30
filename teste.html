@@ -439,7 +439,7 @@
                         <option value="">Selecione um endereço salvo ou cadastre um novo</option>
                     </select>
                     <button type="button" class="btn" onclick="showNewAddressForm()">Cadastrar Novo Endereço</button>
-                    <div id="newAddressForm" style="display: none;">
+<div id="newAddressForm" style="display: none;">
                         <label for="street">Rua: <span class="required-field">*</span></label>
                         <input type="text" id="street" required>
                         <label for="number">Número: <span class="required-field">*</span></label>
@@ -498,19 +498,13 @@
             <div id="comboBuilder"></div>
         </div>
     </div>
-<div id="myOrdersModal" class="modal">
-  <div class="modal-content">
-    <span class="close">&times;</span>
-    <h2>Meus Pedidos</h2>
-    <div class="input-icon">
-      <i class="fab fa-whatsapp"></i>
-      <input type="tel" id="myOrdersPhone" placeholder="WhatsApp (com DDD)" required>
+    <div id="myOrdersModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Meus Pedidos</h2>
+            <div id="myOrdersContent"></div>
+        </div>
     </div>
-    <button class="btn" onclick="fetchMyOrders()">Ver Meus Pedidos</button>
-    <div id="myOrdersList"></div>
-    <div id="myLoyaltyInfo"></div>
-  </div>
-</div>
     <div id="loyaltyProgramModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
@@ -1064,172 +1058,142 @@
                 `;
             }
 
-window.openMyOrders = function() {
-      const phone = prompt("Por favor, digite seu número de WhatsApp com DDD:");
-      if (phone) {
-        db.collection('orders').where('customerPhone', '==', phone).get()
-          .then((querySnapshot) => {
-            let ordersHTML = '<h2>Meus Pedidos</h2>';
-            if (querySnapshot.empty) {
-              ordersHTML += '<p>Você ainda não fez nenhum pedido.</p>';
-            } else {
-              ordersHTML += '<ul class="order-list">';
-              querySnapshot.forEach((doc) => {
-                const order = doc.data();
-                ordersHTML += `
-                  <li class="order-item">
-                    <p><strong>Data:</strong> ${order.createdAt.toDate().toLocaleString()}</p>
-                    <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
-                    <p><strong>Detalhes do Pedido:</strong> ${order.items.map(item => `${item.name} (${item.accompaniments.join(', ')})${item.extras.length > 0 ? ` + Extras: ${item.extras.join(', ')}` : ''}`).join(', ')}</p>
-                    <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Este Pedido</button>
-                  </li>
+            window.openMyOrders = function() {
+                const modal = document.getElementById('myOrdersModal');
+                const content = document.getElementById('myOrdersContent');
+                content.innerHTML = `
+                    <h3>Insira seu número de WhatsApp para ver seus pedidos:</h3>
+                    <input type="tel" id="orderPhoneInput" placeholder="WhatsApp (com DDD)" required>
+                    <button class="btn" onclick="fetchMyOrders()">Buscar Pedidos</button>
+                    <div id="ordersList"></div>
                 `;
-              });
-              ordersHTML += '</ul>';
+                modal.style.display = "block";
             }
-            document.getElementById('ordersList').innerHTML = ordersHTML;
-          })
-          .catch((error) => {
-            console.log("Erro ao buscar pedidos:", error);
-          });
-      }
-    }
 
-window.fetchMyOrders = function() {
-    const phone = document.getElementById('orderPhoneInput').value;
-    if (!phone) {
-        alert("Por favor, insira seu número de WhatsApp.");
-        return;
-    }
-    const ordersList = document.getElementById('ordersList');
-    ordersList.innerHTML = '<p>Buscando pedidos...</p>';
-
-    db.collection('orders')
-        .where('customerPhone', '==', phone)
-        .get()
-        .then((querySnapshot) => {
-            if (querySnapshot.empty) {
-                ordersList.innerHTML = '<p>Nenhum pedido encontrado para este número.</p>';
-            } else {
-                let ordersHtml = '<h3>Seus Pedidos:</h3>';
-                const orders = [];
-                querySnapshot.forEach((doc) => {
-                    const order = doc.data();
-                    order.id = doc.id;
-                    orders.push(order);
-                });
-                // Ordenar os pedidos por data de criação (mais recente primeiro)
-                orders.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
-                orders.forEach((order) => {
-                    ordersHtml += `
-                        <div class="order-item">
-                            <p>Data: ${order.createdAt.toDate().toLocaleString()}</p>
-                            <p>Total: R$ ${order.total.toFixed(2)}</p>
-                            <p>Status: ${order.status}</p>
-                            <button class="btn" onclick="repeatOrder('${order.id}')">Repetir Pedido</button>
-                        </div>
-                    `;
-                });
-                ordersList.innerHTML = ordersHtml;
+            window.fetchMyOrders = function() {
+                const phone = document.getElementById('orderPhoneInput').value;
+                if (!phone) {
+                    alert("Por favor, insira seu número de WhatsApp.");
+                    return;
+                }
+                db.collection('orders')
+                    .where('customerPhone', '==', phone)
+                    .orderBy('createdAt', 'desc')
+                    .get()
+                    .then((querySnapshot) => {
+                        const ordersList = document.getElementById('ordersList');
+                        if (querySnapshot.empty) {
+                            ordersList.innerHTML = '<p>Nenhum pedido encontrado para este número.</p>';
+                        } else {
+                            let ordersHtml = '<h3>Seus Pedidos:</h3>';
+                            querySnapshot.forEach((doc) => {
+                                const order = doc.data();
+                                ordersHtml += `
+                                    <div class="order-item">
+                                        <p>Data: ${order.createdAt.toDate().toLocaleString()}</p>
+                                        <p>Total: R$ ${order.total.toFixed(2)}</p>
+                                        <p>Status: ${order.status}</p>
+                                        <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Pedido</button>
+                                    </div>
+                                `;
+                            });
+                            ordersList.innerHTML = ordersHtml;
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Erro ao buscar pedidos: ", error);
+                        alert("Ocorreu um erro ao buscar seus pedidos. Por favor, tente novamente.");
+                    });
             }
-        })
-        .catch((error) => {
-            console.error("Erro ao buscar pedidos: ", error);
-            ordersList.innerHTML = '<p>Ocorreu um erro ao buscar seus pedidos. Por favor, tente novamente.</p>';
+
+            window.repeatOrder = function(orderId) {
+                db.collection('orders').doc(orderId).get()
+                    .then((doc) => {
+                        if (doc.exists) {
+                            const order = doc.data();
+                            cart = order.items;
+                            localStorage.setItem('cart', JSON.stringify(cart));
+                            alert("Pedido adicionado ao carrinho!");
+                            document.getElementById('myOrdersModal').style.display = "none";
+                            openCart();
+                        } else {
+                            alert("Pedido não encontrado.");
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Erro ao repetir pedido: ", error);
+                        alert("Ocorreu um erro ao repetir o pedido. Por favor, tente novamente.");
+                    });
+            }
+
+            window.openLoyaltyProgram = function() {
+                const modal = document.getElementById('loyaltyProgramModal');
+                const content = document.getElementById('loyaltyProgramContent');
+                content.innerHTML = `
+                    <h3>Programa de Fidelidade Cabana Açaí</h3>
+                    <p>Nosso programa de fidelidade é simples e recompensador:</p>
+                    <ul>
+                        <li>A cada 10 pedidos, você ganha 50% de desconto no próximo!</li>
+                        <li>Os pedidos são contabilizados dentro da janela do WhatsApp do cliente.</li>
+                        <li>Se você fizer pedidos com números de WhatsApp diferentes, os pontos de fidelidade serão somados no novo número que está utilizando para compra.</li>
+                    </ul>
+                    <p>Para verificar seus pontos de fidelidade, insira seu número de WhatsApp:</p>
+                    <input type="tel" id="loyaltyPhoneInput" placeholder="WhatsApp (com DDD)" required>
+                    <button class="btn" onclick="checkLoyaltyPoints()">Verificar Pontos</button>
+                    <div id="loyaltyPoints"></div>
+                `;
+                modal.style.display = "block";
+            }
+
+            window.checkLoyaltyPoints = function() {
+                const phone = document.getElementById('loyaltyPhoneInput').value;
+                if (!phone) {
+                    alert("Por favor, insira seu número de WhatsApp.");
+                    return;
+                }
+                db.collection('customers').doc(phone).get()
+                    .then((doc) => {
+                        const loyaltyPoints = document.getElementById('loyaltyPoints');
+                        if (doc.exists) {
+                            const orderCount = doc.data().orderCount || 0;
+                            loyaltyPoints.innerHTML = `
+                                <p>Você já realizou ${orderCount} ${orderCount === 1 ? 'pedido' : 'pedidos'}.</p>
+                                ${orderCount >= 10 ? 
+                                    '<p><strong>Parabéns!</strong> Você tem direito a 50% de desconto no seu próximo pedido!</p>' :
+                                    `<p>Faltam ${10 - orderCount} ${10 - orderCount === 1 ? 'pedido' : 'pedidos'} para você ganhar 50% de desconto!</p>`
+                                }
+                            `;
+                        } else {
+                            loyaltyPoints.innerHTML = '<p>Nenhum pedido encontrado para este número.</p>';
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Erro ao verificar pontos de fidelidade: ", error);
+                        alert("Ocorreu um erro ao verificar seus pontos. Por favor, tente novamente.");
+                    });
+            }
+
+            document.querySelectorAll('.close').forEach(closeBtn => {
+                closeBtn.onclick = function() {
+                    this.closest('.modal').style.display = "none";
+                }
+            });
+
+            function closeAllModals() {
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.style.display = "none";
+                });
+            }
+
+            window.onclick = function(event) {
+                if (event.target.classList.contains('modal')) {
+                    closeAllModals();
+                }
+            }
+
+            fetchCategories();
+            fetchProducts();
         });
-}
-
-    window.repeatOrder = function(orderId) {
-      db.collection('orders').doc(orderId).get()
-        .then((doc) => {
-          if (doc.exists) {
-            const order = doc.data();
-            cart = order.items;
-            localStorage.setItem('cart', JSON.stringify(cart));
-            openCart();
-          }
-        })
-        .catch((error) => {
-          console.log("Erro ao repetir pedido:", error);
-        });
-    }
-
-    window.showLoyaltyRules = function() {
-      document.getElementById('loyaltyRulesModal').style.display = 'block';
-    }
-
-    // Adicionando a função de fechar para todos os modais
-    document.querySelectorAll('.close').forEach(closeBtn => {
-      closeBtn.onclick = function() {
-        this.closest('.modal').style.display = "none";
-      }
-    });
-
-    function closeAllModals() {
-      document.querySelectorAll('.modal').forEach(modal => {
-        modal.style.display = "none";
-      });
-    }
-
-    // Fecha o modal quando o usuário clica fora dele
-    window.onclick = function(event) {
-      if (event.target.classList.contains('modal')) {
-        closeAllModals();
-      }
-    }
-
-    // Inicializa a exibição de categorias e produtos
-    fetchCategories();
-    fetchProducts();
-
-    document.getElementById('categories').addEventListener('click', function(event) {
-      if (event.target.classList.contains('category-btn')) {
-        const category = event.target.getAttribute('data-category');
-        filterByCategory(category);
-      }
-    });
-
-    // Função para carregar os dados do cliente
-    function loadCustomerData(phone) {
-      db.collection('customers').doc(phone).get()
-        .then((doc) => {
-          if (doc.exists) {
-            const data = doc.data();
-            document.getElementById('customerName').value = data.name;
-            savedAddresses = data.addresses || [];
-            loadSavedAddresses();
-            updateLoyaltyInfo(data.orderCount || 0);
-          } else {
-            updateLoyaltyInfo(0);
-          }
-        })
-        .catch((error) => {
-          console.log("Erro ao carregar dados do cliente:", error);
-        });
-    }
-
-    // Atualizar a função de identificação do cliente
-    document.getElementById('customerPhone').addEventListener('blur', function() {
-      const phone = this.value;
-      if (phone) {
-        loadCustomerData(phone);
-      }
-    });
-
-    // Função para atualizar as informações de fidelidade
-    function updateLoyaltyInfo(orderCount) {
-      const loyaltyInfo = document.getElementById('loyaltyInfo');
-      loyaltyInfo.innerHTML = `
-        <h3>Programa de Fidelidade</h3>
-        <p>Você já realizou ${orderCount} ${orderCount === 1 ? 'pedido' : 'pedidos'}.</p>
-        ${orderCount >= 10 ? 
-          '<p><strong>Parabéns!</strong> Você tem direito a 50% de desconto no seu próximo pedido!</p>' :
-          `<p>Faltam ${10 - orderCount} ${10 - orderCount === 1 ? 'pedido' : 'pedidos'} para você ganhar 50% de desconto!</p>`
-        }
-        <p>Lembre-se: O pedido só será contabilizado após ser recebido por nossa loja no WhatsApp.</p>
-      `;
-    }
-  });
-</script>
+    </script>
 </body>
 </html>
