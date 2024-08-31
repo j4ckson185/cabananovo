@@ -244,7 +244,6 @@
         }
         .input-icon input {
             padding-left: 35px;
-            text-align: center;
         }
         #checkoutForm {
             margin-top: 20px;
@@ -387,7 +386,7 @@
             border: none;
             border-top: 1px solid #ddd;
         }
-                #virtualAssistantBtn {
+        #virtualAssistantBtn {
             position: fixed;
             bottom: 20px;
             right: 20px;
@@ -403,19 +402,16 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             transition: all 0.3s ease;
         }
-
         #virtualAssistantBtn:hover {
             background-color: var(--secondary-color);
             transform: scale(1.1);
         }
-
         #virtualAssistantModal .modal-content {
             max-width: 500px;
             height: 70vh;
             display: flex;
             flex-direction: column;
         }
-
         #assistantMessages {
             flex-grow: 1;
             overflow-y: auto;
@@ -424,35 +420,29 @@
             border-radius: 8px;
             margin-bottom: 10px;
         }
-
         .assistant-message, .user-message {
             margin-bottom: 10px;
             padding: 10px;
             border-radius: 8px;
             max-width: 80%;
         }
-
         .assistant-message {
             background-color: #e6e6fa;
             align-self: flex-start;
         }
-
         .user-message {
             background-color: #e6f3ff;
             align-self: flex-end;
             text-align: right;
             margin-left: auto;
         }
-
         #voiceInputContainer {
             display: flex;
             align-items: center;
         }
-
         #startVoiceBtn {
             margin-right: 10px;
         }
-
         #voiceStatus {
             font-style: italic;
             color: #666;
@@ -470,52 +460,47 @@
         <div class="cart-icon" onclick="openCart()">🛒</div>
     </header>
     <main>
-        <div class="user-options">
-            <button class="btn" onclick="openMyOrders()">Meus Pedidos</button>
-            <button class="btn" onclick="openLoyaltyProgram()">Programa Fidelidade</button>
-            <button class="btn" onclick="openComboBuilder()">Montar Combo</button>
-        </div>
-        <div class="categories" id="categories"></div>
-        <div class="product-grid" id="productGrid"></div>
-    </main>
-    <div id="productModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <div id="modalContent"></div>
-        </div>
+<div class="user-options">
+        <button class="btn" onclick="openMyOrders()">Meus Pedidos</button>
+        <button class="btn" onclick="openLoyaltyProgram()">Programa Fidelidade</button>
+        <button class="btn" onclick="openComboBuilder()">Montar Combo</button>
     </div>
-    <div id="cartModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Seu Carrinho</h2>
-            <div id="cartContent"></div>
-            <div id="cartTotal"></div>
-            <button class="btn" onclick="openCustomerIdentification()">Finalizar Pedido</button>
-            <button class="btn" onclick="continueShopping()">Continuar Comprando</button>
-        </div>
+    <div class="categories" id="categories"></div>
+    <div class="product-grid" id="productGrid"></div>
+</main>
+<div id="productModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="modalContent"></div>
     </div>
-
-<button id="virtualAssistantBtn" class="btn">
-    <i class="fas fa-microphone"></i> Assistente Virtual
-</button>
-
-    <div id="customerIdentificationModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-    <form id="customerIdentificationForm">
-      <h2><i class="fas fa-user"></i> Identifique-se</h2>
-      <div class="input-icon">
-        <i class="fas fa-user"></i>
-        <input type="text" id="customerName" placeholder="Nome Completo" required>
-      </div>
-      <div class="input-icon">
-        <i class="fab fa-whatsapp"></i>
-        <input type="tel" id="customerPhone" placeholder="WhatsApp (com DDD)" required>
-      </div>
-      <button type="submit" class="btn">Avançar</button>
-    </form>
-        </div>
+</div>
+<div id="cartModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Seu Carrinho</h2>
+        <div id="cartContent"></div>
+        <div id="cartTotal"></div>
+        <button class="btn" onclick="openCustomerIdentification()">Finalizar Pedido</button>
+        <button class="btn" onclick="continueShopping()">Continuar Comprando</button>
     </div>
+</div>
+<div id="customerIdentificationModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+<form id="customerIdentificationForm">
+  <h2><i class="fas fa-user"></i> Identifique-se</h2>
+  <div class="input-icon">
+    <i class="fas fa-user"></i>
+    <input type="text" id="customerName" placeholder="Nome Completo" required>
+  </div>
+  <div class="input-icon">
+    <i class="fab fa-whatsapp"></i>
+    <input type="tel" id="customerPhone" placeholder="WhatsApp (com DDD)" required>
+  </div>
+  <button type="submit" class="btn">Avançar</button>
+</form>
+    </div>
+</div>
 <div id="checkoutModal" class="modal">
     <div class="modal-content">
         <span class="close">&times;</span>
@@ -600,6 +585,9 @@
         <div id="loyaltyProgramContent"></div>
     </div>
 </div>
+<button id="virtualAssistantBtn" class="btn">
+    <i class="fas fa-microphone"></i> Assistente Virtual
+</button>
 <div id="virtualAssistantModal" class="modal">
     <div class="modal-content">
         <span class="close">&times;</span>
@@ -681,6 +669,23 @@
         let selectedExtras = [];
         let currentAcaiIndex = 0;
 
+        // Dados do site (simulando a captura destes dados)
+        const siteData = {
+            prices: {
+                'Açaí 200ml': 10.99,
+                'Açaí 300ml': 11.99,
+                'Açaí 500ml': 15.99,
+                'Açaí 1 Litro': 25.99,
+                'Combo 2 de 300ml': 20.00,
+                'Combo 2 de 500ml': 26.99,
+                'Combo 2 de 1 Litro': 49.99
+            },
+            deliveryFee: 3.00,
+            deliveryArea: 'zona norte de Natal',
+            location: 'bairro Potengi',
+            flavors: ['Açaí tradicional', 'Creme de Amendoim', 'Creme de Morango', 'Creme de Cupuaçu', 'Creme de Ovomaltine', 'Creme de Ninho']
+        };
+
         async function fetchProducts() {
             const snapshot = await db.collection('products').get();
             products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -705,75 +710,75 @@
             categoriesContainer.insertBefore(allButton, categoriesContainer.firstChild);
         }
 
-        function filterByCategory(category) {
-            const buttons = document.querySelectorAll('.category-btn');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            const filteredProducts = category === 'all' ? products : products.filter(product => product.category === category);
-            displayProducts(filteredProducts);
-        }
+function filterByCategory(category) {
+        const buttons = document.querySelectorAll('.category-btn');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        const filteredProducts = category === 'all' ? products : products.filter(product => product.category === category);
+        displayProducts(filteredProducts);
+    }
 
-        function displayProducts(productsToDisplay = products) {
-            const productGrid = document.getElementById('productGrid');
-            productGrid.innerHTML = productsToDisplay.map(product => `
-                <div class="product-card" onclick="openProductDetails(${product.id})">
-                    <img src="${product.image}" alt="${product.name}" class="product-image">
-                    <div class="product-info">
-                        <h3 class="product-title">${product.name}</h3>
-                        <p class="product-price">R$ ${parseFloat(product.price).toFixed(2)}</p>
-                        <p class="product-description">${product.description.substring(0, 100)}...</p>
-                        <button class="btn" onclick="openProductDetails(${product.id}, event)">Ver Detalhes</button>
-                    </div>
+    function displayProducts(productsToDisplay = products) {
+        const productGrid = document.getElementById('productGrid');
+        productGrid.innerHTML = productsToDisplay.map(product => `
+            <div class="product-card" onclick="openProductDetails(${product.id})">
+                <img src="${product.image}" alt="${product.name}" class="product-image">
+                <div class="product-info">
+                    <h3 class="product-title">${product.name}</h3>
+                    <p class="product-price">R$ ${parseFloat(product.price).toFixed(2)}</p>
+                    <p class="product-description">${product.description.substring(0, 100)}...</p>
+                    <button class="btn" onclick="openProductDetails(${product.id}, event)">Ver Detalhes</button>
                 </div>
-            `).join('');
-        }
+            </div>
+        `).join('');
+    }
 
-        window.openProductDetails = function(productId, event) {
-            if (event) {
-                event.stopPropagation();
-            }
-            const product = products.find(p => p.id === productId);
-            const modal = document.getElementById('productModal');
-            const modalContent = document.getElementById('modalContent');
-            modalContent.innerHTML = `
-                <h2>${product.name}</h2>
-                <img src="${product.image}" alt="${product.name}" style="width:100%; max-height:300px; object-fit:cover;">
-                <p>${product.description}</p>
-                <p class="product-price">Preço: R$ ${parseFloat(product.price).toFixed(2)}</p>
-                <div class="extras-list">
-                    <h3>Acompanhamentos (escolha de ${product.minAccompaniments} a ${product.maxAccompaniments}):</h3>
-                    <div class="checkbox-list" id="accompaniments">
-                        ${product.accompaniments.map((item, index) => `
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="acc${index}" name="accompaniment" value="${item}">
-                                <label for="acc${index}">${item}</label>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <p id="accompanimentError" class="error-message"></p>
-                </div>
-                <div class="extras-list">
-                    <h3>Itens Extras:</h3>
-                    <div class="checkbox-list" id="extras">
-                        ${product.extras.map((item, index) => `
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="extra${index}" name="extra" value="${item.name}">
-                                <label for="extra${index}">${item.name} - R$ ${parseFloat(item.price).toFixed(2)}</label>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                <button id="addToCartBtn" class="btn" onclick="addToCart(${product.id})">Adicionar ao Carrinho</button>
-            `;
-            modal.style.display = "block";
-            // Adicionar validação para acompanhamentos
-            const accCheckboxes = document.querySelectorAll('#accompaniments input[type="checkbox"]');
-            accCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', () => validateAccompaniments(product));
-            });
+    window.openProductDetails = function(productId, event) {
+        if (event) {
+            event.stopPropagation();
         }
+        const product = products.find(p => p.id === productId);
+        const modal = document.getElementById('productModal');
+        const modalContent = document.getElementById('modalContent');
+        modalContent.innerHTML = `
+            <h2>${product.name}</h2>
+            <img src="${product.image}" alt="${product.name}" style="width:100%; max-height:300px; object-fit:cover;">
+            <p>${product.description}</p>
+            <p class="product-price">Preço: R$ ${parseFloat(product.price).toFixed(2)}</p>
+            <div class="extras-list">
+                <h3>Acompanhamentos (escolha de ${product.minAccompaniments} a ${product.maxAccompaniments}):</h3>
+                <div class="checkbox-list" id="accompaniments">
+                    ${product.accompaniments.map((item, index) => `
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="acc${index}" name="accompaniment" value="${item}">
+                            <label for="acc${index}">${item}</label>
+                        </div>
+                    `).join('')}
+                </div>
+                <p id="accompanimentError" class="error-message"></p>
+            </div>
+            <div class="extras-list">
+                <h3>Itens Extras:</h3>
+                <div class="checkbox-list" id="extras">
+                    ${product.extras.map((item, index) => `
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="extra${index}" name="extra" value="${item.name}">
+                            <label for="extra${index}">${item.name} - R$ ${parseFloat(item.price).toFixed(2)}</label>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <button id="addToCartBtn" class="btn" onclick="addToCart(${product.id})">Adicionar ao Carrinho</button>
+        `;
+        modal.style.display = "block";
+        // Adicionar validação para acompanhamentos
+        const accCheckboxes = document.querySelectorAll('#accompaniments input[type="checkbox"]');
+        accCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => validateAccompaniments(product));
+        });
+    }
 
-function validateAccompaniments(product) {
+    function validateAccompaniments(product) {
         const checkedAccompaniments = document.querySelectorAll('#accompaniments input[type="checkbox"]:checked');
         const addToCartBtn = document.getElementById('addToCartBtn');
         const errorMessage = document.getElementById('accompanimentError');
@@ -1029,68 +1034,68 @@ function validateAccompaniments(product) {
         let summaryHTML = '<h3>Resumo do Pedido:</h3>';
         let total = 0;
         
-        cart.forEach(item => {
-            if (item.acai1) {  // Se for um combo
-                summaryHTML += `
-                    <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                    <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                    <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                    <p>Extras: ${item.extras.length > 0 ? item.extras.join(', ') : 'Nenhum'}</p>
-                    <hr>
-                `;
-            } else {  // Se for um item individual
-                summaryHTML += `
-                    <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                    <p>Acompanhamentos: ${item.accompaniments ? item.accompaniments.join(', ') : 'Nenhum'}</p>
-                    <p>Extras: ${item.extras ? item.extras.join(', ') : 'Nenhum'}</p>
-                    <hr>
-                `;
-            }
-            total += item.totalPrice;
-        });
-        
-        const selectedExtras = document.querySelectorAll('.extra-item.selected');
-        let extrasTotal = 0;
-        selectedExtras.forEach(item => {
-            const itemName = item.querySelector('p').textContent;
-            const itemPrice = 1.99;
-            extrasTotal += itemPrice;
-            summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
-        });
-        total += extrasTotal;
-        summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
-        summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
-        summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
-        orderSummary.innerHTML = summaryHTML;
-    }
+cart.forEach(item => {
+        if (item.acai1) {  // Se for um combo
+            summaryHTML += `
+                <p>${item.name} - R$ ${item.totalPrice.toFixed(2)}</p>
+                <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+                <p>Extras: ${item.extras.length > 0 ? item.extras.join(', ') : 'Nenhum'}</p>
+                <hr>
+            `;
+        } else {  // Se for um item individual
+            summaryHTML += `
+                <p>${item.name} - R$ ${item.totalPrice.toFixed(2)}</p>
+                <p>Acompanhamentos: ${item.accompaniments ? item.accompaniments.join(', ') : 'Nenhum'}</p>
+                <p>Extras: ${item.extras ? item.extras.join(', ') : 'Nenhum'}</p>
+                <hr>
+            `;
+        }
+        total += item.totalPrice;
+    });
+    
+    const selectedExtras = document.querySelectorAll('.extra-item.selected');
+    let extrasTotal = 0;
+    selectedExtras.forEach(item => {
+        const itemName = item.querySelector('p').textContent;
+        const itemPrice = 1.99;
+        extrasTotal += itemPrice;
+        summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
+    });
+    total += extrasTotal;
+    summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
+    summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
+    summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
+    orderSummary.innerHTML = summaryHTML;
+}
 
-    document.getElementById('checkoutForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const selectedAddressIndex = document.getElementById('savedAddresses').value;
-        if (selectedAddressIndex === "") {
-            alert("Por favor, selecione um endereço de entrega.");
-            return;
+document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const selectedAddressIndex = document.getElementById('savedAddresses').value;
+    if (selectedAddressIndex === "") {
+        alert("Por favor, selecione um endereço de entrega.");
+        return;
+    }
+    const selectedAddress = savedAddresses[selectedAddressIndex];
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    const changeNeeded = document.getElementById('changeNeeded').value;
+    const changeAmount = document.getElementById('changeAmount').value;
+    let message = `Pedido confirmado!\n`;
+    message += `Nome: ${customerInfo.name}\n`;
+    message += `WhatsApp: ${customerInfo.phone}\n`;
+    message += `Endereço: ${selectedAddress.street}, ${selectedAddress.number}, ${selectedAddress.neighborhood}, ${selectedAddress.city} - ${selectedAddress.state}\n`;
+    if (selectedAddress.complement) {
+        message += `Complemento: ${selectedAddress.complement}\n`;
+    }
+    message += `Método de Pagamento: ${getPaymentMethodText(paymentMethod)}\n`;
+    if (paymentMethod === 'money') {
+        message += `Precisa de troco: ${changeNeeded === 'yes' ? 'Sim' : 'Não'}\n`;
+        if (changeNeeded === 'yes') {
+            message += `Troco para: R$ ${parseFloat(changeAmount).toFixed(2)}\n`;
         }
-        const selectedAddress = savedAddresses[selectedAddressIndex];
-        const paymentMethod = document.getElementById('paymentMethod').value;
-        const changeNeeded = document.getElementById('changeNeeded').value;
-        const changeAmount = document.getElementById('changeAmount').value;
-        let message = `Pedido confirmado!\n`;
-        message += `Nome: ${customerInfo.name}\n`;
-        message += `WhatsApp: ${customerInfo.phone}\n`;
-        message += `Endereço: ${selectedAddress.street}, ${selectedAddress.number}, ${selectedAddress.neighborhood}, ${selectedAddress.city} - ${selectedAddress.state}\n`;
-        if (selectedAddress.complement) {
-            message += `Complemento: ${selectedAddress.complement}\n`;
-        }
-        message += `Método de Pagamento: ${getPaymentMethodText(paymentMethod)}\n`;
-        if (paymentMethod === 'money') {
-            message += `Precisa de troco: ${changeNeeded === 'yes' ? 'Sim' : 'Não'}\n`;
-            if (changeNeeded === 'yes') {
-                message += `Troco para: R$ ${parseFloat(changeAmount).toFixed(2)}\n`;
-            }
-        }
-        
- message += `\nItens do Pedido:\n`;
+    }
+    
+    message += `\nItens do Pedido:\n`;
     cart.forEach(item => {
         if (item.acai1) {  // Se for um combo
             message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
@@ -1185,46 +1190,46 @@ function validateAccompaniments(product) {
         .catch(error => {
             console.error('Erro ao adicionar pedido: ', error);
         });
-    });
+});
 
-    function getPaymentMethodText(method) {
-        switch(method) {
-            case 'money': return 'Dinheiro';
-            case 'card': return 'Cartão na entrega';
-            case 'pix': return 'PIX';
-            default: return method;
+function getPaymentMethodText(method) {
+    switch(method) {
+        case 'money': return 'Dinheiro';
+        case 'card': return 'Cartão na entrega';
+        case 'pix': return 'PIX';
+        default: return method;
+    }
+}
+
+function getOrderNumberText(number) {
+    const specialCases = ['primeiro', 'segundo', 'terceiro', 'quarto', 'quinto'];
+    return specialCases[number - 1] || `${number}º`;
+}
+
+function updateLoyaltyInfo(orderCount) {
+    const loyaltyInfo = document.getElementById('loyaltyInfo');
+    loyaltyInfo.innerHTML = `
+        <h3>Programa de Fidelidade</h3>
+        <p>Você já realizou ${orderCount} ${orderCount === 1 ? 'pedido' : 'pedidos'}.</p>
+        ${orderCount >= 10 ? 
+          '<p><strong>Parabéns!</strong> Você tem direito a 50% de desconto no seu próximo pedido!</p>' :
+          `<p>Faltam ${10 - orderCount} ${10 - orderCount === 1 ? 'pedido' : 'pedidos'} para você ganhar 50% de desconto!</p>`
         }
-    }
+        <p>Lembre-se: O pedido só será contabilizado após ser recebido por nossa loja no WhatsApp.</p>
+    `;
+}
 
-    function getOrderNumberText(number) {
-        const specialCases = ['primeiro', 'segundo', 'terceiro', 'quarto', 'quinto'];
-        return specialCases[number - 1] || `${number}º`;
-    }
-
-    function updateLoyaltyInfo(orderCount) {
-        const loyaltyInfo = document.getElementById('loyaltyInfo');
-        loyaltyInfo.innerHTML = `
-            <h3>Programa de Fidelidade</h3>
-            <p>Você já realizou ${orderCount} ${orderCount === 1 ? 'pedido' : 'pedidos'}.</p>
-            ${orderCount >= 10 ? 
-              '<p><strong>Parabéns!</strong> Você tem direito a 50% de desconto no seu próximo pedido!</p>' :
-              `<p>Faltam ${10 - orderCount} ${10 - orderCount === 1 ? 'pedido' : 'pedidos'} para você ganhar 50% de desconto!</p>`
-            }
-            <p>Lembre-se: O pedido só será contabilizado após ser recebido por nossa loja no WhatsApp.</p>
-        `;
-    }
-
-    window.openMyOrders = function() {
-        const modal = document.getElementById('myOrdersModal');
-        const content = document.getElementById('myOrdersContent');
-        content.innerHTML = `
-            <h3>Insira seu número de WhatsApp para ver seus pedidos:</h3>
-            <input type="tel" id="orderPhoneInput" placeholder="WhatsApp (com DDD)" required>
-            <button class="btn" onclick="fetchMyOrders()">Buscar Pedidos</button>
-            <div id="ordersList"></div>
-        `;
-        modal.style.display = "block";
-    }
+window.openMyOrders = function() {
+    const modal = document.getElementById('myOrdersModal');
+    const content = document.getElementById('myOrdersContent');
+    content.innerHTML = `
+        <h3>Insira seu número de WhatsApp para ver seus pedidos:</h3>
+        <input type="tel" id="orderPhoneInput" placeholder="WhatsApp (com DDD)" required>
+        <button class="btn" onclick="fetchMyOrders()">Buscar Pedidos</button>
+        <div id="ordersList"></div>
+    `;
+    modal.style.display = "block";
+}
 
 window.fetchMyOrders = function() {
     const phone = document.getElementById('orderPhoneInput').value;
@@ -1245,18 +1250,18 @@ window.fetchMyOrders = function() {
                 querySnapshot.forEach((doc) => {
                     const order = doc.data();
                     ordersHtml += `
-                        <div class="order-item">
-                            <p><strong>Data:</strong> ${order.createdAt.toDate().toLocaleString()}</p>
-                            <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
-                            <p><strong>Detalhes do Pedido:</strong> ${order.items.map(item => {
-                                if (item.acai1) {
-                                    return `${item.name} (Açaí 1: ${item.acai1.flavors.join(', ')}, Açaí 2: ${item.acai2.flavors.join(', ')})`;
-                                } else {
-                                    return `${item.name} ${item.accompaniments ? `(${item.accompaniments.join(', ')})` : ''}${item.extras && item.extras.length > 0 ? ` + Extras: ${item.extras.join(', ')}` : ''}`;
-                                }
-                            }).join(', ')}</p>
-                            <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Este Pedido</button>
-                        </div>
+      <div class="order-item">
+        <p><strong>Data:</strong> ${order.createdAt.toDate().toLocaleString()}</p>
+        <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
+        <p><strong>Detalhes do Pedido:</strong> ${order.items.map(item => {
+            if (item.acai1) {
+                return `${item.name} (Açaí 1: ${item.acai1.flavors.join(', ')}, Açaí 2: ${item.acai2.flavors.join(', ')})`;
+            } else {
+                return `${item.name} ${item.accompaniments ? `(${item.accompaniments.join(', ')})` : ''}${item.extras && item.extras.length > 0 ? ` + Extras: ${item.extras.join(', ')}` : ''}`;
+            }
+        }).join(', ')}</p>
+        <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Este Pedido</button>
+      </div>
                     `;
                 });
                 ordersList.innerHTML = ordersHtml;
@@ -1268,111 +1273,111 @@ window.fetchMyOrders = function() {
         });
 }
 
-    window.repeatOrder = function(orderId) {
-        db.collection('orders').doc(orderId).get()
-            .then((doc) => {
-                if (doc.exists) {
-                    const order = doc.data();
-                    cart = order.items;
-                    localStorage.setItem('cart', JSON.stringify(cart));
-                    alert("Pedido adicionado ao carrinho!");
-                    document.getElementById('myOrdersModal').style.display = "none";
-                    openCart();
-                } else {
-                    alert("Pedido não encontrado.");
-                }
-            })
-            .catch((error) => {
-                console.error("Erro ao repetir pedido: ", error);
-                alert("Ocorreu um erro ao repetir o pedido. Por favor, tente novamente.");
-            });
-    }
-
-    window.openLoyaltyProgram = function() {
-        const modal = document.getElementById('loyaltyProgramModal');
-        const content = document.getElementById('loyaltyProgramContent');
-        content.innerHTML = `
-            <h3>Programa de Fidelidade Cabana Açaí</h3>
-            <p>Nosso programa de fidelidade é simples e recompensador:</p>
-            <ul>
-                <li>A cada 10 pedidos, você ganha 50% de desconto no próximo!</li>
-                <li>Os pedidos são contabilizados dentro da janela do WhatsApp do cliente.</li>
-                <li>Se você fizer pedidos com números de WhatsApp diferentes, os pontos de fidelidade serão somados no novo número que está utilizando para compra.</li>
-            </ul>
-            <p>Para verificar seus pontos de fidelidade, insira seu número de WhatsApp:</p>
-            <input type="tel" id="loyaltyPhoneInput" placeholder="WhatsApp (com DDD)" required>
-            <button class="btn" onclick="checkLoyaltyPoints()">Verificar Pontos</button>
-            <div id="loyaltyPoints"></div>
-        `;
-        modal.style.display = "block";
-    }
-
-    window.checkLoyaltyPoints = function() {
-        const phone = document.getElementById('loyaltyPhoneInput').value;
-        if (!phone) {
-            alert("Por favor, insira seu número de WhatsApp.");
-            return;
-        }
-        db.collection('customers').doc(phone).get()
-            .then((doc) => {
-                const loyaltyPoints = document.getElementById('loyaltyPoints');
-                if (doc.exists) {
-                    const orderCount = doc.data().orderCount || 0;
-                    loyaltyPoints.innerHTML = `
-                        <p>Você já realizou ${orderCount} ${orderCount === 1 ? 'pedido' : 'pedidos'}.</p>
-                        ${orderCount >= 10 ? 
-                            '<p><strong>Parabéns!</strong> Você tem direito a 50% de desconto no seu próximo pedido!</p>' :
-                            `<p>Faltam ${10 - orderCount} ${10 - orderCount === 1 ? 'pedido' : 'pedidos'} para você ganhar 50% de desconto!</p>`
-                        }
-                    `;
-                } else {
-                    loyaltyPoints.innerHTML = '<p>Nenhum pedido encontrado para este número.</p>';
-                }
-            })
-            .catch((error) => {
-                console.error("Erro ao verificar pontos de fidelidade: ", error);
-                alert("Ocorreu um erro ao verificar seus pontos. Por favor, tente novamente.");
-            });
-    }
-
-    // Funções para o sistema de montagem de combos
-    window.openComboBuilder = function() {
-        const modal = document.getElementById('comboModal');
-        const comboBuilder = document.getElementById('comboBuilder');
-        comboBuilder.innerHTML = `
-            <div class="combo-step">
-                <h3>Escolha seu Combo:</h3>
-                <div class="combo-options">
-                    ${combos.map(combo => `
-                        <div class="combo-option" onclick="selectCombo('${combo.name}')">
-                            <h4>${combo.name}</h4>
-                            <p>R$ ${combo.price.toFixed(2)}</p>
-                            <p>Até ${combo.maxAccompaniments} acompanhamentos por açaí</p>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-            <div id="flavorSelection" style="display: none;"></div>
-            <div id="accompanimentSelection" style="display: none;"></div>
-            <div id="extraItemsSelection" style="display: none;"></div>
-            <div id="comboSummary"></div>
-            <button class="btn" onclick="addComboToCart()" style="display: none;">Adicionar ao Carrinho</button>
-            <button class="btn" onclick="resetComboBuilder()">Voltar</button>
-        `;
-        modal.style.display = "block";
-    }
-
-    window.selectCombo = function(comboName) {
-        currentCombo = combos.find(combo => combo.name === comboName);
-        document.querySelectorAll('.combo-option').forEach(option => {
-            option.classList.remove('selected');
-            if (option.textContent.includes(comboName)) {
-                option.classList.add('selected');
+window.repeatOrder = function(orderId) {
+    db.collection('orders').doc(orderId).get()
+        .then((doc) => {
+            if (doc.exists) {
+                const order = doc.data();
+                cart = order.items;
+                localStorage.setItem('cart', JSON.stringify(cart));
+                alert("Pedido adicionado ao carrinho!");
+                document.getElementById('myOrdersModal').style.display = "none";
+                openCart();
+            } else {
+                alert("Pedido não encontrado.");
             }
+        })
+        .catch((error) => {
+            console.error("Erro ao repetir pedido: ", error);
+            alert("Ocorreu um erro ao repetir o pedido. Por favor, tente novamente.");
         });
-        currentAcaiIndex = 0;
-        showFlavorSelection();
+}
+
+window.openLoyaltyProgram = function() {
+    const modal = document.getElementById('loyaltyProgramModal');
+    const content = document.getElementById('loyaltyProgramContent');
+    content.innerHTML = `
+        <h3>Programa de Fidelidade Cabana Açaí</h3>
+        <p>Nosso programa de fidelidade é simples e recompensador:</p>
+        <ul>
+            <li>A cada 10 pedidos, você ganha 50% de desconto no próximo!</li>
+            <li>Os pedidos são contabilizados dentro da janela do WhatsApp do cliente.</li>
+            <li>Se você fizer pedidos com números de WhatsApp diferentes, os pontos de fidelidade serão somados no novo número que está utilizando para compra.</li>
+        </ul>
+        <p>Para verificar seus pontos de fidelidade, insira seu número de WhatsApp:</p>
+        <input type="tel" id="loyaltyPhoneInput" placeholder="WhatsApp (com DDD)" required>
+        <button class="btn" onclick="checkLoyaltyPoints()">Verificar Pontos</button>
+        <div id="loyaltyPoints"></div>
+    `;
+    modal.style.display = "block";
+}
+
+window.checkLoyaltyPoints = function() {
+    const phone = document.getElementById('loyaltyPhoneInput').value;
+    if (!phone) {
+        alert("Por favor, insira seu número de WhatsApp.");
+        return;
     }
+    db.collection('customers').doc(phone).get()
+        .then((doc) => {
+            const loyaltyPoints = document.getElementById('loyaltyPoints');
+            if (doc.exists) {
+                const orderCount = doc.data().orderCount || 0;
+                loyaltyPoints.innerHTML = `
+                    <p>Você já realizou ${orderCount} ${orderCount === 1 ? 'pedido' : 'pedidos'}.</p>
+                    ${orderCount >= 10 ? 
+                        '<p><strong>Parabéns!</strong> Você tem direito a 50% de desconto no seu próximo pedido!</p>' :
+                        `<p>Faltam ${10 - orderCount} ${10 - orderCount === 1 ? 'pedido' : 'pedidos'} para você ganhar 50% de desconto!</p>`
+                }
+            `;
+        } else {
+            loyaltyPoints.innerHTML = '<p>Nenhum pedido encontrado para este número.</p>';
+        }
+    })
+    .catch((error) => {
+        console.error("Erro ao verificar pontos de fidelidade: ", error);
+        alert("Ocorreu um erro ao verificar seus pontos. Por favor, tente novamente.");
+    });
+}
+
+// Funções para o sistema de montagem de combos
+window.openComboBuilder = function() {
+    const modal = document.getElementById('comboModal');
+    const comboBuilder = document.getElementById('comboBuilder');
+    comboBuilder.innerHTML = `
+        <div class="combo-step">
+            <h3>Escolha seu Combo:</h3>
+            <div class="combo-options">
+                ${combos.map(combo => `
+                    <div class="combo-option" onclick="selectCombo('${combo.name}')">
+                        <h4>${combo.name}</h4>
+                        <p>R$ ${combo.price.toFixed(2)}</p>
+                        <p>Até ${combo.maxAccompaniments} acompanhamentos por açaí</p>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+        <div id="flavorSelection" style="display: none;"></div>
+        <div id="accompanimentSelection" style="display: none;"></div>
+        <div id="extraItemsSelection" style="display: none;"></div>
+        <div id="comboSummary"></div>
+        <button class="btn" onclick="addComboToCart()" style="display: none;">Adicionar ao Carrinho</button>
+        <button class="btn" onclick="resetComboBuilder()">Voltar</button>
+    `;
+    modal.style.display = "block";
+}
+
+window.selectCombo = function(comboName) {
+    currentCombo = combos.find(combo => combo.name === comboName);
+    document.querySelectorAll('.combo-option').forEach(option => {
+        option.classList.remove('selected');
+        if (option.textContent.includes(comboName)) {
+            option.classList.add('selected');
+        }
+    });
+    currentAcaiIndex = 0;
+    showFlavorSelection();
+}
 
 function showFlavorSelection() {
     const flavorSelection = document.getElementById('flavorSelection');
@@ -1392,29 +1397,29 @@ function showFlavorSelection() {
     updateFlavorSelection();
 }
 
-    window.toggleFlavor = function(flavor) {
-        const index = selectedFlavors[currentAcaiIndex].indexOf(flavor);
-        if (index > -1) {
-            selectedFlavors[currentAcaiIndex].splice(index, 1);
-        } else if (selectedFlavors[currentAcaiIndex].length < 2) {
-            selectedFlavors[currentAcaiIndex].push(flavor);
-        } else {
-            alert("Você só pode selecionar até 2 sabores por açaí.");
-            return;
-        }
-        updateFlavorSelection();
+window.toggleFlavor = function(flavor) {
+    const index = selectedFlavors[currentAcaiIndex].indexOf(flavor);
+    if (index > -1) {
+        selectedFlavors[currentAcaiIndex].splice(index, 1);
+    } else if (selectedFlavors[currentAcaiIndex].length < 2) {
+        selectedFlavors[currentAcaiIndex].push(flavor);
+    } else {
+        alert("Você só pode selecionar até 2 sabores por açaí.");
+        return;
     }
+    updateFlavorSelection();
+}
 
 function updateFlavorSelection() {
-        document.querySelectorAll('#flavorSelection .combo-item').forEach(item => {
-            const flavor = item.textContent.trim();
-            if (selectedFlavors[currentAcaiIndex].includes(flavor)) {
-                item.classList.add('selected');
-            } else {
-                item.classList.remove('selected');
-            }
-        });
-    }
+    document.querySelectorAll('#flavorSelection .combo-item').forEach(item => {
+        const flavor = item.textContent.trim();
+        if (selectedFlavors[currentAcaiIndex].includes(flavor)) {
+            item.classList.add('selected');
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+}
 
 window.showAccompanimentSelection = function() {
     if (selectedFlavors[currentAcaiIndex].length === 0) {
@@ -1439,29 +1444,29 @@ window.showAccompanimentSelection = function() {
     updateAccompanimentSelection();
 }
 
-    window.toggleAccompaniment = function(accompaniment) {
-        const index = selectedAccompaniments[currentAcaiIndex].indexOf(accompaniment);
-        if (index > -1) {
-            selectedAccompaniments[currentAcaiIndex].splice(index, 1);
-        } else if (selectedAccompaniments[currentAcaiIndex].length < currentCombo.maxAccompaniments) {
-            selectedAccompaniments[currentAcaiIndex].push(accompaniment);
-        } else {
-            alert(`Você só pode selecionar até ${currentCombo.maxAccompaniments} acompanhamentos por açaí.`);
-            return;
-        }
-        updateAccompanimentSelection();
+window.toggleAccompaniment = function(accompaniment) {
+    const index = selectedAccompaniments[currentAcaiIndex].indexOf(accompaniment);
+    if (index > -1) {
+        selectedAccompaniments[currentAcaiIndex].splice(index, 1);
+    } else if (selectedAccompaniments[currentAcaiIndex].length < currentCombo.maxAccompaniments) {
+        selectedAccompaniments[currentAcaiIndex].push(accompaniment);
+    } else {
+        alert(`Você só pode selecionar até ${currentCombo.maxAccompaniments} acompanhamentos por açaí.`);
+        return;
     }
+    updateAccompanimentSelection();
+}
 
-    function updateAccompanimentSelection() {
-        document.querySelectorAll('#accompanimentSelection .combo-item').forEach(item => {
-            const accompaniment = item.querySelector('p').textContent.trim();
-            if (selectedAccompaniments[currentAcaiIndex].includes(accompaniment)) {
-                item.classList.add('selected');
-            } else {
-                item.classList.remove('selected');
-            }
-        });
-    }
+function updateAccompanimentSelection() {
+    document.querySelectorAll('#accompanimentSelection .combo-item').forEach(item => {
+        const accompaniment = item.querySelector('p').textContent.trim();
+        if (selectedAccompaniments[currentAcaiIndex].includes(accompaniment)) {
+            item.classList.add('selected');
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+}
 
 window.nextAcai = function() {
     if (selectedAccompaniments[currentAcaiIndex].length === 0) {
@@ -1477,45 +1482,45 @@ window.nextAcai = function() {
     }
 }
 
-    window.showExtraItemsSelection = function() {
-        const extraItemsSelection = document.getElementById('extraItemsSelection');
-        extraItemsSelection.innerHTML = `
-            <h3>Escolha itens extras (R$ 1,99 cada):</h3>
-            <div class="combo-items">
-                ${extraItems.map(item => `
-                    <div class="combo-item" onclick="toggleExtra('${item.name}')">
-                        <img src="${item.image}" alt="${item.name}">
-                        <p>${item.name}</p>
-                        <p>R$ ${item.price.toFixed(2)}</p>
-                    </div>
-                `).join('')}
-            </div>
-            <button class="btn" onclick="finishCombo()">Finalizar Combo</button>
-        `;
-        extraItemsSelection.style.display = 'block';
-        document.getElementById('accompanimentSelection').style.display = 'none';
-    }
+window.showExtraItemsSelection = function() {
+    const extraItemsSelection = document.getElementById('extraItemsSelection');
+    extraItemsSelection.innerHTML = `
+        <h3>Escolha itens extras (R$ 1,99 cada):</h3>
+        <div class="combo-items">
+            ${extraItems.map(item => `
+                <div class="combo-item" onclick="toggleExtra('${item.name}')">
+                    <img src="${item.image}" alt="${item.name}">
+                    <p>${item.name}</p>
+                    <p>R$ ${item.price.toFixed(2)}</p>
+                </div>
+            `).join('')}
+        </div>
+        <button class="btn" onclick="finishCombo()">Finalizar Combo</button>
+    `;
+    extraItemsSelection.style.display = 'block';
+    document.getElementById('accompanimentSelection').style.display = 'none';
+}
 
-    window.toggleExtra = function(extra) {
-        const index = selectedExtras.indexOf(extra);
-        if (index > -1) {
-            selectedExtras.splice(index, 1);
+window.toggleExtra = function(extra) {
+    const index = selectedExtras.indexOf(extra);
+    if (index > -1) {
+        selectedExtras.splice(index, 1);
+    } else {
+        selectedExtras.push(extra);
+    }
+    updateExtraItemsSelection();
+}
+
+function updateExtraItemsSelection() {
+    document.querySelectorAll('#extraItemsSelection .combo-item').forEach(item => {
+        const extra = item.querySelector('p').textContent.trim();
+        if (selectedExtras.includes(extra)) {
+            item.classList.add('selected');
         } else {
-            selectedExtras.push(extra);
+            item.classList.remove('selected');
         }
-        updateExtraItemsSelection();
-    }
-
-    function updateExtraItemsSelection() {
-        document.querySelectorAll('#extraItemsSelection .combo-item').forEach(item => {
-            const extra = item.querySelector('p').textContent.trim();
-            if (selectedExtras.includes(extra)) {
-                item.classList.add('selected');
-            } else {
-                item.classList.remove('selected');
-            }
-        });
-    }
+    });
+}
 
 window.finishCombo = function() {
     updateComboSummary();
@@ -1538,259 +1543,211 @@ function updateComboSummary() {
         <p><strong>Total:</strong> R$ ${total.toFixed(2)}</p>
     `;
 }
-        
-function updateOrderSummary() {
-    const orderSummary = document.getElementById('orderSummary');
-    let summaryHTML = '<h3>Resumo do Pedido:</h3>';
-    let total = 0;
-    
-    cart.forEach(item => {
-        if (item.acai1) {  // Se for um combo
-            summaryHTML += `
-                <p>${item.name} - R$ ${item.totalPrice.toFixed(2)}</p>
-                <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
-                <hr>
-            `;
-        } else {  // Se for um item individual
-            summaryHTML += `
-                <p>${item.name} - R$ ${item.totalPrice.toFixed(2)}</p>
-                ${item.accompaniments && item.accompaniments.length > 0 ? `<p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>` : ''}
-                ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
-                <hr>
-            `;
-        }
-        total += item.totalPrice;
-    });
-    
-    const selectedExtras = document.querySelectorAll('.extra-item.selected');
-    let extrasTotal = 0;
-    selectedExtras.forEach(item => {
-        const itemName = item.querySelector('p').textContent;
-        const itemPrice = 1.99;
-        extrasTotal += itemPrice;
-        summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
-    });
-    total += extrasTotal;
-    summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
-    summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
-    summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
-    orderSummary.innerHTML = summaryHTML;
+
+window.addComboToCart = function() {
+    const comboItem = {
+        id: Date.now(),
+        name: currentCombo.name,
+        price: currentCombo.price,
+        acai1: {
+            flavors: selectedFlavors[0],
+            accompaniments: selectedAccompaniments[0]
+        },
+        acai2: {
+            flavors: selectedFlavors[1],
+            accompaniments: selectedAccompaniments[1]
+        },
+        extras: selectedExtras,
+        totalPrice: currentCombo.price + (selectedExtras.length * 1.99)
+    };
+    cart.push(comboItem);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    alert('Combo adicionado ao carrinho!');
+    document.getElementById('comboModal').style.display = 'none';
+    resetComboBuilder();
+    openCart();  // Abre o carrinho automaticamente após adicionar o combo
 }
 
-    window.addComboToCart = function() {
-        const comboItem = {
-            id: Date.now(),
-            name: currentCombo.name,
-            price: currentCombo.price,
-            acai1: {
-                flavors: selectedFlavors[0],
-                accompaniments: selectedAccompaniments[0]
-            },
-            acai2: {
-                flavors: selectedFlavors[1],
-                accompaniments: selectedAccompaniments[1]
-            },
-            extras: selectedExtras,
-            totalPrice: currentCombo.price + (selectedExtras.length * 1.99)
-        };
-        cart.push(comboItem);
-        localStorage.setItem('cart', JSON.stringify(cart));
-        alert('Combo adicionado ao carrinho!');
-        document.getElementById('comboModal').style.display = 'none';
-        resetComboBuilder();
-        openCart();  // Abre o carrinho automaticamente após adicionar o combo
-    }
+window.resetComboBuilder = function() {
+    currentCombo = null;
+    selectedFlavors = [[], []];
+    selectedAccompaniments = [[], []];
+    selectedExtras = [];
+    currentAcaiIndex = 0;
+    document.getElementById('flavorSelection').style.display = 'none';
+    document.getElementById('accompanimentSelection').style.display = 'none';
+    document.getElementById('extraItemsSelection').style.display = 'none';
+    document.getElementById('comboSummary').innerHTML = '';
+    document.querySelector('#comboModal .btn[onclick="addComboToCart()"]').style.display = 'none';
+}
 
-    window.resetComboBuilder = function() {
-        currentCombo = null;
-        selectedFlavors = [[], []];
-        selectedAccompaniments = [[], []];
-        selectedExtras = [];
-        currentAcaiIndex = 0;
-        document.getElementById('flavorSelection').style.display = 'none';
-        document.getElementById('accompanimentSelection').style.display = 'none';
-        document.getElementById('extraItemsSelection').style.display = 'none';
-        document.getElementById('comboSummary').innerHTML = '';
-        document.querySelector('#comboModal .btn[onclick="addComboToCart()"]').style.display = 'none';
-    }
+// Assistente Virtual
+const virtualAssistantBtn = document.getElementById('virtualAssistantBtn');
+const virtualAssistantModal = document.getElementById('virtualAssistantModal');
+const closeBtn = virtualAssistantModal.querySelector('.close');
+const startVoiceBtn = document.getElementById('startVoiceBtn');
+const voiceStatus = document.getElementById('voiceStatus');
+const assistantMessages = document.getElementById('assistantMessages');
 
-    document.querySelectorAll('.close').forEach(closeBtn => {
-        closeBtn.onclick = function() {
-            this.closest('.modal').style.display = "none";
-        }
-    });
+let recognition;
+let synthesis;
 
-    function closeAllModals() {
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.style.display = "none";
-        });
-    }
+if ('webkitSpeechRecognition' in window) {
+    recognition = new webkitSpeechRecognition();
+    recognition.continuous = false;
+    recognition.lang = 'pt-BR';
 
-    window.onclick = function(event) {
-        if (event.target.classList.contains('modal')) {
-            closeAllModals();
-        }
-    }
+    recognition.onresult = function(event) {
+        const result = event.results[0][0].transcript.toLowerCase();
+        addUserMessage(result);
+        processVoiceCommand(result);
+    };
 
-    fetchCategories();
-    fetchProducts();
+    recognition.onerror = function(event) {
+        console.error('Erro de reconhecimento de voz:', event.error);
+        voiceStatus.textContent = 'Erro no reconhecimento de voz. Tente novamente.';
+    };
+
+    recognition.onend = function() {
+        voiceStatus.textContent = 'Clique no botão para falar novamente.';
+        startVoiceBtn.disabled = false;
+    };
+}
+
+if ('speechSynthesis' in window) {
+    synthesis = window.speechSynthesis;
+}
+
+virtualAssistantBtn.addEventListener('click', function() {
+    virtualAssistantModal.style.display = 'block';
+    addAssistantMessage("Olá! Como posso ajudar você hoje?");
 });
-</script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const virtualAssistantBtn = document.getElementById('virtualAssistantBtn');
-    const virtualAssistantModal = document.getElementById('virtualAssistantModal');
-    const closeBtn = virtualAssistantModal.querySelector('.close');
-    const startVoiceBtn = document.getElementById('startVoiceBtn');
-    const voiceStatus = document.getElementById('voiceStatus');
-    const assistantMessages = document.getElementById('assistantMessages');
 
-    let recognition;
-    let synthesis;
+closeBtn.addEventListener('click', function() {
+    virtualAssistantModal.style.display = 'none';
+});
 
-    if ('webkitSpeechRecognition' in window) {
-        recognition = new webkitSpeechRecognition();
-        recognition.continuous = false;
-        recognition.lang = 'pt-BR';
-
-        recognition.onresult = function(event) {
-            const result = event.results[0][0].transcript.toLowerCase();
-            addUserMessage(result);
-            processVoiceCommand(result);
-        };
-
-        recognition.onerror = function(event) {
-            console.error('Erro de reconhecimento de voz:', event.error);
-            voiceStatus.textContent = 'Erro no reconhecimento de voz. Tente novamente.';
-        };
-
-        recognition.onend = function() {
-            voiceStatus.textContent = 'Clique no botão para falar novamente.';
-            startVoiceBtn.disabled = false;
-        };
+startVoiceBtn.addEventListener('click', function() {
+    if (recognition) {
+        recognition.start();
+        voiceStatus.textContent = 'Ouvindo... Fale agora.';
+        startVoiceBtn.disabled = true;
+    } else {
+        voiceStatus.textContent = 'Reconhecimento de voz não suportado neste navegador.';
     }
+});
 
-    if ('speechSynthesis' in window) {
-        synthesis = window.speechSynthesis;
+function addAssistantMessage(message) {
+    const messageElement = document.createElement('div');
+    messageElement.className = 'assistant-message';
+    messageElement.textContent = message;
+    assistantMessages.appendChild(messageElement);
+    assistantMessages.scrollTop = assistantMessages.scrollHeight;
+    speakMessage(message);
+}
+
+function addUserMessage(message) {
+    const messageElement = document.createElement('div');
+    messageElement.className = 'user-message';
+    messageElement.textContent = message;
+    assistantMessages.appendChild(messageElement);
+    assistantMessages.scrollTop = assistantMessages.scrollHeight;
+}
+
+function speakMessage(message) {
+    if (synthesis) {
+        const utterance = new SpeechSynthesisUtterance(message);
+        utterance.lang = 'pt-BR';
+        synthesis.speak(utterance);
     }
+}
 
-    virtualAssistantBtn.addEventListener('click', function() {
-        virtualAssistantModal.style.display = 'block';
-        addAssistantMessage("Olá! Como posso ajudar você hoje?");
-    });
+function getProductInfo(productName) {
+    const product = Object.entries(siteData.prices).find(([key]) => 
+        key.toLowerCase().includes(productName.toLowerCase())
+    );
+    return product ? { name: product[0], price: product[1] } : null;
+}
 
-    closeBtn.addEventListener('click', function() {
-        virtualAssistantModal.style.display = 'none';
-    });
+function getAllPrices() {
+    return Object.entries(siteData.prices)
+        .map(([name, price]) => `${name}: R$ ${price.toFixed(2)}`)
+        .join('\n');
+}
 
-    startVoiceBtn.addEventListener('click', function() {
-        if (recognition) {
-            recognition.start();
-            voiceStatus.textContent = 'Ouvindo... Fale agora.';
-            startVoiceBtn.disabled = true;
+function processVoiceCommand(command) {
+    command = command.toLowerCase();
+
+    // Verificar preços específicos
+    const priceMatch = command.match(/preço d[eo] (.*)/);
+    if (priceMatch) {
+        const product = getProductInfo(priceMatch[1]);
+        if (product) {
+            addAssistantMessage(`O preço do ${product.name} é R$ ${product.price.toFixed(2)}.`);
         } else {
-            voiceStatus.textContent = 'Reconhecimento de voz não suportado neste navegador.';
+            addAssistantMessage("Desculpe, não encontrei informações sobre esse produto específico.");
         }
-    });
-
-    function addAssistantMessage(message) {
-        const messageElement = document.createElement('div');
-        messageElement.className = 'assistant-message';
-        messageElement.textContent = message;
-        assistantMessages.appendChild(messageElement);
-        assistantMessages.scrollTop = assistantMessages.scrollHeight;
-        speakMessage(message);
+        return;
     }
 
-    function addUserMessage(message) {
-        const messageElement = document.createElement('div');
-        messageElement.className = 'user-message';
-        messageElement.textContent = message;
-        assistantMessages.appendChild(messageElement);
-        assistantMessages.scrollTop = assistantMessages.scrollHeight;
+    // Listar todos os preços
+    if (command.includes('todos os preços') || command.includes('lista de preços')) {
+        addAssistantMessage("Aqui está a lista de todos os nossos preços:\n" + getAllPrices());
+        return;
     }
 
-    function speakMessage(message) {
-        if (synthesis) {
-            const utterance = new SpeechSynthesisUtterance(message);
-            utterance.lang = 'pt-BR';
-            synthesis.speak(utterance);
-        }
+    // Verificar sabores
+    if (command.includes('sabores') || command.includes('sabor')) {
+        addAssistantMessage(`Nossos sabores disponíveis são: ${siteData.flavors.join(', ')}. Você pode escolher apenas Açaí, apenas Creme, ou uma combinação de Açaí com Creme.`);
+        return;
     }
 
-    function processVoiceCommand(command) {
-        command = command.toLowerCase();
+    // Informações sobre entrega
+    if (command.includes('entrega') || command.includes('delivery')) {
+        addAssistantMessage(`Sim, fazemos entrega! A taxa de entrega é de R$ ${siteData.deliveryFee.toFixed(2)}. Entregamos apenas na ${siteData.deliveryArea}.`);
+        return;
+    }
 
-        // Verificar combos
-        if (command.includes('combo')) {
-            if (command.includes('300') || command.includes('pequeno')) {
-                addAssistantMessage("O Combo 2 de 300ml custa R$ 20,00 e permite até 3 acompanhamentos por açaí.");
-            } else if (command.includes('500') || command.includes('médio')) {
-                addAssistantMessage("O Combo 2 de 500ml custa R$ 26,99 e permite até 4 acompanhamentos por açaí.");
-            } else if (command.includes('1 litro') || command.includes('grande')) {
-                addAssistantMessage("O Combo 2 de 1 Litro custa R$ 49,99 e permite até 8 acompanhamentos por açaí.");
-            } else {
-                addAssistantMessage("Temos três opções de combo: 2 de 300ml, 2 de 500ml e 2 de 1 Litro. Qual você gostaria de saber mais?");
-            }
-            return;
-        }
+    // Localização
+    if (command.includes('onde') || command.includes('localização') || command.includes('endereço')) {
+        addAssistantMessage(`Estamos localizados no ${siteData.location}.`);
+        return;
+    }
 
-        // Verificar sabores
-        const sabores = ["Açaí Tradicional", "Creme de Ninho", "Creme de Cupuaçu", "Creme de Ovomaltine",
-                         "Creme de Morango", "Creme de Maracujá", "Creme de Amendoim"];
-        for (let sabor of sabores) {
-            if (command.includes(sabor.toLowerCase())) {
-                addAssistantMessage(`${sabor} é um dos nossos deliciosos sabores disponíveis. Você pode escolher até 2 sabores por açaí em qualquer combo.`);
-                return;
-            }
-        }
+    // Combos
+    if (command.includes('combo')) {
+        const combos = Object.entries(siteData.prices)
+            .filter(([key]) => key.toLowerCase().includes('combo'))
+            .map(([name, price]) => `${name}: R$ ${price.toFixed(2)}`);
+        addAssistantMessage(`Temos os seguintes combos disponíveis:\n${combos.join('\n')}`);
+        return;
+    }
 
-        // Verificar acompanhamentos e extras
-        const acompanhamentos = ["Ovomaltine", "Amendoim", "Granola", "Chocoball", "M&M", "Côco Ralado", 
-                                 "Leite em pó", "Leite condensado", "Calda de Morango", "Calda de Chocolate"];
-        for (let item of acompanhamentos) {
-            if (command.includes(item.toLowerCase())) {
-                addAssistantMessage(`${item} está disponível como acompanhamento e também como item extra. Como item extra, custa R$ 1,99 adicional.`);
-                return;
-            }
-        }
+    // Se nenhuma palavra-chave específica for encontrada
+    addAssistantMessage("Desculpe, não entendi completamente. Posso te ajudar com informações sobre nossos preços, sabores, combos, entrega ou localização. O que você gostaria de saber?");
+}
 
-        // Verificar preços
-        if (command.includes('preço') || command.includes('valor') || command.includes('custo')) {
-            addAssistantMessage("Os preços dos nossos combos são: Combo 2 de 300ml - R$ 20,00, Combo 2 de 500ml - R$ 26,99, Combo 2 de 1 Litro - R$ 49,99. Itens extras custam R$ 1,99 cada.");
-            return;
-        }
-
-        // Verificar regras de acompanhamentos
-        if (command.includes('acompanhamento') || command.includes('adicional')) {
-            addAssistantMessage("O número de acompanhamentos varia por combo: até 3 para o de 300ml, até 4 para o de 500ml e até 8 para o de 1 Litro. Acompanhamentos adicionais são cobrados como itens extras a R$ 1,99 cada.");
-            return;
-        }
-
-        // Verificar entrega
-        if (command.includes('entrega') || command.includes('delivery')) {
-            addAssistantMessage("Sim, fazemos entrega! A taxa de entrega é de R$ 3,00. Ao finalizar seu pedido, você poderá inserir o endereço de entrega.");
-            return;
-        }
-
-        // Verificar pagamento
-        if (command.includes('pagamento') || command.includes('pagar')) {
-            addAssistantMessage("Aceitamos pagamento em dinheiro, cartão na entrega e PIX. Você pode escolher a forma de pagamento ao finalizar seu pedido.");
-            return;
-        }
-
-        // Verificar programa de fidelidade
-        if (command.includes('fidelidade') || command.includes('desconto')) {
-            addAssistantMessage("Temos um ótimo programa de fidelidade! A cada 10 pedidos, você ganha 50% de desconto no próximo. Você pode verificar seus pontos na seção 'Programa Fidelidade' do nosso site.");
-            return;
-        }
-
-        // Se nenhuma palavra-chave específica for encontrada
-        addAssistantMessage("Desculpe, não entendi completamente. Posso te ajudar com informações sobre nossos combos, sabores, acompanhamentos, preços, entrega ou programa de fidelidade. O que você gostaria de saber?");
+document.querySelectorAll('.close').forEach(closeBtn => {
+    closeBtn.onclick = function() {
+        this.closest('.modal').style.display = "none";
     }
 });
+
+function closeAllModals() {
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.style.display = "none";
+    });
+}
+
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        closeAllModals();
+    }
+}
+
+fetchCategories();
+fetchProducts();
+        });
 </script>
 </body>
 </html>
