@@ -797,7 +797,7 @@ function fetchChatbotConversations() {
     fetch(url, {
         method: 'GET',
         headers: {
-            'Authorization': `6564b636-1a71-4a0f-9863-7c87e586384a`,
+            'Authorization': `Bearer ${apiKey}`,
             'accept': 'application/json'
         }
     })
