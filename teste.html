@@ -834,6 +834,7 @@ function processConversations(conversations) {
                             addOrderToCart(orderDetails);
                             processedOrders[currentUserWhatsapp][orderDetails.id] = new Date().getTime();
                             localStorage.setItem('processedOrders', JSON.stringify(processedOrders));
+                            alert(`Novo pedido adicionado ao carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
                         }
                     }
                 }
@@ -855,23 +856,21 @@ function isOrderNew(orderId, whatsappNumber) {
     return !lastProcessedTime || timeDifference > threshold;
 }
         
-        function extractOrderFromMessage(message) {
+function extractOrderFromMessage(message) {
     console.log('Extraindo pedido da mensagem:', message);
-    const orderRegex = /(Sabores|Acompanhamentos|Total).*?(?=\n|$)/gi;
+    const orderRegex = /(Sabores|Tamanho|Acompanhamentos|Extras|Total|Whatsapp).*?(?=\n|$)/gi;
     const matches = [...message.matchAll(orderRegex)];
     
     if (matches.length > 0) {
         const orderDetails = {
             id: Date.now(), // Identificador único para o pedido
-            item: extractDetail(message, 'Item') || 'Pedido Personalizado',
-            size: extractDetail(message, 'Tamanho') || 'Tamanho não especificado',
-            sabores: extractDetail(message, 'Sabores').split(',').map(s => s.trim()),
-            accompaniments: extractDetail(message, 'Acompanhamentos').split(',').map(a => a.trim()),
-            extras: extractDetail(message, 'Extras').split(',').map(e => e.trim()).filter(e => e !== 'Nenhum'),
-            total: extractDetail(message, 'Total').replace('R$', '').trim(),
-            whatsapp: extractDetail(message, 'Whatsapp') || localStorage.getItem('currentUserWhatsapp')
+            sabores: extractDetail(message, 'Sabores'),
+            tamanho: extractDetail(message, 'Tamanho'),
+            acompanhamentos: extractDetail(message, 'Acompanhamentos'),
+            extras: extractDetail(message, 'Extras'),
+            total: extractDetail(message, 'Total'),
+            whatsapp: extractDetail(message, 'Whatsapp')
         };
-
         console.log('Detalhes do pedido extraídos:', orderDetails);
         return orderDetails;
     }
@@ -888,9 +887,9 @@ function addOrderToCart(orderDetails) {
     const cart = JSON.parse(localStorage.getItem(`cart_${orderDetails.whatsapp}`)) || [];
     cart.push({
         id: orderDetails.id,
-        name: `${orderDetails.item} ${orderDetails.size}`,
         sabores: orderDetails.sabores,
-        accompaniments: orderDetails.accompaniments,
+        tamanho: orderDetails.tamanho,
+        acompanhamentos: orderDetails.acompanhamentos,
         extras: orderDetails.extras,
         total: orderDetails.total,
         whatsapp: orderDetails.whatsapp
@@ -898,7 +897,7 @@ function addOrderToCart(orderDetails) {
     localStorage.setItem(`cart_${orderDetails.whatsapp}`, JSON.stringify(cart));
     console.log(`Pedido adicionado ao carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
 }
-
+        
             // Função para solicitar o número de WhatsApp
             function requestWhatsapp() {
                 document.getElementById('whatsappModal').style.display = 'block';
@@ -945,30 +944,26 @@ window.openCart = function() {
         alert("Por favor, identifique-se primeiro com seu número de WhatsApp.");
         return;
     }
-
     const userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
     const modal = document.getElementById('cartModal');
     const cartContent = document.getElementById('cartContent');
     const cartTotal = document.getElementById('cartTotal');
-
     cartContent.innerHTML = userCart.map(item => `
         <div class="cart-item">
             <div class="cart-item-info">
-                <h3>${item.name}</h3>
-                <p>Sabores: ${item.sabores.join(', ')}</p>
-                <p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>
-                ${item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
-                <p>Total: R$ ${item.total}</p>
+                <h3>${item.tamanho}</h3>
+                <p>Sabores: ${item.sabores}</p>
+                <p>Acompanhamentos: ${item.acompanhamentos}</p>
+                ${item.extras ? `<p>Extras: ${item.extras}</p>` : ''}
+                <p>Total: ${item.total}</p>
             </div>
             <span class="cart-item-remove" onclick="removeFromCart('${item.id}')">🗑️</span>
         </div>
     `).join('');
-
-    const total = userCart.reduce((sum, item) => sum + parseFloat(item.total || 0), 0);
+    const total = userCart.reduce((sum, item) => sum + parseFloat(item.total.replace('R$', '').trim() || 0), 0);
     cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
     modal.style.display = "block";
 }
-
         // Iniciar a verificação periódica das conversações do chatbot
             setInterval(fetchChatbotConversations, 10000); // Verifica a cada 10 segundos
 
@@ -982,7 +977,6 @@ window.openCart = function() {
 window.removeFromCart = function(itemId) {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     let userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
-    // Filtra o item para remover
     userCart = userCart.filter(item => item.id !== parseInt(itemId, 10));
     localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(userCart));
     openCart(); // Atualiza a exibição do carrinho
