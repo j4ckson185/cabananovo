@@ -1579,7 +1579,6 @@ function fetchChatbotConversations() {
     const apiKey = '6564b636-1a71-4a0f-9863-7c87e586384a';
     const chatbotId = 'PpgNSIgeYN1FCucFGP4w3';
     
-    // Obter a data atual e a data de 30 dias atrás
     const endDate = new Date().toISOString().split('T')[0];
     const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     
@@ -1599,18 +1598,18 @@ function fetchChatbotConversations() {
         return response.json();
     })
     .then(data => {
-        console.log('Dados completos da API:', data);
-        if (data && data.conversations) {
-            processConversations(data.conversations);
+        console.log('Dados completos da API:', JSON.stringify(data, null, 2));
+        if (data && Array.isArray(data)) {
+            processConversations(data);
         } else {
-            console.error('Dados inválidos recebidos da API:', data);
+            console.error('Dados inválidos recebidos da API:', JSON.stringify(data, null, 2));
         }
     })
     .catch(error => console.error('Error:', error));
 }
 
 function processConversations(conversations) {
-    console.log('Processando conversas:', conversations);
+    console.log('Processando conversas:', JSON.stringify(conversations, null, 2));
     if (!Array.isArray(conversations)) {
         console.error('Dados de conversas inválidos');
         return;
@@ -1618,17 +1617,18 @@ function processConversations(conversations) {
 
     conversations.forEach(conversation => {
         if (conversation.messages && Array.isArray(conversation.messages)) {
-            const lastMessage = conversation.messages[conversation.messages.length - 1];
-            if (lastMessage && lastMessage.role === 'human') {
-                const possibleOrder = extractOrderFromMessage(lastMessage.content);
-                if (possibleOrder) {
-                    addOrderToCart(possibleOrder);
+            conversation.messages.forEach(message => {
+                if (message.role === 'human') {
+                    const possibleOrder = extractOrderFromMessage(message.content);
+                    if (possibleOrder) {
+                        addOrderToCart(possibleOrder);
+                    }
                 }
-            }
+            });
         }
     });
 }
-
+            
 function extractOrderFromMessage(message) {
     console.log('Extraindo pedido da mensagem:', message);
     // Ajuste esta expressão regular para corresponder ao formato exato dos pedidos do seu chatbot
