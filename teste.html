@@ -1137,41 +1137,47 @@ function validateAccompaniments(product) {
         modal.style.display = "block";
     }
 
-    window.fetchMyOrders = function() {
-        const phone = document.getElementById('orderPhoneInput').value;
-        if (!phone) {
-            alert("Por favor, insira seu número de WhatsApp.");
-            return;
-        }
-        db.collection('orders')
-            .where('customerPhone', '==', phone)
-            .orderBy('createdAt', 'desc')
-            .get()
-            .then((querySnapshot) => {
-                const ordersList = document.getElementById('ordersList');
-                if (querySnapshot.empty) {
-                    ordersList.innerHTML = '<p>Nenhum pedido encontrado para este número.</p>';
-                } else {
-                    let ordersHtml = '<h3>Seus Pedidos:</h3>';
-                    querySnapshot.forEach((doc) => {
-                        const order = doc.data();
-                        ordersHtml += `
-          <div class="order-item">
-            <p><strong>Data:</strong> ${order.createdAt.toDate().toLocaleString()}</p>
-            <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
-            <p><strong>Detalhes do Pedido:</strong> ${order.items.map(item => `${item.name} (${item.accompaniments.join(', ')})${item.extras.length > 0 ? ` + Extras: ${item.extras.join(', ')}` : ''}`).join(', ')}</p>
-            <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Este Pedido</button>
-          </div>
-                        `;
-                    });
-                    ordersList.innerHTML = ordersHtml;
-                }
-            })
-            .catch((error) => {
-                console.error("Erro ao buscar pedidos: ", error);
-                alert("Ocorreu um erro ao buscar seus pedidos. Por favor, tente novamente.");
-            });
+window.fetchMyOrders = function() {
+    const phone = document.getElementById('orderPhoneInput').value;
+    if (!phone) {
+        alert("Por favor, insira seu número de WhatsApp.");
+        return;
     }
+    db.collection('orders')
+        .where('customerPhone', '==', phone)
+        .orderBy('createdAt', 'desc')
+        .get()
+        .then((querySnapshot) => {
+            const ordersList = document.getElementById('ordersList');
+            if (querySnapshot.empty) {
+                ordersList.innerHTML = '<p>Nenhum pedido encontrado para este número.</p>';
+            } else {
+                let ordersHtml = '<h3>Seus Pedidos:</h3>';
+                querySnapshot.forEach((doc) => {
+                    const order = doc.data();
+                    ordersHtml += `
+                        <div class="order-item">
+                            <p><strong>Data:</strong> ${order.createdAt.toDate().toLocaleString()}</p>
+                            <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
+                            <p><strong>Detalhes do Pedido:</strong> ${order.items.map(item => {
+                                if (item.acai1) {
+                                    return `${item.name} (Açaí 1: ${item.acai1.flavors.join(', ')}, Açaí 2: ${item.acai2.flavors.join(', ')})`;
+                                } else {
+                                    return `${item.name} ${item.accompaniments ? `(${item.accompaniments.join(', ')})` : ''}${item.extras && item.extras.length > 0 ? ` + Extras: ${item.extras.join(', ')}` : ''}`;
+                                }
+                            }).join(', ')}</p>
+                            <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Este Pedido</button>
+                        </div>
+                    `;
+                });
+                ordersList.innerHTML = ordersHtml;
+            }
+        })
+        .catch((error) => {
+            console.error("Erro ao buscar pedidos: ", error);
+            alert("Ocorreu um erro ao buscar seus pedidos. Por favor, tente novamente.");
+        });
+}
 
     window.repeatOrder = function(orderId) {
         db.collection('orders').doc(orderId).get()
@@ -1420,27 +1426,50 @@ function updateFlavorSelection() {
         });
     }
 
-    function finishCombo() {
-        updateComboSummary();
-        document.querySelector('#comboModal .btn[onclick="addComboToCart()"]').style.display = 'block';
-    }
+window.finishCombo = function() {
+    updateComboSummary();
+    document.querySelector('#comboModal .btn[onclick="addComboToCart()"]').style.display = 'block';
+}
 
-    function updateComboSummary() {
-        const comboSummary = document.getElementById('comboSummary');
-        let total = currentCombo.price + (selectedExtras.length * 1.99);
-        comboSummary.innerHTML = `
-            <h3>Resumo do Combo:</h3>
-            <p><strong>Combo:</strong> ${currentCombo.name}</p>
-            <p><strong>Açaí 1:</strong></p>
-            <p>Sabores: ${selectedFlavors[0].join(', ')}</p>
-            <p>Acompanhamentos: ${selectedAccompaniments[0].join(', ')}</p>
-            <p><strong>Açaí 2:</strong></p>
-            <p>Sabores: ${selectedFlavors[1].join(', ')}</p>
-            <p>Acompanhamentos: ${selectedAccompaniments[1].join(', ')}</p>
-            <p><strong>Extras:</strong> ${selectedExtras.length > 0 ? selectedExtras.join(', ') : 'Nenhum'}</p>
-            <p><strong>Total:</strong> R$ ${total.toFixed(2)}</p>
-        `;
-    }
+function updateOrderSummary() {
+    const orderSummary = document.getElementById('orderSummary');
+    let summaryHTML = '<h3>Resumo do Pedido:</h3>';
+    let total = 0;
+    
+    cart.forEach(item => {
+        if (item.acai1) {  // Se for um combo
+            summaryHTML += `
+                <p>${item.name} - R$ ${item.totalPrice.toFixed(2)}</p>
+                <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+                ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+                <hr>
+            `;
+        } else {  // Se for um item individual
+            summaryHTML += `
+                <p>${item.name} - R$ ${item.totalPrice.toFixed(2)}</p>
+                ${item.accompaniments && item.accompaniments.length > 0 ? `<p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>` : ''}
+                ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+                <hr>
+            `;
+        }
+        total += item.totalPrice;
+    });
+    
+    const selectedExtras = document.querySelectorAll('.extra-item.selected');
+    let extrasTotal = 0;
+    selectedExtras.forEach(item => {
+        const itemName = item.querySelector('p').textContent;
+        const itemPrice = 1.99;
+        extrasTotal += itemPrice;
+        summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
+    });
+    total += extrasTotal;
+    summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
+    summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
+    summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
+    orderSummary.innerHTML = summaryHTML;
+}
 
     window.addComboToCart = function() {
         const comboItem = {
