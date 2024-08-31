@@ -820,26 +820,20 @@ const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().
 }
 
 function processConversations(conversations) {
+    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     conversations.forEach(conversation => {
         if (conversation.messages && Array.isArray(conversation.messages)) {
             conversation.messages.forEach(message => {
                 if (message.role === 'user') {
                     const orderDetails = extractOrderFromMessage(message.content);
-                    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
-
-                    // Verifica se o número atual de WhatsApp é o mesmo do pedido
                     if (orderDetails && orderDetails.whatsapp === currentUserWhatsapp) {
-                        // Se o número de WhatsApp atual não tem um histórico de pedidos processados, inicializa-o
                         if (!processedOrders[currentUserWhatsapp]) {
                             processedOrders[currentUserWhatsapp] = {};
                         }
-
-                        // Verifica se o pedido é novo
                         if (!processedOrders[currentUserWhatsapp][orderDetails.id]) {
                             addOrderToCart(orderDetails);
-                            processedOrders[currentUserWhatsapp][orderDetails.id] = new Date().getTime(); // Marca o pedido como processado
+                            processedOrders[currentUserWhatsapp][orderDetails.id] = new Date().getTime();
                             localStorage.setItem('processedOrders', JSON.stringify(processedOrders));
-                            alert(`Novo pedido adicionado ao carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
                         }
                     }
                 }
@@ -918,10 +912,32 @@ window.saveWhatsapp = function() {
         localStorage.setItem('currentUserWhatsapp', whatsapp);
         localStorage.setItem('processedOrders', JSON.stringify({})); // Reseta os pedidos processados
         document.getElementById('whatsappModal').style.display = 'none';
+        
+        // Inicia a verificação periódica após salvar o número
+        startPeriodicCheck(whatsapp);
     } else {
         alert("Por favor, insira um número de WhatsApp válido.");
     }
 };
+
+        // Adicione esta nova função para iniciar a verificação periódica
+function startPeriodicCheck(whatsapp) {
+    // Verifica imediatamente
+    checkForNewOrders(whatsapp);
+        // Continua verificando a cada 10 segundos
+    setInterval(() => checkForNewOrders(whatsapp), 10000);
+}
+
+// Adicione esta função para verificar novos pedidos
+function checkForNewOrders(whatsapp) {
+    fetchChatbotConversations();
+    const userCart = JSON.parse(localStorage.getItem(`cart_${whatsapp}`)) || [];
+    if (userCart.length > 0) {
+        alert(`Novo pedido adicionado ao carrinho para o WhatsApp: ${whatsapp}`);
+        // Limpa o carrinho após o alerta para evitar alertas repetidos
+        localStorage.setItem(`cart_${whatsapp}`, JSON.stringify([]));
+    }
+}
         
 window.openCart = function() {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
