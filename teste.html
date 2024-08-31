@@ -783,7 +783,7 @@ function validateAccompaniments(product) {
     }
 
                 // Novas variáveis e funções para integração com Chatbase
-            let processedOrders = JSON.parse(localStorage.getItem('processedOrders')) || {};
+let processedOrders = new Set();
 
 function fetchChatbotConversations() {
     const apiKey = '6564b636-1a71-4a0f-9863-7c87e586384a';
