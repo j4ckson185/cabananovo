@@ -1347,12 +1347,16 @@ alert("Por favor, selecione pelo menos um sabor.");
 return;
 }
 const accompanimentSelection = document.getElementById('accompanimentSelection');
-accompanimentSelection.innerHTML =         <h3>Escolha até ${currentCombo.maxAccompaniments} acompanhamentos para o Açaí ${currentAcaiIndex + 1}:</h3>         <div class="combo-items">             ${extraItems.map(item =>
+accompanimentSelection.innerHTML =         
+    <h3>Escolha até ${currentCombo.maxAccompaniments} acompanhamentos para o Açaí ${currentAcaiIndex + 1}:</h3>         
+    <div class="combo-items">             ${extraItems.map(item =>
 <div class="combo-item" onclick="toggleAccompaniment('${item.name}')">
 <img src="${item.image}" alt="${item.name}">
 <p>${item.name}</p>
 </div>
-).join('')}         </div>         <button class="btn" onclick="nextAcai()">Próximo</button>     ;
+).join('')}         
+        </div>         
+<button class="btn" onclick="nextAcai()">Próximo</button>     ;
 accompanimentSelection.style.display = 'block';
 document.getElementById('flavorSelection').style.display = 'none';
 updateAccompanimentSelection();
