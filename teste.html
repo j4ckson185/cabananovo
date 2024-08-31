@@ -854,10 +854,9 @@ function processConversations(conversations, currentUserWhatsapp) {
                 if (message.role === 'user') {
                     const orderDetails = extractOrderFromMessage(message.content);
                     if (orderDetails && orderDetails.whatsapp === currentUserWhatsapp) {
-                        const orderId = orderDetails.id || Date.now().toString();
-                        if (!processedOrders[orderId]) {
+                        if (!processedOrders[orderDetails.id]) {
                             addOrderToCart(orderDetails);
-                            processedOrders[orderId] = true;
+                            processedOrders[orderDetails.id] = true;
                             newOrdersAdded = true;
                         }
                     }
@@ -902,16 +901,30 @@ function isOrderNew(orderId, whatsappNumber) {
         
 function extractOrderFromMessage(message) {
     console.log('Extraindo pedido da mensagem:', message);
-    const orderDetails = {
-        id: Date.now(),
-        sabores: extractDetail(message, 'Sabores'),
-        tamanho: extractDetail(message, 'Tamanho'),
-        acompanhamentos: extractDetail(message, 'Acompanhamentos'),
-        extras: extractDetail(message, 'Extras'),
-        total: extractDetail(message, 'Total'),
-        whatsapp: extractDetail(message, 'Whatsapp'),
-        timestamp: Date.now()
-    };
+    const orderRegex = /(Sabores|Tamanho|Acompanhamentos|Extras|Total|Whatsapp).*?(?=\n|$)/gi;
+    const matches = [...message.matchAll(orderRegex)];
+    
+    if (matches.length > 0) {
+        const orderDetails = {
+            id: Date.now().toString(), // Identificador único para o pedido
+            sabores: extractDetail(message, 'Sabores'),
+            tamanho: extractDetail(message, 'Tamanho'),
+            acompanhamentos: extractDetail(message, 'Acompanhamentos'),
+            extras: extractDetail(message, 'Extras'),
+            total: extractDetail(message, 'Total'),
+            whatsapp: extractDetail(message, 'Whatsapp')
+        };
+        console.log('Detalhes do pedido extraídos:', orderDetails);
+        return orderDetails;
+    }
+    return null;
+}
+
+function extractDetail(text, label) {
+    const regex = new RegExp(`${label}:?\\s*(.+)`, 'i');
+    const match = text.match(regex);
+    return match ? match[1].trim() : '';
+}
     
     // Verifica se todos os campos necessários estão presentes
     if (orderDetails.sabores && orderDetails.tamanho && orderDetails.acompanhamentos && orderDetails.total && orderDetails.whatsapp) {
@@ -929,7 +942,6 @@ function extractDetail(text, label) {
 
 function addOrderToCart(orderDetails) {
     const cart = JSON.parse(localStorage.getItem(`cart_${orderDetails.whatsapp}`)) || [];
-    const title = `${orderDetails.sabores} ${orderDetails.tamanho}`;
     
     // Verifica se o pedido já existe no carrinho
     const existingOrderIndex = cart.findIndex(item => item.id === orderDetails.id);
@@ -938,16 +950,19 @@ function addOrderToCart(orderDetails) {
         // Adiciona novo pedido
         const newItem = {
             id: orderDetails.id,
-            title: title,
+            title: `${orderDetails.sabores} ${orderDetails.tamanho}`,
+            sabores: orderDetails.sabores,
+            tamanho: orderDetails.tamanho,
             acompanhamentos: orderDetails.acompanhamentos,
             extras: orderDetails.extras,
             total: orderDetails.total,
-            whatsapp: orderDetails.whatsapp,
-            timestamp: orderDetails.timestamp
+            whatsapp: orderDetails.whatsapp
         };
         cart.push(newItem);
         localStorage.setItem(`cart_${orderDetails.whatsapp}`, JSON.stringify(cart));
-        console.log(`Pedido adicionado ao carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
+        console.log(`Novo pedido adicionado ao carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
+    } else {
+        console.log(`Pedido já existe no carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
     }
 }
         
@@ -1207,8 +1222,9 @@ function updateOrderSummary() {
     userCart.forEach(item => {
         summaryHTML += `
             <div>
-                <p><strong>${item.title || 'Produto'}</strong></p>
+                <p><strong>${item.title || 'Produto não especificado'}</strong></p>
                 <p>Sabores: ${item.sabores || 'Não especificado'}</p>
+                <p>Tamanho: ${item.tamanho || 'Não especificado'}</p>
                 <p>Acompanhamentos: ${item.acompanhamentos || 'Nenhum'}</p>
                 ${item.extras ? `<p>Extras: ${item.extras}</p>` : ''}
                 <p>Subtotal: ${item.total}</p>
