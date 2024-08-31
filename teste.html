@@ -839,25 +839,37 @@ function processConversations(conversations) {
 }
 function extractOrderFromMessage(message) {
     console.log('Extraindo pedido da mensagem:', message);
-    const orderRegex = /NOVO PEDIDO\s+(.*?)\s+Total:\s*R\$(\d+,\d+)\s+Whatsapp:\s*(\d+)/i;
+    const orderRegex = /NOVO PEDIDO:\s*([\s\S]*?)Whatsapp:\s*(\d+)/i;
     const match = message.match(orderRegex);
     
     if (match) {
-        const [, itemAndSize, price, whatsapp] = match;
-        const [item, size] = itemAndSize.split(/\s+(?=\d+ML)/);
-        const accompaniments = itemAndSize.split(/\d+ML\s+/)[1]?.split(',').map(a => a.trim()) || [];
+        const [, orderDetails, whatsapp] = match;
+        
+        const item = extractDetail(orderDetails, 'Item');
+        const size = extractDetail(orderDetails, 'Tamanho');
+        const sabores = extractDetail(orderDetails, 'Sabores').split(',').map(s => s.trim());
+        const accompaniments = extractDetail(orderDetails, 'Acompanhamentos').split(',').map(a => a.trim());
+        const extras = extractDetail(orderDetails, 'Extras');
 
-        const orderDetails = {
-            item: item.trim(),
+        const orderItem = {
+            item: item,
             size: size,
+            sabores: sabores,
             accompaniments: accompaniments,
-            price: parseFloat(price.replace(',', '.')),
+            extras: extras !== 'Nenhum' ? extras.split(',').map(e => e.trim()) : [],
             whatsapp: whatsapp
         };
-        console.log('Detalhes do pedido extraídos:', orderDetails);
-        return orderDetails;
+
+        console.log('Detalhes do pedido extraídos:', orderItem);
+        return orderItem;
     }
     return null;
+}
+
+function extractDetail(text, label) {
+    const regex = new RegExp(`${label}:\\s*(.+)`, 'i');
+    const match = text.match(regex);
+    return match ? match[1].trim() : '';
 }
 
 function addOrderToCart(orderDetails) {
@@ -865,8 +877,9 @@ function addOrderToCart(orderDetails) {
     const cartItem = {
         id: Date.now(),
         name: `${orderDetails.item} ${orderDetails.size}`,
+        sabores: orderDetails.sabores,
         accompaniments: orderDetails.accompaniments,
-        price: orderDetails.price,
+        extras: orderDetails.extras,
         whatsapp: orderDetails.whatsapp
     };
 
@@ -894,49 +907,34 @@ function addOrderToCart(orderDetails) {
                 }
             }
         
-            window.openCart = function() {
-                const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
-                if (!currentUserWhatsapp) {
-                    requestWhatsapp();
-                    return;
-                }
-                
-                const userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
-                const modal = document.getElementById('cartModal');
-                const cartContent = document.getElementById('cartContent');
-                const cartTotal = document.getElementById('cartTotal');
-        cartContent.innerHTML = cart.map(item => {
-            if (item.acai1) {  // Se for um combo
-                return `
-                    <div class="cart-item">
-                        <div class="cart-item-info">
-                            <h3>${item.name}</h3>
-                            <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                            <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                            <p>Extras: ${item.extras.length > 0 ? item.extras.join(', ') : 'Nenhum'}</p>
-                            <p>Preço: R$ ${item.totalPrice.toFixed(2)}</p>
-                        </div>
-                        <span class="cart-item-remove" onclick="removeFromCart(${item.id})">🗑️</span>
-                    </div>
-                `;
-            } else {  // Se for um item individual
-                return `
-                    <div class="cart-item">
-                        <div class="cart-item-info">
-                            <h3>${item.name}</h3>
-                            <p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>
-                            <p>Extras: ${item.extras.join(', ')}</p>
-                            <p>Preço: R$ ${item.totalPrice.toFixed(2)}</p>
-                        </div>
-                        <span class="cart-item-remove" onclick="removeFromCart(${item.id})">🗑️</span>
-                    </div>
-                `;
-            }
-        }).join('');
-        const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-        cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
-        modal.style.display = "block";
+window.openCart = function() {
+    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+    if (!currentUserWhatsapp) {
+        alert("Por favor, identifique-se primeiro com seu número de WhatsApp.");
+        return;
     }
+
+    const userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
+    const modal = document.getElementById('cartModal');
+    const cartContent = document.getElementById('cartContent');
+    const cartTotal = document.getElementById('cartTotal');
+
+    cartContent.innerHTML = userCart.map(item => `
+        <div class="cart-item">
+            <div class="cart-item-info">
+                <h3>${item.name}</h3>
+                <p>Sabores: ${item.sabores.join(', ')}</p>
+                <p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>
+                ${item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+            </div>
+            <span class="cart-item-remove" onclick="removeFromCart(${item.id})">🗑️</span>
+        </div>
+    `).join('');
+
+    const total = userCart.reduce((sum, item) => sum + (item.price || 0), 0);
+    cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
+    modal.style.display = "block";
+}
 
         // Iniciar a verificação periódica das conversações do chatbot
             setInterval(fetchChatbotConversations, 60000); // Verifica a cada 60 segundos
