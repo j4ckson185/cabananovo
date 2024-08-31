@@ -783,7 +783,7 @@ function validateAccompaniments(product) {
     }
 
                 // Novas variáveis e funções para integração com Chatbase
-let processedOrders = new Set();
+          let processedOrders = JSON.parse(localStorage.getItem('processedOrders')) || {};
 
 function fetchChatbotConversations() {
     const apiKey = '6564b636-1a71-4a0f-9863-7c87e586384a';
@@ -792,7 +792,7 @@ function fetchChatbotConversations() {
     const endDate = new Date().toISOString();
     const startDate = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // 5 minutos atrás
     
-    const url = `https://www.chatbase.co/api/v1/get-conversations?chatbotId=${chatbotId}&startDate=${startDate}&endDate=${endDate}&page=1&size=20`;
+    const url = `https://www.chatbase.co/api/v1/conversations?chatbotId=${chatbotId}&filteredSources=API,Chatbase site,Instagram,Messenger,Slack,Unspecified,WhatsApp,Widget or Iframe;
 
     fetch(url, {
         method: 'GET',
