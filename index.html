@@ -244,6 +244,7 @@
         }
         .input-icon input {
             padding-left: 35px;
+            text-align: center;
         }
         #checkoutForm {
             margin-top: 20px;
@@ -1285,22 +1286,23 @@ window.fetchMyOrders = function() {
         showFlavorSelection();
     }
 
-    function showFlavorSelection() {
-        const flavorSelection = document.getElementById('flavorSelection');
-        flavorSelection.innerHTML = `
-            <h3>Escolha até 2 sabores para o Açaí ${currentAcaiIndex + 1}:</h3>
-            <div class="combo-items">
-                ${acaiFlavors.map(flavor => `
-                    <div class="combo-item" onclick="toggleFlavor('${flavor}')">
-                        <p>${flavor}</p>
-                    </div>
-                `).join('')}
-            </div>
-            <button class="btn" onclick="showAccompanimentSelection()">Próximo</button>
-        `;
-        flavorSelection.style.display = 'block';
-        updateFlavorSelection();
-    }
+function showFlavorSelection() {
+    const flavorSelection = document.getElementById('flavorSelection');
+    flavorSelection.innerHTML = `
+        <h3>Escolha até 2 sabores para o Açaí ${currentAcaiIndex + 1}:</h3>
+        <div class="combo-items">
+            ${acaiFlavors.map(flavor => `
+                <div class="combo-item" onclick="toggleFlavor('${flavor}')">
+                    <p>${flavor}</p>
+                </div>
+            `).join('')}
+        </div>
+        <button class="btn" onclick="showAccompanimentSelection()">Próximo</button>
+    `;
+    flavorSelection.style.display = 'block';
+    document.getElementById('accompanimentSelection').style.display = 'none';
+    updateFlavorSelection();
+}
 
     window.toggleFlavor = function(flavor) {
         const index = selectedFlavors[currentAcaiIndex].indexOf(flavor);
@@ -1326,28 +1328,28 @@ function updateFlavorSelection() {
         });
     }
 
-    window.showAccompanimentSelection = function() {
-        if (selectedFlavors[currentAcaiIndex].length === 0) {
-            alert("Por favor, selecione pelo menos um sabor.");
-            return;
-        }
-        const accompanimentSelection = document.getElementById('accompanimentSelection');
-        accompanimentSelection.innerHTML = `
-            <h3>Escolha até ${currentCombo.maxAccompaniments} acompanhamentos para o Açaí ${currentAcaiIndex + 1}:</h3>
-            <div class="combo-items">
-                ${extraItems.map(item => `
-                    <div class="combo-item" onclick="toggleAccompaniment('${item.name}')">
-                        <img src="${item.image}" alt="${item.name}">
-                        <p>${item.name}</p>
-                    </div>
-                `).join('')}
-            </div>
-            <button class="btn" onclick="nextAcai()">Próximo</button>
-        `;
-        accompanimentSelection.style.display = 'block';
-        document.getElementById('flavorSelection').style.display = 'none';
-        updateAccompanimentSelection();
+window.showAccompanimentSelection = function() {
+    if (selectedFlavors[currentAcaiIndex].length === 0) {
+        alert("Por favor, selecione pelo menos um sabor.");
+        return;
     }
+    const accompanimentSelection = document.getElementById('accompanimentSelection');
+    accompanimentSelection.innerHTML = `
+        <h3>Escolha até ${currentCombo.maxAccompaniments} acompanhamentos para o Açaí ${currentAcaiIndex + 1}:</h3>
+        <div class="combo-items">
+            ${extraItems.map(item => `
+                <div class="combo-item" onclick="toggleAccompaniment('${item.name}')">
+                    <img src="${item.image}" alt="${item.name}">
+                    <p>${item.name}</p>
+                </div>
+            `).join('')}
+        </div>
+        <button class="btn" onclick="nextAcai()">Próximo</button>
+    `;
+    accompanimentSelection.style.display = 'block';
+    document.getElementById('flavorSelection').style.display = 'none';
+    updateAccompanimentSelection();
+}
 
     window.toggleAccompaniment = function(accompaniment) {
         const index = selectedAccompaniments[currentAcaiIndex].indexOf(accompaniment);
@@ -1373,18 +1375,19 @@ function updateFlavorSelection() {
         });
     }
 
-    window.nextAcai = function() {
-        if (selectedAccompaniments[currentAcaiIndex].length === 0) {
-            alert("Por favor, selecione pelo menos um acompanhamento.");
-            return;
-        }
-        if (currentAcaiIndex === 0) {
-            currentAcaiIndex = 1;
-            showFlavorSelection();
-        } else {
-            showExtraItemsSelection();
-        }
+window.nextAcai = function() {
+    if (selectedAccompaniments[currentAcaiIndex].length === 0) {
+        alert("Por favor, selecione pelo menos um acompanhamento.");
+        return;
     }
+    if (currentAcaiIndex === 0) {
+        currentAcaiIndex = 1;
+        document.getElementById('accompanimentSelection').style.display = 'none';
+        showFlavorSelection();
+    } else {
+        showExtraItemsSelection();
+    }
+}
 
     window.showExtraItemsSelection = function() {
         const extraItemsSelection = document.getElementById('extraItemsSelection');
