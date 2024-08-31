@@ -785,12 +785,14 @@ function validateAccompaniments(product) {
                 // Novas variáveis e funções para integração com Chatbase
             let processedOrders = JSON.parse(localStorage.getItem('processedOrders')) || {};
 
- function fetchChatbotConversations() {
+let processedOrders = new Set();
+
+function fetchChatbotConversations() {
     const apiKey = '6564b636-1a71-4a0f-9863-7c87e586384a';
     const chatbotId = 'PpgNSIgeYN1FCucFGP4w3';
     
-    const endDate = new Date().toISOString().split('T')[0];
-    const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const endDate = new Date().toISOString();
+    const startDate = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // 5 minutos atrás
     
     const url = `https://www.chatbase.co/api/v1/get-conversations?chatbotId=${chatbotId}&startDate=${startDate}&endDate=${endDate}&page=1&size=20`;
 
@@ -801,18 +803,10 @@ function validateAccompaniments(product) {
             'accept': 'application/json'
         }
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
-        console.log('Dados completos da API:', JSON.stringify(data, null, 2));
         if (data && data.data && Array.isArray(data.data)) {
             processConversations(data.data);
-        } else {
-            console.error('Dados inválidos recebidos da API:', JSON.stringify(data, null, 2));
         }
     })
     .catch(error => console.error('Error:', error));
@@ -824,50 +818,41 @@ function processConversations(conversations) {
             conversation.messages.forEach(message => {
                 if (message.role === 'user') {
                     const orderDetails = extractOrderFromMessage(message.content);
-                    if (orderDetails) {
-                        const orderId = `${orderDetails.whatsapp}-${orderDetails.item}-${Date.now()}`;
-                        if (!processedOrders[orderId]) {
-                            addOrderToCart(orderDetails);
-                            processedOrders[orderId] = true;
-                            localStorage.setItem('processedOrders', JSON.stringify(processedOrders));
-                        }
+                    if (orderDetails && !processedOrders.has(orderDetails.id)) {
+                        addOrderToCart(orderDetails);
+                        processedOrders.add(orderDetails.id);
                     }
                 }
             });
         }
     });
 }
+        
 function extractOrderFromMessage(message) {
     console.log('Extraindo pedido da mensagem:', message);
-    const orderRegex = /NOVO PEDIDO:\s*([\s\S]*?)Whatsapp:\s*(\d+)/i;
-    const match = message.match(orderRegex);
+    const orderRegex = /(Sabores|Acompanhamentos|Total).*?(?=\n|$)/gi;
+    const matches = [...message.matchAll(orderRegex)];
     
-    if (match) {
-        const [, orderDetails, whatsapp] = match;
-        
-        const item = extractDetail(orderDetails, 'Item');
-        const size = extractDetail(orderDetails, 'Tamanho');
-        const sabores = extractDetail(orderDetails, 'Sabores').split(',').map(s => s.trim());
-        const accompaniments = extractDetail(orderDetails, 'Acompanhamentos').split(',').map(a => a.trim());
-        const extras = extractDetail(orderDetails, 'Extras');
-
-        const orderItem = {
-            item: item,
-            size: size,
-            sabores: sabores,
-            accompaniments: accompaniments,
-            extras: extras !== 'Nenhum' ? extras.split(',').map(e => e.trim()) : [],
-            whatsapp: whatsapp
+    if (matches.length > 0) {
+        const orderDetails = {
+            id: Date.now(), // Identificador único para o pedido
+            item: extractDetail(message, 'Item') || 'Pedido Personalizado',
+            size: extractDetail(message, 'Tamanho') || 'Tamanho não especificado',
+            sabores: extractDetail(message, 'Sabores').split(',').map(s => s.trim()),
+            accompaniments: extractDetail(message, 'Acompanhamentos').split(',').map(a => a.trim()),
+            extras: extractDetail(message, 'Extras').split(',').map(e => e.trim()).filter(e => e !== 'Nenhum'),
+            total: extractDetail(message, 'Total').replace('R$', '').trim(),
+            whatsapp: extractDetail(message, 'Whatsapp') || localStorage.getItem('currentUserWhatsapp')
         };
 
-        console.log('Detalhes do pedido extraídos:', orderItem);
-        return orderItem;
+        console.log('Detalhes do pedido extraídos:', orderDetails);
+        return orderDetails;
     }
     return null;
 }
 
 function extractDetail(text, label) {
-    const regex = new RegExp(`${label}:\\s*(.+)`, 'i');
+    const regex = new RegExp(`${label}:?\\s*(.+)`, 'i');
     const match = text.match(regex);
     return match ? match[1].trim() : '';
 }
@@ -875,11 +860,12 @@ function extractDetail(text, label) {
 function addOrderToCart(orderDetails) {
     console.log('Adicionando pedido ao carrinho para o número:', orderDetails.whatsapp);
     const cartItem = {
-        id: Date.now(),
+        id: orderDetails.id,
         name: `${orderDetails.item} ${orderDetails.size}`,
         sabores: orderDetails.sabores,
         accompaniments: orderDetails.accompaniments,
         extras: orderDetails.extras,
+        total: orderDetails.total,
         whatsapp: orderDetails.whatsapp
     };
 
@@ -926,18 +912,19 @@ window.openCart = function() {
                 <p>Sabores: ${item.sabores.join(', ')}</p>
                 <p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>
                 ${item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+                <p>Total: R$ ${item.total}</p>
             </div>
-            <span class="cart-item-remove" onclick="removeFromCart(${item.id})">🗑️</span>
+            <span class="cart-item-remove" onclick="removeFromCart('${item.id}')">🗑️</span>
         </div>
     `).join('');
 
-    const total = userCart.reduce((sum, item) => sum + (item.price || 0), 0);
+    const total = userCart.reduce((sum, item) => sum + parseFloat(item.total || 0), 0);
     cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
     modal.style.display = "block";
 }
 
         // Iniciar a verificação periódica das conversações do chatbot
-            setInterval(fetchChatbotConversations, 60000); // Verifica a cada 60 segundos
+            setInterval(fetchChatbotConversations, 10000); // Verifica a cada 10 segundos
 
                    // Solicitar o WhatsApp ao carregar a página
             requestWhatsapp();
@@ -946,11 +933,13 @@ window.openCart = function() {
         document.getElementById('cartModal').style.display = "none";
     }
 
-    window.removeFromCart = function(itemId) {
-        cart = cart.filter(item => item.id !== itemId);
-        localStorage.setItem('cart', JSON.stringify(cart));
-        openCart();
-    }
+window.removeFromCart = function(itemId) {
+    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+    let userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
+    userCart = userCart.filter(item => item.id !== itemId);
+    localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(userCart));
+    openCart(); // Atualiza a exibição do carrinho
+}
 
     window.openCustomerIdentification = function() {
         document.getElementById('cartModal').style.display = "none";
