@@ -915,7 +915,7 @@ window.saveWhatsapp = function() {
         localStorage.setItem('processedOrders', JSON.stringify({})); // Reseta os pedidos processados
         document.getElementById('whatsappModal').style.display = 'none';
         
-        // Inicia a verificação uma única vez após salvar o número
+        // Verifica os pedidos uma única vez após salvar o número
         fetchChatbotConversations();
     } else {
         alert("Por favor, insira um número de WhatsApp válido.");
