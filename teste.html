@@ -1575,23 +1575,39 @@
             }
 
             // Funções para integração com o Chatbase
-            function fetchChatbotConversations() {
-                const apiKey = '6564b636-1a71-4a0f-9863-7c87e586384a';
-                const chatbotId = 'PpgNSIgeYN1FCucFGP4w3';
-                const url = `https://www.chatbase.co/api/v1/conversations?chatbotId=${chatbotId}&filteredSources=API,Chatbase site,Instagram,Messenger,Slack,Unspecified,WhatsApp,Widget or Iframe`;
-                fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${apiKey}`,
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    processConversations(data.conversations);
-                })
-                .catch(error => console.error('Error:', error));
-            }
+function fetchChatbotConversations() {
+    const apiKey = '6564b636-1a71-4a0f-9863-7c87e586384a';
+    const chatbotId = 'PpgNSIgeYN1FCucFGP4w3';
+    const url = `https://www.chatbase.co/api/v1/conversations?chatbotId=${chatbotId}&filteredSources=API,Chatbase site,Instagram,Messenger,Slack,Unspecified,WhatsApp,Widget or Iframe`;
+
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.text(); // Primeiro, obtenha o texto bruto da resposta
+    })
+    .then(text => {
+        console.log('Resposta bruta:', text); // Log da resposta bruta
+        try {
+            return JSON.parse(text); // Tente analisar como JSON
+        } catch (e) {
+            console.error('Falha ao analisar JSON:', e);
+            throw new Error('A resposta não é um JSON válido');
+        }
+    })
+    .then(data => {
+        console.log('Dados analisados:', data); // Log dos dados analisados
+        processConversations(data.conversations);
+    })
+    .catch(error => console.error('Error:', error));
+}
 
             function processConversations(conversations) {
                 conversations.forEach(conversation => {
