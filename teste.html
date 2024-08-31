@@ -1609,34 +1609,44 @@ function fetchChatbotConversations() {
     .catch(error => console.error('Error:', error));
 }
 
-            function processConversations(conversations) {
-                conversations.forEach(conversation => {
-                    const lastMessage = conversation.messages[conversation.messages.length - 1];
-                    if (lastMessage && lastMessage.role === 'human') {
-                        const possibleOrder = extractOrderFromMessage(lastMessage.content);
-                        if (possibleOrder) {
-                            addOrderToCart(possibleOrder);
-                        }
-                    }
-                });
-            }
+function processConversations(data) {
+    console.log('Processando dados:', data);
+    if (!data || !Array.isArray(data)) {
+        console.error('Dados inválidos recebidos da API');
+        return;
+    }
 
-            function extractOrderFromMessage(message) {
-                const orderRegex = /NOVO PEDIDO:([\s\S]*?)FIM DO PEDIDO/;
-                const match = message.match(orderRegex);
-                if (match) {
-                    const orderText = match[1];
-                    const orderDetails = {
-                        item: extractDetail(orderText, 'Item'),
-                        size: extractDetail(orderText, 'Tamanho'),
-                        flavors: extractDetail(orderText, 'Sabores').split(',').map(s => s.trim()),
-                        accompaniments: extractDetail(orderText, 'Acompanhamentos').split(',').map(a => a.trim()),
-                        extras: extractDetail(orderText, 'Extras').split(',').map(e => e.trim()).filter(e => e !== 'Nenhum')
-                    };
-                    return orderDetails;
+    data.forEach(conversation => {
+        if (conversation.messages && Array.isArray(conversation.messages)) {
+            const lastMessage = conversation.messages[conversation.messages.length - 1];
+            if (lastMessage && lastMessage.role === 'human') {
+                const possibleOrder = extractOrderFromMessage(lastMessage.content);
+                if (possibleOrder) {
+                    addOrderToCart(possibleOrder);
                 }
-                return null;
             }
+        }
+    });
+}
+
+function extractOrderFromMessage(message) {
+    console.log('Extraindo pedido da mensagem:', message);
+    const orderRegex = /NOVO PEDIDO:([\s\S]*?)FIM DO PEDIDO/;
+    const match = message.match(orderRegex);
+    if (match) {
+        const orderText = match[1];
+        const orderDetails = {
+            item: extractDetail(orderText, 'Item'),
+            size: extractDetail(orderText, 'Tamanho'),
+            flavors: extractDetail(orderText, 'Sabores').split(',').map(s => s.trim()),
+            accompaniments: extractDetail(orderText, 'Acompanhamentos').split(',').map(a => a.trim()),
+            extras: extractDetail(orderText, 'Extras').split(',').map(e => e.trim()).filter(e => e !== 'Nenhum')
+        };
+        console.log('Detalhes do pedido extraídos:', orderDetails);
+        return orderDetails;
+    }
+    return null;
+}
 
             function extractDetail(text, label) {
                 const regex = new RegExp(`- ${label}: (.+)`);
@@ -1644,29 +1654,29 @@ function fetchChatbotConversations() {
                 return match ? match[1].trim() : '';
             }
 
-            function addOrderToCart(orderDetails) {
-                const cartItem = {
-                    id: Date.now(),
-                    name: `${orderDetails.item} ${orderDetails.size}`,
-                    flavors: orderDetails.flavors,
-                    accompaniments: orderDetails.accompaniments,
-                    extras: orderDetails.extras,
-                    totalPrice: calculatePrice(orderDetails) // Você precisará implementar esta função
-                };
-                cart.push(cartItem);
-                localStorage.setItem('cart', JSON.stringify(cart));
-                alert('Novo pedido adicionado ao carrinho!');
-                if (typeof openCart === 'function') {
-                    openCart();
-                }
-            }
+function addOrderToCart(orderDetails) {
+    console.log('Adicionando pedido ao carrinho:', orderDetails);
+    const cartItem = {
+        id: Date.now(),
+        name: `${orderDetails.item} ${orderDetails.size}`,
+        flavors: orderDetails.flavors,
+        accompaniments: orderDetails.accompaniments,
+        extras: orderDetails.extras,
+        totalPrice: calculatePrice(orderDetails)
+    };
+    cart.push(cartItem);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    alert('Novo pedido adicionado ao carrinho!');
+    if (typeof openCart === 'function') {
+        openCart();
+    }
+}
 
-            // Você precisará implementar esta função de acordo com sua estrutura de preços
-            function calculatePrice(orderDetails) {
-                // Implemente a lógica de cálculo de preço baseada nos detalhes do pedido
-                // Por enquanto, retornaremos um valor fixo
-                return 20.00;
-            }
+function calculatePrice(orderDetails) {
+    // Implemente a lógica de cálculo de preço real aqui
+    console.log('Calculando preço para:', orderDetails);
+    return 20.00; // Preço fixo temporário
+}
 
             // Inicie a verificação periódica das conversações do chatbot
             setInterval(fetchChatbotConversations, 60000); // Verifica a cada 60 segundos
