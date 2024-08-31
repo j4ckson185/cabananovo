@@ -195,8 +195,11 @@
             padding-bottom: 10px;
             border-bottom: 1px solid #ddd;
         }
-        #cartIcon.has-items::after {
-    content: attr(data-count);
+   #cartIcon {
+    position: relative;
+}
+
+.cart-count {
     position: absolute;
     top: -10px;
     right: -10px;
@@ -454,7 +457,7 @@
             <button class="btn" onclick="openMyOrders()">Meus Pedidos</button>
             <button class="btn" onclick="openLoyaltyProgram()">Programa Fidelidade</button>
             <button class="btn" onclick="openComboBuilder()">Montar Combo</button>
-            <button class="btn" id="cartIcon" onclick="openCart()">Meu Carrinho</button>
+            <button class="btn" id="cartIcon" onclick="openCart()">Meu Carrinho <span class="cart-count"></span></button>
         </div>
         <div class="categories" id="categories"></div>
         <div class="product-grid" id="productGrid"></div>
@@ -851,9 +854,10 @@ function processConversations(conversations, currentUserWhatsapp) {
                 if (message.role === 'user') {
                     const orderDetails = extractOrderFromMessage(message.content);
                     if (orderDetails && orderDetails.whatsapp === currentUserWhatsapp) {
-                        if (!processedOrders[orderDetails.id]) {
+                        const orderId = orderDetails.id || Date.now().toString();
+                        if (!processedOrders[orderId]) {
                             addOrderToCart(orderDetails);
-                            processedOrders[orderDetails.id] = true;
+                            processedOrders[orderId] = true;
                             newOrdersAdded = true;
                         }
                     }
@@ -865,7 +869,7 @@ function processConversations(conversations, currentUserWhatsapp) {
     localStorage.setItem('processedOrders', JSON.stringify(processedOrders));
 
     if (newOrdersAdded) {
-        updateCartIcon(); // Uma função para atualizar visualmente o ícone do carrinho
+        updateCartIcon();
     }
 }
 
@@ -1034,9 +1038,16 @@ window.openCustomerIdentification = function() {
         loadCustomerData(whatsapp);
     }
     
+    // Remova qualquer observação existente antes de adicionar uma nova
+    const existingObservation = document.getElementById('customerObservation');
+    if (existingObservation) {
+        existingObservation.remove();
+    }
+    
     // Adiciona a observação
     const observationDiv = document.createElement('div');
-    observationDiv.innerHTML = '<p><strong>Observação:</strong> Os pedidos que você fizer em nosso cardápio, você terá acesso através deste número de WhatsApp informado, assim você poderá acessá-los através do botão Meus Pedidos na tela inicial do cardápio.</p>';
+    observationDiv.id = 'customerObservation';
+    observationDiv.innerHTML = '<p><strong>Observação:</strong> Os pedidos que você fizer em nossa loja, você terá acesso através deste número de WhatsApp informado, assim você poderá acessá-los através do botão Meus Pedidos na tela inicial do cardápio.</p>';
     document.getElementById('customerIdentificationForm').appendChild(observationDiv);
 }
 
@@ -1196,9 +1207,10 @@ function updateOrderSummary() {
     userCart.forEach(item => {
         summaryHTML += `
             <div>
-                <p><strong>${item.title}</strong></p>
-                <p>Acompanhamentos: ${item.acompanhamentos}</p>
-                ${item.extras ? `<p>Itens Extras: ${item.extras}</p>` : ''}
+                <p><strong>${item.title || 'Produto'}</strong></p>
+                <p>Sabores: ${item.sabores || 'Não especificado'}</p>
+                <p>Acompanhamentos: ${item.acompanhamentos || 'Nenhum'}</p>
+                ${item.extras ? `<p>Extras: ${item.extras}</p>` : ''}
                 <p>Subtotal: ${item.total}</p>
             </div>
             <hr>
