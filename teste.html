@@ -826,13 +826,15 @@ function processConversations(conversations) {
                 if (message.role === 'user') {
                     const orderDetails = extractOrderFromMessage(message.content);
                     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+
+                    // Verifica se o pedido é novo e corresponde ao número atual de WhatsApp
                     if (
                         orderDetails &&
-                        !processedOrders[orderDetails.id] &&
-                        orderDetails.whatsapp === currentUserWhatsapp
+                        orderDetails.whatsapp === currentUserWhatsapp &&
+                        (!processedOrders[orderDetails.id] || isOrderNew(orderDetails.id))
                     ) {
                         addOrderToCart(orderDetails);
-                        processedOrders[orderDetails.id] = true; // Marca o pedido como processado
+                        processedOrders[orderDetails.id] = new Date().getTime(); // Armazena o horário do processamento
                         localStorage.setItem('processedOrders', JSON.stringify(processedOrders));
                         alert(`Novo pedido adicionado ao carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
                     }
@@ -842,7 +844,20 @@ function processConversations(conversations) {
     });
 }
         
-function extractOrderFromMessage(message) {
+// Função para verificar se o pedido é novo ou se o horário é diferente
+function isOrderNew(orderId) {
+    const lastProcessedTime = processedOrders[orderId];
+    const currentTime = new Date().getTime();
+    const timeDifference = currentTime - lastProcessedTime;
+
+    // Define um intervalo de 1 minuto para considerar o pedido como novo (60000 milissegundos)
+    const threshold = 60000;
+
+    // Retorna verdadeiro apenas se o pedido é novo ou o tempo for superior ao limite
+    return !lastProcessedTime || timeDifference > threshold;
+}
+        
+        function extractOrderFromMessage(message) {
     console.log('Extraindo pedido da mensagem:', message);
     const orderRegex = /(Sabores|Acompanhamentos|Total).*?(?=\n|$)/gi;
     const matches = [...message.matchAll(orderRegex)];
