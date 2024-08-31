@@ -916,7 +916,16 @@ window.saveWhatsapp = function() {
         localStorage.setItem('processedOrders', JSON.stringify({})); // Reseta os pedidos processados
         document.getElementById('whatsappModal').style.display = 'none';
         
-        // Inicia a verificação periódica após salvar o número
+        // Carrega as informações do cliente, se existirem
+        db.collection('customers').doc(whatsapp).get().then((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                localStorage.setItem('customerName', data.name);
+            }
+        }).catch((error) => {
+            console.log("Erro ao carregar dados do cliente:", error);
+        });
+
         startPeriodicCheck(whatsapp);
     } else {
         alert("Por favor, insira um número de WhatsApp válido.");
@@ -986,17 +995,18 @@ window.removeFromCart = function(itemId) {
     openCart(); // Atualiza a exibição do carrinho
 };
 
-    window.openCustomerIdentification = function() {
-        document.getElementById('cartModal').style.display = "none";
-        const modal = document.getElementById('customerIdentificationModal');
-        modal.style.display = "block";
-        const phone = localStorage.getItem('customerPhone');
-        if (phone) {
-            document.getElementById('customerPhone').value = phone;
-            document.getElementById('customerName').value = localStorage.getItem('customerName') || '';
-            loadCustomerData(phone);
-        }
+window.openCustomerIdentification = function() {
+    document.getElementById('cartModal').style.display = "none";
+    const modal = document.getElementById('customerIdentificationModal');
+    modal.style.display = "block";
+    const whatsapp = localStorage.getItem('currentUserWhatsapp');
+    if (whatsapp) {
+        document.getElementById('customerPhone').value = whatsapp;
+        document.getElementById('customerPhone').disabled = true; // Desabilita a edição do número
+        document.getElementById('customerName').value = localStorage.getItem('customerName') || '';
+        loadCustomerData(whatsapp);
     }
+}
 
     function loadCustomerData(phone) {
         db.collection('customers').doc(phone).get().then((doc) => {
@@ -1020,23 +1030,22 @@ window.removeFromCart = function(itemId) {
         });
     }
 
-    document.getElementById('customerIdentificationForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const phone = document.getElementById('customerPhone').value;
-        const name = document.getElementById('customerName').value;
-        customerInfo = { phone, name };
-        localStorage.setItem('customerPhone', phone);
-        localStorage.setItem('customerName', name);
-        db.collection('customers').doc(phone).set({
-            name: name,
-            addresses: savedAddresses
-        }, { merge: true }).then(() => {
-            document.getElementById('customerIdentificationModal').style.display = "none";
-            openCheckout();
-        }).catch((error) => {
-            console.error("Error saving customer data: ", error);
-        });
+document.getElementById('customerIdentificationForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const phone = document.getElementById('customerPhone').value;
+    const name = document.getElementById('customerName').value;
+    customerInfo = { phone, name };
+    localStorage.setItem('customerName', name);
+    db.collection('customers').doc(phone).set({
+        name: name,
+        addresses: savedAddresses
+    }, { merge: true }).then(() => {
+        document.getElementById('customerIdentificationModal').style.display = "none";
+        openCheckout();
+    }).catch((error) => {
+        console.error("Error saving customer data: ", error);
     });
+});
 
     function openCheckout() {
         const checkoutModal = document.getElementById('checkoutModal');
@@ -1661,38 +1670,26 @@ function updateComboSummary() {
         
 function updateOrderSummary() {
     const orderSummary = document.getElementById('orderSummary');
+    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+    const userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
+    
     let summaryHTML = '<h3>Resumo do Pedido:</h3>';
     let total = 0;
     
-    cart.forEach(item => {
-        if (item.acai1) {  // Se for um combo
-            summaryHTML += `
-                <p>${item.name} - R$ ${item.totalPrice.toFixed(2)}</p>
-                <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
-                <hr>
-            `;
-        } else {  // Se for um item individual
-            summaryHTML += `
-                <p>${item.name} - R$ ${item.totalPrice.toFixed(2)}</p>
-                ${item.accompaniments && item.accompaniments.length > 0 ? `<p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>` : ''}
-                ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
-                <hr>
-            `;
-        }
-        total += item.totalPrice;
+    userCart.forEach(item => {
+        summaryHTML += `
+            <div>
+                <p><strong>${item.tamanho}</strong></p>
+                <p>Sabores: ${item.sabores}</p>
+                <p>Acompanhamentos: ${item.acompanhamentos}</p>
+                ${item.extras ? `<p>Extras: ${item.extras}</p>` : ''}
+                <p>Subtotal: ${item.total}</p>
+            </div>
+            <hr>
+        `;
+        total += parseFloat(item.total.replace('R$', '').trim() || 0);
     });
-    
-    const selectedExtras = document.querySelectorAll('.extra-item.selected');
-    let extrasTotal = 0;
-    selectedExtras.forEach(item => {
-        const itemName = item.querySelector('p').textContent;
-        const itemPrice = 1.99;
-        extrasTotal += itemPrice;
-        summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
-    });
-    total += extrasTotal;
+
     summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
     summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
     summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
