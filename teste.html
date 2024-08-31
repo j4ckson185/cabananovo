@@ -798,25 +798,22 @@ function validateAccompaniments(product) {
           // Mantenha um controle dos pedidos processados
 let processedOrders = JSON.parse(localStorage.getItem('processedOrders')) || {};
 
+        function formatDate(date) {
+    return date.toISOString().split('T')[0]; // Retorna apenas a parte da data (YYYY-MM-DD)
+}
+
 function fetchChatbotConversations() {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     if (!currentUserWhatsapp) return;
 
     const apiKey = '6564b636-1a71-4a0f-9863-7c87e586384a';
     const chatbotId = 'PpgNSIgeYN1FCucFGP4w3';
-    
-    // Função para formatar a data no formato correto
- function formatDate(date) {
-    const offset = -3 * 60; // offset em minutos para o fuso horário de Brasília
-    const localDate = new Date(date.getTime() - offset * 60 * 1000);
-    return localDate.toISOString().split('.')[0] + '-03:00';
-}
 
     const endDate = formatDate(new Date());
-    const startDate = formatDate(new Date(Date.now() - 5 * 60 * 1000)); // 5 minutos atrás
-    
+    const startDate = formatDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)); // 30 dias atrás
+
     const url = `https://www.chatbase.co/api/v1/get-conversations?chatbotId=${chatbotId}&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&page=1&size=20`;
-    
+
     fetch(url, {
         method: 'GET',
         headers: {
@@ -831,6 +828,7 @@ function fetchChatbotConversations() {
         return response.json();
     })
     .then(data => {
+        console.log('Dados recebidos:', data);
         if (data && data.data && Array.isArray(data.data)) {
             processConversations(data.data, currentUserWhatsapp);
         } else {
