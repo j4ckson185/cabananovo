@@ -822,6 +822,8 @@ const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().
 function processConversations(conversations) {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     let newOrderAdded = false;
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000; // 5 minutos atrás
+
     conversations.forEach(conversation => {
         if (conversation.messages && Array.isArray(conversation.messages)) {
             conversation.messages.forEach(message => {
@@ -831,9 +833,10 @@ function processConversations(conversations) {
                         if (!processedOrders[currentUserWhatsapp]) {
                             processedOrders[currentUserWhatsapp] = {};
                         }
-                        if (!processedOrders[currentUserWhatsapp][orderDetails.id]) {
+                        const orderTime = new Date(message.timestamp).getTime();
+                        if (!processedOrders[currentUserWhatsapp][orderDetails.id] && orderTime > fiveMinutesAgo) {
                             addOrderToCart(orderDetails);
-                            processedOrders[currentUserWhatsapp][orderDetails.id] = new Date().getTime();
+                            processedOrders[currentUserWhatsapp][orderDetails.id] = orderTime;
                             newOrderAdded = true;
                         }
                     }
@@ -841,6 +844,7 @@ function processConversations(conversations) {
             });
         }
     });
+    
     localStorage.setItem('processedOrders', JSON.stringify(processedOrders));
     if (newOrderAdded) {
         alert(`Novo pedido adicionado ao carrinho para o WhatsApp: ${currentUserWhatsapp}`);
@@ -889,10 +893,10 @@ function extractDetail(text, label) {
 
 function addOrderToCart(orderDetails) {
     const cart = JSON.parse(localStorage.getItem(`cart_${orderDetails.whatsapp}`)) || [];
+    const title = `${orderDetails.sabores} ${orderDetails.tamanho}`;
     cart.push({
         id: orderDetails.id,
-        sabores: orderDetails.sabores,
-        tamanho: orderDetails.tamanho,
+        title: title,
         acompanhamentos: orderDetails.acompanhamentos,
         extras: orderDetails.extras,
         total: orderDetails.total,
@@ -964,10 +968,9 @@ window.openCart = function() {
     cartContent.innerHTML = userCart.map(item => `
         <div class="cart-item">
             <div class="cart-item-info">
-                <h3>${item.tamanho}</h3>
-                <p>Sabores: ${item.sabores}</p>
+                <h3>${item.title}</h3>
                 <p>Acompanhamentos: ${item.acompanhamentos}</p>
-                ${item.extras ? `<p>Extras: ${item.extras}</p>` : ''}
+                ${item.extras ? `<p>Itens Extras: ${item.extras}</p>` : ''}
                 <p>Total: ${item.total}</p>
             </div>
             <span class="cart-item-remove" onclick="removeFromCart('${item.id}')">🗑️</span>
@@ -1002,10 +1005,14 @@ window.openCustomerIdentification = function() {
     const whatsapp = localStorage.getItem('currentUserWhatsapp');
     if (whatsapp) {
         document.getElementById('customerPhone').value = whatsapp;
-        document.getElementById('customerPhone').disabled = true; // Desabilita a edição do número
         document.getElementById('customerName').value = localStorage.getItem('customerName') || '';
         loadCustomerData(whatsapp);
     }
+    
+    // Adiciona a observação
+    const observationDiv = document.createElement('div');
+    observationDiv.innerHTML = '<p><strong>Observação:</strong> Os pedidos que você fizer em nosso cardápio, você terá acesso através deste número de WhatsApp informado, assim você poderá acessá-los através do botão Meus Pedidos na tela inicial do cardápio.</p>';
+    document.getElementById('customerIdentificationForm').appendChild(observationDiv);
 }
 
     function loadCustomerData(phone) {
@@ -1153,45 +1160,32 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
         updateOrderSummary();
     }
 
-    function updateOrderSummary() {
-        const orderSummary = document.getElementById('orderSummary');
-        let summaryHTML = '<h3>Resumo do Pedido:</h3>';
-        let total = 0;
-        
-        cart.forEach(item => {
-            if (item.acai1) {  // Se for um combo
-                summaryHTML += `
-                    <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                    <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                    <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                    <p>Extras: ${item.extras.length > 0 ? item.extras.join(', ') : 'Nenhum'}</p>
-                    <hr>
-                `;
-            } else {  // Se for um item individual
-                summaryHTML += `
-                    <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                    <p>Acompanhamentos: ${item.accompaniments ? item.accompaniments.join(', ') : 'Nenhum'}</p>
-                    <p>Extras: ${item.extras ? item.extras.join(', ') : 'Nenhum'}</p>
-                    <hr>
-                `;
-            }
-            total += item.totalPrice;
-        });
-        
-        const selectedExtras = document.querySelectorAll('.extra-item.selected');
-        let extrasTotal = 0;
-        selectedExtras.forEach(item => {
-            const itemName = item.querySelector('p').textContent;
-            const itemPrice = 1.99;
-            extrasTotal += itemPrice;
-            summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
-        });
-        total += extrasTotal;
-        summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
-        summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
-        summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
-        orderSummary.innerHTML = summaryHTML;
-    }
+function updateOrderSummary() {
+    const orderSummary = document.getElementById('orderSummary');
+    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+    const userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
+    
+    let summaryHTML = '<h3>Resumo do Pedido:</h3>';
+    let total = 0;
+    
+    userCart.forEach(item => {
+        summaryHTML += `
+            <div>
+                <p><strong>${item.title}</strong></p>
+                <p>Acompanhamentos: ${item.acompanhamentos}</p>
+                ${item.extras ? `<p>Itens Extras: ${item.extras}</p>` : ''}
+                <p>Subtotal: ${item.total}</p>
+            </div>
+            <hr>
+        `;
+        total += parseFloat(item.total.replace('R$', '').trim() || 0);
+    });
+
+    summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
+    summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
+    summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
+    orderSummary.innerHTML = summaryHTML;
+}
 
     document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         e.preventDefault();
