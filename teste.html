@@ -793,10 +793,11 @@ function fetchChatbotConversations() {
     const apiKey = '6564b636-1a71-4a0f-9863-7c87e586384a';
     const chatbotId = 'PpgNSIgeYN1FCucFGP4w3';
     
-    const endDate = new Date().toISOString().split('T')[0];
-    const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const endDate = new Date().toISOString();
+    const startDate = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // 5 minutos atrás
     
     const url = `https://www.chatbase.co/api/v1/get-conversations?chatbotId=${chatbotId}&startDate=${startDate}&endDate=${endDate}&page=1&size=20`;
+    
     fetch(url, {
         method: 'GET',
         headers: {
@@ -804,29 +805,17 @@ function fetchChatbotConversations() {
             'accept': 'application/json'
         }
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
-        console.log('Dados completos da API:', JSON.stringify(data, null, 2));
         if (data && data.data && Array.isArray(data.data)) {
-            processConversations(data.data);
-        } else {
-            console.error('Dados inválidos recebidos da API:', JSON.stringify(data, null, 2));
+            processConversations(data.data, currentUserWhatsapp);
         }
     })
     .catch(error => console.error('Error:', error));
 }
 
-function processConversations(conversations) {
-    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
-    if (!currentUserWhatsapp) return; // Não processa se não houver número
-
+function processConversations(conversations, currentUserWhatsapp) {
     let newOrderAdded = false;
-    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
     const processedOrders = JSON.parse(localStorage.getItem('processedOrders') || '{}');
 
     conversations.forEach(conversation => {
@@ -835,12 +824,9 @@ function processConversations(conversations) {
                 if (message.role === 'user') {
                     const orderDetails = extractOrderFromMessage(message.content);
                     if (orderDetails && orderDetails.whatsapp === currentUserWhatsapp) {
-                        if (!processedOrders[currentUserWhatsapp]) {
-                            processedOrders[currentUserWhatsapp] = {};
-                        }
-                        if (!processedOrders[currentUserWhatsapp][orderDetails.id] && orderDetails.timestamp > fiveMinutesAgo) {
+                        if (!processedOrders[orderDetails.id]) {
                             addOrderToCart(orderDetails);
-                            processedOrders[currentUserWhatsapp][orderDetails.id] = orderDetails.timestamp;
+                            processedOrders[orderDetails.id] = true;
                             newOrderAdded = true;
                         }
                     }
@@ -933,7 +919,7 @@ window.saveWhatsapp = function() {
         localStorage.setItem('processedOrders', JSON.stringify({})); // Reseta os pedidos processados
         document.getElementById('whatsappModal').style.display = 'none';
         
-        // Inicia a verificação imediatamente após salvar o número
+        // Inicia a verificação uma única vez após salvar o número
         fetchChatbotConversations();
     } else {
         alert("Por favor, insira um número de WhatsApp válido.");
