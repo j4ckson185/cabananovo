@@ -785,99 +785,98 @@ function validateAccompaniments(product) {
                 // Novas variáveis e funções para integração com Chatbase
             let processedOrders = JSON.parse(localStorage.getItem('processedOrders')) || {};
 
-            function fetchChatbotConversations() {
-                const apiKey = '6564b636-1a71-4a0f-9863-7c87e586384a';
-                const chatbotId = 'PpgNSIgeYN1FCucFGP4w3';
-                
-                const endDate = new Date().toISOString().split('T')[0];
-                const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-                
-                const url = `https://www.chatbase.co/api/v1/get-conversations?chatbotId=${chatbotId}&startDate=${startDate}&endDate=${endDate}&page=1&size=20`;
+ function fetchChatbotConversations() {
+    const apiKey = '6564b636-1a71-4a0f-9863-7c87e586384a';
+    const chatbotId = 'PpgNSIgeYN1FCucFGP4w3';
+    
+    const endDate = new Date().toISOString().split('T')[0];
+    const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
+    const url = `https://www.chatbase.co/api/v1/get-conversations?chatbotId=${chatbotId}&startDate=${startDate}&endDate=${endDate}&page=1&size=20`;
 
-                fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${apiKey}`,
-                        'accept': 'application/json'
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Dados completos da API:', JSON.stringify(data, null, 2));
-                    if (data && Array.isArray(data)) {
-                        processConversations(data);
-                    } else {
-                        console.error('Dados inválidos recebidos da API:', JSON.stringify(data, null, 2));
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-            }
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'accept': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Dados completos da API:', JSON.stringify(data, null, 2));
+        if (data && data.data && Array.isArray(data.data)) {
+            processConversations(data.data);
+        } else {
+            console.error('Dados inválidos recebidos da API:', JSON.stringify(data, null, 2));
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
 
-            function processConversations(conversations) {
-                conversations.forEach(conversation => {
-                    if (conversation.messages && Array.isArray(conversation.messages)) {
-                        conversation.messages.forEach(message => {
-                            if (message.role === 'user') {
-                                const orderDetails = extractOrderFromMessage(message.content);
-                                if (orderDetails) {
-                                    const orderId = `${orderDetails.whatsapp}-${orderDetails.item}-${Date.now()}`;
-                                    if (!processedOrders[orderId]) {
-                                        addOrderToCart(orderDetails);
-                                        processedOrders[orderId] = true;
-                                        localStorage.setItem('processedOrders', JSON.stringify(processedOrders));
-                                    }
-                                }
-                            }
-                        });
+function processConversations(conversations) {
+    conversations.forEach(conversation => {
+        if (conversation.messages && Array.isArray(conversation.messages)) {
+            conversation.messages.forEach(message => {
+                if (message.role === 'user') {
+                    const orderDetails = extractOrderFromMessage(message.content);
+                    if (orderDetails) {
+                        const orderId = `${orderDetails.whatsapp}-${orderDetails.item}-${Date.now()}`;
+                        if (!processedOrders[orderId]) {
+                            addOrderToCart(orderDetails);
+                            processedOrders[orderId] = true;
+                            localStorage.setItem('processedOrders', JSON.stringify(processedOrders));
+                        }
                     }
-                });
-            }
-
-            function extractOrderFromMessage(message) {
-                console.log('Extraindo pedido da mensagem:', message);
-                const orderRegex = /NOVO PEDIDO\s+(.*?)\s+Total:\s*R\$(\d+,\d+)\s+Whatsapp:\s*(\d+)/i;
-                const match = message.match(orderRegex);
-                
-                if (match) {
-                    const [, itemAndSize, price, whatsapp] = match;
-                    const [item, size] = itemAndSize.split(/\s+(?=\d+ML)/);
-                    const accompaniments = itemAndSize.split(/\d+ML\s+/)[1]?.split(',').map(a => a.trim()) || [];
-
-                    const orderDetails = {
-                        item: item.trim(),
-                        size: size,
-                        accompaniments: accompaniments,
-                        price: parseFloat(price.replace(',', '.')),
-                        whatsapp: whatsapp
-                    };
-                    console.log('Detalhes do pedido extraídos:', orderDetails);
-                    return orderDetails;
                 }
-                return null;
-            }
+            });
+        }
+    });
+}
+function extractOrderFromMessage(message) {
+    console.log('Extraindo pedido da mensagem:', message);
+    const orderRegex = /NOVO PEDIDO\s+(.*?)\s+Total:\s*R\$(\d+,\d+)\s+Whatsapp:\s*(\d+)/i;
+    const match = message.match(orderRegex);
+    
+    if (match) {
+        const [, itemAndSize, price, whatsapp] = match;
+        const [item, size] = itemAndSize.split(/\s+(?=\d+ML)/);
+        const accompaniments = itemAndSize.split(/\d+ML\s+/)[1]?.split(',').map(a => a.trim()) || [];
 
-            function addOrderToCart(orderDetails) {
-                console.log('Adicionando pedido ao carrinho para o número:', orderDetails.whatsapp);
-                const cartItem = {
-                    id: Date.now(),
-                    name: `${orderDetails.item} ${orderDetails.size}`,
-                    accompaniments: orderDetails.accompaniments,
-                    price: orderDetails.price,
-                    whatsapp: orderDetails.whatsapp
-                };
+        const orderDetails = {
+            item: item.trim(),
+            size: size,
+            accompaniments: accompaniments,
+            price: parseFloat(price.replace(',', '.')),
+            whatsapp: whatsapp
+        };
+        console.log('Detalhes do pedido extraídos:', orderDetails);
+        return orderDetails;
+    }
+    return null;
+}
 
-                let userCart = JSON.parse(localStorage.getItem(`cart_${orderDetails.whatsapp}`)) || [];
-                userCart.push(cartItem);
-                localStorage.setItem(`cart_${orderDetails.whatsapp}`, JSON.stringify(userCart));
+function addOrderToCart(orderDetails) {
+    console.log('Adicionando pedido ao carrinho para o número:', orderDetails.whatsapp);
+    const cartItem = {
+        id: Date.now(),
+        name: `${orderDetails.item} ${orderDetails.size}`,
+        accompaniments: orderDetails.accompaniments,
+        price: orderDetails.price,
+        whatsapp: orderDetails.whatsapp
+    };
 
-                console.log(`Pedido adicionado ao carrinho do usuário ${orderDetails.whatsapp}`);
-                alert(`Novo pedido adicionado ao carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
-            }
+    let userCart = JSON.parse(localStorage.getItem(`cart_${orderDetails.whatsapp}`)) || [];
+    userCart.push(cartItem);
+    localStorage.setItem(`cart_${orderDetails.whatsapp}`, JSON.stringify(userCart));
+
+    console.log(`Pedido adicionado ao carrinho do usuário ${orderDetails.whatsapp}`);
+    alert(`Novo pedido adicionado ao carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
+}
 
             // Função para solicitar o número de WhatsApp
             function requestWhatsapp() {
