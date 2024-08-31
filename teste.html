@@ -1578,45 +1578,45 @@
 function fetchChatbotConversations() {
     const apiKey = '6564b636-1a71-4a0f-9863-7c87e586384a';
     const chatbotId = 'PpgNSIgeYN1FCucFGP4w3';
-    const url = `https://www.chatbase.co/api/v1/get-conversations?chatbotId=${chatbotId}&filteredSources=API,Chatbase site,Instagram,Messenger,Slack,Unspecified,WhatsApp,Widget or Iframe`;
+    
+    // Obter a data atual e a data de 30 dias atrás
+    const endDate = new Date().toISOString().split('T')[0];
+    const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
+    const url = `https://www.chatbase.co/api/v1/get-conversations?chatbotId=${chatbotId}&startDate=${startDate}&endDate=${endDate}&page=1&size=20`;
 
     fetch(url, {
         method: 'GET',
         headers: {
             'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json'
+            'accept': 'application/json'
         }
     })
     .then(response => {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.text(); // Primeiro, obtenha o texto bruto da resposta
-    })
-    .then(text => {
-        console.log('Resposta bruta:', text); // Log da resposta bruta
-        try {
-            return JSON.parse(text); // Tente analisar como JSON
-        } catch (e) {
-            console.error('Falha ao analisar JSON:', e);
-            throw new Error('A resposta não é um JSON válido');
-        }
+        return response.json();
     })
     .then(data => {
-        console.log('Dados analisados:', data); // Log dos dados analisados
-        processConversations(data.conversations);
+        console.log('Dados completos da API:', data);
+        if (data && data.conversations) {
+            processConversations(data.conversations);
+        } else {
+            console.error('Dados inválidos recebidos da API:', data);
+        }
     })
     .catch(error => console.error('Error:', error));
 }
 
-function processConversations(data) {
-    console.log('Processando dados:', data);
-    if (!data || !Array.isArray(data)) {
-        console.error('Dados inválidos recebidos da API');
+function processConversations(conversations) {
+    console.log('Processando conversas:', conversations);
+    if (!Array.isArray(conversations)) {
+        console.error('Dados de conversas inválidos');
         return;
     }
 
-    data.forEach(conversation => {
+    conversations.forEach(conversation => {
         if (conversation.messages && Array.isArray(conversation.messages)) {
             const lastMessage = conversation.messages[conversation.messages.length - 1];
             if (lastMessage && lastMessage.role === 'human') {
