@@ -443,6 +443,7 @@
             <button class="btn" onclick="openMyOrders()">Meus Pedidos</button>
             <button class="btn" onclick="openLoyaltyProgram()">Programa Fidelidade</button>
             <button class="btn" onclick="openComboBuilder()">Montar Combo</button>
+            <button class="btn" onclick="openCart()">Meu Carrinho</button>
         </div>
         <div class="categories" id="categories"></div>
         <div class="product-grid" id="productGrid"></div>
@@ -788,13 +789,13 @@ let processedOrders = JSON.parse(localStorage.getItem('processedOrders')) || {};
 
 function fetchChatbotConversations() {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
-    if (!currentUserWhatsapp) return; // Não busca se não houver número
+    if (!currentUserWhatsapp) return;
 
     const apiKey = '6564b636-1a71-4a0f-9863-7c87e586384a';
     const chatbotId = 'PpgNSIgeYN1FCucFGP4w3';
     
-    const endDate = new Date().toISOString();
-    const startDate = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // 5 minutos atrás
+    const endDate = new Date().toISOString().split('T')[0];
+    const startDate = new Date(Date.now() - 5 * 60 * 1000).toISOString().split('T')[0];
     
     const url = `https://www.chatbase.co/api/v1/get-conversations?chatbotId=${chatbotId}&startDate=${startDate}&endDate=${endDate}&page=1&size=20`;
     
@@ -815,7 +816,6 @@ function fetchChatbotConversations() {
 }
 
 function processConversations(conversations, currentUserWhatsapp) {
-    let newOrderAdded = false;
     const processedOrders = JSON.parse(localStorage.getItem('processedOrders') || '{}');
 
     conversations.forEach(conversation => {
@@ -827,7 +827,6 @@ function processConversations(conversations, currentUserWhatsapp) {
                         if (!processedOrders[orderDetails.id]) {
                             addOrderToCart(orderDetails);
                             processedOrders[orderDetails.id] = true;
-                            newOrderAdded = true;
                         }
                     }
                 }
@@ -836,9 +835,6 @@ function processConversations(conversations, currentUserWhatsapp) {
     });
     
     localStorage.setItem('processedOrders', JSON.stringify(processedOrders));
-    if (newOrderAdded) {
-        alert(`Novo pedido adicionado ao carrinho para o WhatsApp: ${currentUserWhatsapp}`);
-    }
 }
         
 // Função para verificar se o pedido é novo ou se o horário é diferente
