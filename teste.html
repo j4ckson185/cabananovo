@@ -1631,7 +1631,8 @@ function processConversations(conversations) {
 
 function extractOrderFromMessage(message) {
     console.log('Extraindo pedido da mensagem:', message);
-    const orderRegex = /NOVO PEDIDO:([\s\S]*?)FIM DO PEDIDO/;
+    // Ajuste esta expressão regular para corresponder ao formato exato dos pedidos do seu chatbot
+    const orderRegex = /NOVO PEDIDO:([\s\S]*?)FIM DO PEDIDO/i;
     const match = message.match(orderRegex);
     if (match) {
         const orderText = match[1];
@@ -1648,11 +1649,11 @@ function extractOrderFromMessage(message) {
     return null;
 }
 
-            function extractDetail(text, label) {
-                const regex = new RegExp(`- ${label}: (.+)`);
-                const match = text.match(regex);
-                return match ? match[1].trim() : '';
-            }
+function extractDetail(text, label) {
+    const regex = new RegExp(`${label}:\\s*(.+)`, 'i');
+    const match = text.match(regex);
+    return match ? match[1].trim() : '';
+}
 
 function addOrderToCart(orderDetails) {
     console.log('Adicionando pedido ao carrinho:', orderDetails);
