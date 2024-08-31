@@ -896,7 +896,8 @@ function addOrderToCart(orderDetails) {
             }
 
             // Função para salvar o número de WhatsApp
- window.saveWhatsapp = function() {
+// Função para salvar o número de WhatsApp
+window.saveWhatsapp = function() {
     const whatsapp = document.getElementById('whatsappInput').value;
     if (whatsapp) {
         localStorage.setItem('currentUserWhatsapp', whatsapp);
@@ -906,14 +907,6 @@ function addOrderToCart(orderDetails) {
         alert("Por favor, insira um número de WhatsApp válido.");
     }
 };
-ntById('whatsappInput').value;
-                if (whatsapp) {
-                    localStorage.setItem('currentUserWhatsapp', whatsapp);
-                    document.getElementById('whatsappModal').style.display = 'none';
-                } else {
-                    alert("Por favor, insira um número de WhatsApp válido.");
-                }
-            };
         
 window.openCart = function() {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
