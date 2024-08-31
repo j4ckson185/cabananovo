@@ -787,6 +787,9 @@ function validateAccompaniments(product) {
 let processedOrders = JSON.parse(localStorage.getItem('processedOrders')) || {};
 
 function fetchChatbotConversations() {
+    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+    if (!currentUserWhatsapp) return; // Não busca se não houver número
+
     const apiKey = '6564b636-1a71-4a0f-9863-7c87e586384a';
     const chatbotId = 'PpgNSIgeYN1FCucFGP4w3';
     
@@ -820,8 +823,11 @@ function fetchChatbotConversations() {
 
 function processConversations(conversations) {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+    if (!currentUserWhatsapp) return; // Não processa se não houver número
+
     let newOrderAdded = false;
-    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000; // 5 minutos atrás
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+    const processedOrders = JSON.parse(localStorage.getItem('processedOrders') || '{}');
 
     conversations.forEach(conversation => {
         if (conversation.messages && Array.isArray(conversation.messages)) {
@@ -842,6 +848,12 @@ function processConversations(conversations) {
             });
         }
     });
+    
+    localStorage.setItem('processedOrders', JSON.stringify(processedOrders));
+    if (newOrderAdded) {
+        alert(`Novo pedido adicionado ao carrinho para o WhatsApp: ${currentUserWhatsapp}`);
+    }
+}
     
     localStorage.setItem('processedOrders', JSON.stringify(processedOrders));
     if (newOrderAdded) {
@@ -892,18 +904,25 @@ function extractDetail(text, label) {
 function addOrderToCart(orderDetails) {
     const cart = JSON.parse(localStorage.getItem(`cart_${orderDetails.whatsapp}`)) || [];
     const title = `${orderDetails.sabores} ${orderDetails.tamanho}`;
-    const newItem = {
-        id: orderDetails.id,
-        title: title,
-        acompanhamentos: orderDetails.acompanhamentos,
-        extras: orderDetails.extras,
-        total: orderDetails.total,
-        whatsapp: orderDetails.whatsapp,
-        timestamp: orderDetails.timestamp
-    };
-    cart.push(newItem);
-    localStorage.setItem(`cart_${orderDetails.whatsapp}`, JSON.stringify(cart));
-    console.log(`Pedido adicionado ao carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
+    
+    // Verifica se o pedido já existe no carrinho
+    const existingOrderIndex = cart.findIndex(item => item.id === orderDetails.id);
+    
+    if (existingOrderIndex === -1) {
+        // Adiciona novo pedido
+        const newItem = {
+            id: orderDetails.id,
+            title: title,
+            acompanhamentos: orderDetails.acompanhamentos,
+            extras: orderDetails.extras,
+            total: orderDetails.total,
+            whatsapp: orderDetails.whatsapp,
+            timestamp: orderDetails.timestamp
+        };
+        cart.push(newItem);
+        localStorage.setItem(`cart_${orderDetails.whatsapp}`, JSON.stringify(cart));
+        console.log(`Pedido adicionado ao carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
+    }
 }
         
             // Função para solicitar o número de WhatsApp
@@ -920,17 +939,8 @@ window.saveWhatsapp = function() {
         localStorage.setItem('processedOrders', JSON.stringify({})); // Reseta os pedidos processados
         document.getElementById('whatsappModal').style.display = 'none';
         
-        // Carrega as informações do cliente, se existirem
-        db.collection('customers').doc(whatsapp).get().then((doc) => {
-            if (doc.exists) {
-                const data = doc.data();
-                localStorage.setItem('customerName', data.name);
-            }
-        }).catch((error) => {
-            console.log("Erro ao carregar dados do cliente:", error);
-        });
-
-        startPeriodicCheck(whatsapp);
+        // Inicia a verificação imediatamente após salvar o número
+        fetchChatbotConversations();
     } else {
         alert("Por favor, insira um número de WhatsApp válido.");
     }
