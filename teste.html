@@ -1431,6 +1431,23 @@ window.finishCombo = function() {
     document.querySelector('#comboModal .btn[onclick="addComboToCart()"]').style.display = 'block';
 }
 
+function updateComboSummary() {
+    const comboSummary = document.getElementById('comboSummary');
+    let total = currentCombo.price + (selectedExtras.length * 1.99);
+    comboSummary.innerHTML = `
+        <h3>Resumo do Combo:</h3>
+        <p><strong>Combo:</strong> ${currentCombo.name}</p>
+        <p><strong>Açaí 1:</strong></p>
+        <p>Sabores: ${selectedFlavors[0].join(', ')}</p>
+        <p>Acompanhamentos: ${selectedAccompaniments[0].join(', ')}</p>
+        <p><strong>Açaí 2:</strong></p>
+        <p>Sabores: ${selectedFlavors[1].join(', ')}</p>
+        <p>Acompanhamentos: ${selectedAccompaniments[1].join(', ')}</p>
+        <p><strong>Extras:</strong> ${selectedExtras.length > 0 ? selectedExtras.join(', ') : 'Nenhum'}</p>
+        <p><strong>Total:</strong> R$ ${total.toFixed(2)}</p>
+    `;
+}
+        
 function updateOrderSummary() {
     const orderSummary = document.getElementById('orderSummary');
     let summaryHTML = '<h3>Resumo do Pedido:</h3>';
