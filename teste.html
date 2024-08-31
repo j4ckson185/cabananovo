@@ -854,12 +854,6 @@ function processConversations(conversations) {
         alert(`Novo pedido adicionado ao carrinho para o WhatsApp: ${currentUserWhatsapp}`);
     }
 }
-    
-    localStorage.setItem('processedOrders', JSON.stringify(processedOrders));
-    if (newOrderAdded) {
-        alert(`Novo pedido adicionado ao carrinho para o WhatsApp: ${currentUserWhatsapp}`);
-    }
-};
         
 // Função para verificar se o pedido é novo ou se o horário é diferente
 function isOrderNew(orderId, whatsappNumber) {
