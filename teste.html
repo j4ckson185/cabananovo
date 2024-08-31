@@ -1599,8 +1599,8 @@ function fetchChatbotConversations() {
     })
     .then(data => {
         console.log('Dados completos da API:', JSON.stringify(data, null, 2));
-        if (data && Array.isArray(data)) {
-            processConversations(data);
+        if (data && data.data && Array.isArray(data.data)) {
+            processConversations(data.data);
         } else {
             console.error('Dados inválidos recebidos da API:', JSON.stringify(data, null, 2));
         }
@@ -1618,7 +1618,7 @@ function processConversations(conversations) {
     conversations.forEach(conversation => {
         if (conversation.messages && Array.isArray(conversation.messages)) {
             conversation.messages.forEach(message => {
-                if (message.role === 'human') {
+                if (message.role === 'user') {
                     const possibleOrder = extractOrderFromMessage(message.content);
                     if (possibleOrder) {
                         addOrderToCart(possibleOrder);
@@ -1631,9 +1631,9 @@ function processConversations(conversations) {
             
 function extractOrderFromMessage(message) {
     console.log('Extraindo pedido da mensagem:', message);
-    // Ajuste esta expressão regular para corresponder ao formato exato dos pedidos do seu chatbot
     const orderRegex = /NOVO PEDIDO:([\s\S]*?)FIM DO PEDIDO/i;
     const match = message.match(orderRegex);
+    
     if (match) {
         const orderText = match[1];
         const orderDetails = {
@@ -1676,7 +1676,8 @@ function addOrderToCart(orderDetails) {
 function calculatePrice(orderDetails) {
     // Implemente a lógica de cálculo de preço real aqui
     console.log('Calculando preço para:', orderDetails);
-    return 20.00; // Preço fixo temporário
+    // Por enquanto, vamos retornar um preço fixo
+    return 20.00;
 }
 
             // Inicie a verificação periódica das conversações do chatbot
