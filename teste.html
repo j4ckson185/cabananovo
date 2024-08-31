@@ -827,16 +827,17 @@ function processConversations(conversations) {
                     const orderDetails = extractOrderFromMessage(message.content);
                     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
 
+                    // Verifica se o número atual de WhatsApp é o mesmo do pedido
                     if (orderDetails && orderDetails.whatsapp === currentUserWhatsapp) {
-                        // Inicializa o array de pedidos para o número atual se não existir
+                        // Se o número de WhatsApp atual não tem um histórico de pedidos processados, inicializa-o
                         if (!processedOrders[currentUserWhatsapp]) {
                             processedOrders[currentUserWhatsapp] = {};
                         }
 
-                        // Verifica se o pedido é novo ou se o horário é diferente do último registro
-                        if (!processedOrders[currentUserWhatsapp][orderDetails.id] || isOrderNew(orderDetails.id, currentUserWhatsapp)) {
+                        // Verifica se o pedido é novo
+                        if (!processedOrders[currentUserWhatsapp][orderDetails.id]) {
                             addOrderToCart(orderDetails);
-                            processedOrders[currentUserWhatsapp][orderDetails.id] = new Date().getTime(); // Armazena o horário do processamento
+                            processedOrders[currentUserWhatsapp][orderDetails.id] = new Date().getTime(); // Marca o pedido como processado
                             localStorage.setItem('processedOrders', JSON.stringify(processedOrders));
                             alert(`Novo pedido adicionado ao carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
                         }
@@ -890,8 +891,8 @@ function extractDetail(text, label) {
 }
 
 function addOrderToCart(orderDetails) {
-    console.log('Adicionando pedido ao carrinho para o número:', orderDetails.whatsapp);
-    const cartItem = {
+    const cart = JSON.parse(localStorage.getItem(`cart_${orderDetails.whatsapp}`)) || [];
+    cart.push({
         id: orderDetails.id,
         name: `${orderDetails.item} ${orderDetails.size}`,
         sabores: orderDetails.sabores,
@@ -899,13 +900,9 @@ function addOrderToCart(orderDetails) {
         extras: orderDetails.extras,
         total: orderDetails.total,
         whatsapp: orderDetails.whatsapp
-    };
-
-    let userCart = JSON.parse(localStorage.getItem(`cart_${orderDetails.whatsapp}`)) || [];
-    userCart.push(cartItem);
-    localStorage.setItem(`cart_${orderDetails.whatsapp}`, JSON.stringify(userCart));
-
-    console.log(`Pedido adicionado ao carrinho do usuário ${orderDetails.whatsapp}`);
+    });
+    localStorage.setItem(`cart_${orderDetails.whatsapp}`, JSON.stringify(cart));
+    console.log(`Pedido adicionado ao carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
 }
 
             // Função para solicitar o número de WhatsApp
