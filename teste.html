@@ -1036,6 +1036,9 @@ window.openCart = function() {
                 updateOrderSummary();
             }
 
+            // Chame esta função quando o usuário acessar o cardápio digital
+               identifyUser();
+
             function updateOrderSummary() {
                 const orderSummary = document.getElementById('orderSummary');
                 let summaryHTML = '<h3>Resumo do Pedido:</h3>';
