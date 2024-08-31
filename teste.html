@@ -821,6 +821,7 @@ const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().
 
 function processConversations(conversations) {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+    let newOrderAdded = false;
     conversations.forEach(conversation => {
         if (conversation.messages && Array.isArray(conversation.messages)) {
             conversation.messages.forEach(message => {
@@ -833,14 +834,17 @@ function processConversations(conversations) {
                         if (!processedOrders[currentUserWhatsapp][orderDetails.id]) {
                             addOrderToCart(orderDetails);
                             processedOrders[currentUserWhatsapp][orderDetails.id] = new Date().getTime();
-                            localStorage.setItem('processedOrders', JSON.stringify(processedOrders));
-                            alert(`Novo pedido adicionado ao carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
+                            newOrderAdded = true;
                         }
                     }
                 }
             });
         }
     });
+    localStorage.setItem('processedOrders', JSON.stringify(processedOrders));
+    if (newOrderAdded) {
+        alert(`Novo pedido adicionado ao carrinho para o WhatsApp: ${currentUserWhatsapp}`);
+    }
 }
         
 // Função para verificar se o pedido é novo ou se o horário é diferente
