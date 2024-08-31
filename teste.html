@@ -783,7 +783,8 @@ function validateAccompaniments(product) {
     }
 
                 // Novas variáveis e funções para integração com Chatbase
-          let processedOrders = new Set();
+          // Mantenha um controle dos pedidos processados
+let processedOrders = JSON.parse(localStorage.getItem('processedOrders')) || {};
 
 function fetchChatbotConversations() {
     const apiKey = '6564b636-1a71-4a0f-9863-7c87e586384a';
@@ -824,9 +825,16 @@ function processConversations(conversations) {
             conversation.messages.forEach(message => {
                 if (message.role === 'user') {
                     const orderDetails = extractOrderFromMessage(message.content);
-                    if (orderDetails && !processedOrders.has(orderDetails.id)) {
+                    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+                    if (
+                        orderDetails &&
+                        !processedOrders[orderDetails.id] &&
+                        orderDetails.whatsapp === currentUserWhatsapp
+                    ) {
                         addOrderToCart(orderDetails);
-                        processedOrders.add(orderDetails.id);
+                        processedOrders[orderDetails.id] = true; // Marca o pedido como processado
+                        localStorage.setItem('processedOrders', JSON.stringify(processedOrders));
+                        alert(`Novo pedido adicionado ao carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
                     }
                 }
             });
@@ -888,8 +896,17 @@ function addOrderToCart(orderDetails) {
             }
 
             // Função para salvar o número de WhatsApp
-            window.saveWhatsapp = function() {
-                const whatsapp = document.getElementById('whatsappInput').value;
+ window.saveWhatsapp = function() {
+    const whatsapp = document.getElementById('whatsappInput').value;
+    if (whatsapp) {
+        localStorage.setItem('currentUserWhatsapp', whatsapp);
+        localStorage.setItem('processedOrders', JSON.stringify({})); // Reseta os pedidos processados
+        document.getElementById('whatsappModal').style.display = 'none';
+    } else {
+        alert("Por favor, insira um número de WhatsApp válido.");
+    }
+};
+ntById('whatsappInput').value;
                 if (whatsapp) {
                     localStorage.setItem('currentUserWhatsapp', whatsapp);
                     document.getElementById('whatsappModal').style.display = 'none';
@@ -941,10 +958,11 @@ window.openCart = function() {
 window.removeFromCart = function(itemId) {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     let userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
-    userCart = userCart.filter(item => item.id !== itemId);
+    // Filtra o item para remover
+    userCart = userCart.filter(item => item.id !== parseInt(itemId, 10));
     localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(userCart));
     openCart(); // Atualiza a exibição do carrinho
-}
+};
 
     window.openCustomerIdentification = function() {
         document.getElementById('cartModal').style.display = "none";
