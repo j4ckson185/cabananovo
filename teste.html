@@ -817,10 +817,16 @@
                 return total;
             }
 
-            window.openCart = function () {
-                const modal = document.getElementById('cartModal');
-                const cartContent = document.getElementById('cartContent');
-                const cartTotal = document.getElementById('cartTotal');
+window.openCart = function() {
+    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+    if (!currentUserWhatsapp) {
+        alert("Por favor, identifique-se primeiro com seu número de WhatsApp.");
+        return;
+    }
+    const userCart = loadUserCart(currentUserWhatsapp);
+    const modal = document.getElementById('cartModal');
+    const cartContent = document.getElementById('cartContent');
+    const cartTotal = document.getElementById('cartTotal');
                 cartContent.innerHTML = cart.map(item => {
                     if (item.acai1) {  // Se for um combo
                         return `
@@ -853,6 +859,14 @@
                 cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
                 modal.style.display = "block";
             }
+
+      window.identifyUser = function() {
+        const whatsappNumber = prompt("Por favor, insira seu número de WhatsApp:");
+        if (whatsappNumber) {
+        localStorage.setItem('currentUserWhatsapp', whatsappNumber);
+        alert(`Identificado como ${whatsappNumber}`);
+    }
+}
 
             window.continueShopping = function () {
                 document.getElementById('cartModal').style.display = "none";
@@ -1616,12 +1630,22 @@ function processConversations(conversations) {
     }
 
     conversations.forEach(conversation => {
+        let whatsappNumber = null;
         if (conversation.messages && Array.isArray(conversation.messages)) {
             conversation.messages.forEach(message => {
                 if (message.role === 'user') {
+                    const phoneMatch = message.content.match(/WhatsApp:\s*(\+?\d+)/);
+                    if (phoneMatch) {
+                        whatsappNumber = phoneMatch[1];
+                    }
                     const possibleOrder = extractOrderFromMessage(message.content);
-                    if (possibleOrder) {
-                        addOrderToCart(possibleOrder);
+                    if (possibleOrder && whatsappNumber) {
+                        const orderId = `${whatsappNumber}-${possibleOrder.item}-${Date.now()}`;
+                        if (!processedOrders[orderId]) {
+                            addOrderToCart(possibleOrder, whatsappNumber);
+                            processedOrders[orderId] = true;
+                            localStorage.setItem('processedOrders', JSON.stringify(processedOrders));
+                        }
                     }
                 }
             });
@@ -1655,29 +1679,40 @@ function extractDetail(text, label) {
     return match ? match[1].trim() : '';
 }
 
-function addOrderToCart(orderDetails) {
-    console.log('Adicionando pedido ao carrinho:', orderDetails);
+function addOrderToCart(orderDetails, whatsappNumber) {
+    console.log('Adicionando pedido ao carrinho para o número:', whatsappNumber);
     const cartItem = {
         id: Date.now(),
-        name: `${orderDetails.item} ${orderDetails.size}`,
+        name: `${orderDetails.item}`,
+        size: orderDetails.size,
         flavors: orderDetails.flavors,
         accompaniments: orderDetails.accompaniments,
         extras: orderDetails.extras,
-        totalPrice: calculatePrice(orderDetails)
+        totalPrice: calculatePrice(orderDetails),
+        whatsappNumber: whatsappNumber
     };
-    cart.push(cartItem);
-    localStorage.setItem('cart', JSON.stringify(cart));
-    alert('Novo pedido adicionado ao carrinho!');
-    if (typeof openCart === 'function') {
-        openCart();
-    }
+
+    let userCart = JSON.parse(localStorage.getItem(`cart_${whatsappNumber}`)) || [];
+    userCart.push(cartItem);
+    localStorage.setItem(`cart_${whatsappNumber}`, JSON.stringify(userCart));
+
+    console.log(`Pedido adicionado ao carrinho do usuário ${whatsappNumber}`);
 }
+   
+   // Adicionando um objeto para rastrear pedidos processados
+let processedOrders = JSON.parse(localStorage.getItem('processedOrders')) || {};
+
 
 function calculatePrice(orderDetails) {
     // Implemente a lógica de cálculo de preço real aqui
     console.log('Calculando preço para:', orderDetails);
     // Por enquanto, vamos retornar um preço fixo
     return 20.00;
+}
+
+            // Função para carregar o carrinho do usuário atual
+function loadUserCart(whatsappNumber) {
+    return JSON.parse(localStorage.getItem(`cart_${whatsappNumber}`)) || [];
 }
 
             // Inicie a verificação periódica das conversações do chatbot
