@@ -792,12 +792,12 @@ function fetchChatbotConversations() {
     const endDate = new Date().toISOString();
     const startDate = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // 5 minutos atrás
     
-    const url = `https://www.chatbase.co/api/v1/conversations?chatbotId=${chatbotId}&filteredSources=API,Chatbase site,Instagram,Messenger,Slack,Unspecified,WhatsApp,Widget or Iframe;
+  const url = `https://www.chatbase.co/api/v1/get-conversations?chatbotId=${chatbotId}&startDate=${startDate}&endDate=${endDate}&page=1&size=20`;
 
     fetch(url, {
         method: 'GET',
         headers: {
-            'Authorization': `apiKey`,
+            'Authorization': `Bearer ${apiKey}`,
             'accept': 'application/json'
         }
     })
