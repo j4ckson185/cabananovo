@@ -1146,18 +1146,16 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
     });
 });
 
-    function openCheckout() {
-        const checkoutModal = document.getElementById('checkoutModal');
-        const orderSummary = document.getElementById('orderSummary');
-        loadSavedAddresses();
-        updateOrderSummary();
-        updateOrderSummaryWithExtras();
-
-        document.getElementById('paymentSection').style.display = 'none';
-        document.getElementById('submitOrderBtn').style.display = 'none';
-        checkoutModal.style.display = "block";
-        displayExtraItems();
-    }
+function openCheckout() {
+    const checkoutModal = document.getElementById('checkoutModal');
+    const orderSummary = document.getElementById('orderSummary');
+    loadSavedAddresses();
+    document.getElementById('paymentSection').style.display = 'none';
+    document.getElementById('submitOrderBtn').style.display = 'none';
+    checkoutModal.style.display = "block";
+    displayExtraItems();
+    updateOrderSummaryWithExtras(); // Adicione esta linha
+}
 
     function loadSavedAddresses() {
         const select = document.getElementById('savedAddresses');
@@ -1245,11 +1243,11 @@ function displayExtraItems() {
         <div class="extra-item" onclick="toggleExtraItem(this, '${item.name}')">
             <img src="${item.image}" alt="${item.name}">
             <p>${item.name}</p>
-            <p>R$ 1,99</p>
+            <p>R$ ${item.price.toFixed(2)}</p>
         </div>
     `).join('');
 }
-
+        
 window.toggleExtraItem = function(element, itemName) {
     element.classList.toggle('selected');
     updateOrderSummaryWithExtras();
@@ -1281,9 +1279,6 @@ function updateOrderSummaryWithExtras() {
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
     let extrasTotal = selectedExtras.length * 1.99;
     
-    summaryHTML += `<h4>Subtotal dos itens: R$ ${subtotal.toFixed(2)}</h4>`;
-    summaryHTML += `<h4>Total dos extras: R$ ${extrasTotal.toFixed(2)}</h4>`;
-    
     selectedExtras.forEach(item => {
         const itemName = item.querySelector('p').textContent;
         summaryHTML += `<p>Extra: ${itemName} - R$ 1,99</p>`;
@@ -1291,9 +1286,12 @@ function updateOrderSummaryWithExtras() {
 
     const total = subtotal + extrasTotal + deliveryFee;
 
+    summaryHTML += `<h4>Subtotal: R$ ${subtotal.toFixed(2)}</h4>`;
+    summaryHTML += `<h4>Total dos extras: R$ ${extrasTotal.toFixed(2)}</h4>`;
     summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
     summaryHTML += `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
     orderSummary.innerHTML = summaryHTML;
+}
 
     // Atualiza o carrinho com os novos extras
     updateCartWithExtras(selectedExtras);
@@ -1360,9 +1358,9 @@ function updateOrderSummary() {
 }
 
 // Função para lidar com a seleção de itens extras
-window.toggleExtraItem = function(element) {
+window.toggleExtraItem = function(element, itemName) {
     element.classList.toggle('selected');
-    updateOrderSummary();
+    updateOrderSummaryWithExtras();
 }
 
 document.getElementById('checkoutForm').addEventListener('submit', function(e) {
