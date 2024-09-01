@@ -1206,7 +1206,7 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
 
 function openCheckout() {
     console.log('Iniciando openCheckout');
-    cleanupCart(); // Adicione esta linha
+    resetCart(); // Use esta função em vez de cleanupCart
     const checkoutModal = document.getElementById('checkoutModal');
     loadSavedAddresses();
     updateOrderSummaryWithExtras();
@@ -1215,6 +1215,12 @@ function openCheckout() {
     checkoutModal.style.display = "block";
     displayExtraItems();
     console.log('Checkout aberto com sucesso');
+}
+
+        function resetCart() {
+    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+    localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify([]));
+    console.log('Carrinho resetado');
 }
 
     function loadSavedAddresses() {
@@ -1311,58 +1317,34 @@ function displayExtraItems() {
 window.toggleExtraItem = function(element, itemName) {
     element.classList.toggle('selected');
     updateOrderSummaryWithExtras();
-    console.log('Item extra toggleado:', itemName); // Para debugar
+    console.log('Item extra toggleado:', itemName);
 }
 
 function updateOrderSummaryWithExtras() {
+    console.log('Iniciando updateOrderSummaryWithExtras');
     const orderSummary = document.getElementById('orderSummary');
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     const userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
     
-    console.log('Carrinho atual:', userCart); // Para debugar
-    
+    console.log('Carrinho atual:', userCart);
+
     let summaryHTML = '<h3>Resumo do Pedido:</h3>';
     let subtotal = 0;
     
     userCart.forEach(item => {
-        let itemTotal = 0;
-        if (typeof item.total === 'number') {
-            itemTotal = item.total;
-        } else if (typeof item.total === 'string') {
-            itemTotal = parseFloat(item.total.replace(/[^\d.-]/g, '')) || 0;
-        } else {
-            console.warn('Tipo de total não reconhecido:', typeof item.total, item.total);
-            itemTotal = 0;
-        }
+        let itemTotal = parseFloat(item.total) || 0;
 
-        if (item.isCombo) {
-            summaryHTML += `
-                <div>
-                    <p><strong>${item.title}</strong></p>
-                    <p>Açaí 1:</p>
-                    <p>Sabores: ${item.acai1.flavors.join(', ')}</p>
-                    <p>Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                    <p>Açaí 2:</p>
-                    <p>Sabores: ${item.acai2.flavors.join(', ')}</p>
-                    <p>Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                    ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
-                    <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
-                </div>
-                <hr>
-            `;
-        } else {
-            summaryHTML += `
-                <div>
-                    <p><strong>${item.title}</strong></p>
-                    <p>Sabores: ${item.sabores}</p>
-                    <p>Tamanho: ${item.tamanho}</p>
-                    <p>Acompanhamentos: ${Array.isArray(item.acompanhamentos) ? item.acompanhamentos.join(', ') : item.acompanhamentos}</p>
-                    ${item.extras && item.extras.length ? `<p>Extras: ${Array.isArray(item.extras) ? item.extras.join(', ') : item.extras}</p>` : ''}
-                    <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
-                </div>
-                <hr>
-            `;
-        }
+        summaryHTML += `
+            <div>
+                <p><strong>${item.title}</strong></p>
+                <p>Sabores: ${item.sabores || 'Não especificado'}</p>
+                <p>Tamanho: ${item.tamanho || 'Não especificado'}</p>
+                <p>Acompanhamentos: ${Array.isArray(item.acompanhamentos) ? item.acompanhamentos.join(', ') : (item.acompanhamentos || 'Nenhum')}</p>
+                ${item.extras && item.extras.length ? `<p>Extras: ${Array.isArray(item.extras) ? item.extras.join(', ') : item.extras}</p>` : ''}
+                <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
+            </div>
+            <hr>
+        `;
         subtotal += itemTotal;
     });
     
@@ -1386,7 +1368,7 @@ function updateOrderSummaryWithExtras() {
     summaryHTML += `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
     orderSummary.innerHTML = summaryHTML;
 
-    console.log('Resumo do pedido atualizado'); // Para debugar
+    console.log('Resumo do pedido atualizado');
 }
 
     function updateCartWithExtras(selectedExtras) {
