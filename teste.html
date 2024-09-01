@@ -1214,15 +1214,22 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
 });
 
 function openCheckout() {
+    console.log('Iniciando openCheckout');
     const checkoutModal = document.getElementById('checkoutModal');
-    const orderSummary = document.getElementById('orderSummary');
     loadSavedAddresses();
-    updateOrderSummary();
+    try {
+        updateOrderSummary();
+    } catch (error) {
+        console.error('Erro ao atualizar o resumo do pedido:', error);
+        alert('Ocorreu um erro ao carregar o resumo do pedido. Por favor, tente novamente.');
+        return;
+    }
     document.getElementById('paymentSection').style.display = 'none';
     document.getElementById('submitOrderBtn').style.display = 'none';
     checkoutModal.style.display = "block";
     displayExtraItems();
-    updateOrderSummaryWithExtras(); // Adicione esta linha
+    updateOrderSummaryWithExtras();
+    console.log('Checkout aberto com sucesso');
 }
 
     function loadSavedAddresses() {
@@ -1376,31 +1383,40 @@ function updateOrderSummaryWithExtras() {
 }
         
 function updateOrderSummary() {
+    console.log('Iniciando updateOrderSummary');
     const orderSummary = document.getElementById('orderSummary');
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     const userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
     
+    console.log('Conteúdo do carrinho:', JSON.stringify(userCart, null, 2));
+
     let summaryHTML = '<h3>Resumo do Pedido:</h3>';
     let subtotal = 0;
     
     userCart.forEach(item => {
+        console.log('Processando item:', item);
         let itemTotal = 0;
         if (typeof item.total === 'number') {
             itemTotal = item.total;
         } else if (typeof item.total === 'string') {
             itemTotal = parseFloat(item.total.replace(/[^\d.-]/g, '')) || 0;
+        } else if (item.total && typeof item.total.toFixed === 'function') {
+            itemTotal = item.total;
+        } else {
+            console.warn('Tipo de total não reconhecido:', typeof item.total, item.total);
+            itemTotal = 0;
         }
 
         if (item.isCombo) {
             summaryHTML += `
                 <div>
-                    <p><strong>${item.title}</strong></p>
+                    <p><strong>${item.title || 'Combo'}</strong></p>
                     <p>Açaí 1:</p>
-                    <p>Sabores: ${item.acai1.flavors.join(', ')}</p>
-                    <p>Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                    <p>Sabores: ${item.acai1?.flavors?.join(', ') || 'Não especificado'}</p>
+                    <p>Acompanhamentos: ${item.acai1?.accompaniments?.join(', ') || 'Nenhum'}</p>
                     <p>Açaí 2:</p>
-                    <p>Sabores: ${item.acai2.flavors.join(', ')}</p>
-                    <p>Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+                    <p>Sabores: ${item.acai2?.flavors?.join(', ') || 'Não especificado'}</p>
+                    <p>Acompanhamentos: ${item.acai2?.accompaniments?.join(', ') || 'Nenhum'}</p>
                     ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
                     <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
                 </div>
