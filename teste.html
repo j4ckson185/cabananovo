@@ -1961,9 +1961,15 @@ function cleanupCart() {
     let cart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
     
     cart = cart.filter(item => {
-        return item && typeof item === 'object' && 
-               (typeof item.total === 'number' || 
-               (typeof item.total === 'string' && !isNaN(parseFloat(item.total))));
+        if (typeof item.total === 'number') {
+            return true;
+        } else if (typeof item.total === 'string') {
+            item.total = parseFloat(item.total.replace(/[^\d.-]/g, '')) || 0;
+            return true;
+        } else {
+            console.warn('Item removido do carrinho devido a total inválido:', item);
+            return false;
+        }
     });
 
     localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(cart));
@@ -1971,31 +1977,77 @@ function cleanupCart() {
 }
         
 function updateOrderSummary() {
+    console.log('Iniciando updateOrderSummary');
     const orderSummary = document.getElementById('orderSummary');
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     const userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
     
+    console.log('Conteúdo do carrinho:', JSON.stringify(userCart, null, 2));
+
     let summaryHTML = '<h3>Resumo do Pedido:</h3>';
-    let total = 0;
+    let subtotal = 0;
     
     userCart.forEach(item => {
-        summaryHTML += `
-            <div>
-                <p><strong>${item.tamanho}</strong></p>
-                <p>Sabores: ${item.sabores}</p>
-                <p>Acompanhamentos: ${item.acompanhamentos}</p>
-                ${item.extras ? `<p>Extras: ${item.extras}</p>` : ''}
-                <p>Subtotal: ${item.total}</p>
-            </div>
-            <hr>
-        `;
-        total += parseFloat(item.total.replace('R$', '').trim() || 0);
+        console.log('Processando item:', item);
+        let itemTotal = 0;
+
+        if (typeof item.total === 'number') {
+            itemTotal = item.total;
+        } else if (typeof item.total === 'string') {
+            itemTotal = parseFloat(item.total.replace(/[^\d.-]/g, '')) || 0;
+        } else {
+            console.warn('Tipo de total não reconhecido:', typeof item.total, item.total);
+            itemTotal = 0;
+        }
+
+        if (item.isCombo) {
+            summaryHTML += `
+                <div>
+                    <p><strong>${item.title || 'Combo'}</strong></p>
+                    <p>Açaí 1:</p>
+                    <p>Sabores: ${item.acai1?.flavors?.join(', ') || 'Não especificado'}</p>
+                    <p>Acompanhamentos: ${item.acai1?.accompaniments?.join(', ') || 'Nenhum'}</p>
+                    <p>Açaí 2:</p>
+                    <p>Sabores: ${item.acai2?.flavors?.join(', ') || 'Não especificado'}</p>
+                    <p>Acompanhamentos: ${item.acai2?.accompaniments?.join(', ') || 'Nenhum'}</p>
+                    ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+                    <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
+                </div>
+                <hr>
+            `;
+        } else {
+            summaryHTML += `
+                <div>
+                    <p><strong>${item.title || 'Item'}</strong></p>
+                    <p>Sabores: ${item.sabores || 'Não especificado'}</p>
+                    <p>Tamanho: ${item.tamanho || 'Não especificado'}</p>
+                    <p>Acompanhamentos: ${Array.isArray(item.acompanhamentos) ? item.acompanhamentos.join(', ') : (item.acompanhamentos || 'Nenhum')}</p>
+                    ${item.extras && item.extras.length ? `<p>Extras: ${Array.isArray(item.extras) ? item.extras.join(', ') : item.extras}</p>` : ''}
+                    <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
+                </div>
+                <hr>
+            `;
+        }
+        subtotal += itemTotal;
+    });
+    
+    const selectedExtras = document.querySelectorAll('.extra-item.selected');
+    let extrasTotal = selectedExtras.length * 1.99;
+    
+    selectedExtras.forEach(item => {
+        const itemName = item.querySelector('p').textContent;
+        summaryHTML += `<p>Extra: ${itemName} - R$ 1,99</p>`;
     });
 
-    summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
+    const total = subtotal + extrasTotal + deliveryFee;
+
+    summaryHTML += `<h4>Subtotal dos itens: R$ ${subtotal.toFixed(2)}</h4>`;
+    summaryHTML += `<h4>Total dos extras: R$ ${extrasTotal.toFixed(2)}</h4>`;
     summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
-    summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
+    summaryHTML += `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
     orderSummary.innerHTML = summaryHTML;
+
+    console.log('Resumo do pedido atualizado');
 }
 
 window.addComboToCart = function() {
