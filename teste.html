@@ -1346,7 +1346,8 @@ function updateOrderSummaryWithExtras() {
         summaryHTML += '<p>Seu carrinho está vazio.</p>';
     } else {
         userCart.forEach(item => {
-            let itemTotal = parseFloat(item.total) || 0;
+            // Alteração aqui para garantir que estamos pegando o valor correto
+            let itemTotal = typeof item.total === 'number' ? item.total : parseFloat(item.total.replace(/[^\d.-]/g, '')) || 0;
 
             summaryHTML += `
                 <div>
