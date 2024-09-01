@@ -1065,43 +1065,19 @@ let removedItems = JSON.parse(localStorage.getItem('removedItems') || '{}');
 
 window.removeFromCart = function(itemId) {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
-    if (!currentUserWhatsapp) {
-        console.error('Número de WhatsApp não encontrado');
-        return;
-    }
-
-    const cartKey = `cart_${currentUserWhatsapp}`;
-    let cart = JSON.parse(localStorage.getItem(cartKey)) || [];
-
-    // Encontra o índice do item no carrinho
-    const itemIndex = cart.findIndex(item => item.id === itemId);
-
-    if (itemIndex > -1) {
-        // Remove o item do array
-        const removedItem = cart.splice(itemIndex, 1)[0];
-
-        // Adiciona o item à lista de itens removidos
-        if (!removedItems[currentUserWhatsapp]) {
-            removedItems[currentUserWhatsapp] = [];
-        }
-        removedItems[currentUserWhatsapp].push(removedItem);
-
-        // Atualiza o carrinho no localStorage
-        localStorage.setItem(cartKey, JSON.stringify(cart));
-        
-        // Atualiza a lista de itens removidos no localStorage
-        localStorage.setItem('removedItems', JSON.stringify(removedItems));
-
-        // Atualiza a exibição do carrinho
-        openCart();
-
-        // Atualiza o ícone do carrinho
-        updateCartIcon();
-
-        console.log(`Item removido do carrinho: ${itemId}`);
-    } else {
-        console.log(`Item não encontrado no carrinho: ${itemId}`);
-    }
+    let userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
+    
+    // Filtra o item para remover
+    userCart = userCart.filter(item => item.id !== itemId);
+    
+    // Atualiza o carrinho no localStorage
+    localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(userCart));
+    
+    // Atualiza a exibição do carrinho
+    openCart();
+    
+    // Atualiza o ícone do carrinho
+    updateCartIcon();
 };
 
 window.openCustomerIdentification = function() {
@@ -1621,6 +1597,7 @@ window.repeatOrder = function(orderId) {
                 alert("Pedido adicionado ao carrinho!");
                 document.getElementById('myOrdersModal').style.display = "none";
                 updateCartIcon(); // Atualiza o ícone do carrinho
+                openCart(); // Abre o carrinho imediatamente
             } else {
                 alert("Pedido não encontrado.");
             }
