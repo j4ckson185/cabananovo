@@ -1927,29 +1927,32 @@ function updateOrderSummary() {
     orderSummary.innerHTML = summaryHTML;
 }
 
-    window.addComboToCart = function() {
-        const comboItem = {
-            id: Date.now(),
-            name: currentCombo.name,
-            price: currentCombo.price,
-            acai1: {
-                flavors: selectedFlavors[0],
-                accompaniments: selectedAccompaniments[0]
-            },
-            acai2: {
-                flavors: selectedFlavors[1],
-                accompaniments: selectedAccompaniments[1]
-            },
-            extras: selectedExtras,
-            totalPrice: currentCombo.price + (selectedExtras.length * 1.99)
-        };
-        cart.push(comboItem);
-        localStorage.setItem('cart', JSON.stringify(cart));
-        alert('Combo adicionado ao carrinho!');
-        document.getElementById('comboModal').style.display = 'none';
-        resetComboBuilder();
-        openCart();  // Abre o carrinho automaticamente após adicionar o combo
-    }
+window.addComboToCart = function() {
+    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+    let cart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
+
+    const comboItem = {
+        id: Date.now().toString(),
+        title: currentCombo.name,
+        sabores: `${selectedFlavors[0].join(', ')} e ${selectedFlavors[1].join(', ')}`,
+        tamanho: currentCombo.name.includes('300ml') ? '300ml' : 
+                 currentCombo.name.includes('500ml') ? '500ml' : '1 Litro',
+        acompanhamentos: [...selectedAccompaniments[0], ...selectedAccompaniments[1]],
+        extras: selectedExtras,
+        total: currentCombo.price + (selectedExtras.length * 1.99)
+    };
+
+    cart.push(comboItem);
+    localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(cart));
+
+    console.log('Combo adicionado ao carrinho:', comboItem);
+
+    alert('Combo adicionado ao carrinho!');
+    document.getElementById('comboModal').style.display = 'none';
+    resetComboBuilder();
+    updateCartIcon();
+    openCart();  // Abre o carrinho automaticamente após adicionar o combo
+}
 
     window.resetComboBuilder = function() {
         currentCombo = null;
