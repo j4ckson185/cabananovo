@@ -1218,8 +1218,10 @@ function openCheckout() {
     
     updateOrderSummaryWithExtras();
     
-    document.getElementById('paymentSection').style.display = 'block';
-    document.getElementById('submitOrderBtn').style.display = 'block';
+    // Ocultar inicialmente o método de pagamento e o botão de fazer pedido
+    document.getElementById('paymentSection').style.display = 'none';
+    document.getElementById('submitOrderBtn').style.display = 'none';
+    
     checkoutModal.style.display = "block";
     displayExtraItems();
     console.log('Checkout aberto com sucesso');
@@ -1239,65 +1241,65 @@ function openCheckout() {
         });
     }
 
-    window.handleSavedAddressChange = function() {
-        const selectedIndex = document.getElementById('savedAddresses').value;
-        if (selectedIndex !== "") {
-            const address = savedAddresses[selectedIndex];
-            document.getElementById('street').value = address.street;
-            document.getElementById('number').value = address.number;
-            document.getElementById('complement').value = address.complement || '';
-            document.getElementById('neighborhood').value = address.neighborhood;
-            document.getElementById('city').value = address.city;
-            document.getElementById('state').value = address.state;
-            
-            document.getElementById('paymentSection').style.display = 'block';
-            document.getElementById('submitOrderBtn').style.display = 'block';
-        } else {
-            document.getElementById('paymentSection').style.display = 'none';
-            document.getElementById('submitOrderBtn').style.display = 'none';
-        }
+ window.handleSavedAddressChange = function() {
+    const selectedIndex = document.getElementById('savedAddresses').value;
+    if (selectedIndex !== "") {
+        const address = savedAddresses[selectedIndex];
+        document.getElementById('street').value = address.street;
+        document.getElementById('number').value = address.number;
+        document.getElementById('complement').value = address.complement || '';
+        document.getElementById('neighborhood').value = address.neighborhood;
+        document.getElementById('city').value = address.city;
+        document.getElementById('state').value = address.state;
+        
+        document.getElementById('paymentSection').style.display = 'block';
+        document.getElementById('submitOrderBtn').style.display = 'block';
+    } else {
+        document.getElementById('paymentSection').style.display = 'none';
+        document.getElementById('submitOrderBtn').style.display = 'none';
     }
+}
 
     window.showNewAddressForm = function() {
         document.getElementById('newAddressForm').style.display = 'block';
     }
 
-    window.saveNewAddress = function() {
-        const newAddress = {
-            street: document.getElementById('street').value,
-            number: document.getElementById('number').value,
-            complement: document.getElementById('complement').value,
-            neighborhood: document.getElementById('neighborhood').value,
-            city: document.getElementById('city').value,
-            state: document.getElementById('state').value
-        };
-        
-        let missingFields = [];
-        if (!newAddress.street) missingFields.push('Rua');
-        if (!newAddress.number) missingFields.push('Número');
-        if (!newAddress.neighborhood) missingFields.push('Bairro');
-        if (!newAddress.city) missingFields.push('Cidade');
-        if (!newAddress.state) missingFields.push('Estado');
-        
-        if (missingFields.length > 0) {
-            alert(`Por favor, preencha os seguintes campos obrigatórios: ${missingFields.join(', ')}`);
-            return;
-        }
-        savedAddresses.push(newAddress);
-        localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
-        
-        db.collection('customers').doc(customerInfo.phone).update({
-            addresses: savedAddresses
-        }).then(() => {
-            loadSavedAddresses();
-            alert('Novo endereço salvo com sucesso!');
-            document.getElementById('newAddressForm').style.display = 'none';
-            document.getElementById('paymentSection').style.display = 'block';
-            document.getElementById('submitOrderBtn').style.display = 'block';
-        }).catch((error) => {
-            console.error("Error updating addresses: ", error);
-        });
+  window.saveNewAddress = function() {
+    const newAddress = {
+        street: document.getElementById('street').value,
+        number: document.getElementById('number').value,
+        complement: document.getElementById('complement').value,
+        neighborhood: document.getElementById('neighborhood').value,
+        city: document.getElementById('city').value,
+        state: document.getElementById('state').value
+    };
+    
+    let missingFields = [];
+    if (!newAddress.street) missingFields.push('Rua');
+    if (!newAddress.number) missingFields.push('Número');
+    if (!newAddress.neighborhood) missingFields.push('Bairro');
+    if (!newAddress.city) missingFields.push('Cidade');
+    if (!newAddress.state) missingFields.push('Estado');
+    
+    if (missingFields.length > 0) {
+        alert(`Por favor, preencha os seguintes campos obrigatórios: ${missingFields.join(', ')}`);
+        return;
     }
+    savedAddresses.push(newAddress);
+    localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
+    
+    db.collection('customers').doc(customerInfo.phone).update({
+        addresses: savedAddresses
+    }).then(() => {
+        loadSavedAddresses();
+        alert('Novo endereço salvo com sucesso!');
+        document.getElementById('newAddressForm').style.display = 'none';
+        document.getElementById('paymentSection').style.display = 'block';
+        document.getElementById('submitOrderBtn').style.display = 'block';
+    }).catch((error) => {
+        console.error("Error updating addresses: ", error);
+    });
+}
 
     window.handlePaymentChange = function() {
         const paymentMethod = document.getElementById('paymentMethod').value;
