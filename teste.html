@@ -1486,6 +1486,8 @@ window.toggleExtraItem = function(element, itemName) {
 
 document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     e.preventDefault();
+    console.log('Iniciando processo de checkout');
+
     const selectedAddressIndex = document.getElementById('savedAddresses').value;
     if (selectedAddressIndex === "") {
         alert("Por favor, selecione um endereço de entrega.");
@@ -1571,9 +1573,12 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         createdAt: new Date()
     };
 
+    console.log('Pedido criado:', order);
+
+    // Salvar o pedido no Firebase
     db.collection('orders').add(order)
         .then(() => {
-            console.log('Pedido adicionado com sucesso!');
+            console.log('Pedido salvo com sucesso no Firebase');
             return db.collection('customers').doc(customerInfo.phone).get();
         })
         .then((doc) => {
@@ -1601,15 +1606,22 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
                     message += `\nFaltam ${10 - orderCount} pedidos para o próximo desconto de fidelidade.`;
                 }
             }
-            window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
-            cart = [];
-            localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(cart));
+            
+            console.log('Mensagem final do pedido:', message);
+            
+            // Encaminhar para o WhatsApp
+            const whatsappUrl = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+
+            // Limpar o carrinho e fechar o modal de checkout
+            localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify([]));
             document.getElementById('paymentMethod').value = 'card';
             handlePaymentChange();
             document.getElementById('checkoutModal').style.display = "none";
         })
         .catch(error => {
-            console.error('Erro ao adicionar pedido: ', error);
+            console.error('Erro ao processar o pedido:', error);
+            alert('Ocorreu um erro ao processar seu pedido. Por favor, tente novamente.');
         });
 });
 
