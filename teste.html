@@ -1258,27 +1258,46 @@ function updateOrderSummary() {
     const userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
     
     let summaryHTML = '<h3>Resumo do Pedido:</h3>';
-    let total = 0;
+    let subtotal = 0;
     
     userCart.forEach(item => {
         summaryHTML += `
             <div>
-                <p><strong>${item.title || 'Produto não especificado'}</strong></p>
-                <p>Sabores: ${item.sabores || 'Não especificado'}</p>
-                <p>Tamanho: ${item.tamanho || 'Não especificado'}</p>
-                <p>Acompanhamentos: ${item.acompanhamentos || 'Nenhum'}</p>
+                <p><strong>${item.title}</strong></p>
+                <p>Sabores: ${item.sabores}</p>
+                <p>Tamanho: ${item.tamanho}</p>
+                <p>Acompanhamentos: ${item.acompanhamentos}</p>
                 ${item.extras ? `<p>Extras: ${item.extras}</p>` : ''}
                 <p>Subtotal: ${item.total}</p>
             </div>
             <hr>
         `;
-        total += parseFloat(item.total.replace('R$', '').trim() || 0);
+        subtotal += parseFloat(item.total.replace('R$', '').trim() || 0);
     });
 
-    summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
+    // Adiciona os itens extras selecionados
+    const selectedExtras = document.querySelectorAll('.extra-item.selected');
+    let extrasTotal = 0;
+    selectedExtras.forEach(extraItem => {
+        const extraName = extraItem.querySelector('p').textContent;
+        const extraPrice = 1.99; // Preço fixo para itens extras
+        extrasTotal += extraPrice;
+        summaryHTML += `<p>Extra: ${extraName} - R$ ${extraPrice.toFixed(2)}</p>`;
+    });
+
+    const total = subtotal + extrasTotal + deliveryFee;
+
+    summaryHTML += `<h4>Subtotal: R$ ${subtotal.toFixed(2)}</h4>`;
+    summaryHTML += `<h4>Extras: R$ ${extrasTotal.toFixed(2)}</h4>`;
     summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
-    summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
+    summaryHTML += `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
     orderSummary.innerHTML = summaryHTML;
+}
+
+// Função para lidar com a seleção de itens extras
+window.toggleExtraItem = function(element) {
+    element.classList.toggle('selected');
+    updateOrderSummary();
 }
 
     document.getElementById('checkoutForm').addEventListener('submit', function(e) {
