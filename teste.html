@@ -1540,13 +1540,26 @@ window.fetchMyOrders = function() {
                         <div class="order-item">
                             <p><strong>Data:</strong> ${order.createdAt.toDate().toLocaleString()}</p>
                             <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
-                            <p><strong>Detalhes do Pedido:</strong> ${order.items.map(item => {
-                                if (item.acai1) {
-                                    return `${item.name} (Açaí 1: ${item.acai1.flavors.join(', ')}, Açaí 2: ${item.acai2.flavors.join(', ')})`;
-                                } else {
-                                    return `${item.name} ${item.accompaniments ? `(${item.accompaniments.join(', ')})` : ''}${item.extras && item.extras.length > 0 ? ` + Extras: ${item.extras.join(', ')}` : ''}`;
-                                }
-                            }).join(', ')}</p>
+                            <p><strong>Detalhes do Pedido:</strong></p>
+                            <ul>
+                                ${order.items.map(item => `
+                                    <li>
+                                        ${item.title} - R$ ${parseFloat(item.total).toFixed(2)}
+                                        <br>Sabores: ${item.sabores}
+                                        <br>Tamanho: ${item.tamanho}
+                                        <br>Acompanhamentos: ${item.acompanhamentos}
+                                        ${item.extras && item.extras.length ? `<br>Extras: ${item.extras.join(', ')}` : ''}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                            ${order.extraItems && order.extraItems.length ? `
+                                <p><strong>Itens Extras Adicionais:</strong></p>
+                                <ul>
+                                    ${order.extraItems.map(extra => `<li>${extra}</li>`).join('')}
+                                </ul>
+                            ` : ''}
+                            <p><strong>Subtotal:</strong> R$ ${order.subtotal.toFixed(2)}</p>
+                            <p><strong>Taxa de Entrega:</strong> R$ ${order.deliveryFee.toFixed(2)}</p>
                             <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Este Pedido</button>
                         </div>
                     `;
