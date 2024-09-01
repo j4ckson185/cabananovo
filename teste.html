@@ -1151,6 +1151,8 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
         const orderSummary = document.getElementById('orderSummary');
         loadSavedAddresses();
         updateOrderSummary();
+        updateOrderSummaryWithExtras();
+
         document.getElementById('paymentSection').style.display = 'none';
         document.getElementById('submitOrderBtn').style.display = 'none';
         checkoutModal.style.display = "block";
@@ -1243,17 +1245,62 @@ function displayExtraItems() {
         <div class="extra-item" onclick="toggleExtraItem(this, '${item.name}')">
             <img src="${item.image}" alt="${item.name}">
             <p>${item.name}</p>
-            <p>R$ ${item.price.toFixed(2)}</p>
+            <p>R$ 1,99</p>
         </div>
     `).join('');
 }
 
 window.toggleExtraItem = function(element, itemName) {
     element.classList.toggle('selected');
-    updateOrderSummary();
+    updateOrderSummaryWithExtras();
     console.log('Item extra toggled:', itemName);
 }
 
+function updateOrderSummaryWithExtras() {
+    const orderSummary = document.getElementById('orderSummary');
+    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+    const userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
+    
+    let summaryHTML = '<h3>Resumo do Pedido:</h3>';
+    let subtotal = 0;
+    
+    userCart.forEach(item => {
+        summaryHTML += `
+            <div>
+                <p><strong>${item.title}</strong></p>
+                <p>Sabores: ${item.sabores}</p>
+                <p>Tamanho: ${item.tamanho}</p>
+                <p>Acompanhamentos: ${item.acompanhamentos}</p>
+                ${item.extras ? `<p>Extras: ${item.extras}</p>` : ''}
+                <p>Subtotal: ${item.total}</p>
+            </div>
+            <hr>
+        `;
+        subtotal += parseFloat(item.total.replace('R$', '').trim() || 0);
+    });
+    
+    const selectedExtras = document.querySelectorAll('.extra-item.selected');
+    let extrasTotal = selectedExtras.length * 1.99;
+    
+    selectedExtras.forEach(item => {
+        const itemName = item.querySelector('p').textContent;
+        summaryHTML += `<p>Extra: ${itemName} - R$ 1,99</p>`;
+    });
+
+    const total = subtotal + extrasTotal + deliveryFee;
+
+    summaryHTML += `<h4>Subtotal dos itens: R$ ${subtotal.toFixed(2)}</h4>`;
+    summaryHTML += `<h4>Total dos extras: R$ ${extrasTotal.toFixed(2)}</h4>`;
+    summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
+    summaryHTML += `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
+    orderSummary.innerHTML = summaryHTML;
+
+    console.log('Subtotal:', subtotal);
+    console.log('Extras Total:', extrasTotal);
+    console.log('Delivery Fee:', deliveryFee);
+    console.log('Total:', total);
+}
+        
 function updateOrderSummary() {
     const orderSummary = document.getElementById('orderSummary');
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
