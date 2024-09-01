@@ -1061,19 +1061,29 @@ window.openCart = function() {
 
     console.log('Carrinho atual:', userCart); // Para debug
 
-    cartContent.innerHTML = userCart.map(item => `
-        <div class="cart-item">
-            <div class="cart-item-info">
-                <h3>${item.title}</h3>
-                <p>Sabores: ${item.sabores}</p>
-                <p>Tamanho: ${item.tamanho}</p>
-                <p>Acompanhamentos: ${item.acompanhamentos.join(', ')}</p>
-                ${item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
-                <p>Total: R$ ${typeof item.total === 'number' ? item.total.toFixed(2) : item.total}</p>
+    cartContent.innerHTML = userCart.map(item => {
+        const acompanhamentos = Array.isArray(item.acompanhamentos) 
+            ? item.acompanhamentos.join(', ') 
+            : item.acompanhamentos;
+        
+        const extras = Array.isArray(item.extras) 
+            ? item.extras.join(', ') 
+            : item.extras;
+
+        return `
+            <div class="cart-item">
+                <div class="cart-item-info">
+                    <h3>${item.title}</h3>
+                    <p>Sabores: ${item.sabores}</p>
+                    <p>Tamanho: ${item.tamanho}</p>
+                    <p>Acompanhamentos: ${acompanhamentos}</p>
+                    ${extras ? `<p>Extras: ${extras}</p>` : ''}
+                    <p>Total: R$ ${typeof item.total === 'number' ? item.total.toFixed(2) : item.total}</p>
+                </div>
+                <span class="cart-item-remove" onclick="removeFromCart('${item.id}')">🗑️</span>
             </div>
-            <span class="cart-item-remove" onclick="removeFromCart('${item.id}')">🗑️</span>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 
     const total = userCart.reduce((sum, item) => sum + (typeof item.total === 'number' ? item.total : parseFloat(item.total.replace('R$', '').trim() || 0)), 0);
     cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
@@ -1614,8 +1624,8 @@ window.repeatOrder = function(orderId) {
                         title: item.title,
                         sabores: item.sabores,
                         tamanho: item.tamanho,
-                        acompanhamentos: item.acompanhamentos,
-                        extras: item.extras,
+                        acompanhamentos: Array.isArray(item.acompanhamentos) ? item.acompanhamentos : [item.acompanhamentos],
+                        extras: Array.isArray(item.extras) ? item.extras : (item.extras ? [item.extras] : []),
                         total: item.total
                     });
                 });
