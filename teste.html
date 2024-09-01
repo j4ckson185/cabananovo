@@ -795,11 +795,11 @@ window.addToCart = function(productId) {
     let cart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
 
     const cartItem = {
-        id: Date.now().toString(), // ID único
+        id: Date.now().toString(),
         productId: product.id,
         title: product.name,
-        sabores: product.name, // Assumindo que o nome do produto é o sabor
-        tamanho: product.size || 'Padrão', // Adicione tamanho se disponível
+        sabores: product.name,
+        tamanho: product.size || 'Padrão',
         acompanhamentos: accompaniments,
         extras: extras,
         total: calculateTotalPrice(product, extras)
@@ -808,7 +808,7 @@ window.addToCart = function(productId) {
     cart.push(cartItem);
     localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(cart));
     
-    console.log('Item adicionado ao carrinho:', cartItem); // Para debug
+    console.log('Item adicionado ao carrinho:', cartItem);
 
     document.getElementById('productModal').style.display = "none";
     openCart();
@@ -823,19 +823,8 @@ function calculateTotalPrice(product, selectedExtras) {
             total += extra.price;
         }
     });
-    return total;
+    return parseFloat(total.toFixed(2));
 }
- 
-        function calculateTotalPrice(product, selectedExtras) {
-        let total = product.price;
-        selectedExtras.forEach(extraName => {
-            const extra = product.extras.find(e => e.name === extraName);
-            if (extra) {
-                total += extra.price;
-            }
-        });
-        return total;
-    }
 
                 // Novas variáveis e funções para integração com Chatbase
           // Mantenha um controle dos pedidos processados
@@ -1215,6 +1204,7 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
 
 function openCheckout() {
     console.log('Iniciando openCheckout');
+    cleanupCart();
     const checkoutModal = document.getElementById('checkoutModal');
     loadSavedAddresses();
     try {
@@ -1396,12 +1386,11 @@ function updateOrderSummary() {
     userCart.forEach(item => {
         console.log('Processando item:', item);
         let itemTotal = 0;
+
         if (typeof item.total === 'number') {
             itemTotal = item.total;
         } else if (typeof item.total === 'string') {
             itemTotal = parseFloat(item.total.replace(/[^\d.-]/g, '')) || 0;
-        } else if (item.total && typeof item.total.toFixed === 'function') {
-            itemTotal = item.total;
         } else {
             console.warn('Tipo de total não reconhecido:', typeof item.total, item.total);
             itemTotal = 0;
@@ -1965,6 +1954,17 @@ function updateComboSummary() {
         <p><strong>Total:</strong> R$ ${total.toFixed(2)}</p>
     `;
 }
+
+function cleanupCart() {
+    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+    let cart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
+    
+    cart = cart.filter(item => {
+        return item && typeof item === 'object' && (typeof item.total === 'number' || typeof item.total === 'string');
+    });
+
+    localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(cart));
+}
         
 function updateOrderSummary() {
     const orderSummary = document.getElementById('orderSummary');
@@ -2011,7 +2011,7 @@ window.addComboToCart = function() {
             accompaniments: selectedAccompaniments[1]
         },
         extras: selectedExtras,
-        total: currentCombo.price + (selectedExtras.length * 1.99)
+        total: parseFloat((currentCombo.price + (selectedExtras.length * 1.99)).toFixed(2))
     };
 
     cart.push(comboItem);
@@ -2023,7 +2023,7 @@ window.addComboToCart = function() {
     document.getElementById('comboModal').style.display = 'none';
     resetComboBuilder();
     updateCartIcon();
-    openCart();  // Abre o carrinho automaticamente após adicionar o combo
+    openCart();
 }
 
     window.resetComboBuilder = function() {
