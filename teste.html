@@ -1517,23 +1517,32 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     message += `\nItens do Pedido:\n`;
     let total = 0;
     cart.forEach(item => {
-        message += `\n${item.title} - R$ ${item.total}`;
-        message += `\nSabores: ${item.sabores}`;
-        message += `\nAcompanhamentos: ${item.acompanhamentos}`;
-        if (item.extras && item.extras.length > 0) {
-            message += `\nExtras: ${item.extras.join(', ')}`;
+        let itemTotal = 0;
+        if (typeof item.total === 'number') {
+            itemTotal = item.total;
+        } else if (typeof item.total === 'string') {
+            itemTotal = parseFloat(item.total.replace(/[^\d.-]/g, '')) || 0;
+        } else {
+            console.warn('Tipo de total não reconhecido:', typeof item.total, item.total);
+            itemTotal = 0;
         }
-        total += parseFloat(item.total.replace('R$', '').trim());
+
+        message += `\n${item.title} - R$ ${itemTotal.toFixed(2)}`;
+        message += `\nSabores: ${item.sabores}`;
+        message += `\nAcompanhamentos: ${Array.isArray(item.acompanhamentos) ? item.acompanhamentos.join(', ') : item.acompanhamentos}`;
+        if (item.extras && item.extras.length > 0) {
+            message += `\nExtras: ${Array.isArray(item.extras) ? item.extras.join(', ') : item.extras}`;
+        }
+        total += itemTotal;
     });
 
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
-    let extrasTotal = 0;
+    let extrasTotal = selectedExtras.length * 1.99;
     if (selectedExtras.length > 0) {
         message += "\n\nItens Extras Adicionais:";
         selectedExtras.forEach(item => {
             const itemName = item.querySelector('p').textContent;
             message += `\n- ${itemName} (R$ 1,99)`;
-            extrasTotal += 1.99;
         });
     }
     
