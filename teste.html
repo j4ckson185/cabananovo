@@ -1293,10 +1293,6 @@ function updateOrderSummaryWithExtras() {
     orderSummary.innerHTML = summaryHTML;
 }
 
-    // Atualiza o carrinho com os novos extras
-    updateCartWithExtras(selectedExtras);
-}
-
     function updateCartWithExtras(selectedExtras) {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     let cart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
