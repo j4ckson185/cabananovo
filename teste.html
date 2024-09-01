@@ -1201,9 +1201,15 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
         addresses: savedAddresses
     }, { merge: true }).then(() => {
         document.getElementById('customerIdentificationModal').style.display = "none";
-        openCheckout(); // Chama a função para abrir a página de finalizar pedido
+        try {
+            openCheckout();
+        } catch (error) {
+            console.error("Erro ao abrir checkout:", error);
+            alert("Ocorreu um erro ao abrir a página de checkout. Por favor, tente novamente.");
+        }
     }).catch((error) => {
         console.error("Error saving customer data: ", error);
+        alert("Ocorreu um erro ao salvar os dados do cliente. Por favor, tente novamente.");
     });
 });
 
@@ -1378,14 +1384,11 @@ function updateOrderSummary() {
     let subtotal = 0;
     
     userCart.forEach(item => {
-        let itemTotal;
+        let itemTotal = 0;
         if (typeof item.total === 'number') {
             itemTotal = item.total;
         } else if (typeof item.total === 'string') {
-            itemTotal = parseFloat(item.total.replace('R$', '').trim() || 0);
-        } else {
-            console.error('Tipo de total inválido:', item.total);
-            itemTotal = 0;
+            itemTotal = parseFloat(item.total.replace(/[^\d.-]/g, '')) || 0;
         }
 
         if (item.isCombo) {
@@ -1398,7 +1401,7 @@ function updateOrderSummary() {
                     <p>Açaí 2:</p>
                     <p>Sabores: ${item.acai2.flavors.join(', ')}</p>
                     <p>Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                    ${item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+                    ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
                     <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
                 </div>
                 <hr>
@@ -1406,10 +1409,10 @@ function updateOrderSummary() {
         } else {
             summaryHTML += `
                 <div>
-                    <p><strong>${item.title}</strong></p>
-                    <p>Sabores: ${item.sabores}</p>
-                    <p>Tamanho: ${item.tamanho}</p>
-                    <p>Acompanhamentos: ${Array.isArray(item.acompanhamentos) ? item.acompanhamentos.join(', ') : item.acompanhamentos}</p>
+                    <p><strong>${item.title || 'Item'}</strong></p>
+                    <p>Sabores: ${item.sabores || 'Não especificado'}</p>
+                    <p>Tamanho: ${item.tamanho || 'Não especificado'}</p>
+                    <p>Acompanhamentos: ${Array.isArray(item.acompanhamentos) ? item.acompanhamentos.join(', ') : (item.acompanhamentos || 'Nenhum')}</p>
                     ${item.extras && item.extras.length ? `<p>Extras: ${Array.isArray(item.extras) ? item.extras.join(', ') : item.extras}</p>` : ''}
                     <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
                 </div>
