@@ -1229,6 +1229,7 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
         const paymentMethod = document.getElementById('paymentMethod').value;
         document.getElementById('moneyChange').style.display = paymentMethod === 'money' ? 'block' : 'none';
         document.getElementById('pixInfo').style.display = paymentMethod === 'pix' ? 'block' : 'none';
+        updateOrderSummary();
     }
 
     window.handleChangeNeeded = function() {
@@ -1258,7 +1259,7 @@ function updateOrderSummary() {
     const userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
     
     let summaryHTML = '<h3>Resumo do Pedido:</h3>';
-    let subtotal = 0;
+    let total = 0;
     
     userCart.forEach(item => {
         summaryHTML += `
@@ -1272,25 +1273,22 @@ function updateOrderSummary() {
             </div>
             <hr>
         `;
-        subtotal += parseFloat(item.total.replace('R$', '').trim() || 0);
+        total += parseFloat(item.total.replace('R$', '').trim() || 0);
     });
-
-    // Adiciona os itens extras selecionados
+    
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
     let extrasTotal = 0;
-    selectedExtras.forEach(extraItem => {
-        const extraName = extraItem.querySelector('p').textContent;
-        const extraPrice = 1.99; // Preço fixo para itens extras
-        extrasTotal += extraPrice;
-        summaryHTML += `<p>Extra: ${extraName} - R$ ${extraPrice.toFixed(2)}</p>`;
+    selectedExtras.forEach(item => {
+        const itemName = item.querySelector('p').textContent;
+        const itemPrice = 1.99;
+        extrasTotal += itemPrice;
+        summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
     });
+    total += extrasTotal;
 
-    const total = subtotal + extrasTotal + deliveryFee;
-
-    summaryHTML += `<h4>Subtotal: R$ ${subtotal.toFixed(2)}</h4>`;
-    summaryHTML += `<h4>Extras: R$ ${extrasTotal.toFixed(2)}</h4>`;
+    summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
     summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
-    summaryHTML += `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
+    summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
     orderSummary.innerHTML = summaryHTML;
 }
 
