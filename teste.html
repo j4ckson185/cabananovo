@@ -1209,13 +1209,7 @@ function openCheckout() {
     cleanupCart();
     const checkoutModal = document.getElementById('checkoutModal');
     loadSavedAddresses();
-    try {
-        updateOrderSummary();
-    } catch (error) {
-        console.error('Erro ao atualizar o resumo do pedido:', error);
-        alert('Ocorreu um erro ao carregar o resumo do pedido. Por favor, tente novamente.');
-        return;
-    }
+    updateOrderSummaryWithExtras(); // Adicione esta linha
     document.getElementById('paymentSection').style.display = 'block';
     document.getElementById('submitOrderBtn').style.display = 'block';
     checkoutModal.style.display = "block";
@@ -1352,7 +1346,7 @@ function updateOrderSummaryWithExtras() {
                     <p>Açaí 2:</p>
                     <p>Sabores: ${item.acai2.flavors.join(', ')}</p>
                     <p>Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                    ${item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+                    ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
                     <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
                 </div>
                 <hr>
@@ -1376,10 +1370,14 @@ function updateOrderSummaryWithExtras() {
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
     let extrasTotal = selectedExtras.length * 1.99;
     
-    selectedExtras.forEach(item => {
-        const itemName = item.querySelector('p').textContent;
-        summaryHTML += `<p>Extra: ${itemName} - R$ 1,99</p>`;
-    });
+    if (selectedExtras.length > 0) {
+        summaryHTML += '<h4>Itens Extras Adicionais:</h4>';
+        selectedExtras.forEach(item => {
+            const itemName = item.querySelector('p').textContent;
+            summaryHTML += `<p>Extra: ${itemName} - R$ 1,99</p>`;
+        });
+        summaryHTML += '<hr>';
+    }
 
     const total = subtotal + extrasTotal + deliveryFee;
 
