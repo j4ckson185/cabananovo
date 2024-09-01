@@ -1236,21 +1236,21 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
         document.getElementById('changeAmountDiv').style.display = changeNeeded === 'yes' ? 'block' : 'none';
     }
 
-    function displayExtraItems() {
-        const extraItemsContainer = document.getElementById('extraItems');
-        extraItemsContainer.innerHTML = extraItems.map(item => `
-            <div class="extra-item" onclick="toggleExtraItem(this, '${item.name}')">
-                <img src="${item.image}" alt="${item.name}">
-                <p>${item.name}</p>
-                <p>R$ ${item.price.toFixed(2)}</p>
-            </div>
-        `).join('');
-    }
+function displayExtraItems() {
+    const extraItemsContainer = document.getElementById('extraItems');
+    extraItemsContainer.innerHTML = extraItems.map(item => `
+        <div class="extra-item" onclick="toggleExtraItem(this, '${item.name}')">
+            <img src="${item.image}" alt="${item.name}">
+            <p>${item.name}</p>
+            <p>R$ ${item.price.toFixed(2)}</p>
+        </div>
+    `).join('');
+}
 
-    window.toggleExtraItem = function(element, itemName) {
-        element.classList.toggle('selected');
-        updateOrderSummary();
-    }
+window.toggleExtraItem = function(element, itemName) {
+    element.classList.toggle('selected');
+    updateOrderSummary();
+}
 
 function updateOrderSummary() {
     const orderSummary = document.getElementById('orderSummary');
