@@ -1185,6 +1185,8 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
     customerInfo = { phone, name };
     localStorage.setItem('customerPhone', phone);
     localStorage.setItem('customerName', name);
+    localStorage.setItem('currentUserWhatsapp', phone); // Adicionando esta linha
+
     db.collection('customers').doc(phone).set({
         name: name,
         addresses: savedAddresses
@@ -1218,7 +1220,6 @@ function openCheckout() {
     document.getElementById('submitOrderBtn').style.display = 'none';
     checkoutModal.style.display = "block";
     displayExtraItems();
-    updateOrderSummaryWithExtras();
     console.log('Checkout aberto com sucesso');
 }
 
@@ -1960,10 +1961,13 @@ function cleanupCart() {
     let cart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
     
     cart = cart.filter(item => {
-        return item && typeof item === 'object' && (typeof item.total === 'number' || typeof item.total === 'string');
+        return item && typeof item === 'object' && 
+               (typeof item.total === 'number' || 
+               (typeof item.total === 'string' && !isNaN(parseFloat(item.total))));
     });
 
     localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(cart));
+    console.log('Carrinho limpo:', cart);
 }
         
 function updateOrderSummary() {
