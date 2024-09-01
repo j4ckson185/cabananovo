@@ -933,6 +933,19 @@ function addOrderToCart(orderDetails) {
     const cartKey = `cart_${orderDetails.whatsapp}`;
     let cart = JSON.parse(localStorage.getItem(cartKey)) || [];
     
+    // Verifica se o item foi previamente removido
+    const removedItemsList = removedItems[orderDetails.whatsapp] || [];
+    const wasRemoved = removedItemsList.some(item => 
+        item.sabores === orderDetails.sabores && 
+        item.tamanho === orderDetails.tamanho && 
+        item.total === orderDetails.total
+    );
+
+    if (wasRemoved) {
+        console.log(`Item previamente removido, não será adicionado novamente: ${orderDetails.sabores} ${orderDetails.tamanho}`);
+        return;
+    }
+    
     const existingOrderIndex = cart.findIndex(item => 
         item.sabores === orderDetails.sabores && 
         item.tamanho === orderDetails.tamanho && 
@@ -1026,6 +1039,9 @@ window.openCart = function() {
         document.getElementById('cartModal').style.display = "none";
     }
 
+// Adicione esta variável no escopo global do seu script
+let removedItems = JSON.parse(localStorage.getItem('removedItems') || '{}');
+
 window.removeFromCart = function(itemId) {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     if (!currentUserWhatsapp) {
@@ -1041,10 +1057,19 @@ window.removeFromCart = function(itemId) {
 
     if (itemIndex > -1) {
         // Remove o item do array
-        cart.splice(itemIndex, 1);
+        const removedItem = cart.splice(itemIndex, 1)[0];
+
+        // Adiciona o item à lista de itens removidos
+        if (!removedItems[currentUserWhatsapp]) {
+            removedItems[currentUserWhatsapp] = [];
+        }
+        removedItems[currentUserWhatsapp].push(removedItem);
 
         // Atualiza o carrinho no localStorage
         localStorage.setItem(cartKey, JSON.stringify(cart));
+        
+        // Atualiza a lista de itens removidos no localStorage
+        localStorage.setItem('removedItems', JSON.stringify(removedItems));
 
         // Atualiza a exibição do carrinho
         openCart();
