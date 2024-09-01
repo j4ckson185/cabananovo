@@ -914,23 +914,14 @@ function extractOrderFromMessage(message) {
             total: extractDetail(message, 'Total'),
             whatsapp: extractDetail(message, 'Whatsapp')
         };
-        console.log('Detalhes do pedido extraídos:', orderDetails);
-        return orderDetails;
-    }
-    return null;
-}
 
-function extractDetail(text, label) {
-    const regex = new RegExp(`${label}:?\\s*(.+)`, 'i');
-    const match = text.match(regex);
-    return match ? match[1].trim() : '';
-}
-    
-    // Verifica se todos os campos necessários estão presentes
-    if (orderDetails.sabores && orderDetails.tamanho && orderDetails.acompanhamentos && orderDetails.total && orderDetails.whatsapp) {
-        console.log('Detalhes do pedido extraídos:', orderDetails);
-        return orderDetails;
+        // Verifica se todos os campos necessários estão presentes
+        if (orderDetails.sabores && orderDetails.tamanho && orderDetails.acompanhamentos && orderDetails.total && orderDetails.whatsapp) {
+            console.log('Detalhes do pedido extraídos:', orderDetails);
+            return orderDetails;
+        }
     }
+    
     return null;
 }
 
