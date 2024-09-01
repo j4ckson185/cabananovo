@@ -1253,7 +1253,6 @@ function displayExtraItems() {
 window.toggleExtraItem = function(element, itemName) {
     element.classList.toggle('selected');
     updateOrderSummaryWithExtras();
-    console.log('Item extra toggled:', itemName);
 }
 
 function updateOrderSummaryWithExtras() {
@@ -1282,6 +1281,9 @@ function updateOrderSummaryWithExtras() {
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
     let extrasTotal = selectedExtras.length * 1.99;
     
+    summaryHTML += `<h4>Subtotal dos itens: R$ ${subtotal.toFixed(2)}</h4>`;
+    summaryHTML += `<h4>Total dos extras: R$ ${extrasTotal.toFixed(2)}</h4>`;
+    
     selectedExtras.forEach(item => {
         const itemName = item.querySelector('p').textContent;
         summaryHTML += `<p>Extra: ${itemName} - R$ 1,99</p>`;
@@ -1289,16 +1291,26 @@ function updateOrderSummaryWithExtras() {
 
     const total = subtotal + extrasTotal + deliveryFee;
 
-    summaryHTML += `<h4>Subtotal dos itens: R$ ${subtotal.toFixed(2)}</h4>`;
-    summaryHTML += `<h4>Total dos extras: R$ ${extrasTotal.toFixed(2)}</h4>`;
     summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
     summaryHTML += `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
     orderSummary.innerHTML = summaryHTML;
 
-    console.log('Subtotal:', subtotal);
-    console.log('Extras Total:', extrasTotal);
-    console.log('Delivery Fee:', deliveryFee);
-    console.log('Total:', total);
+    // Atualiza o carrinho com os novos extras
+    updateCartWithExtras(selectedExtras);
+}
+
+    function updateCartWithExtras(selectedExtras) {
+    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+    let cart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
+    
+    // Atualiza os extras para cada item no carrinho
+    cart = cart.map(item => {
+        item.extras = Array.from(selectedExtras).map(extra => extra.querySelector('p').textContent);
+        item.total = (parseFloat(item.total.replace('R$', '').trim() || 0) + item.extras.length * 1.99).toFixed(2);
+        return item;
+    });
+
+    localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(cart));
 }
         
 function updateOrderSummary() {
@@ -1353,69 +1365,65 @@ window.toggleExtraItem = function(element) {
     updateOrderSummary();
 }
 
-    document.getElementById('checkoutForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const selectedAddressIndex = document.getElementById('savedAddresses').value;
-        if (selectedAddressIndex === "") {
-            alert("Por favor, selecione um endereço de entrega.");
-            return;
+document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const selectedAddressIndex = document.getElementById('savedAddresses').value;
+    if (selectedAddressIndex === "") {
+        alert("Por favor, selecione um endereço de entrega.");
+        return;
+    }
+    const selectedAddress = savedAddresses[selectedAddressIndex];
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    const changeNeeded = document.getElementById('changeNeeded').value;
+    const changeAmount = document.getElementById('changeAmount').value;
+
+    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+    const cart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
+
+    let message = `Pedido confirmado!\n`;
+    message += `Nome: ${customerInfo.name}\n`;
+    message += `WhatsApp: ${customerInfo.phone}\n`;
+    message += `Endereço: ${selectedAddress.street}, ${selectedAddress.number}, ${selectedAddress.neighborhood}, ${selectedAddress.city} - ${selectedAddress.state}\n`;
+    if (selectedAddress.complement) {
+        message += `Complemento: ${selectedAddress.complement}\n`;
+    }
+    message += `Método de Pagamento: ${getPaymentMethodText(paymentMethod)}\n`;
+    if (paymentMethod === 'money') {
+        message += `Precisa de troco: ${changeNeeded === 'yes' ? 'Sim' : 'Não'}\n`;
+        if (changeNeeded === 'yes') {
+            message += `Troco para: R$ ${parseFloat(changeAmount).toFixed(2)}\n`;
         }
-        const selectedAddress = savedAddresses[selectedAddressIndex];
-        const paymentMethod = document.getElementById('paymentMethod').value;
-        const changeNeeded = document.getElementById('changeNeeded').value;
-        const changeAmount = document.getElementById('changeAmount').value;
-        let message = `Pedido confirmado!\n`;
-        message += `Nome: ${customerInfo.name}\n`;
-        message += `WhatsApp: ${customerInfo.phone}\n`;
-        message += `Endereço: ${selectedAddress.street}, ${selectedAddress.number}, ${selectedAddress.neighborhood}, ${selectedAddress.city} - ${selectedAddress.state}\n`;
-        if (selectedAddress.complement) {
-            message += `Complemento: ${selectedAddress.complement}\n`;
-        }
-        message += `Método de Pagamento: ${getPaymentMethodText(paymentMethod)}\n`;
-        if (paymentMethod === 'money') {
-            message += `Precisa de troco: ${changeNeeded === 'yes' ? 'Sim' : 'Não'}\n`;
-            if (changeNeeded === 'yes') {
-                message += `Troco para: R$ ${parseFloat(changeAmount).toFixed(2)}\n`;
-            }
-        }
-        
- message += `\nItens do Pedido:\n`;
-    cart.forEach(item => {
-        if (item.acai1) {  // Se for um combo
-            message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
-            message += `\nAçaí 1: Sabores: ${item.acai1.flavors.join(', ')}, Acompanhamentos: ${item.acai1.accompaniments.join(', ')}`;
-            message += `\nAçaí 2: Sabores: ${item.acai2.flavors.join(', ')}, Acompanhamentos: ${item.acai2.accompaniments.join(', ')}`;
-            if (item.extras && item.extras.length > 0) {
-                message += `\nExtras: ${item.extras.join(', ')}`;
-            }
-        } else {  // Se for um item individual
-            message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
-            if (item.accompaniments && item.accompaniments.length > 0) {
-                message += `\nAcompanhamentos: ${item.accompaniments.join(', ')}`;
-            }
-            if (item.extras && item.extras.length > 0) {
-                message += `\nExtras: ${item.extras.join(', ')}`;
-            }
-        }
-    });
+    }
     
+    message += `\nItens do Pedido:\n`;
+    let total = 0;
+    cart.forEach(item => {
+        message += `\n${item.title} - R$ ${item.total}`;
+        message += `\nSabores: ${item.sabores}`;
+        message += `\nAcompanhamentos: ${item.acompanhamentos}`;
+        if (item.extras && item.extras.length > 0) {
+            message += `\nExtras: ${item.extras.join(', ')}`;
+        }
+        total += parseFloat(item.total.replace('R$', '').trim());
+    });
+
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
+    let extrasTotal = 0;
     if (selectedExtras.length > 0) {
         message += "\n\nItens Extras Adicionais:";
         selectedExtras.forEach(item => {
             const itemName = item.querySelector('p').textContent;
             message += `\n- ${itemName} (R$ 1,99)`;
+            extrasTotal += 1.99;
         });
     }
     
-    const subtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-    const extrasTotal = selectedExtras.length * 1.99;
-    const total = subtotal + extrasTotal + deliveryFee;
+    total += extrasTotal;
     
-    message += `\n\nSubtotal: R$ ${subtotal.toFixed(2)}`;
+    message += `\n\nSubtotal: R$ ${total.toFixed(2)}`;
     message += `\nExtras Adicionais: R$ ${extrasTotal.toFixed(2)}`;
     message += `\nTaxa de Entrega: R$ ${deliveryFee.toFixed(2)}`;
-    message += `\nTotal: R$ ${total.toFixed(2)}`;
+    message += `\nTotal: R$ ${(total + deliveryFee).toFixed(2)}`;
     
     const order = {
         id: Date.now(),
@@ -1427,13 +1435,14 @@ window.toggleExtraItem = function(element) {
         changeAmount: changeAmount,
         items: cart,
         extraItems: Array.from(selectedExtras).map(item => item.querySelector('p').textContent),
-        subtotal: subtotal,
+        subtotal: total,
         extrasTotal: extrasTotal,
         deliveryFee: deliveryFee,
-        total: total,
+        total: total + deliveryFee,
         status: 'preparing',
         createdAt: new Date()
     };
+
     db.collection('orders').add(order)
         .then(() => {
             console.log('Pedido adicionado com sucesso!');
@@ -1466,7 +1475,7 @@ window.toggleExtraItem = function(element) {
             }
             window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
             cart = [];
-            localStorage.setItem('cart', JSON.stringify(cart));
+            localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(cart));
             document.getElementById('paymentMethod').value = 'card';
             handlePaymentChange();
             document.getElementById('checkoutModal').style.display = "none";
@@ -1474,7 +1483,7 @@ window.toggleExtraItem = function(element) {
         .catch(error => {
             console.error('Erro ao adicionar pedido: ', error);
         });
-    });
+});
 
     function getPaymentMethodText(method) {
         switch(method) {
