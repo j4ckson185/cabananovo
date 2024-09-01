@@ -809,21 +809,14 @@ let lastFetchTime = 0;
 const fetchInterval = 60000; // 1 minuto
 
 function fetchChatbotConversations() {
-    const currentTime = Date.now();
-    if (currentTime - lastFetchTime < fetchInterval) {
-        console.log('Aguardando intervalo para próxima busca');
-        return;
-    }
-    lastFetchTime = currentTime;
-
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     if (!currentUserWhatsapp) return;
 
     const apiKey = '6564b636-1a71-4a0f-9863-7c87e586384a';
     const chatbotId = 'PpgNSIgeYN1FCucFGP4w3';
     
-    const endDate = new Date().toISOString().split('T')[0];
-    const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // 30 dias atrás
+    const endDate = new Date().toISOString();
+    const startDate = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // 5 minutos atrás
     
     const url = `https://www.chatbase.co/api/v1/get-conversations?chatbotId=${chatbotId}&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&page=1&size=20`;
     
@@ -834,23 +827,13 @@ function fetchChatbotConversations() {
             'accept': 'application/json'
         }
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
-        console.log('Dados recebidos da API:', data);
         if (data && data.data && Array.isArray(data.data)) {
             processConversations(data.data, currentUserWhatsapp);
-        } else {
-            console.log('Nenhuma conversa nova encontrada');
         }
     })
-    .catch(error => {
-        console.error('Erro ao buscar conversas:', error);
-    });
+    .catch(error => console.error('Error:', error));
 }
         
 function processConversations(conversations, currentUserWhatsapp) {
@@ -862,10 +845,13 @@ function processConversations(conversations, currentUserWhatsapp) {
             conversation.messages.forEach(message => {
                 if (message.role === 'user') {
                     const orderDetails = extractOrderFromMessage(message.content);
-                    if (orderDetails && orderDetails.whatsapp === currentUserWhatsapp && !processedOrders[orderDetails.id]) {
-                        addOrderToCart(orderDetails);
-                        processedOrders[orderDetails.id] = true;
-                        newOrdersAdded = true;
+                    if (orderDetails && orderDetails.whatsapp === currentUserWhatsapp) {
+                        const orderId = orderDetails.id || Date.now().toString();
+                        if (!processedOrders[orderId]) {
+                            addOrderToCart(orderDetails);
+                            processedOrders[orderId] = true;
+                            newOrdersAdded = true;
+                        }
                     }
                 }
             });
@@ -873,6 +859,7 @@ function processConversations(conversations, currentUserWhatsapp) {
     });
     
     localStorage.setItem('processedOrders', JSON.stringify(processedOrders));
+
     if (newOrdersAdded) {
         updateCartIcon();
     }
@@ -934,8 +921,10 @@ function addOrderToCart(orderDetails) {
     const cartKey = `cart_${orderDetails.whatsapp}`;
     let cart = JSON.parse(localStorage.getItem(cartKey)) || [];
     
-    const existingOrder = cart.find(item => item.id === orderDetails.id);
-    if (!existingOrder) {
+    const existingOrderIndex = cart.findIndex(item => item.id === orderDetails.id);
+    
+    if (existingOrderIndex === -1) {
+        // Adiciona novo pedido
         cart.push({
             id: orderDetails.id,
             title: `${orderDetails.sabores} ${orderDetails.tamanho}`,
@@ -946,9 +935,9 @@ function addOrderToCart(orderDetails) {
             total: orderDetails.total
         });
         localStorage.setItem(cartKey, JSON.stringify(cart));
-        console.log('Novo pedido adicionado ao carrinho');
+        console.log(`Novo pedido adicionado ao carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
     } else {
-        console.log('Pedido já existe no carrinho');
+        console.log(`Pedido já existe no carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
     }
 }
         
