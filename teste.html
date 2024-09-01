@@ -1104,8 +1104,13 @@ window.removeFromCart = function(itemId) {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     let userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
     
+    console.log('Removendo item:', itemId);
+    console.log('Carrinho antes:', userCart);
+
     // Filtra o item para remover
-    userCart = userCart.filter(item => item.id !== itemId);
+    userCart = userCart.filter(item => item.id != itemId); // Usando != em vez de !==
+
+    console.log('Carrinho depois:', userCart);
     
     // Atualiza o carrinho no localStorage
     localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(userCart));
@@ -1115,8 +1120,6 @@ window.removeFromCart = function(itemId) {
     
     // Atualiza o ícone do carrinho
     updateCartIcon();
-
-    console.log('Item removido:', itemId); // Para debug
 };
         
 window.openCustomerIdentification = function() {
@@ -1186,6 +1189,7 @@ function openCheckout() {
     const checkoutModal = document.getElementById('checkoutModal');
     const orderSummary = document.getElementById('orderSummary');
     loadSavedAddresses();
+    updateOrderSummary();
     document.getElementById('paymentSection').style.display = 'none';
     document.getElementById('submitOrderBtn').style.display = 'none';
     checkoutModal.style.display = "block";
@@ -1352,27 +1356,27 @@ function updateOrderSummary() {
     let subtotal = 0;
     
     userCart.forEach(item => {
+        const itemTotal = typeof item.total === 'number' ? item.total : parseFloat(item.total.replace('R$', '').trim() || 0);
         summaryHTML += `
             <div>
                 <p><strong>${item.title}</strong></p>
                 <p>Sabores: ${item.sabores}</p>
                 <p>Tamanho: ${item.tamanho}</p>
-                <p>Acompanhamentos: ${item.acompanhamentos}</p>
-                ${item.extras ? `<p>Extras: ${item.extras}</p>` : ''}
-                <p>Subtotal: ${item.total}</p>
+                <p>Acompanhamentos: ${Array.isArray(item.acompanhamentos) ? item.acompanhamentos.join(', ') : item.acompanhamentos}</p>
+                ${item.extras && item.extras.length ? `<p>Extras: ${Array.isArray(item.extras) ? item.extras.join(', ') : item.extras}</p>` : ''}
+                <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
             </div>
             <hr>
         `;
-        subtotal += parseFloat(item.total.replace('R$', '').trim() || 0);
+        subtotal += itemTotal;
     });
     
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
-    let extrasTotal = 0;
+    let extrasTotal = selectedExtras.length * 1.99;
+    
     selectedExtras.forEach(item => {
         const itemName = item.querySelector('p').textContent;
-        const itemPrice = 1.99; // Preço fixo para extras
-        extrasTotal += itemPrice;
-        summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
+        summaryHTML += `<p>Extra: ${itemName} - R$ 1,99</p>`;
     });
 
     const total = subtotal + extrasTotal + deliveryFee;
@@ -1383,10 +1387,7 @@ function updateOrderSummary() {
     summaryHTML += `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
     orderSummary.innerHTML = summaryHTML;
 
-    console.log('Subtotal:', subtotal);
-    console.log('Extras Total:', extrasTotal);
-    console.log('Delivery Fee:', deliveryFee);
-    console.log('Total:', total);
+    console.log('Resumo do pedido atualizado');
 }
 
 // Função para lidar com a seleção de itens extras
