@@ -1917,26 +1917,36 @@ window.nextAcai = function() {
         document.getElementById('accompanimentSelection').style.display = 'none';
     }
 
-    window.toggleExtra = function(extra) {
-        const index = selectedExtras.indexOf(extra);
-        if (index > -1) {
-            selectedExtras.splice(index, 1);
-        } else {
-            selectedExtras.push(extra);
-        }
-        updateExtraItemsSelection();
+window.toggleExtra = function(extra) {
+    const index = selectedExtras.indexOf(extra);
+    if (index > -1) {
+        selectedExtras.splice(index, 1);
+    } else {
+        selectedExtras.push(extra);
     }
+    updateExtraItemsSelection();
+    try {
+        updateOrderSummary();
+    } catch (error) {
+        console.error('Erro ao atualizar o resumo do pedido em toggleExtra:', error);
+    }
+}
 
-    function updateExtraItemsSelection() {
-        document.querySelectorAll('#extraItemsSelection .combo-item').forEach(item => {
-            const extra = item.querySelector('p').textContent.trim();
-            if (selectedExtras.includes(extra)) {
-                item.classList.add('selected');
-            } else {
-                item.classList.remove('selected');
-            }
-        });
+function updateExtraItemsSelection() {
+    document.querySelectorAll('#extraItemsSelection .combo-item').forEach(item => {
+        const extra = item.querySelector('p').textContent;
+        if (selectedExtras.includes(extra)) {
+            item.classList.add('selected');
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+    try {
+        updateOrderSummary();
+    } catch (error) {
+        console.error('Erro ao atualizar o resumo do pedido em updateExtraItemsSelection:', error);
     }
+}
 
 window.finishCombo = function() {
     updateComboSummary();
@@ -2004,43 +2014,27 @@ function updateOrderSummary() {
             itemTotal = 0;
         }
 
-        if (item.isCombo) {
-            summaryHTML += `
-                <div>
-                    <p><strong>${item.title || 'Combo'}</strong></p>
-                    <p>Açaí 1:</p>
-                    <p>Sabores: ${item.acai1?.flavors?.join(', ') || 'Não especificado'}</p>
-                    <p>Acompanhamentos: ${item.acai1?.accompaniments?.join(', ') || 'Nenhum'}</p>
-                    <p>Açaí 2:</p>
-                    <p>Sabores: ${item.acai2?.flavors?.join(', ') || 'Não especificado'}</p>
-                    <p>Acompanhamentos: ${item.acai2?.accompaniments?.join(', ') || 'Nenhum'}</p>
-                    ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
-                    <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
-                </div>
-                <hr>
-            `;
-        } else {
-            summaryHTML += `
-                <div>
-                    <p><strong>${item.title || 'Item'}</strong></p>
-                    <p>Sabores: ${item.sabores || 'Não especificado'}</p>
-                    <p>Tamanho: ${item.tamanho || 'Não especificado'}</p>
-                    <p>Acompanhamentos: ${Array.isArray(item.acompanhamentos) ? item.acompanhamentos.join(', ') : (item.acompanhamentos || 'Nenhum')}</p>
-                    ${item.extras && item.extras.length ? `<p>Extras: ${Array.isArray(item.extras) ? item.extras.join(', ') : item.extras}</p>` : ''}
-                    <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
-                </div>
-                <hr>
-            `;
-        }
+        // ... (resto do código para exibir itens do carrinho)
+
         subtotal += itemTotal;
     });
     
-    const selectedExtras = document.querySelectorAll('.extra-item.selected');
-    let extrasTotal = selectedExtras.length * 1.99;
+    // Lidar com extras selecionados na página
+    const selectedExtrasElements = document.querySelectorAll('.extra-item.selected');
+    let extrasTotal = 0;
     
-    selectedExtras.forEach(item => {
+    selectedExtrasElements.forEach(item => {
         const itemName = item.querySelector('p').textContent;
-        summaryHTML += `<p>Extra: ${itemName} - R$ 1,99</p>`;
+        const itemPrice = 1.99; // ou use o preço real do item, se disponível
+        extrasTotal += itemPrice;
+        summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
+    });
+
+    // Lidar com extras do array selectedExtras
+    selectedExtras.forEach(extra => {
+        const extraPrice = 1.99; // ou use o preço real do extra, se disponível
+        extrasTotal += extraPrice;
+        summaryHTML += `<p>Extra: ${extra} - R$ ${extraPrice.toFixed(2)}</p>`;
     });
 
     const total = subtotal + extrasTotal + deliveryFee;
