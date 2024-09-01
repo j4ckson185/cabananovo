@@ -1251,6 +1251,7 @@ function displayExtraItems() {
 window.toggleExtraItem = function(element, itemName) {
     element.classList.toggle('selected');
     updateOrderSummary();
+    console.log('Item extra toggled:', itemName);
 }
 
 function updateOrderSummary() {
@@ -1259,7 +1260,7 @@ function updateOrderSummary() {
     const userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
     
     let summaryHTML = '<h3>Resumo do Pedido:</h3>';
-    let total = 0;
+    let subtotal = 0;
     
     userCart.forEach(item => {
         summaryHTML += `
@@ -1273,23 +1274,30 @@ function updateOrderSummary() {
             </div>
             <hr>
         `;
-        total += parseFloat(item.total.replace('R$', '').trim() || 0);
+        subtotal += parseFloat(item.total.replace('R$', '').trim() || 0);
     });
     
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
     let extrasTotal = 0;
     selectedExtras.forEach(item => {
         const itemName = item.querySelector('p').textContent;
-        const itemPrice = 1.99;
+        const itemPrice = 1.99; // Preço fixo para extras
         extrasTotal += itemPrice;
         summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
     });
-    total += extrasTotal;
 
-    summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
+    const total = subtotal + extrasTotal + deliveryFee;
+
+    summaryHTML += `<h4>Subtotal dos itens: R$ ${subtotal.toFixed(2)}</h4>`;
+    summaryHTML += `<h4>Total dos extras: R$ ${extrasTotal.toFixed(2)}</h4>`;
     summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
-    summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
+    summaryHTML += `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
     orderSummary.innerHTML = summaryHTML;
+
+    console.log('Subtotal:', subtotal);
+    console.log('Extras Total:', extrasTotal);
+    console.log('Delivery Fee:', deliveryFee);
+    console.log('Total:', total);
 }
 
 // Função para lidar com a seleção de itens extras
