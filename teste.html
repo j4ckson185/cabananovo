@@ -906,7 +906,7 @@ function extractOrderFromMessage(message) {
     
     if (matches.length > 0) {
         const orderDetails = {
-            id: Date.now().toString(), // Identificador único para o pedido
+            id: Date.now().toString(),
             sabores: extractDetail(message, 'Sabores'),
             tamanho: extractDetail(message, 'Tamanho'),
             acompanhamentos: extractDetail(message, 'Acompanhamentos'),
@@ -943,11 +943,9 @@ function extractDetail(text, label) {
 function addOrderToCart(orderDetails) {
     const cart = JSON.parse(localStorage.getItem(`cart_${orderDetails.whatsapp}`)) || [];
     
-    // Verifica se o pedido já existe no carrinho
     const existingOrderIndex = cart.findIndex(item => item.id === orderDetails.id);
     
     if (existingOrderIndex === -1) {
-        // Adiciona novo pedido
         const newItem = {
             id: orderDetails.id,
             title: `${orderDetails.sabores} ${orderDetails.tamanho}`,
