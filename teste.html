@@ -1483,8 +1483,6 @@ window.toggleExtraItem = function(element, itemName) {
 
 document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    console.log('Iniciando processo de checkout');
-
     const selectedAddressIndex = document.getElementById('savedAddresses').value;
     if (selectedAddressIndex === "") {
         alert("Por favor, selecione um endereço de entrega.");
