@@ -990,8 +990,10 @@ window.openCart = function() {
         <div class="cart-item">
             <div class="cart-item-info">
                 <h3>${item.title}</h3>
+                <p>Sabores: ${item.sabores}</p>
+                <p>Tamanho: ${item.tamanho}</p>
                 <p>Acompanhamentos: ${item.acompanhamentos}</p>
-                ${item.extras ? `<p>Itens Extras: ${item.extras}</p>` : ''}
+                ${item.extras ? `<p>Extras: ${item.extras}</p>` : ''}
                 <p>Total: ${item.total}</p>
             </div>
             <span class="cart-item-remove" onclick="removeFromCart('${item.id}')">🗑️</span>
@@ -1011,10 +1013,34 @@ window.openCart = function() {
 
 window.removeFromCart = function(itemId) {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
-    let userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
-    userCart = userCart.filter(item => item.id !== parseInt(itemId, 10));
-    localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(userCart));
-    openCart(); // Atualiza a exibição do carrinho
+    if (!currentUserWhatsapp) {
+        console.error('Número de WhatsApp não encontrado');
+        return;
+    }
+
+    const cartKey = `cart_${currentUserWhatsapp}`;
+    let cart = JSON.parse(localStorage.getItem(cartKey)) || [];
+
+    // Encontra o índice do item no carrinho
+    const itemIndex = cart.findIndex(item => item.id === itemId);
+
+    if (itemIndex > -1) {
+        // Remove o item do array
+        cart.splice(itemIndex, 1);
+
+        // Atualiza o carrinho no localStorage
+        localStorage.setItem(cartKey, JSON.stringify(cart));
+
+        // Atualiza a exibição do carrinho
+        openCart();
+
+        // Atualiza o ícone do carrinho
+        updateCartIcon();
+
+        console.log(`Item removido do carrinho: ${itemId}`);
+    } else {
+        console.log(`Item não encontrado no carrinho: ${itemId}`);
+    }
 };
 
 window.openCustomerIdentification = function() {
