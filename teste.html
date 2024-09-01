@@ -1378,18 +1378,44 @@ function updateOrderSummary() {
     let subtotal = 0;
     
     userCart.forEach(item => {
-        const itemTotal = typeof item.total === 'number' ? item.total : parseFloat(item.total.replace('R$', '').trim() || 0);
-        summaryHTML += `
-            <div>
-                <p><strong>${item.title}</strong></p>
-                <p>Sabores: ${item.sabores}</p>
-                <p>Tamanho: ${item.tamanho}</p>
-                <p>Acompanhamentos: ${Array.isArray(item.acompanhamentos) ? item.acompanhamentos.join(', ') : item.acompanhamentos}</p>
-                ${item.extras && item.extras.length ? `<p>Extras: ${Array.isArray(item.extras) ? item.extras.join(', ') : item.extras}</p>` : ''}
-                <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
-            </div>
-            <hr>
-        `;
+        let itemTotal;
+        if (typeof item.total === 'number') {
+            itemTotal = item.total;
+        } else if (typeof item.total === 'string') {
+            itemTotal = parseFloat(item.total.replace('R$', '').trim() || 0);
+        } else {
+            console.error('Tipo de total inválido:', item.total);
+            itemTotal = 0;
+        }
+
+        if (item.isCombo) {
+            summaryHTML += `
+                <div>
+                    <p><strong>${item.title}</strong></p>
+                    <p>Açaí 1:</p>
+                    <p>Sabores: ${item.acai1.flavors.join(', ')}</p>
+                    <p>Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                    <p>Açaí 2:</p>
+                    <p>Sabores: ${item.acai2.flavors.join(', ')}</p>
+                    <p>Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+                    ${item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+                    <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
+                </div>
+                <hr>
+            `;
+        } else {
+            summaryHTML += `
+                <div>
+                    <p><strong>${item.title}</strong></p>
+                    <p>Sabores: ${item.sabores}</p>
+                    <p>Tamanho: ${item.tamanho}</p>
+                    <p>Acompanhamentos: ${Array.isArray(item.acompanhamentos) ? item.acompanhamentos.join(', ') : item.acompanhamentos}</p>
+                    ${item.extras && item.extras.length ? `<p>Extras: ${Array.isArray(item.extras) ? item.extras.join(', ') : item.extras}</p>` : ''}
+                    <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
+                </div>
+                <hr>
+            `;
+        }
         subtotal += itemTotal;
     });
     
