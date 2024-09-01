@@ -1062,27 +1062,48 @@ window.openCart = function() {
     console.log('Carrinho atual:', userCart); // Para debug
 
     cartContent.innerHTML = userCart.map(item => {
-        const acompanhamentos = Array.isArray(item.acompanhamentos) 
-            ? item.acompanhamentos.join(', ') 
-            : item.acompanhamentos;
-        
-        const extras = Array.isArray(item.extras) 
-            ? item.extras.join(', ') 
-            : item.extras;
-
-        return `
-            <div class="cart-item">
-                <div class="cart-item-info">
-                    <h3>${item.title}</h3>
-                    <p>Sabores: ${item.sabores}</p>
-                    <p>Tamanho: ${item.tamanho}</p>
-                    <p>Acompanhamentos: ${acompanhamentos}</p>
-                    ${extras ? `<p>Extras: ${extras}</p>` : ''}
-                    <p>Total: R$ ${typeof item.total === 'number' ? item.total.toFixed(2) : item.total}</p>
+        if (item.isCombo) {
+            // Exibição especial para combos
+            return `
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <h3>${item.title}</h3>
+                        <p><strong>Açaí 1:</strong></p>
+                        <p>Sabores: ${item.acai1.flavors.join(', ')}</p>
+                        <p>Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                        <p><strong>Açaí 2:</strong></p>
+                        <p>Sabores: ${item.acai2.flavors.join(', ')}</p>
+                        <p>Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+                        ${item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+                        <p>Total: R$ ${item.total.toFixed(2)}</p>
+                    </div>
+                    <span class="cart-item-remove" onclick="removeFromCart('${item.id}')">🗑️</span>
                 </div>
-                <span class="cart-item-remove" onclick="removeFromCart('${item.id}')">🗑️</span>
-            </div>
-        `;
+            `;
+        } else {
+            // Exibição padrão para outros itens
+            const acompanhamentos = Array.isArray(item.acompanhamentos) 
+                ? item.acompanhamentos.join(', ') 
+                : item.acompanhamentos;
+            
+            const extras = Array.isArray(item.extras) 
+                ? item.extras.join(', ') 
+                : item.extras;
+
+            return `
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <h3>${item.title}</h3>
+                        <p>Sabores: ${item.sabores}</p>
+                        <p>Tamanho: ${item.tamanho}</p>
+                        <p>Acompanhamentos: ${acompanhamentos}</p>
+                        ${extras ? `<p>Extras: ${extras}</p>` : ''}
+                        <p>Total: R$ ${typeof item.total === 'number' ? item.total.toFixed(2) : item.total}</p>
+                    </div>
+                    <span class="cart-item-remove" onclick="removeFromCart('${item.id}')">🗑️</span>
+                </div>
+            `;
+        }
     }).join('');
 
     const total = userCart.reduce((sum, item) => sum + (typeof item.total === 'number' ? item.total : parseFloat(item.total.replace('R$', '').trim() || 0)), 0);
@@ -1173,13 +1194,14 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
     const phone = document.getElementById('customerPhone').value;
     const name = document.getElementById('customerName').value;
     customerInfo = { phone, name };
+    localStorage.setItem('customerPhone', phone);
     localStorage.setItem('customerName', name);
     db.collection('customers').doc(phone).set({
         name: name,
         addresses: savedAddresses
     }, { merge: true }).then(() => {
         document.getElementById('customerIdentificationModal').style.display = "none";
-        openCheckout();
+        openCheckout(); // Chama a função para abrir a página de finalizar pedido
     }).catch((error) => {
         console.error("Error saving customer data: ", error);
     });
@@ -1933,11 +1955,16 @@ window.addComboToCart = function() {
 
     const comboItem = {
         id: Date.now().toString(),
+        isCombo: true,
         title: currentCombo.name,
-        sabores: `${selectedFlavors[0].join(', ')} e ${selectedFlavors[1].join(', ')}`,
-        tamanho: currentCombo.name.includes('300ml') ? '300ml' : 
-                 currentCombo.name.includes('500ml') ? '500ml' : '1 Litro',
-        acompanhamentos: [...selectedAccompaniments[0], ...selectedAccompaniments[1]],
+        acai1: {
+            flavors: selectedFlavors[0],
+            accompaniments: selectedAccompaniments[0]
+        },
+        acai2: {
+            flavors: selectedFlavors[1],
+            accompaniments: selectedAccompaniments[1]
+        },
         extras: selectedExtras,
         total: currentCombo.price + (selectedExtras.length * 1.99)
     };
