@@ -1206,10 +1206,10 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
 
 function openCheckout() {
     console.log('Iniciando openCheckout');
-    cleanupCart();
+    cleanupCart(); // Adicione esta linha
     const checkoutModal = document.getElementById('checkoutModal');
     loadSavedAddresses();
-    updateOrderSummaryWithExtras(); // Adicione esta linha
+    updateOrderSummaryWithExtras();
     document.getElementById('paymentSection').style.display = 'block';
     document.getElementById('submitOrderBtn').style.display = 'block';
     checkoutModal.style.display = "block";
@@ -1310,17 +1310,16 @@ function displayExtraItems() {
         
 window.toggleExtraItem = function(element, itemName) {
     element.classList.toggle('selected');
-    try {
-        updateOrderSummary();
-    } catch (error) {
-        console.error('Erro ao atualizar o resumo do pedido:', error);
-    }
+    updateOrderSummaryWithExtras();
+    console.log('Item extra toggleado:', itemName); // Para debugar
 }
 
 function updateOrderSummaryWithExtras() {
     const orderSummary = document.getElementById('orderSummary');
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     const userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
+    
+    console.log('Carrinho atual:', userCart); // Para debugar
     
     let summaryHTML = '<h3>Resumo do Pedido:</h3>';
     let subtotal = 0;
@@ -1386,6 +1385,8 @@ function updateOrderSummaryWithExtras() {
     summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
     summaryHTML += `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
     orderSummary.innerHTML = summaryHTML;
+
+    console.log('Resumo do pedido atualizado'); // Para debugar
 }
 
     function updateCartWithExtras(selectedExtras) {
@@ -2020,20 +2021,11 @@ function cleanupCart() {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     let cart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
     
-    cart = cart.filter(item => {
-        if (typeof item.total === 'number') {
-            return true;
-        } else if (typeof item.total === 'string') {
-            item.total = parseFloat(item.total.replace(/[^\d.-]/g, '')) || 0;
-            return true;
-        } else {
-            console.warn('Item removido do carrinho devido a total inválido:', item);
-            return false;
-        }
-    });
-
+    // Remover qualquer item inválido ou pedidos antigos
+    cart = cart.filter(item => item && item.id && item.title);
+    
     localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(cart));
-    console.log('Carrinho limpo:', cart);
+    console.log('Carrinho limpo:', cart); // Para debugar
 }
         
 function updateOrderSummary() {
