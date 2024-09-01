@@ -1189,13 +1189,7 @@ function openCheckout() {
     const checkoutModal = document.getElementById('checkoutModal');
     loadSavedAddresses();
     
-    // Carregar o carrinho atual
-    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
-    const userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
-    console.log('Carrinho carregado:', userCart);
-
-    // Atualizar o resumo do pedido
-    updateOrderSummaryWithExtras(userCart);
+    updateOrderSummaryWithExtras();
     
     document.getElementById('paymentSection').style.display = 'block';
     document.getElementById('submitOrderBtn').style.display = 'block';
@@ -1305,15 +1299,17 @@ window.toggleExtraItem = function(element, itemName) {
     element.classList.toggle('selected');
     console.log('Extra item selected:', element.classList.contains('selected'));
     
-    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
-    const userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
-    
-    updateOrderSummaryWithExtras(userCart);
+    updateOrderSummaryWithExtras();
 }
 
 function updateOrderSummaryWithExtras(userCart) {
     console.log('Iniciando updateOrderSummaryWithExtras');
     const orderSummary = document.getElementById('orderSummary');
+    
+    if (!userCart) {
+        const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+        userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
+    }
     
     console.log('Carrinho atual:', userCart);
 
