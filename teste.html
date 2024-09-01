@@ -782,7 +782,28 @@ function validateAccompaniments(product) {
     }
 
 window.addToCart = function(productId) {
-    // ... (código existente)
+    const product = products.find(p => p.id === productId);
+    const accompaniments = Array.from(document.querySelectorAll('#accompaniments input[type="checkbox"]:checked')).map(cb => cb.value);
+    const extras = Array.from(document.querySelectorAll('#extras input[type="checkbox"]:checked')).map(cb => cb.value);
+
+    if (accompaniments.length < product.minAccompaniments || accompaniments.length > product.maxAccompaniments) {
+        alert(`Por favor, selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos.`);
+        return;
+    }
+
+    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+    let cart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
+
+    const cartItem = {
+        id: Date.now().toString(),
+        productId: product.id,
+        title: product.name,
+        sabores: product.name,
+        tamanho: product.size || 'Padrão',
+        acompanhamentos: accompaniments,
+        extras: extras,
+        total: calculateTotalPrice(product, extras)
+    };
 
     cart.push(cartItem);
     localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(cart));
@@ -1186,8 +1207,14 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
 
 function openCheckout() {
     console.log('Iniciando openCheckout');
+    cleanupCart(); // Adicione esta linha se quiser limpar o carrinho ao abrir o checkout
     const checkoutModal = document.getElementById('checkoutModal');
     loadSavedAddresses();
+    
+    // Desmarcar todos os itens extras
+    document.querySelectorAll('.extra-item').forEach(item => {
+        item.classList.remove('selected');
+    });
     
     updateOrderSummaryWithExtras();
     
@@ -1197,6 +1224,7 @@ function openCheckout() {
     displayExtraItems();
     console.log('Checkout aberto com sucesso');
 }
+        
         function resetCart() {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify([]));
@@ -1302,14 +1330,12 @@ window.toggleExtraItem = function(element, itemName) {
     updateOrderSummaryWithExtras();
 }
 
-function updateOrderSummaryWithExtras(userCart) {
+function updateOrderSummaryWithExtras() {
     console.log('Iniciando updateOrderSummaryWithExtras');
     const orderSummary = document.getElementById('orderSummary');
     
-    if (!userCart) {
-        const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
-        userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
-    }
+    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+    const userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
     
     console.log('Carrinho atual:', userCart);
 
@@ -1988,11 +2014,14 @@ function cleanupCart() {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     let cart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
     
-    // Remover qualquer item inválido ou pedidos antigos
-    cart = cart.filter(item => item && item.id && item.title);
+    // Opção 1: Limpar completamente o carrinho
+    cart = [];
+
+    // Opção 2: Remover apenas itens inválidos (descomente se preferir esta opção)
+    // cart = cart.filter(item => item && item.id && item.title && item.total);
     
     localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(cart));
-    console.log('Carrinho limpo:', cart); // Para debugar
+    console.log('Carrinho limpo:', cart);
 }
         
 function updateOrderSummary() {
