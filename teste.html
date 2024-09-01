@@ -805,18 +805,28 @@ let processedOrders = JSON.parse(localStorage.getItem('processedOrders')) || {};
     return date.toISOString().split('T')[0]; // Retorna apenas a parte da data (YYYY-MM-DD)
 }
 
+let lastFetchTime = 0;
+const fetchInterval = 60000; // 1 minuto
+
 function fetchChatbotConversations() {
+    const currentTime = Date.now();
+    if (currentTime - lastFetchTime < fetchInterval) {
+        console.log('Aguardando intervalo para próxima busca');
+        return;
+    }
+    lastFetchTime = currentTime;
+
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     if (!currentUserWhatsapp) return;
 
     const apiKey = '6564b636-1a71-4a0f-9863-7c87e586384a';
     const chatbotId = 'PpgNSIgeYN1FCucFGP4w3';
-
-    const endDate = formatDate(new Date());
-    const startDate = formatDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)); // 30 dias atrás
-
+    
+    const endDate = new Date().toISOString().split('T')[0];
+    const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // 30 dias atrás
+    
     const url = `https://www.chatbase.co/api/v1/get-conversations?chatbotId=${chatbotId}&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&page=1&size=20`;
-
+    
     fetch(url, {
         method: 'GET',
         headers: {
@@ -831,7 +841,7 @@ function fetchChatbotConversations() {
         return response.json();
     })
     .then(data => {
-        console.log('Dados recebidos:', data);
+        console.log('Dados recebidos da API:', data);
         if (data && data.data && Array.isArray(data.data)) {
             processConversations(data.data, currentUserWhatsapp);
         } else {
@@ -839,8 +849,7 @@ function fetchChatbotConversations() {
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        console.log('URL da requisição:', url);
+        console.error('Erro ao buscar conversas:', error);
     });
 }
         
@@ -853,12 +862,10 @@ function processConversations(conversations, currentUserWhatsapp) {
             conversation.messages.forEach(message => {
                 if (message.role === 'user') {
                     const orderDetails = extractOrderFromMessage(message.content);
-                    if (orderDetails && orderDetails.whatsapp === currentUserWhatsapp) {
-                        if (!processedOrders[orderDetails.id]) {
-                            addOrderToCart(orderDetails);
-                            processedOrders[orderDetails.id] = true;
-                            newOrdersAdded = true;
-                        }
+                    if (orderDetails && orderDetails.whatsapp === currentUserWhatsapp && !processedOrders[orderDetails.id]) {
+                        addOrderToCart(orderDetails);
+                        processedOrders[orderDetails.id] = true;
+                        newOrdersAdded = true;
                     }
                 }
             });
@@ -866,7 +873,6 @@ function processConversations(conversations, currentUserWhatsapp) {
     });
     
     localStorage.setItem('processedOrders', JSON.stringify(processedOrders));
-
     if (newOrdersAdded) {
         updateCartIcon();
     }
@@ -901,27 +907,20 @@ function isOrderNew(orderId, whatsappNumber) {
         
 function extractOrderFromMessage(message) {
     console.log('Extraindo pedido da mensagem:', message);
-    const orderRegex = /(Sabores|Tamanho|Acompanhamentos|Extras|Total|Whatsapp).*?(?=\n|$)/gi;
-    const matches = [...message.matchAll(orderRegex)];
-    
-    if (matches.length > 0) {
-        const orderDetails = {
-            id: Date.now().toString(),
-            sabores: extractDetail(message, 'Sabores'),
-            tamanho: extractDetail(message, 'Tamanho'),
-            acompanhamentos: extractDetail(message, 'Acompanhamentos'),
-            extras: extractDetail(message, 'Extras'),
-            total: extractDetail(message, 'Total'),
-            whatsapp: extractDetail(message, 'Whatsapp')
-        };
+    const orderDetails = {
+        id: Date.now().toString(),
+        sabores: extractDetail(message, 'Sabores'),
+        tamanho: extractDetail(message, 'Tamanho'),
+        acompanhamentos: extractDetail(message, 'Acompanhamentos'),
+        extras: extractDetail(message, 'Extras'),
+        total: extractDetail(message, 'Total'),
+        whatsapp: extractDetail(message, 'Whatsapp')
+    };
 
-        // Verifica se todos os campos necessários estão presentes
-        if (orderDetails.sabores && orderDetails.tamanho && orderDetails.acompanhamentos && orderDetails.total && orderDetails.whatsapp) {
-            console.log('Detalhes do pedido extraídos:', orderDetails);
-            return orderDetails;
-        }
+    if (orderDetails.sabores && orderDetails.tamanho && orderDetails.total && orderDetails.whatsapp) {
+        console.log('Detalhes do pedido extraídos:', orderDetails);
+        return orderDetails;
     }
-    
     return null;
 }
 
@@ -932,26 +931,24 @@ function extractDetail(text, label) {
 }
 
 function addOrderToCart(orderDetails) {
-    const cart = JSON.parse(localStorage.getItem(`cart_${orderDetails.whatsapp}`)) || [];
+    const cartKey = `cart_${orderDetails.whatsapp}`;
+    let cart = JSON.parse(localStorage.getItem(cartKey)) || [];
     
-    const existingOrderIndex = cart.findIndex(item => item.id === orderDetails.id);
-    
-    if (existingOrderIndex === -1) {
-        const newItem = {
+    const existingOrder = cart.find(item => item.id === orderDetails.id);
+    if (!existingOrder) {
+        cart.push({
             id: orderDetails.id,
             title: `${orderDetails.sabores} ${orderDetails.tamanho}`,
             sabores: orderDetails.sabores,
             tamanho: orderDetails.tamanho,
             acompanhamentos: orderDetails.acompanhamentos,
             extras: orderDetails.extras,
-            total: orderDetails.total,
-            whatsapp: orderDetails.whatsapp
-        };
-        cart.push(newItem);
-        localStorage.setItem(`cart_${orderDetails.whatsapp}`, JSON.stringify(cart));
-        console.log(`Novo pedido adicionado ao carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
+            total: orderDetails.total
+        });
+        localStorage.setItem(cartKey, JSON.stringify(cart));
+        console.log('Novo pedido adicionado ao carrinho');
     } else {
-        console.log(`Pedido já existe no carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
+        console.log('Pedido já existe no carrinho');
     }
 }
         
