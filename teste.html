@@ -1216,8 +1216,8 @@ function openCheckout() {
         alert('Ocorreu um erro ao carregar o resumo do pedido. Por favor, tente novamente.');
         return;
     }
-    document.getElementById('paymentSection').style.display = 'none';
-    document.getElementById('submitOrderBtn').style.display = 'none';
+    document.getElementById('paymentSection').style.display = 'block';
+    document.getElementById('submitOrderBtn').style.display = 'block';
     checkoutModal.style.display = "block";
     displayExtraItems();
     console.log('Checkout aberto com sucesso');
@@ -2002,6 +2002,8 @@ window.addComboToCart = function() {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     let cart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
 
+    const comboTotal = currentCombo.price + (selectedExtras.length * 1.99);
+
     const comboItem = {
         id: Date.now().toString(),
         isCombo: true,
@@ -2015,7 +2017,7 @@ window.addComboToCart = function() {
             accompaniments: selectedAccompaniments[1]
         },
         extras: selectedExtras,
-        total: parseFloat((currentCombo.price + (selectedExtras.length * 1.99)).toFixed(2))
+        total: parseFloat(comboTotal.toFixed(2))
     };
 
     cart.push(comboItem);
