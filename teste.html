@@ -815,7 +815,6 @@ function fetchChatbotConversations() {
     const apiKey = '6564b636-1a71-4a0f-9863-7c87e586384a';
     const chatbotId = 'PpgNSIgeYN1FCucFGP4w3';
     
-    // Ajuste as datas para o formato que a API espera
     const endDate = new Date().toISOString().split('T')[0];
     const startDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // 24 horas atrás
     
@@ -847,6 +846,7 @@ function fetchChatbotConversations() {
         console.log('URL da requisição:', url);
     });
 }
+
         
 function processConversations(conversations, currentUserWhatsapp) {
     const processedOrders = JSON.parse(localStorage.getItem('processedOrders') || '{}');
@@ -858,7 +858,7 @@ function processConversations(conversations, currentUserWhatsapp) {
                 if (message.role === 'user') {
                     const orderDetails = extractOrderFromMessage(message.content);
                     if (orderDetails && orderDetails.whatsapp === currentUserWhatsapp) {
-                        const orderId = orderDetails.id || Date.now().toString();
+                        const orderId = orderDetails.id || message.id || Date.now().toString();
                         if (!processedOrders[orderId]) {
                             addOrderToCart(orderDetails);
                             processedOrders[orderId] = true;
@@ -933,12 +933,15 @@ function addOrderToCart(orderDetails) {
     const cartKey = `cart_${orderDetails.whatsapp}`;
     let cart = JSON.parse(localStorage.getItem(cartKey)) || [];
     
-    const existingOrderIndex = cart.findIndex(item => item.id === orderDetails.id);
+    const existingOrderIndex = cart.findIndex(item => 
+        item.sabores === orderDetails.sabores && 
+        item.tamanho === orderDetails.tamanho && 
+        item.total === orderDetails.total
+    );
     
     if (existingOrderIndex === -1) {
-        // Adiciona novo pedido
         cart.push({
-            id: orderDetails.id,
+            id: orderDetails.id || Date.now().toString(),
             title: `${orderDetails.sabores} ${orderDetails.tamanho}`,
             sabores: orderDetails.sabores,
             tamanho: orderDetails.tamanho,
