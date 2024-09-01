@@ -1316,7 +1316,11 @@ function displayExtraItems() {
         
 window.toggleExtraItem = function(element, itemName) {
     element.classList.toggle('selected');
-    updateOrderSummaryWithExtras();
+    try {
+        updateOrderSummary();
+    } catch (error) {
+        console.error('Erro ao atualizar o resumo do pedido:', error);
+    }
 }
 
 function updateOrderSummaryWithExtras() {
