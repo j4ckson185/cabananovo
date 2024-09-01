@@ -782,33 +782,13 @@ function validateAccompaniments(product) {
     }
 
 window.addToCart = function(productId) {
-    const product = products.find(p => p.id === productId);
-    const accompaniments = Array.from(document.querySelectorAll('#accompaniments input[type="checkbox"]:checked')).map(cb => cb.value);
-    const extras = Array.from(document.querySelectorAll('#extras input[type="checkbox"]:checked')).map(cb => cb.value);
-
-    if (accompaniments.length < product.minAccompaniments || accompaniments.length > product.maxAccompaniments) {
-        alert(`Por favor, selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos.`);
-        return;
-    }
-
-    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
-    let cart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
-
-    const cartItem = {
-        id: Date.now().toString(),
-        productId: product.id,
-        title: product.name,
-        sabores: product.name,
-        tamanho: product.size || 'Padrão',
-        acompanhamentos: accompaniments,
-        extras: extras,
-        total: calculateTotalPrice(product, extras)
-    };
+    // ... (código existente)
 
     cart.push(cartItem);
     localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(cart));
     
     console.log('Item adicionado ao carrinho:', cartItem);
+    console.log('Carrinho atualizado:', cart);
 
     document.getElementById('productModal').style.display = "none";
     openCart();
@@ -1206,17 +1186,23 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
 
 function openCheckout() {
     console.log('Iniciando openCheckout');
-    resetCart(); // Use esta função em vez de cleanupCart
     const checkoutModal = document.getElementById('checkoutModal');
     loadSavedAddresses();
-    updateOrderSummaryWithExtras();
+    
+    // Carregar o carrinho atual
+    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+    const userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
+    console.log('Carrinho carregado:', userCart);
+
+    // Atualizar o resumo do pedido
+    updateOrderSummaryWithExtras(userCart);
+    
     document.getElementById('paymentSection').style.display = 'block';
     document.getElementById('submitOrderBtn').style.display = 'block';
     checkoutModal.style.display = "block";
     displayExtraItems();
     console.log('Checkout aberto com sucesso');
 }
-
         function resetCart() {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify([]));
@@ -1315,16 +1301,19 @@ function displayExtraItems() {
 }
         
 window.toggleExtraItem = function(element, itemName) {
+    console.log('Toggling extra item:', itemName);
     element.classList.toggle('selected');
-    updateOrderSummaryWithExtras();
-    console.log('Item extra toggleado:', itemName);
-}
-
-function updateOrderSummaryWithExtras() {
-    console.log('Iniciando updateOrderSummaryWithExtras');
-    const orderSummary = document.getElementById('orderSummary');
+    console.log('Extra item selected:', element.classList.contains('selected'));
+    
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     const userCart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
+    
+    updateOrderSummaryWithExtras(userCart);
+}
+
+function updateOrderSummaryWithExtras(userCart) {
+    console.log('Iniciando updateOrderSummaryWithExtras');
+    const orderSummary = document.getElementById('orderSummary');
     
     console.log('Carrinho atual:', userCart);
 
@@ -1336,11 +1325,11 @@ function updateOrderSummaryWithExtras() {
 
         summaryHTML += `
             <div>
-                <p><strong>${item.title}</strong></p>
+                <p><strong>${item.title || 'Item sem nome'}</strong></p>
                 <p>Sabores: ${item.sabores || 'Não especificado'}</p>
                 <p>Tamanho: ${item.tamanho || 'Não especificado'}</p>
                 <p>Acompanhamentos: ${Array.isArray(item.acompanhamentos) ? item.acompanhamentos.join(', ') : (item.acompanhamentos || 'Nenhum')}</p>
-                ${item.extras && item.extras.length ? `<p>Extras: ${Array.isArray(item.extras) ? item.extras.join(', ') : item.extras}</p>` : ''}
+                ${item.extras && item.extras.length ? `<p>Extras do item: ${Array.isArray(item.extras) ? item.extras.join(', ') : item.extras}</p>` : ''}
                 <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
             </div>
             <hr>
