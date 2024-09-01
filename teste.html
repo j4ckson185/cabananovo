@@ -814,6 +814,7 @@ window.addToCart = function(productId) {
     document.getElementById('productModal').style.display = "none";
     openCart();
     updateCartIcon();
+    updateOrderSummaryWithExtras(); // Adicione esta linha
 }
 
 function calculateTotalPrice(product, selectedExtras) {
@@ -1207,7 +1208,6 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
 
 function openCheckout() {
     console.log('Iniciando openCheckout');
-    cleanupCart(); // Adicione esta linha se quiser limpar o carrinho ao abrir o checkout
     const checkoutModal = document.getElementById('checkoutModal');
     loadSavedAddresses();
     
@@ -1342,22 +1342,26 @@ function updateOrderSummaryWithExtras() {
     let summaryHTML = '<h3>Resumo do Pedido:</h3>';
     let subtotal = 0;
     
-    userCart.forEach(item => {
-        let itemTotal = parseFloat(item.total) || 0;
+    if (userCart.length === 0) {
+        summaryHTML += '<p>Seu carrinho está vazio.</p>';
+    } else {
+        userCart.forEach(item => {
+            let itemTotal = parseFloat(item.total) || 0;
 
-        summaryHTML += `
-            <div>
-                <p><strong>${item.title || 'Item sem nome'}</strong></p>
-                <p>Sabores: ${item.sabores || 'Não especificado'}</p>
-                <p>Tamanho: ${item.tamanho || 'Não especificado'}</p>
-                <p>Acompanhamentos: ${Array.isArray(item.acompanhamentos) ? item.acompanhamentos.join(', ') : (item.acompanhamentos || 'Nenhum')}</p>
-                ${item.extras && item.extras.length ? `<p>Extras do item: ${Array.isArray(item.extras) ? item.extras.join(', ') : item.extras}</p>` : ''}
-                <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
-            </div>
-            <hr>
-        `;
-        subtotal += itemTotal;
-    });
+            summaryHTML += `
+                <div>
+                    <p><strong>${item.title || 'Item sem nome'}</strong></p>
+                    <p>Sabores: ${item.sabores || 'Não especificado'}</p>
+                    <p>Tamanho: ${item.tamanho || 'Não especificado'}</p>
+                    <p>Acompanhamentos: ${Array.isArray(item.acompanhamentos) ? item.acompanhamentos.join(', ') : (item.acompanhamentos || 'Nenhum')}</p>
+                    ${item.extras && item.extras.length ? `<p>Extras do item: ${Array.isArray(item.extras) ? item.extras.join(', ') : item.extras}</p>` : ''}
+                    <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
+                </div>
+                <hr>
+            `;
+            subtotal += itemTotal;
+        });
+    }
     
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
     let extrasTotal = selectedExtras.length * 1.99;
