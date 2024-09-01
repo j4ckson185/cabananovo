@@ -781,29 +781,52 @@ function validateAccompaniments(product) {
         }
     }
 
-    window.addToCart = function(productId) {
-        const product = products.find(p => p.id === productId);
-        const accompaniments = Array.from(document.querySelectorAll('#accompaniments input[type="checkbox"]:checked')).map(cb => cb.value);
-        const extras = Array.from(document.querySelectorAll('#extras input[type="checkbox"]:checked')).map(cb => cb.value);
-        if (accompaniments.length < product.minAccompaniments || accompaniments.length > product.maxAccompaniments) {
-            alert(`Por favor, selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos.`);
-            return;
-        }
-        const cartItem = {
-            id: Date.now(),
-            productId: product.id,
-            name: product.name,
-            price: product.price,
-            accompaniments: accompaniments,
-            extras: extras,
-            totalPrice: calculateTotalPrice(product, extras)
-        };
-        cart.push(cartItem);
-        localStorage.setItem('cart', JSON.stringify(cart));
-        openCart();
+window.addToCart = function(productId) {
+    const product = products.find(p => p.id === productId);
+    const accompaniments = Array.from(document.querySelectorAll('#accompaniments input[type="checkbox"]:checked')).map(cb => cb.value);
+    const extras = Array.from(document.querySelectorAll('#extras input[type="checkbox"]:checked')).map(cb => cb.value);
+
+    if (accompaniments.length < product.minAccompaniments || accompaniments.length > product.maxAccompaniments) {
+        alert(`Por favor, selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos.`);
+        return;
     }
 
-    function calculateTotalPrice(product, selectedExtras) {
+    const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
+    let cart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
+
+    const cartItem = {
+        id: Date.now().toString(), // ID único
+        productId: product.id,
+        title: product.name,
+        sabores: product.name, // Assumindo que o nome do produto é o sabor
+        tamanho: product.size || 'Padrão', // Adicione tamanho se disponível
+        acompanhamentos: accompaniments,
+        extras: extras,
+        total: calculateTotalPrice(product, extras)
+    };
+
+    cart.push(cartItem);
+    localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(cart));
+    
+    console.log('Item adicionado ao carrinho:', cartItem); // Para debug
+
+    document.getElementById('productModal').style.display = "none";
+    openCart();
+    updateCartIcon();
+}
+
+function calculateTotalPrice(product, selectedExtras) {
+    let total = product.price;
+    selectedExtras.forEach(extraName => {
+        const extra = product.extras.find(e => e.name === extraName);
+        if (extra) {
+            total += extra.price;
+        }
+    });
+    return total;
+}
+ 
+        function calculateTotalPrice(product, selectedExtras) {
         let total = product.price;
         selectedExtras.forEach(extraName => {
             const extra = product.extras.find(e => e.name === extraName);
@@ -1035,20 +1058,24 @@ window.openCart = function() {
     const modal = document.getElementById('cartModal');
     const cartContent = document.getElementById('cartContent');
     const cartTotal = document.getElementById('cartTotal');
+
+    console.log('Carrinho atual:', userCart); // Para debug
+
     cartContent.innerHTML = userCart.map(item => `
         <div class="cart-item">
             <div class="cart-item-info">
                 <h3>${item.title}</h3>
                 <p>Sabores: ${item.sabores}</p>
                 <p>Tamanho: ${item.tamanho}</p>
-                <p>Acompanhamentos: ${item.acompanhamentos}</p>
-                ${item.extras ? `<p>Extras: ${item.extras}</p>` : ''}
-                <p>Total: ${item.total}</p>
+                <p>Acompanhamentos: ${item.acompanhamentos.join(', ')}</p>
+                ${item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+                <p>Total: R$ ${typeof item.total === 'number' ? item.total.toFixed(2) : item.total}</p>
             </div>
             <span class="cart-item-remove" onclick="removeFromCart('${item.id}')">🗑️</span>
         </div>
     `).join('');
-    const total = userCart.reduce((sum, item) => sum + parseFloat(item.total.replace('R$', '').trim() || 0), 0);
+
+    const total = userCart.reduce((sum, item) => sum + (typeof item.total === 'number' ? item.total : parseFloat(item.total.replace('R$', '').trim() || 0)), 0);
     cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
     modal.style.display = "block";
 }
@@ -1078,8 +1105,10 @@ window.removeFromCart = function(itemId) {
     
     // Atualiza o ícone do carrinho
     updateCartIcon();
-};
 
+    console.log('Item removido:', itemId); // Para debug
+};
+        
 window.openCustomerIdentification = function() {
     document.getElementById('cartModal').style.display = "none";
     const modal = document.getElementById('customerIdentificationModal');
