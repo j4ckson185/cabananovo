@@ -1063,7 +1063,7 @@ window.openCart = function() {
                         <p>Sabores: ${item.acai2.flavors.join(', ')}</p>
                         <p>Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
                         ${item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
-                        <p>Total: R$ ${parseFloat(item.total).toFixed(2)}</p>
+                        <p>Total: R$ ${item.total.toFixed(2)}</p>
                     </div>
                     <span class="cart-item-remove" onclick="removeFromCart('${item.id}')">🗑️</span>
                 </div>
@@ -2105,8 +2105,6 @@ window.addComboToCart = function() {
     const currentUserWhatsapp = localStorage.getItem('currentUserWhatsapp');
     let cart = JSON.parse(localStorage.getItem(`cart_${currentUserWhatsapp}`)) || [];
 
-    const comboTotal = currentCombo.price + (selectedExtras.length * 1.99);
-
     const comboItem = {
         id: Date.now().toString(),
         isCombo: true,
@@ -2120,7 +2118,7 @@ window.addComboToCart = function() {
             accompaniments: selectedAccompaniments[1]
         },
         extras: selectedExtras,
-        total: parseFloat(comboTotal.toFixed(2))
+        total: currentCombo.price + (selectedExtras.length * 1.99)
     };
 
     cart.push(comboItem);
