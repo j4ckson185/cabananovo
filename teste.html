@@ -1542,6 +1542,18 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             itemTotal = 0;
         }
 
+        if (item.isCombo) {
+            message += `\n${item.title} - R$ ${itemTotal.toFixed(2)}`;
+            message += `\nAçaí 1:`;
+            message += `\nSabores: ${item.acai1.flavors.join(', ')}`;
+            message += `\nAcompanhamentos: ${item.acai1.accompaniments.join(', ')}`;
+            message += `\nAçaí 2:`;
+            message += `\nSabores: ${item.acai2.flavors.join(', ')}`;
+            message += `\nAcompanhamentos: ${item.acai2.accompaniments.join(', ')}`;
+            if (item.extras && item.extras.length > 0) {
+                message += `\nExtras: ${item.extras.join(', ')}`;
+            }
+         } else {                 
         message += `\n${item.title} - R$ ${itemTotal.toFixed(2)}`;
         message += `\nSabores: ${item.sabores}`;
         message += `\nAcompanhamentos: ${Array.isArray(item.acompanhamentos) ? item.acompanhamentos.join(', ') : item.acompanhamentos}`;
