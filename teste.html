@@ -1348,20 +1348,36 @@ function updateOrderSummaryWithExtras() {
         summaryHTML += '<p>Seu carrinho está vazio.</p>';
     } else {
         userCart.forEach(item => {
-            // Alteração aqui para garantir que estamos pegando o valor correto
             let itemTotal = typeof item.total === 'number' ? item.total : parseFloat(item.total.replace(/[^\d.-]/g, '')) || 0;
 
-            summaryHTML += `
-                <div>
-                    <p><strong>${item.title || 'Item sem nome'}</strong></p>
-                    <p>Sabores: ${item.sabores || 'Não especificado'}</p>
-                    <p>Tamanho: ${item.tamanho || 'Não especificado'}</p>
-                    <p>Acompanhamentos: ${Array.isArray(item.acompanhamentos) ? item.acompanhamentos.join(', ') : (item.acompanhamentos || 'Nenhum')}</p>
-                    ${item.extras && item.extras.length ? `<p>Extras do item: ${Array.isArray(item.extras) ? item.extras.join(', ') : item.extras}</p>` : ''}
-                    <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
-                </div>
-                <hr>
-            `;
+            if (item.isCombo) {
+                summaryHTML += `
+                    <div>
+                        <p><strong>${item.title || 'Combo'}</strong></p>
+                        <p>Açaí 1:</p>
+                        <p>Sabores: ${item.acai1.flavors.join(', ')}</p>
+                        <p>Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                        <p>Açaí 2:</p>
+                        <p>Sabores: ${item.acai2.flavors.join(', ')}</p>
+                        <p>Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+                        ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+                        <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
+                    </div>
+                    <hr>
+                `;
+            } else {
+                summaryHTML += `
+                    <div>
+                        <p><strong>${item.title || 'Item sem nome'}</strong></p>
+                        <p>Sabores: ${item.sabores || 'Não especificado'}</p>
+                        <p>Tamanho: ${item.tamanho || 'Não especificado'}</p>
+                        <p>Acompanhamentos: ${Array.isArray(item.acompanhamentos) ? item.acompanhamentos.join(', ') : (item.acompanhamentos || 'Nenhum')}</p>
+                        ${item.extras && item.extras.length ? `<p>Extras do item: ${Array.isArray(item.extras) ? item.extras.join(', ') : item.extras}</p>` : ''}
+                        <p>Subtotal: R$ ${itemTotal.toFixed(2)}</p>
+                    </div>
+                    <hr>
+                `;
+            }
             subtotal += itemTotal;
         });
     }
