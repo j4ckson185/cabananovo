@@ -975,7 +975,6 @@ function addOrderToCart(orderDetails) {
         item.tamanho === orderDetails.tamanho && 
         item.total === orderDetails.total
     );
-
     if (wasRemoved) {
         console.log(`Item previamente removido, não será adicionado novamente: ${orderDetails.sabores} ${orderDetails.tamanho}`);
         return;
@@ -988,17 +987,19 @@ function addOrderToCart(orderDetails) {
     );
     
     if (existingOrderIndex === -1) {
-        cart.push({
+        const newItem = {
             id: orderDetails.id || Date.now().toString(),
             title: `${orderDetails.sabores} ${orderDetails.tamanho}`,
-            sabores: orderDetails.sabores,
-            tamanho: orderDetails.tamanho,
-            acompanhamentos: orderDetails.acompanhamentos,
-            extras: orderDetails.extras,
-            total: orderDetails.total
-        });
+            sabores: orderDetails.sabores || 'Não especificado',
+            tamanho: orderDetails.tamanho || 'Não especificado',
+            acompanhamentos: orderDetails.acompanhamentos || [],
+            extras: orderDetails.extras || [],
+            total: parseFloat(orderDetails.total.replace(/[^\d.-]/g, '')) || 0
+        };
+        
+        cart.push(newItem);
         localStorage.setItem(cartKey, JSON.stringify(cart));
-        console.log(`Novo pedido adicionado ao carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
+        console.log(`Novo pedido adicionado ao carrinho para o WhatsApp: ${orderDetails.whatsapp}`, newItem);
     } else {
         console.log(`Pedido já existe no carrinho para o WhatsApp: ${orderDetails.whatsapp}`);
     }
