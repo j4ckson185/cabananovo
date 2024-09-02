@@ -1553,12 +1553,13 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             if (item.extras && item.extras.length > 0) {
                 message += `\nExtras: ${item.extras.join(', ')}`;
             }
-         } else {                 
-        message += `\n${item.title} - R$ ${itemTotal.toFixed(2)}`;
-        message += `\nSabores: ${item.sabores}`;
-        message += `\nAcompanhamentos: ${Array.isArray(item.acompanhamentos) ? item.acompanhamentos.join(', ') : item.acompanhamentos}`;
-        if (item.extras && item.extras.length > 0) {
-            message += `\nExtras: ${Array.isArray(item.extras) ? item.extras.join(', ') : item.extras}`;
+        } else {
+            message += `\n${item.title} - R$ ${itemTotal.toFixed(2)}`;
+            message += `\nSabores: ${item.sabores}`;
+            message += `\nAcompanhamentos: ${Array.isArray(item.acompanhamentos) ? item.acompanhamentos.join(', ') : item.acompanhamentos}`;
+            if (item.extras && item.extras.length > 0) {
+                message += `\nExtras: ${Array.isArray(item.extras) ? item.extras.join(', ') : item.extras}`;
+            }
         }
         total += itemTotal;
     });
@@ -1598,12 +1599,9 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         createdAt: new Date()
     };
 
-    console.log('Pedido criado:', order);
-
-    // Salvar o pedido no Firebase
     db.collection('orders').add(order)
         .then(() => {
-            console.log('Pedido salvo com sucesso no Firebase');
+            console.log('Pedido adicionado com sucesso!');
             return db.collection('customers').doc(customerInfo.phone).get();
         })
         .then((doc) => {
@@ -1631,22 +1629,15 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
                     message += `\nFaltam ${10 - orderCount} pedidos para o próximo desconto de fidelidade.`;
                 }
             }
-            
-            console.log('Mensagem final do pedido:', message);
-            
-            // Encaminhar para o WhatsApp
-            const whatsappUrl = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
-            window.open(whatsappUrl, '_blank');
-
-            // Limpar o carrinho e fechar o modal de checkout
-            localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify([]));
+            window.open(`https://wa.me/5584987673202?text=${encodeURIComponent(message)}`, '_blank');
+            cart = [];
+            localStorage.setItem(`cart_${currentUserWhatsapp}`, JSON.stringify(cart));
             document.getElementById('paymentMethod').value = 'card';
             handlePaymentChange();
             document.getElementById('checkoutModal').style.display = "none";
         })
         .catch(error => {
-            console.error('Erro ao processar o pedido:', error);
-            alert('Ocorreu um erro ao processar seu pedido. Por favor, tente novamente.');
+            console.error('Erro ao adicionar pedido: ', error);
         });
 });
 
