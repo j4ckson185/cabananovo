@@ -421,6 +421,9 @@ function showHeaderAndCategories() {
             }
 
             window.openProductDetails = function(productId) {
+             if (event) {
+                event.stopPropagation();
+            }
                 hideHeaderAndCategories() {
                 const product = products.find(p => p.id === productId);
                 const modal = document.getElementById('productModal');
