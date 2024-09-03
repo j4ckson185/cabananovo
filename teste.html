@@ -425,14 +425,11 @@ function showHeaderAndCategories() {
                 cartCount.textContent = cart.length;
             }
 
-            window.openProductDetails = function(productId) {
-             if (event) {
-                event.stopPropagation();
-            }
-                hideHeaderAndCategories();
-                const product = products.find(p => p.id === productId);
-                const modal = document.getElementById('productModal');
-                const modalContent = document.getElementById('modalContent');
+window.openProductDetails = function(productId) {
+    hideHeaderAndCategories();
+    const product = products.find(p => p.id === productId);
+    const modal = document.getElementById('productModal');
+    const modalContent = document.getElementById('modalContent');
                 modalContent.innerHTML = `
                     <h2>${product.name}</h2>
                     <img src="${product.image}" alt="${product.name}" style="width:100%; max-height:300px; object-fit:cover;">
