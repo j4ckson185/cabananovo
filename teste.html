@@ -676,7 +676,7 @@ window.applyDiscount = function() {
                 discountMessage.style.color = 'red';
             }
             console.log("Chamando updateOrderSummary de applyDiscount");
-            window.updateOrderSummary();
+            updateOrderSummary(); // Chamada direta
         })
         .catch((error) => {
             console.error("Erro ao verificar cupom:", error);
@@ -685,17 +685,22 @@ window.applyDiscount = function() {
             window.appliedDiscount = 0;
             window.appliedCouponId = null;
             console.log("Chamando updateOrderSummary após erro");
-            window.updateOrderSummary();
+            updateOrderSummary(); // Chamada direta
         });
 }
 
         // Função global para atualizar o resumo do pedido
-window.updateOrderSummary = function() {
+function updateOrderSummary() {
     console.log("Iniciando updateOrderSummary");
     console.log("Desconto aplicado:", window.appliedDiscount);
     console.log("Taxa de entrega:", window.deliveryFee);
 
     const orderSummary = document.getElementById('orderSummary');
+    if (!orderSummary) {
+        console.error("Elemento orderSummary não encontrado");
+        return;
+    }
+
     let summaryHTML = '<h3>Resumo do Pedido:</h3>';
     let subtotal = 0;
     
@@ -703,22 +708,6 @@ window.updateOrderSummary = function() {
 
     window.cart.forEach(item => {
         console.log("Item do carrinho:", item);
-        if (item.acai1) {  // Se for um combo
-            summaryHTML += `
-                <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                <p>Extras: ${item.extras.length > 0 ? item.extras.join(', ') : 'Nenhum'}</p>
-                <hr>
-            `;
-        } else {  // Se for um item individual
-            summaryHTML += `
-                <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                <p>Acompanhamentos: ${item.accompaniments ? item.accompaniments.join(', ') : 'Nenhum'}</p>
-                <p>Extras: ${item.extras ? item.extras.join(', ') : 'Nenhum'}</p>
-                <hr>
-            `;
-        }
         subtotal += item.totalPrice;
     });
     
@@ -727,10 +716,8 @@ window.updateOrderSummary = function() {
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
     let extrasTotal = 0;
     selectedExtras.forEach(item => {
-        const itemName = item.querySelector('p').textContent;
         const itemPrice = 1.99;
         extrasTotal += itemPrice;
-        summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
     });
     subtotal += extrasTotal;
 
@@ -738,7 +725,6 @@ window.updateOrderSummary = function() {
 
     summaryHTML += `<h4>Subtotal: R$ ${subtotal.toFixed(2)}</h4>`;
     
-    // Aplicar o desconto
     if (window.appliedDiscount > 0) {
         summaryHTML += `<h4>Desconto aplicado: R$ ${window.appliedDiscount.toFixed(2)}</h4>`;
     }
@@ -749,6 +735,7 @@ window.updateOrderSummary = function() {
     summaryHTML += `<h4>Taxa de Entrega: R$ ${window.deliveryFee.toFixed(2)}</h4>`;
     const finalTotal = discountedTotal + window.deliveryFee;
     summaryHTML += `<h3>Total: R$ ${finalTotal.toFixed(2)}</h3>`;
+    
     orderSummary.innerHTML = summaryHTML;
 
     console.log('Resumo final:', {
