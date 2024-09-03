@@ -631,12 +631,15 @@
 
         // Variáveis globais
         window.db = null;
+        window.cart = JSON.parse(localStorage.getItem('cart')) || [];
+        window.deliveryFee = 3.00;
         window.customerInfo = {};
         window.appliedDiscount = 0;
         window.appliedCouponId = null;
 
         // Função global para aplicar desconto
 window.applyDiscount = function() {
+    console.log("Iniciando applyDiscount");
     if (!window.db) {
         console.error("Firebase não está inicializado");
         alert("Erro ao aplicar cupom. Por favor, recarregue a página e tente novamente.");
@@ -655,10 +658,11 @@ window.applyDiscount = function() {
                 const coupon = querySnapshot.docs[0].data();
                 const couponId = querySnapshot.docs[0].id;
                 if (!coupon.customerPhone || coupon.customerPhone === window.customerInfo.phone) {
-                    window.appliedDiscount = coupon.discount;
+                    window.appliedDiscount = parseFloat(coupon.discount);
                     window.appliedCouponId = couponId;
                     discountMessage.textContent = `Cupom aplicado! Desconto de R$${window.appliedDiscount.toFixed(2)}`;
                     discountMessage.style.color = 'green';
+                    console.log("Cupom aplicado:", window.appliedDiscount);
                 } else {
                     window.appliedDiscount = 0;
                     window.appliedCouponId = null;
@@ -671,6 +675,7 @@ window.applyDiscount = function() {
                 discountMessage.textContent = 'Cupom inválido ou expirado';
                 discountMessage.style.color = 'red';
             }
+            console.log("Chamando updateOrderSummary de applyDiscount");
             window.updateOrderSummary();
         })
         .catch((error) => {
@@ -679,17 +684,25 @@ window.applyDiscount = function() {
             discountMessage.style.color = 'red';
             window.appliedDiscount = 0;
             window.appliedCouponId = null;
+            console.log("Chamando updateOrderSummary após erro");
             window.updateOrderSummary();
         });
 }
 
         // Função global para atualizar o resumo do pedido
 window.updateOrderSummary = function() {
+    console.log("Iniciando updateOrderSummary");
+    console.log("Desconto aplicado:", window.appliedDiscount);
+    console.log("Taxa de entrega:", window.deliveryFee);
+
     const orderSummary = document.getElementById('orderSummary');
     let summaryHTML = '<h3>Resumo do Pedido:</h3>';
     let subtotal = 0;
     
-    cart.forEach(item => {
+    console.log("Carrinho:", window.cart);
+
+    window.cart.forEach(item => {
+        console.log("Item do carrinho:", item);
         if (item.acai1) {  // Se for um combo
             summaryHTML += `
                 <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
@@ -709,6 +722,8 @@ window.updateOrderSummary = function() {
         subtotal += item.totalPrice;
     });
     
+    console.log("Subtotal após itens do carrinho:", subtotal);
+
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
     let extrasTotal = 0;
     selectedExtras.forEach(item => {
@@ -719,6 +734,8 @@ window.updateOrderSummary = function() {
     });
     subtotal += extrasTotal;
 
+    console.log("Subtotal após extras:", subtotal);
+
     summaryHTML += `<h4>Subtotal: R$ ${subtotal.toFixed(2)}</h4>`;
     
     // Aplicar o desconto
@@ -727,13 +744,14 @@ window.updateOrderSummary = function() {
     }
     
     const discountedTotal = Math.max(0, subtotal - window.appliedDiscount);
+    console.log("Total após desconto:", discountedTotal);
     
     summaryHTML += `<h4>Taxa de Entrega: R$ ${window.deliveryFee.toFixed(2)}</h4>`;
     const finalTotal = discountedTotal + window.deliveryFee;
     summaryHTML += `<h3>Total: R$ ${finalTotal.toFixed(2)}</h3>`;
     orderSummary.innerHTML = summaryHTML;
 
-    console.log('Resumo atualizado:', {
+    console.log('Resumo final:', {
         subtotal,
         appliedDiscount: window.appliedDiscount,
         discountedTotal,
