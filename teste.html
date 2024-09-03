@@ -200,6 +200,11 @@
         </div>
     </header>
     <main>
+        <div class="user-options">
+    <button class="btn" onclick="openMyOrders()">Meus Pedidos</button>
+    <button class="btn" onclick="openComboBuilder()">Montar Combo</button>
+    <button class="btn" onclick="openLoyaltyProgram()">Programa Fidelidade</button>
+       </div>
         <div id="categoriesContainer" class="categories"></div>
         <div class="store-hours">
             Aberta de Quarta à Domingo, de 12:30h às 22:30h
@@ -1037,6 +1042,7 @@ window.checkLoyaltyPoints = function() {
 
 function closeModal(modalId) {
     document.getElementById(modalId).style.display = "none";
+    showHeaderAndCategories();
 }
 
 document.querySelectorAll('.close').forEach(closeBtn => {
