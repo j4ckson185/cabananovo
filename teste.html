@@ -614,7 +614,9 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script>
-    window.applyDiscount = function() {
+        let db;
+        
+        window.applyDiscount = function() {
         const discountCode = document.getElementById('discountCode').value;
         const discountMessage = document.getElementById('discountMessage');
         
@@ -1072,7 +1074,7 @@
                 updateOrderSummary();
             }
 
-function updateOrderSummary() {
+    window.updateOrderSummary = function() {
     const orderSummary = document.getElementById('orderSummary');
     let summaryHTML = '<h3>Resumo do Pedido:</h3>';
     let total = 0;
