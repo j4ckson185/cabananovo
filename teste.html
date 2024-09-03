@@ -575,7 +575,7 @@
             </form>
             <div id="discountSection">
     <h3>Cupom de Desconto</h3>
-    <input type="text" id="discountCode" placeholder="Digite o código do cupom, caso possua">
+    <input type="text" id="discountCode" placeholder="Digite o código do cupom">
     <button type="button" class="btn" onclick="applyDiscount()">Aplicar Cupom</button>
     <p id="discountMessage"></p>
    </div>
@@ -614,6 +614,43 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script>
+    window.applyDiscount = function() {
+        const discountCode = document.getElementById('discountCode').value;
+        const discountMessage = document.getElementById('discountMessage');
+        
+        db.collection('coupons')
+            .where('code', '==', discountCode)
+            .where('expirationDate', '>', new Date())
+            .get()
+            .then((querySnapshot) => {
+                if (!querySnapshot.empty) {
+                    const coupon = querySnapshot.docs[0].data();
+                    const couponId = querySnapshot.docs[0].id;
+                    if (!coupon.customerPhone || coupon.customerPhone === customerInfo.phone) {
+                        appliedDiscount = coupon.discount;
+                        appliedCouponId = couponId;
+                        discountMessage.textContent = `Cupom aplicado! Desconto de R$${appliedDiscount.toFixed(2)}`;
+                        discountMessage.style.color = 'green';
+                        updateOrderSummary();
+                    } else {
+                        discountMessage.textContent = 'Este cupom é exclusivo para outro cliente.';
+                        discountMessage.style.color = 'red';
+                    }
+                } else {
+                    appliedDiscount = 0;
+                    appliedCouponId = null;
+                    discountMessage.textContent = 'Cupom inválido ou expirado';
+                    discountMessage.style.color = 'red';
+                    updateOrderSummary();
+                }
+            })
+            .catch((error) => {
+                console.error("Erro ao verificar cupom:", error);
+                discountMessage.textContent = 'Erro ao verificar cupom. Tente novamente.';
+                discountMessage.style.color = 'red';
+            });
+    }
+        
         document.addEventListener('DOMContentLoaded', function () {
             // Configuração do Firebase
             const firebaseConfig = {
@@ -1080,43 +1117,6 @@ function updateOrderSummary() {
     summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
     summaryHTML += `<h3>Total: R$ ${(discountedTotal + deliveryFee).toFixed(2)}</h3>`;
     orderSummary.innerHTML = summaryHTML;
-}
-
-            function applyDiscount() {
-    const discountCode = document.getElementById('discountCode').value;
-    const discountMessage = document.getElementById('discountMessage');
-    
-    db.collection('coupons')
-        .where('code', '==', discountCode)
-        .where('expirationDate', '>', new Date())
-        .get()
-        .then((querySnapshot) => {
-            if (!querySnapshot.empty) {
-                const coupon = querySnapshot.docs[0].data();
-                const couponId = querySnapshot.docs[0].id;
-                if (!coupon.customerPhone || coupon.customerPhone === customerInfo.phone) {
-                    appliedDiscount = coupon.discount;
-                    appliedCouponId = couponId;
-                    discountMessage.textContent = `Cupom aplicado! Desconto de R$${appliedDiscount.toFixed(2)}`;
-                    discountMessage.style.color = 'green';
-                    updateOrderSummary();
-                } else {
-                    discountMessage.textContent = 'Este cupom é exclusivo para outro cliente.';
-                    discountMessage.style.color = 'red';
-                }
-            } else {
-                appliedDiscount = 0;
-                appliedCouponId = null;
-                discountMessage.textContent = 'Cupom inválido ou expirado';
-                discountMessage.style.color = 'red';
-                updateOrderSummary();
-            }
-        })
-        .catch((error) => {
-            console.error("Erro ao verificar cupom:", error);
-            discountMessage.textContent = 'Erro ao verificar cupom. Tente novamente.';
-            discountMessage.style.color = 'red';
-        });
 }
 
 document.getElementById('checkoutForm').addEventListener('submit', function(e) {
