@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Cupons - Cabana Açaí</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #4a0e4e;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #4a0e4e;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #6a1a6e;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #4a0e4e;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gerenciar Cupons</h1>
+        <form id="couponForm">
+            <input type="text" id="couponCode" placeholder="Código do Cupom" required>
+            <input type="number" id="discountAmount" placeholder="Valor do Desconto (R$)" required>
+            <input type="datetime-local" id="expirationDate" required>
+            <input type="tel" id="customerPhone" placeholder="WhatsApp do Cliente (opcional)">
+            <button type="submit">Adicionar Cupom</button>
+        </form>
+        <table id="couponTable">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Desconto</th>
+                    <th>Validade</th>
+                    <th>Cliente</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="couponList"></tbody>
+        </table>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script>
+        // Inicialização do Firebase (use a mesma configuração do seu arquivo principal)
+        const firebaseConfig = {
+            apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
+            authDomain: "cabana-8d55e.firebaseapp.com",
+            databaseURL: "https://cabana-8d55e-default-rtdb.firebaseio.com",
+            projectId: "cabana-8d55e",
+            storageBucket: "cabana-8d55e.appspot.com",
+            messagingSenderId: "706144237954",
+            appId: "1:706144237954:web:345c10370972486afc779b",
+            measurementId: "G-96Y337GYT8"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        document.getElementById('couponForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const couponCode = document.getElementById('couponCode').value;
+            const discountAmount = parseFloat(document.getElementById('discountAmount').value);
+            const expirationDate = new Date(document.getElementById('expirationDate').value);
+            const customerPhone = document.getElementById('customerPhone').value;
+
+            db.collection('coupons').add({
+                code: couponCode,
+                discount: discountAmount,
+                expirationDate: expirationDate,
+                customerPhone: customerPhone || null
+            }).then(() => {
+                alert('Cupom adicionado com sucesso!');
+                document.getElementById('couponForm').reset();
+                loadCoupons();
+            }).catch(error => {
+                console.error('Erro ao adicionar cupom:', error);
+                alert('Erro ao adicionar cupom. Por favor, tente novamente.');
+            });
+        });
+
+        function loadCoupons() {
+            const couponList = document.getElementById('couponList');
+            couponList.innerHTML = '';
+            db.collection('coupons').get().then((querySnapshot) => {
+                querySnapshot.forEach((doc) => {
+                    const coupon = doc.data();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${coupon.code}</td>
+                        <td>R$ ${coupon.discount.toFixed(2)}</td>
+                        <td>${new Date(coupon.expirationDate.toDate()).toLocaleString('pt-BR')}</td>
+                        <td>${coupon.customerPhone || 'N/A'}</td>
+                        <td><button onclick="removeCoupon('${doc.id}')">Remover</button></td>
+                    `;
+                    couponList.appendChild(row);
+                });
+            });
+        }
+
+        function removeCoupon(couponId) {
+            if (confirm('Tem certeza que deseja remover este cupom?')) {
+                db.collection('coupons').doc(couponId).delete().then(() => {
+                    alert('Cupom removido com sucesso!');
+                    loadCoupons();
+                }).catch(error => {
+                    console.error('Erro ao remover cupom:', error);
+                    alert('Erro ao remover cupom. Por favor, tente novamente.');
+                });
+            }
+        }
+
+        loadCoupons();
+    </script>
+</body>
+</html>
