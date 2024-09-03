@@ -185,13 +185,158 @@
             text-decoration: none;
             cursor: pointer;
         }
-        .user-options {
+        .extras-list {
+            margin-top: 1em;
+        }
+        .extras-list h3 {
+            margin-bottom: 0.5em;
+        }
+        .extras-list ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .extras-list li {
+            margin-bottom: 0.5em;
+        }
+        .checkbox-list {
             display: flex;
-            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+        .checkbox-item input {
+            margin-right: 5px;
+        }
+        #cartModal .modal-content {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .cart-item-info {
+            flex-grow: 1;
+        }
+        .cart-item-remove {
+            color: red;
+            cursor: pointer;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+        #customerIdentificationForm {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        #customerIdentificationForm h2 {
+            color: var(--primary-color);
             margin-bottom: 20px;
         }
-        .user-options .btn {
-            margin: 0 10px;
+        #customerIdentificationForm label {
+            display: block;
+            margin-top: 10px;
+            color: var(--secondary-color);
+        }
+        #customerIdentificationForm input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #customerIdentificationForm .btn {
+            margin-top: 20px;
+            width: 100%;
+        }
+        .input-icon {
+            position: relative;
+        }
+        .input-icon i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary-color);
+        }
+        .input-icon input {
+            padding-left: 35px;
+        }
+        #checkoutForm {
+            margin-top: 20px;
+        }
+        #checkoutForm label {
+            display: block;
+            margin-top: 10px;
+        }
+        #checkoutForm input, #checkoutForm textarea, #checkoutForm select {
+            width: 100%;
+            padding: 5px;
+            margin-top: 5px;
+        }
+        #orderSummary {
+            margin-top: 20px;
+        }
+        .loyalty-info {
+            background-color: #e8f5e9;
+            border: 1px solid #4caf50;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .required-field {
+            color: red;
+        }
+        .extras-suggestion {
+            background-color: #f0e6ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .extras-suggestion h3 {
+            color: #4a0e4e;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .extra-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+        }
+        .extra-item {
+            background-color: white;
+            border: 2px solid #8e44ad;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .extra-item img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+        .extra-item p {
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+        .extra-item.selected {
+            background-color: #e6e6fa;
+            border-color: #4a0e4e;
+            transform: scale(1.05);
         }
         #comboModal .modal-content {
             max-width: 800px;
@@ -249,6 +394,14 @@
             background-color: #f0f0f0;
             border-radius: 8px;
         }
+        .user-options {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .user-options .btn {
+            margin: 0 10px;
+        }
     </style>
 </head>
 <body>
@@ -293,7 +446,7 @@
             <button class="btn" onclick="continueShopping()">Continuar Comprando</button>
         </div>
     </div>
-    <div id="customerIdentificationModal" class="modal">
+<div id="customerIdentificationModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
             <form id="customerIdentificationForm">
@@ -308,6 +461,69 @@
                 </div>
                 <button type="submit" class="btn">Avançar</button>
             </form>
+        </div>
+    </div>
+    <div id="checkoutModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Finalizar Pedido</h2>
+            <form id="checkoutForm">
+                <div id="deliveryAddressSection">
+                    <h3>Endereço de Entrega</h3>
+                    <select id="savedAddresses" onchange="handleSavedAddressChange()">
+                        <option value="">Selecione um endereço salvo ou cadastre um novo</option>
+                    </select>
+                    <button type="button" class="btn" onclick="showNewAddressForm()">Cadastrar Novo Endereço</button>
+                    <div id="newAddressForm" style="display: none;">
+                        <label for="street">Rua: <span class="required-field">*</span></label>
+                        <input type="text" id="street" required>
+                        <label for="number">Número: <span class="required-field">*</span></label>
+                        <input type="text" id="number" required>
+                        <label for="complement">Complemento:</label>
+                        <input type="text" id="complement">
+                        <label for="neighborhood">Bairro: <span class="required-field">*</span></label>
+                        <input type="text" id="neighborhood" required>
+                        <label for="city">Cidade: <span class="required-field">*</span></label>
+                        <input type="text" id="city" required>
+                        <label for="state">Estado: <span class="required-field">*</span></label>
+                        <input type="text" id="state" required>
+                        <button type="button" class="btn" onclick="saveNewAddress()">Salvar Endereço</button>
+                    </div>
+                </div>
+                <div id="paymentSection" style="display: none;">
+                    <label for="paymentMethod">Método de Pagamento:</label>
+                    <select id="paymentMethod" required onchange="handlePaymentChange()">
+                        <option value="card">Cartão na entrega</option>
+                        <option value="money">Dinheiro</option>
+                        <option value="pix">PIX</option>
+                    </select>
+                    <div id="moneyChange" style="display:none;">
+                        <label for="changeNeeded">Precisa de troco?</label>
+                        <select id="changeNeeded" onchange="handleChangeNeeded()">
+                            <option value="no">Não</option>
+                            <option value="yes">Sim</option>
+                        </select>
+                        <div id="changeAmountDiv" style="display:none;">
+                            <label for="changeAmount">Troco para quanto?</label>
+                            <input type="number" id="changeAmount" min="0" step="0.01">
+                        </div>
+                    </div>
+                    <div id="pixInfo" style="display:none;">
+                        <p>Chave PIX: 84 9 8873-1028</p>
+                        <p>Após o envio do PIX, favor enviar o comprovante para o WhatsApp 84 9 8767-3202</p>
+                    </div>
+                </div>
+                <button type="submit" class="btn" id="submitOrderBtn" style="display: none;">Fazer Pedido</button>
+            </form>
+            <div id="orderSummary"></div>
+            <div id="loyaltyInfo" class="loyalty-info"></div>
+            
+            <div class="extras-suggestion">
+                <h3>Deixe seu açaí mais delicioso e recheado com esses itens extras</h3>
+                <div class="extra-items" id="extraItems">
+                    <!-- Itens extras serão adicionados aqui via JavaScript -->
+                </div>
+            </div>
         </div>
     </div>
     <div id="comboModal" class="modal">
@@ -354,20 +570,30 @@
             const deliveryFee = 3.00;
             let customerInfo = {};
             let savedAddresses = [];
-
+            // Dados dos itens extras
+            const extraItems = [
+                { name: "Ovomaltine", price: 1.99, image: "https://images.tcdn.com.br/img/img_prod/919170/ovomaltine_flocos_extra_crocante_750g_425_1_e9d3c08b8341c4e7818b1759c877a213.jpg" },
+                { name: "Amendoim", price: 1.99, image: "https://cdn.entrypoint.directory/assets/39790/produtos/3053/xerem-amendoim-secundaria-relva-verde-500g.jpg" },
+                { name: "Granola", price: 1.99, image: "https://jardimdaservas.com.br/wp-content/uploads/2023/05/GRANOLAAAIGUARANEMEL-1.jpg" },
+                { name: "Chocoball", price: 1.99, image: "https://lojasantoantonio.vtexassets.com/arquivos/ids/156826/562-Choco-Power-Ball-Mini-Preto-e-Branco-500G-MAVALERIO.jpg?v=637254329101230000" },
+                { name: "M&M", price: 1.99, image: "https://static.welban.com.br/public/welban/imagens/produtos/confete-de-chocolate-colorido-500g-chococandy-dori-64029a15a016e.jpg" },
+                { name: "Côco Ralado", price: 1.99, image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_Mt3NOWlBbg-Yv0ttYPiXwNdMIxdh1aSuxJOIg50WN-1FOjiagSbr7MDjQf9OE0b2hnU&usqp=CAU" },
+                { name: "Leite em pó", price: 1.99, image: "https://acougueamigos.com/cdn/shop/products/acougue-amigos_1_27.jpg?v=1615589403" },
+                { name: "Leite condensado", price: 1.99, image: "https://static.escolakids.uol.com.br/conteudo_legenda/07795c263fc55bd57242ef71ae55cee8.jpg" },
+                { name: "Calda de Morango", price: 1.99, image: "https://i.ytimg.com/vi/3K6gWHdjyUU/maxresdefault.jpg" },
+                { name: "Calda de Chocolate", price: 1.99, image: "https://img.cybercook.com.br/receitas/53/calda-de-chocolate.jpeg" }
+            ];
             // Dados dos combos
             const combos = [
                 { name: "Combo 2 de 300ml", price: 20.00, maxAccompaniments: 3 },
                 { name: "Combo 2 de 500ml", price: 26.99, maxAccompaniments: 4 },
                 { name: "Combo 2 de 1 Litro", price: 49.99, maxAccompaniments: 8 }
             ];
-
             // Dados dos sabores de açaí
             const acaiFlavors = [
                 "Açaí Tradicional", "Creme de Ninho", "Creme de Cupuaçu", "Creme de Ovomaltine",
                 "Creme de Morango", "Creme de Maracujá", "Creme de Amendoim"
             ];
-
             let currentCombo = null;
             let selectedFlavors = [[], []];
             let selectedAccompaniments = [[], []];
@@ -397,7 +623,7 @@
                 displayCategories(categories);
             }
 
-function displayCategories(categories) {
+            function displayCategories(categories) {
                 const categoriesContainer = document.getElementById('categoriesContainer');
                 categoriesContainer.innerHTML = categories.map(category => `
                     <button class="category-btn" onclick="filterByCategory('${category}')">${category}</button>
@@ -595,6 +821,466 @@ function displayCategories(categories) {
                     document.getElementById('customerName').value = localStorage.getItem('customerName') || '';
                     loadCustomerData(phone);
                 }
+            }
+
+            function loadCustomerData(phone) {
+                db.collection('customers').doc(phone).get().then((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        customerInfo = {
+                            name: data.name,
+                            phone: phone,
+                            addresses: data.addresses || []
+                        };
+                        document.getElementById('customerName').value = data.name;
+                        savedAddresses = data.addresses || [];
+                        localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
+                        updateLoyaltyInfo(data.orderCount || 0);
+                    } else {
+                        updateLoyaltyInfo(0);
+                    }
+                }).catch((error) => {
+                    console.log("Error getting customer data:", error);
+                    updateLoyaltyInfo(0);
+                });
+            }
+
+            document.getElementById('customerIdentificationForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const phone = document.getElementById('customerPhone').value;
+                const name = document.getElementById('customerName').value;
+                customerInfo = { phone, name };
+                localStorage.setItem('customerPhone', phone);
+                localStorage.setItem('customerName', name);
+                db.collection('customers').doc(phone).set({
+                    name: name,
+                    addresses: savedAddresses
+                }, { merge: true }).then(() => {
+                    closeModal('customerIdentificationModal');
+                    openCheckout();
+                }).catch((error) => {
+                    console.error("Error saving customer data: ", error);
+                });
+            });
+
+            function openCheckout() {
+                const checkoutModal = document.getElementById('checkoutModal');
+                loadSavedAddresses();
+                updateOrderSummary();
+                document.getElementById('paymentSection').style.display = 'none';
+                document.getElementById('submitOrderBtn').style.display = 'none';
+                checkoutModal.style.display = "block";
+                displayExtraItems();
+            }
+
+            function loadSavedAddresses() {
+                const select = document.getElementById('savedAddresses');
+                select.innerHTML = '<option value="">Selecione um endereço salvo ou cadastre um novo</option>';
+                savedAddresses.forEach((address, index) => {
+                    select.innerHTML += `<option value="${index}">${address.street}, ${address.number} - ${address.neighborhood}</option>`;
+                });
+            }
+
+            window.handleSavedAddressChange = function() {
+                const selectedIndex = document.getElementById('savedAddresses').value;
+                if (selectedIndex !== "") {
+                    const address = savedAddresses[selectedIndex];
+                    document.getElementById('street').value = address.street;
+                    document.getElementById('number').value = address.number;
+                    document.getElementById('complement').value = address.complement || '';
+                    document.getElementById('neighborhood').value = address.neighborhood;
+                    document.getElementById('city').value = address.city;
+                    document.getElementById('state').value = address.state;
+                    
+                    document.getElementById('paymentSection').style.display = 'block';
+                    document.getElementById('submitOrderBtn').style.display = 'block';
+                } else {
+                    document.getElementById('paymentSection').style.display = 'none';
+                    document.getElementById('submitOrderBtn').style.display = 'none';
+                }
+            }
+
+            window.showNewAddressForm = function() {
+                document.getElementById('newAddressForm').style.display = 'block';
+            }
+
+            window.saveNewAddress = function() {
+                const newAddress = {
+                    street: document.getElementById('street').value,
+                    number: document.getElementById('number').value,
+                    complement: document.getElementById('complement').value,
+                    neighborhood: document.getElementById('neighborhood').value,
+                    city: document.getElementById('city').value,
+                    state: document.getElementById('state').value
+                };
+                
+                let missingFields = [];
+                if (!newAddress.street) missingFields.push('Rua');
+                if (!newAddress.number) missingFields.push('Número');
+                if (!newAddress.neighborhood) missingFields.push('Bairro');
+                if (!newAddress.city) missingFields.push('Cidade');
+                if (!newAddress.state) missingFields.push('Estado');
+                
+                if (missingFields.length > 0) {
+                    alert(`Por favor, preencha os seguintes campos obrigatórios: ${missingFields.join(', ')}`);
+                    return;
+                }
+                savedAddresses.push(newAddress);
+                localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
+                
+                db.collection('customers').doc(customerInfo.phone).update({
+                    addresses: savedAddresses
+                }).then(() => {
+                    loadSavedAddresses();
+                    alert('Novo endereço salvo com sucesso!');
+                    document.getElementById('newAddressForm').style.display = 'none';
+                    document.getElementById('paymentSection').style.display = 'block';
+                    document.getElementById('submitOrderBtn').style.display = 'block';
+                }).catch((error) => {
+                    console.error("Error updating addresses: ", error);
+                });
+            }
+
+            window.handlePaymentChange = function() {
+                const paymentMethod = document.getElementById('paymentMethod').value;
+                document.getElementById('moneyChange').style.display = paymentMethod === 'money' ? 'block' : 'none';
+                document.getElementById('pixInfo').style.display = paymentMethod === 'pix' ? 'block' : 'none';
+            }
+
+            window.handleChangeNeeded = function() {
+                const changeNeeded = document.getElementById('changeNeeded').value;
+                document.getElementById('changeAmountDiv').style.display = changeNeeded === 'yes' ? 'block' : 'none';
+            }
+
+            function displayExtraItems() {
+                const extraItemsContainer = document.getElementById('extraItems');
+                extraItemsContainer.innerHTML = extraItems.map(item => `
+                    <div class="extra-item" onclick="toggleExtraItem(this, '${item.name}')">
+                        <img src="${item.image}" alt="${item.name}">
+                        <p>${item.name}</p>
+                        <p>R$ ${item.price.toFixed(2)}</p>
+                    </div>
+                `).join('');
+            }
+
+            window.toggleExtraItem = function(element, itemName) {
+                element.classList.toggle('selected');
+                updateOrderSummary();
+            }
+
+            function updateOrderSummary() {
+                const orderSummary = document.getElementById('orderSummary');
+                let summaryHTML = '<h3>Resumo do Pedido:</h3>';
+                let total = 0;
+                
+                cart.forEach(item => {
+                    if (item.acai1) {  // Se for um combo
+                        summaryHTML += `
+                            <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
+                            <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                            <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+                            <p>Extras: ${item.extras.length > 0 ? item.extras.join(', ') : 'Nenhum'}</p>
+                            <hr>
+                        `;
+                    } else {  // Se for um item individual
+                        summaryHTML += `
+                            <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
+                            <p>Acompanhamentos: ${item.accompaniments ? item.accompaniments.join(', ') : 'Nenhum'}</p>
+                            <p>Extras: ${item.extras ? item.extras.join(', ') : 'Nenhum'}</p>
+                            <hr>
+                        `;
+                    }
+                    total += item.totalPrice;
+                });
+                
+                const selectedExtras = document.querySelectorAll('.extra-item.selected');
+                let extrasTotal = 0;
+                selectedExtras.forEach(item => {
+                    const itemName = item.querySelector('p').textContent;
+                    const itemPrice = 1.99;
+                    extrasTotal += itemPrice;
+                    summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
+                });
+                total += extrasTotal;
+                summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
+                summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
+                summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
+                orderSummary.innerHTML = summaryHTML;
+            }
+
+            document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const selectedAddressIndex = document.getElementById('savedAddresses').value;
+                if (selectedAddressIndex === "") {
+                    alert("Por favor, selecione um endereço de entrega.");
+                    return;
+                }
+const selectedAddress = savedAddresses[selectedAddressIndex];
+                const paymentMethod = document.getElementById('paymentMethod').value;
+                const changeNeeded = document.getElementById('changeNeeded').value;
+                const changeAmount = document.getElementById('changeAmount').value;
+                let message = `Pedido confirmado!\n`;
+                message += `Nome: ${customerInfo.name}\n`;
+                message += `WhatsApp: ${customerInfo.phone}\n`;
+                message += `Endereço: ${selectedAddress.street}, ${selectedAddress.number}, ${selectedAddress.neighborhood}, ${selectedAddress.city} - ${selectedAddress.state}\n`;
+                if (selectedAddress.complement) {
+                    message += `Complemento: ${selectedAddress.complement}\n`;
+                }
+                message += `Método de Pagamento: ${getPaymentMethodText(paymentMethod)}\n`;
+                if (paymentMethod === 'money') {
+                    message += `Precisa de troco: ${changeNeeded === 'yes' ? 'Sim' : 'Não'}\n`;
+                    if (changeNeeded === 'yes') {
+                        message += `Troco para: R$ ${parseFloat(changeAmount).toFixed(2)}\n`;
+                    }
+                }
+                
+                message += `\nItens do Pedido:\n`;
+                cart.forEach(item => {
+                    if (item.acai1) {  // Se for um combo
+                        message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
+                        message += `\nAçaí 1: Sabores: ${item.acai1.flavors.join(', ')}, Acompanhamentos: ${item.acai1.accompaniments.join(', ')}`;
+                        message += `\nAçaí 2: Sabores: ${item.acai2.flavors.join(', ')}, Acompanhamentos: ${item.acai2.accompaniments.join(', ')}`;
+                        if (item.extras && item.extras.length > 0) {
+                            message += `\nExtras: ${item.extras.join(', ')}`;
+                        }
+                    } else {  // Se for um item individual
+                        message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
+                        if (item.accompaniments && item.accompaniments.length > 0) {
+                            message += `\nAcompanhamentos: ${item.accompaniments.join(', ')}`;
+                        }
+                        if (item.extras && item.extras.length > 0) {
+                            message += `\nExtras: ${item.extras.join(', ')}`;
+                        }
+                    }
+                });
+                
+                const selectedExtras = document.querySelectorAll('.extra-item.selected');
+                if (selectedExtras.length > 0) {
+                    message += "\n\nItens Extras Adicionais:";
+                    selectedExtras.forEach(item => {
+                        const itemName = item.querySelector('p').textContent;
+                        message += `\n- ${itemName} (R$ 1,99)`;
+                    });
+                }
+                
+                const subtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+                const extrasTotal = selectedExtras.length * 1.99;
+                const total = subtotal + extrasTotal + deliveryFee;
+                
+                message += `\n\nSubtotal: R$ ${subtotal.toFixed(2)}`;
+                message += `\nExtras Adicionais: R$ ${extrasTotal.toFixed(2)}`;
+                message += `\nTaxa de Entrega: R$ ${deliveryFee.toFixed(2)}`;
+                message += `\nTotal: R$ ${total.toFixed(2)}`;
+                
+                const order = {
+                    id: Date.now(),
+                    customerName: customerInfo.name,
+                    customerPhone: customerInfo.phone,
+                    address: selectedAddress,
+                    paymentMethod: paymentMethod,
+                    changeNeeded: changeNeeded,
+                    changeAmount: changeAmount,
+                    items: cart,
+                    extraItems: Array.from(selectedExtras).map(item => item.querySelector('p').textContent),
+                    subtotal: subtotal,
+                    extrasTotal: extrasTotal,
+                    deliveryFee: deliveryFee,
+                    total: total,
+                    status: 'preparing',
+                    createdAt: new Date()
+                };
+                db.collection('orders').add(order)
+                    .then(() => {
+                        console.log('Pedido adicionado com sucesso!');
+                        return db.collection('customers').doc(customerInfo.phone).get();
+                    })
+                    .then((doc) => {
+                        let orderCount = 0;
+                        if (doc.exists) {
+                            orderCount = doc.data().orderCount || 0;
+                        }
+                        orderCount++;
+                        
+                        return db.collection('customers').doc(customerInfo.phone).set({
+                            name: customerInfo.name,
+                            orderCount: orderCount
+                        }, { merge: true });
+                    })
+                    .then(() => {
+                        return db.collection('customers').doc(customerInfo.phone).get();
+                    })
+                    .then((doc) => {
+                        if (doc.exists) {
+                            const orderCount = doc.data().orderCount;
+                            message += `\n\nEste é o ${getOrderNumberText(orderCount)} pedido do cliente.`;
+                            if (orderCount >= 10) {
+                                message += `\nCliente tem direito ao desconto de fidelidade!`;
+                            } else {
+                                message += `\nFaltam ${10 - orderCount} pedidos para o próximo desconto de fidelidade.`;
+                            }
+                        }
+                        window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
+                        cart = [];
+                        localStorage.setItem('cart', JSON.stringify(cart));
+                        updateCartCount();
+                        document.getElementById('paymentMethod').value = 'card';
+                        handlePaymentChange();
+                        closeModal('checkoutModal');
+                    })
+                    .catch(error => {
+                        console.error('Erro ao adicionar pedido: ', error);
+                    });
+            });
+
+            function getPaymentMethodText(method) {
+                switch(method) {
+                    case 'money': return 'Dinheiro';
+                    case 'card': return 'Cartão na entrega';
+                    case 'pix': return 'PIX';
+                    default: return method;
+                }
+            }
+
+            function getOrderNumberText(number) {
+                const specialCases = ['primeiro', 'segundo', 'terceiro', 'quarto', 'quinto'];
+                return specialCases[number - 1] || `${number}º`;
+            }
+
+            function updateLoyaltyInfo(orderCount) {
+                const loyaltyInfo = document.getElementById('loyaltyInfo');
+                loyaltyInfo.innerHTML = `
+                    <h3>Programa de Fidelidade</h3>
+                    <p>Você já realizou ${orderCount} ${orderCount === 1 ? 'pedido' : 'pedidos'}.</p>
+                    ${orderCount >= 10 ? 
+                      '<p><strong>Parabéns!</strong> Você tem direito a 50% de desconto no seu próximo pedido!</p>' :
+                      `<p>Faltam ${10 - orderCount} ${10 - orderCount === 1 ? 'pedido' : 'pedidos'} para você ganhar 50% de desconto!</p>`
+                    }
+                    <p>Lembre-se: O pedido só será contabilizado após ser recebido por nossa loja no WhatsApp.</p>
+                `;
+            }
+
+            window.openMyOrders = function() {
+                hideHeaderAndCategories();
+                const modal = document.getElementById('myOrdersModal');
+                const content = document.getElementById('myOrdersContent');
+                content.innerHTML = `
+                    <h3>Insira seu número de WhatsApp para ver seus pedidos:</h3>
+                    <input type="tel" id="orderPhoneInput" placeholder="WhatsApp (com DDD)" required>
+                    <button class="btn" onclick="fetchMyOrders()">Buscar Pedidos</button>
+                    <div id="ordersList"></div>
+                `;
+                modal.style.display = "block";
+            }
+
+            window.fetchMyOrders = function() {
+                const phone = document.getElementById('orderPhoneInput').value;
+                if (!phone) {
+                    alert("Por favor, insira seu número de WhatsApp.");
+                    return;
+                }
+                db.collection('orders')
+                    .where('customerPhone', '==', phone)
+                    .orderBy('createdAt', 'desc')
+                    .get()
+                    .then((querySnapshot) => {
+                        const ordersList = document.getElementById('ordersList');
+                        if (querySnapshot.empty) {
+                            ordersList.innerHTML = '<p>Nenhum pedido encontrado para este número.</p>';
+                        } else {
+                            let ordersHtml = '<h3>Seus Pedidos:</h3>';
+                            querySnapshot.forEach((doc) => {
+                                const order = doc.data();
+                                ordersHtml += `
+                                    <div class="order-item">
+                                        <p><strong>Data:</strong> ${order.createdAt.toDate().toLocaleString()}</p>
+                                        <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
+                                        <p><strong>Detalhes do Pedido:</strong> ${order.items.map(item => {
+                                            if (item.acai1) {
+                                                return `${item.name} (Açaí 1: ${item.acai1.flavors.join(', ')}, Açaí 2: ${item.acai2.flavors.join(', ')})`;
+                                            } else {
+                                                return `${item.name} ${item.accompaniments ? `(${item.accompaniments.join(', ')})` : ''}${item.extras && item.extras.length > 0 ? ` + Extras: ${item.extras.join(', ')}` : ''}`;
+                                            }
+                                        }).join(', ')}</p>
+                                        <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Este Pedido</button>
+                                    </div>
+                                `;
+                            });
+                            ordersList.innerHTML = ordersHtml;
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Erro ao buscar pedidos: ", error);
+                        alert("Ocorreu um erro ao buscar seus pedidos. Por favor, tente novamente.");
+                    });
+            }
+
+            window.repeatOrder = function(orderId) {
+                db.collection('orders').doc(orderId).get()
+                    .then((doc) => {
+                        if (doc.exists) {
+                            const order = doc.data();
+                            cart = order.items;
+                            localStorage.setItem('cart', JSON.stringify(cart));
+                            alert("Pedido adicionado ao carrinho!");
+                            closeModal('myOrdersModal');
+                            updateCartCount();
+                            openCart();
+                        } else {
+                            alert("Pedido não encontrado.");
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Erro ao repetir pedido: ", error);
+                        alert("Ocorreu um erro ao repetir o pedido. Por favor, tente novamente.");
+                    });
+            }
+
+            window.openLoyaltyProgram = function() {
+                hideHeaderAndCategories();
+                const modal = document.getElementById('loyaltyProgramModal');
+                const content = document.getElementById('loyaltyProgramContent');
+                content.innerHTML = `
+                    <h3>Programa de Fidelidade Cabana Açaí</h3>
+                    <p>Nosso programa de fidelidade é simples e recompensador:</p>
+                    <ul>
+                        <li>A cada 10 pedidos, você ganha 50% de desconto no próximo!</li>
+                        <li>Os pedidos são contabilizados dentro da janela do WhatsApp do cliente.</li>
+                        <li>Se você fizer pedidos com números de WhatsApp diferentes, os pontos de fidelidade serão somados no novo número que está utilizando para compra.</li>
+                    </ul>
+                    <p>Para verificar seus pontos de fidelidade, insira seu número de WhatsApp:</p>
+                    <input type="tel" id="loyaltyPhoneInput" placeholder="WhatsApp (com DDD)" required>
+                    <button class="btn" onclick="checkLoyaltyPoints()">Verificar Pontos</button>
+                    <div id="loyaltyPoints"></div>
+                `;
+                modal.style.display = "block";
+            }
+
+            window.checkLoyaltyPoints = function() {
+                const phone = document.getElementById('loyaltyPhoneInput').value;
+                if (!phone) {
+                    alert("Por favor, insira seu número de WhatsApp.");
+                    return;
+                }
+                db.collection('customers').doc(phone).get()
+                    .then((doc) => {
+                        const loyaltyPoints = document.getElementById('loyaltyPoints');
+                        if (doc.exists) {
+                            const orderCount = doc.data().orderCount || 0;
+                            loyaltyPoints.innerHTML = `
+                                <p>Você já realizou ${orderCount} ${orderCount === 1 ? 'pedido' : 'pedidos'}.</p>
+                                ${orderCount >= 10 ? 
+                                    '<p><strong>Parabéns!</strong> Você tem direito a 50% de desconto no seu próximo pedido!</p>' :
+                                    `<p>Faltam ${10 - orderCount} ${10 - orderCount === 1 ? 'pedido' : 'pedidos'} para você ganhar 50% de desconto!</p>`
+                                }
+                            `;
+                        } else {
+                            loyaltyPoints.innerHTML = '<p>Nenhum pedido encontrado para este número.</p>';
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Erro ao verificar pontos de fidelidade: ", error);
+                        alert("Ocorreu um erro ao verificar seus pontos. Por favor, tente novamente.");
+                    });
             }
 
             window.openComboBuilder = function() {
@@ -837,39 +1523,6 @@ function displayCategories(categories) {
                 document.getElementById('extraItemsSelection').style.display = 'none';
                 document.getElementById('comboSummary').innerHTML = '';
                 document.querySelector('#comboModal .btn[onclick="addComboToCart()"]').style.display = 'none';
-            }
-
-            window.openMyOrders = function() {
-                hideHeaderAndCategories();
-                const modal = document.getElementById('myOrdersModal');
-                const content = document.getElementById('myOrdersContent');
-                content.innerHTML = `
-                    <h3>Insira seu número de WhatsApp para ver seus pedidos:</h3>
-                    <input type="tel" id="orderPhoneInput" placeholder="WhatsApp (com DDD)" required>
-                    <button class="btn" onclick="fetchMyOrders()">Buscar Pedidos</button>
-                    <div id="ordersList"></div>
-                `;
-                modal.style.display = "block";
-            }
-
-            window.openLoyaltyProgram = function() {
-                hideHeaderAndCategories();
-                const modal = document.getElementById('loyaltyProgramModal');
-                const content = document.getElementById('loyaltyProgramContent');
-                content.innerHTML = `
-                    <h3>Programa de Fidelidade Cabana Açaí</h3>
-                    <p>Nosso programa de fidelidade é simples e recompensador:</p>
-                    <ul>
-                        <li>A cada 10 pedidos, você ganha 50% de desconto no próximo!</li>
-                        <li>Os pedidos são contabilizados dentro da janela do WhatsApp do cliente.</li>
-                        <li>Se você fizer pedidos com números de WhatsApp diferentes, os pontos de fidelidade serão somados no novo número que está utilizando para compra.</li>
-                    </ul>
-                    <p>Para verificar seus pontos de fidelidade, insira seu número de WhatsApp:</p>
-                    <input type="tel" id="loyaltyPhoneInput" placeholder="WhatsApp (com DDD)" required>
-                    <button class="btn" onclick="checkLoyaltyPoints()">Verificar Pontos</button>
-                    <div id="loyaltyPoints"></div>
-                `;
-                modal.style.display = "block";
             }
 
             function closeModal(modalId) {
