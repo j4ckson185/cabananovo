@@ -573,6 +573,12 @@
                 </div>
                 <button type="submit" class="btn" id="submitOrderBtn" style="display: none;">Fazer Pedido</button>
             </form>
+            <div id="discountSection">
+    <h3>Cupom de Desconto</h3>
+    <input type="text" id="discountCode" placeholder="Digite o código do cupom, caso possua">
+    <button type="button" class="btn" onclick="applyDiscount()">Aplicar Cupom</button>
+    <p id="discountMessage"></p>
+   </div>
             <div id="orderSummary"></div>
             <div id="loyaltyInfo" class="loyalty-info"></div>
             
@@ -628,6 +634,8 @@
             const deliveryFee = 3.00;
             let customerInfo = {};
             let savedAddresses = [];
+            let appliedDiscount = 0;
+            let appliedCouponId = null;
             // Dados dos itens extras
             const extraItems = [
                 { name: "Ovomaltine", price: 1.99, image: "https://images.tcdn.com.br/img/img_prod/919170/ovomaltine_flocos_extra_crocante_750g_425_1_e9d3c08b8341c4e7818b1759c877a213.jpg" },
@@ -1027,169 +1035,223 @@
                 updateOrderSummary();
             }
 
-            function updateOrderSummary() {
-                const orderSummary = document.getElementById('orderSummary');
-                let summaryHTML = '<h3>Resumo do Pedido:</h3>';
-                let total = 0;
-                
-                cart.forEach(item => {
-                    if (item.acai1) {  // Se for um combo
-                        summaryHTML += `
-                            <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                            <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                            <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                            <p>Extras: ${item.extras.length > 0 ? item.extras.join(', ') : 'Nenhum'}</p>
-                            <hr>
-                        `;
-                    } else {  // Se for um item individual
-                        summaryHTML += `
-                            <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                            <p>Acompanhamentos: ${item.accompaniments ? item.accompaniments.join(', ') : 'Nenhum'}</p>
-                            <p>Extras: ${item.extras ? item.extras.join(', ') : 'Nenhum'}</p>
-                            <hr>
-                        `;
-                    }
-                    total += item.totalPrice;
-                });
-                
-                const selectedExtras = document.querySelectorAll('.extra-item.selected');
-                let extrasTotal = 0;
-                selectedExtras.forEach(item => {
-                    const itemName = item.querySelector('p').textContent;
-                    const itemPrice = 1.99;
-                    extrasTotal += itemPrice;
-                    summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
-                });
-                total += extrasTotal;
-                summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
-                summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
-                summaryHTML += `<h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>`;
-                orderSummary.innerHTML = summaryHTML;
-            }
+function updateOrderSummary() {
+    const orderSummary = document.getElementById('orderSummary');
+    let summaryHTML = '<h3>Resumo do Pedido:</h3>';
+    let total = 0;
+    
+    cart.forEach(item => {
+        if (item.acai1) {  // Se for um combo
+            summaryHTML += `
+                <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
+                <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+                <p>Extras: ${item.extras.length > 0 ? item.extras.join(', ') : 'Nenhum'}</p>
+                <hr>
+            `;
+        } else {  // Se for um item individual
+            summaryHTML += `
+                <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
+                <p>Acompanhamentos: ${item.accompaniments ? item.accompaniments.join(', ') : 'Nenhum'}</p>
+                <p>Extras: ${item.extras ? item.extras.join(', ') : 'Nenhum'}</p>
+                <hr>
+            `;
+        }
+        total += item.totalPrice;
+    });
+    
+    const selectedExtras = document.querySelectorAll('.extra-item.selected');
+    let extrasTotal = 0;
+    selectedExtras.forEach(item => {
+        const itemName = item.querySelector('p').textContent;
+        const itemPrice = 1.99;
+        extrasTotal += itemPrice;
+        summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
+    });
+    total += extrasTotal;
 
-            document.getElementById('checkoutForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                const selectedAddressIndex = document.getElementById('savedAddresses').value;
-                if (selectedAddressIndex === "") {
-                    alert("Por favor, selecione um endereço de entrega.");
-                    return;
+    // Aplicar o desconto
+    let discountedTotal = Math.max(0, total - appliedDiscount);
+    
+    summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
+    if (appliedDiscount > 0) {
+        summaryHTML += `<h4>Desconto aplicado: R$ ${appliedDiscount.toFixed(2)}</h4>`;
+    }
+    summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
+    summaryHTML += `<h3>Total: R$ ${(discountedTotal + deliveryFee).toFixed(2)}</h3>`;
+    orderSummary.innerHTML = summaryHTML;
+}
+
+            function applyDiscount() {
+    const discountCode = document.getElementById('discountCode').value;
+    const discountMessage = document.getElementById('discountMessage');
+    
+    db.collection('coupons')
+        .where('code', '==', discountCode)
+        .where('expirationDate', '>', new Date())
+        .get()
+        .then((querySnapshot) => {
+            if (!querySnapshot.empty) {
+                const coupon = querySnapshot.docs[0].data();
+                const couponId = querySnapshot.docs[0].id;
+                if (!coupon.customerPhone || coupon.customerPhone === customerInfo.phone) {
+                    appliedDiscount = coupon.discount;
+                    appliedCouponId = couponId;
+                    discountMessage.textContent = `Cupom aplicado! Desconto de R$${appliedDiscount.toFixed(2)}`;
+                    discountMessage.style.color = 'green';
+                    updateOrderSummary();
+                } else {
+                    discountMessage.textContent = 'Este cupom é exclusivo para outro cliente.';
+                    discountMessage.style.color = 'red';
                 }
-const selectedAddress = savedAddresses[selectedAddressIndex];
-                const paymentMethod = document.getElementById('paymentMethod').value;
-                const changeNeeded = document.getElementById('changeNeeded').value;
-                const changeAmount = document.getElementById('changeAmount').value;
-                let message = `Pedido confirmado!\n`;
-                message += `Nome: ${customerInfo.name}\n`;
-                message += `WhatsApp: ${customerInfo.phone}\n`;
-                message += `Endereço: ${selectedAddress.street}, ${selectedAddress.number}, ${selectedAddress.neighborhood}, ${selectedAddress.city} - ${selectedAddress.state}\n`;
-                if (selectedAddress.complement) {
-                    message += `Complemento: ${selectedAddress.complement}\n`;
+            } else {
+                appliedDiscount = 0;
+                appliedCouponId = null;
+                discountMessage.textContent = 'Cupom inválido ou expirado';
+                discountMessage.style.color = 'red';
+                updateOrderSummary();
+            }
+        })
+        .catch((error) => {
+            console.error("Erro ao verificar cupom:", error);
+            discountMessage.textContent = 'Erro ao verificar cupom. Tente novamente.';
+            discountMessage.style.color = 'red';
+        });
+}
+
+document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const selectedAddressIndex = document.getElementById('savedAddresses').value;
+    if (selectedAddressIndex === "") {
+        alert("Por favor, selecione um endereço de entrega.");
+        return;
+    }
+    const selectedAddress = savedAddresses[selectedAddressIndex];
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    const changeNeeded = document.getElementById('changeNeeded').value;
+    const changeAmount = document.getElementById('changeAmount').value;
+    let message = `Pedido confirmado!\n`;
+    message += `Nome: ${customerInfo.name}\n`;
+    message += `WhatsApp: ${customerInfo.phone}\n`;
+    message += `Endereço: ${selectedAddress.street}, ${selectedAddress.number}, ${selectedAddress.neighborhood}, ${selectedAddress.city} - ${selectedAddress.state}\n`;
+    if (selectedAddress.complement) {
+        message += `Complemento: ${selectedAddress.complement}\n`;
+    }
+    message += `Método de Pagamento: ${getPaymentMethodText(paymentMethod)}\n`;
+    if (paymentMethod === 'money') {
+        message += `Precisa de troco: ${changeNeeded === 'yes' ? 'Sim' : 'Não'}\n`;
+        if (changeNeeded === 'yes') {
+            message += `Troco para: R$ ${parseFloat(changeAmount).toFixed(2)}\n`;
+        }
+    }
+    
+    message += `\nItens do Pedido:\n`;
+    cart.forEach(item => {
+        if (item.acai1) {  // Se for um combo
+            message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
+            message += `\nAçaí 1: Sabores: ${item.acai1.flavors.join(', ')}, Acompanhamentos: ${item.acai1.accompaniments.join(', ')}`;
+            message += `\nAçaí 2: Sabores: ${item.acai2.flavors.join(', ')}, Acompanhamentos: ${item.acai2.accompaniments.join(', ')}`;
+            if (item.extras && item.extras.length > 0) {
+                message += `\nExtras: ${item.extras.join(', ')}`;
+            }
+        } else {  // Se for um item individual
+            message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
+            if (item.accompaniments && item.accompaniments.length > 0) {
+                message += `\nAcompanhamentos: ${item.accompaniments.join(', ')}`;
+            }
+            if (item.extras && item.extras.length > 0) {
+                message += `\nExtras: ${item.extras.join(', ')}`;
+            }
+        }
+    });
+    
+    const selectedExtras = document.querySelectorAll('.extra-item.selected');
+    if (selectedExtras.length > 0) {
+        message += "\n\nItens Extras Adicionais:";
+        selectedExtras.forEach(item => {
+            const itemName = item.querySelector('p').textContent;
+            message += `\n- ${itemName} (R$ 1,99)`;
+        });
+    }
+    
+    const subtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+    const extrasTotal = selectedExtras.length * 1.99;
+    const total = subtotal + extrasTotal;
+    const discountedTotal = Math.max(0, total - appliedDiscount);
+    
+    message += `\n\nSubtotal: R$ ${total.toFixed(2)}`;
+    if (appliedDiscount > 0) {
+        message += `\nDesconto aplicado: R$ ${appliedDiscount.toFixed(2)}`;
+    }
+    message += `\nTaxa de Entrega: R$ ${deliveryFee.toFixed(2)}`;
+    message += `\nTotal: R$ ${(discountedTotal + deliveryFee).toFixed(2)}`;
+    
+    const order = {
+        id: Date.now(),
+        customerName: customerInfo.name,
+        customerPhone: customerInfo.phone,
+        address: selectedAddress,
+        paymentMethod: paymentMethod,
+        changeNeeded: changeNeeded,
+        changeAmount: changeAmount,
+        items: cart,
+        extraItems: Array.from(selectedExtras).map(item => item.querySelector('p').textContent),
+        subtotal: subtotal,
+        extrasTotal: extrasTotal,
+        appliedDiscount: appliedDiscount,
+        appliedCouponId: appliedCouponId,
+        deliveryFee: deliveryFee,
+        total: discountedTotal + deliveryFee,
+        status: 'preparing',
+        createdAt: new Date()
+    };
+    db.collection('orders').add(order)
+        .then(() => {
+            console.log('Pedido adicionado com sucesso!');
+            return db.collection('customers').doc(customerInfo.phone).get();
+        })
+        .then((doc) => {
+            let orderCount = 0;
+            if (doc.exists) {
+                orderCount = doc.data().orderCount || 0;
+            }
+            orderCount++;
+            
+            return db.collection('customers').doc(customerInfo.phone).set({
+                name: customerInfo.name,
+                orderCount: orderCount
+            }, { merge: true });
+        })
+        .then(() => {
+            return db.collection('customers').doc(customerInfo.phone).get();
+        })
+        .then((doc) => {
+            if (doc.exists) {
+                const orderCount = doc.data().orderCount;
+                message += `\n\nEste é o ${getOrderNumberText(orderCount)} pedido do cliente.`;
+                if (orderCount >= 10) {
+                    message += `\nCliente tem direito ao desconto de fidelidade!`;
+                } else {
+                    message += `\nFaltam ${10 - orderCount} pedidos para o próximo desconto de fidelidade.`;
                 }
-                message += `Método de Pagamento: ${getPaymentMethodText(paymentMethod)}\n`;
-                if (paymentMethod === 'money') {
-                    message += `Precisa de troco: ${changeNeeded === 'yes' ? 'Sim' : 'Não'}\n`;
-                    if (changeNeeded === 'yes') {
-                        message += `Troco para: R$ ${parseFloat(changeAmount).toFixed(2)}\n`;
-                    }
-                }
-                
-                message += `\nItens do Pedido:\n`;
-                cart.forEach(item => {
-                    if (item.acai1) {  // Se for um combo
-                        message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
-                        message += `\nAçaí 1: Sabores: ${item.acai1.flavors.join(', ')}, Acompanhamentos: ${item.acai1.accompaniments.join(', ')}`;
-                        message += `\nAçaí 2: Sabores: ${item.acai2.flavors.join(', ')}, Acompanhamentos: ${item.acai2.accompaniments.join(', ')}`;
-                        if (item.extras && item.extras.length > 0) {
-                            message += `\nExtras: ${item.extras.join(', ')}`;
-                        }
-                    } else {  // Se for um item individual
-                        message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
-                        if (item.accompaniments && item.accompaniments.length > 0) {
-                            message += `\nAcompanhamentos: ${item.accompaniments.join(', ')}`;
-                        }
-                        if (item.extras && item.extras.length > 0) {
-                            message += `\nExtras: ${item.extras.join(', ')}`;
-                        }
-                    }
-                });
-                
-                const selectedExtras = document.querySelectorAll('.extra-item.selected');
-                if (selectedExtras.length > 0) {
-                    message += "\n\nItens Extras Adicionais:";
-                    selectedExtras.forEach(item => {
-                        const itemName = item.querySelector('p').textContent;
-                        message += `\n- ${itemName} (R$ 1,99)`;
-                    });
-                }
-                
-                const subtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-                const extrasTotal = selectedExtras.length * 1.99;
-                const total = subtotal + extrasTotal + deliveryFee;
-                
-                message += `\n\nSubtotal: R$ ${subtotal.toFixed(2)}`;
-                message += `\nExtras Adicionais: R$ ${extrasTotal.toFixed(2)}`;
-                message += `\nTaxa de Entrega: R$ ${deliveryFee.toFixed(2)}`;
-                message += `\nTotal: R$ ${total.toFixed(2)}`;
-                
-                const order = {
-                    id: Date.now(),
-                    customerName: customerInfo.name,
-                    customerPhone: customerInfo.phone,
-                    address: selectedAddress,
-                    paymentMethod: paymentMethod,
-                    changeNeeded: changeNeeded,
-                    changeAmount: changeAmount,
-                    items: cart,
-                    extraItems: Array.from(selectedExtras).map(item => item.querySelector('p').textContent),
-                    subtotal: subtotal,
-                    extrasTotal: extrasTotal,
-                    deliveryFee: deliveryFee,
-                    total: total,
-                    status: 'preparing',
-                    createdAt: new Date()
-                };
-                db.collection('orders').add(order)
-                    .then(() => {
-                        console.log('Pedido adicionado com sucesso!');
-                        return db.collection('customers').doc(customerInfo.phone).get();
-                    })
-                    .then((doc) => {
-                        let orderCount = 0;
-                        if (doc.exists) {
-                            orderCount = doc.data().orderCount || 0;
-                        }
-                        orderCount++;
-                        
-                        return db.collection('customers').doc(customerInfo.phone).set({
-                            name: customerInfo.name,
-                            orderCount: orderCount
-                        }, { merge: true });
-                    })
-                    .then(() => {
-                        return db.collection('customers').doc(customerInfo.phone).get();
-                    })
-                    .then((doc) => {
-                        if (doc.exists) {
-                            const orderCount = doc.data().orderCount;
-                            message += `\n\nEste é o ${getOrderNumberText(orderCount)} pedido do cliente.`;
-                            if (orderCount >= 10) {
-                                message += `\nCliente tem direito ao desconto de fidelidade!`;
-                            } else {
-                                message += `\nFaltam ${10 - orderCount} pedidos para o próximo desconto de fidelidade.`;
-                            }
-                        }
-                        window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
-                        cart = [];
-                        localStorage.setItem('cart', JSON.stringify(cart));
-                        updateCartCount();
-                        document.getElementById('paymentMethod').value = 'card';
-                        handlePaymentChange();
-                        closeModal('checkoutModal');
-                    })
-                    .catch(error => {
-                        console.error('Erro ao adicionar pedido: ', error);
-                    });
-            });
+            }
+            if (appliedCouponId) {
+                return db.collection('coupons').doc(appliedCouponId).delete();
+            }
+        })
+        .then(() => {
+            window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
+            cart = [];
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+            document.getElementById('paymentMethod').value = 'card';
+            handlePaymentChange();
+            closeModal('checkoutModal');
+        })
+        .catch(error => {
+            console.error('Erro ao adicionar pedido: ', error);
+        });
+});
 
             function getPaymentMethodText(method) {
                 switch(method) {
