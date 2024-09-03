@@ -586,7 +586,7 @@
             <div id="discountSection">
                 <h3>Cupom de Desconto</h3>
                 <input type="text" id="discountCode" placeholder="Digite o código do cupom">
-                <button type="button" class="btn" onclick="applyDiscount()">Aplicar Cupom</button>
+                <button onclick="applyDiscount()">Aplicar Cupom</button>
                 <p id="discountMessage"></p>
             </div>
             <div id="orderSummary"></div>
@@ -675,8 +675,8 @@ window.applyDiscount = function() {
                 discountMessage.textContent = 'Cupom inválido ou expirado';
                 discountMessage.style.color = 'red';
             }
-            console.log("Chamando updateOrderSummary de applyDiscount");
-            updateOrderSummary(); // Chamada direta
+            console.log("Atualizando resumo do pedido");
+            updateOrderSummary();
         })
         .catch((error) => {
             console.error("Erro ao verificar cupom:", error);
@@ -684,13 +684,46 @@ window.applyDiscount = function() {
             discountMessage.style.color = 'red';
             window.appliedDiscount = 0;
             window.appliedCouponId = null;
-            console.log("Chamando updateOrderSummary após erro");
-            updateOrderSummary(); // Chamada direta
+            console.log("Atualizando resumo do pedido após erro");
+            updateOrderSummary();
         });
 }
 
+function updateOrderSummaryDirectly() {
+    console.log("Iniciando updateOrderSummaryDirectly");
+    const orderSummary = document.getElementById('orderSummary');
+    if (!orderSummary) {
+        console.error("Elemento orderSummary não encontrado");
+        return;
+    }
+
+    let subtotal = window.cart.reduce((sum, item) => sum + item.totalPrice, 0);
+    const selectedExtras = document.querySelectorAll('.extra-item.selected');
+    let extrasTotal = selectedExtras.length * 1.99;
+    subtotal += extrasTotal;
+
+    const discountedTotal = Math.max(0, subtotal - window.appliedDiscount);
+    const finalTotal = discountedTotal + window.deliveryFee;
+
+    orderSummary.innerHTML = `
+        <h3>Resumo do Pedido:</h3>
+        <h4>Subtotal: R$ ${subtotal.toFixed(2)}</h4>
+        ${window.appliedDiscount > 0 ? `<h4>Desconto aplicado: R$ ${window.appliedDiscount.toFixed(2)}</h4>` : ''}
+        <h4>Taxa de Entrega: R$ ${window.deliveryFee.toFixed(2)}</h4>
+        <h3>Total: R$ ${finalTotal.toFixed(2)}</h3>
+    `;
+
+    console.log('Resumo final:', {
+        subtotal,
+        appliedDiscount: window.appliedDiscount,
+        discountedTotal,
+        deliveryFee: window.deliveryFee,
+        finalTotal
+    });
+}
+
         // Função global para atualizar o resumo do pedido
-function updateOrderSummary() {
+window.updateOrderSummary = function() {
     console.log("Iniciando updateOrderSummary");
     console.log("Desconto aplicado:", window.appliedDiscount);
     console.log("Taxa de entrega:", window.deliveryFee);
@@ -714,11 +747,7 @@ function updateOrderSummary() {
     console.log("Subtotal após itens do carrinho:", subtotal);
 
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
-    let extrasTotal = 0;
-    selectedExtras.forEach(item => {
-        const itemPrice = 1.99;
-        extrasTotal += itemPrice;
-    });
+    let extrasTotal = selectedExtras.length * 1.99;
     subtotal += extrasTotal;
 
     console.log("Subtotal após extras:", subtotal);
@@ -745,6 +774,7 @@ function updateOrderSummary() {
         deliveryFee: window.deliveryFee,
         finalTotal
     });
+}
 }
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -814,14 +844,14 @@ function showHeaderAndCategories() {
 }
 
 async function fetchProducts() {
-    const snapshot = await db.collection('products').get();
-    products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    displayProducts(products);
+    const snapshot = await window.db.collection('products').get();
+    window.products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    displayProducts(window.products);
     updateCartCount();
 }
 
 async function fetchCategories() {
-    const snapshot = await db.collection('categories').get();
+    const snapshot = await window.db.collection('categories').get();
     const categories = snapshot.docs.map(doc => doc.data().name);
     displayCategories(categories);
 }
