@@ -680,52 +680,54 @@
         }
 
         // Função global para atualizar o resumo do pedido
-        window.updateOrderSummary = function() {
-            const orderSummary = document.getElementById('orderSummary');
-            let summaryHTML = '<h3>Resumo do Pedido:</h3>';
-            let total = 0;
-            
-            cart.forEach(item => {
-                if (item.acai1) {  // Se for um combo
-                    summaryHTML += `
-                        <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                        <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                        <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                        <p>Extras: ${item.extras.length > 0 ? item.extras.join(', ') : 'Nenhum'}</p>
-                        <hr>
-                    `;
-                } else {  // Se for um item individual
-                    summaryHTML += `
-                        <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                        <p>Acompanhamentos: ${item.accompaniments ? item.accompaniments.join(', ') : 'Nenhum'}</p>
-                        <p>Extras: ${item.extras ? item.extras.join(', ') : 'Nenhum'}</p>
-                        <hr>
-                    `;
-                }
-                total += item.totalPrice;
-            });
-            
-            const selectedExtras = document.querySelectorAll('.extra-item.selected');
-            let extrasTotal = 0;
-            selectedExtras.forEach(item => {
-                const itemName = item.querySelector('p').textContent;
-                const itemPrice = 1.99;
-                extrasTotal += itemPrice;
-                summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
-            });
-            total += extrasTotal;
-
-            // Aplicar o desconto
-            let discountedTotal = Math.max(0, total - window.appliedDiscount);
-            
-            summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
-            if (window.appliedDiscount > 0) {
-                summaryHTML += `<h4>Desconto aplicado: R$ ${window.appliedDiscount.toFixed(2)}</h4>`;
-            }
-            summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
-            summaryHTML += `<h3>Total: R$ ${(discountedTotal + deliveryFee).toFixed(2)}</h3>`;
-            orderSummary.innerHTML = summaryHTML;
+window.updateOrderSummary = function() {
+    const orderSummary = document.getElementById('orderSummary');
+    let summaryHTML = '<h3>Resumo do Pedido:</h3>';
+    let subtotal = 0;
+    
+    cart.forEach(item => {
+        if (item.acai1) {  // Se for um combo
+            summaryHTML += `
+                <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
+                <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+                <p>Extras: ${item.extras.length > 0 ? item.extras.join(', ') : 'Nenhum'}</p>
+                <hr>
+            `;
+        } else {  // Se for um item individual
+            summaryHTML += `
+                <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
+                <p>Acompanhamentos: ${item.accompaniments ? item.accompaniments.join(', ') : 'Nenhum'}</p>
+                <p>Extras: ${item.extras ? item.extras.join(', ') : 'Nenhum'}</p>
+                <hr>
+            `;
         }
+        subtotal += item.totalPrice;
+    });
+    
+    const selectedExtras = document.querySelectorAll('.extra-item.selected');
+    let extrasTotal = 0;
+    selectedExtras.forEach(item => {
+        const itemName = item.querySelector('p').textContent;
+        const itemPrice = 1.99;
+        extrasTotal += itemPrice;
+        summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
+    });
+    subtotal += extrasTotal;
+
+    summaryHTML += `<h4>Subtotal: R$ ${subtotal.toFixed(2)}</h4>`;
+    
+    // Aplicar o desconto
+    if (window.appliedDiscount > 0) {
+        summaryHTML += `<h4>Desconto aplicado: R$ ${window.appliedDiscount.toFixed(2)}</h4>`;
+    }
+    
+    const discountedTotal = Math.max(0, subtotal - window.appliedDiscount);
+    
+    summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
+    summaryHTML += `<h3>Total: R$ ${(discountedTotal + deliveryFee).toFixed(2)}</h3>`;
+    orderSummary.innerHTML = summaryHTML;
+}
 
         document.addEventListener('DOMContentLoaded', function () {
             // Configuração do Firebase
