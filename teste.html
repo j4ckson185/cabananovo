@@ -241,7 +241,90 @@
             </form>
         </div>
     </div>
-    <!-- ... (o resto do HTML permanece o mesmo) ... -->
+        <div id="checkoutModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Finalizar Pedido</h2>
+            <form id="checkoutForm">
+                <div id="deliveryAddressSection">
+                    <h3>Endereço de Entrega</h3>
+                    <select id="savedAddresses" onchange="handleSavedAddressChange()">
+                        <option value="">Selecione um endereço salvo ou cadastre um novo</option>
+                    </select>
+                    <button type="button" class="btn" onclick="showNewAddressForm()">Cadastrar Novo Endereço</button>
+                    <div id="newAddressForm" style="display: none;">
+                        <label for="street">Rua: <span class="required-field">*</span></label>
+                        <input type="text" id="street" required>
+                        <label for="number">Número: <span class="required-field">*</span></label>
+                        <input type="text" id="number" required>
+                        <label for="complement">Complemento:</label>
+                        <input type="text" id="complement">
+                        <label for="neighborhood">Bairro: <span class="required-field">*</span></label>
+                        <input type="text" id="neighborhood" required>
+                        <label for="city">Cidade: <span class="required-field">*</span></label>
+                        <input type="text" id="city" required>
+                        <label for="state">Estado: <span class="required-field">*</span></label>
+                        <input type="text" id="state" required>
+                        <button type="button" class="btn" onclick="saveNewAddress()">Salvar Endereço</button>
+                    </div>
+                </div>
+                <div id="paymentSection" style="display: none;">
+                    <label for="paymentMethod">Método de Pagamento:</label>
+                    <select id="paymentMethod" required onchange="handlePaymentChange()">
+                        <option value="card">Cartão na entrega</option>
+                        <option value="money">Dinheiro</option>
+                        <option value="pix">PIX</option>
+                    </select>
+                    <div id="moneyChange" style="display:none;">
+                        <label for="changeNeeded">Precisa de troco?</label>
+                        <select id="changeNeeded" onchange="handleChangeNeeded()">
+                            <option value="no">Não</option>
+                            <option value="yes">Sim</option>
+                        </select>
+                        <div id="changeAmountDiv" style="display:none;">
+                            <label for="changeAmount">Troco para quanto?</label>
+                            <input type="number" id="changeAmount" min="0" step="0.01">
+                        </div>
+                    </div>
+                    <div id="pixInfo" style="display:none;">
+                        <p>Chave PIX: 84 9 8873-1028</p>
+                        <p>Após o envio do PIX, favor enviar o comprovante para o WhatsApp 84 9 8767-3202</p>
+                    </div>
+                </div>
+                <button type="submit" class="btn" id="submitOrderBtn" style="display: none;">Fazer Pedido</button>
+            </form>
+            <div id="orderSummary"></div>
+            <div id="loyaltyInfo" class="loyalty-info"></div>
+            
+            <div class="extras-suggestion">
+                <h3>Deixe seu açaí mais delicioso e recheado com esses itens extras</h3>
+                <div class="extra-items" id="extraItems">
+                    <!-- Itens extras serão adicionados aqui via JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="comboModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Monte seu Combo</h2>
+            <div id="comboBuilder"></div>
+        </div>
+    </div>
+    <div id="myOrdersModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Meus Pedidos</h2>
+            <div id="myOrdersContent"></div>
+        </div>
+    </div>
+    <div id="loyaltyProgramModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Programa Fidelidade</h2>
+            <div id="loyaltyProgramContent"></div>
+        </div>
+    </div>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script>
