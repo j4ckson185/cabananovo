@@ -636,48 +636,52 @@
         window.appliedCouponId = null;
 
         // Função global para aplicar desconto
-        window.applyDiscount = function() {
-            if (!window.db) {
-                console.error("Firebase não está inicializado");
-                alert("Erro ao aplicar cupom. Por favor, recarregue a página e tente novamente.");
-                return;
-            }
+window.applyDiscount = function() {
+    if (!window.db) {
+        console.error("Firebase não está inicializado");
+        alert("Erro ao aplicar cupom. Por favor, recarregue a página e tente novamente.");
+        return;
+    }
 
-            const discountCode = document.getElementById('discountCode').value;
-            const discountMessage = document.getElementById('discountMessage');
-            
-            window.db.collection('coupons')
-                .where('code', '==', discountCode)
-                .where('expirationDate', '>', new Date())
-                .get()
-                .then((querySnapshot) => {
-                    if (!querySnapshot.empty) {
-                        const coupon = querySnapshot.docs[0].data();
-                        const couponId = querySnapshot.docs[0].id;
-                        if (!coupon.customerPhone || coupon.customerPhone === window.customerInfo.phone) {
-                            window.appliedDiscount = coupon.discount;
-                            window.appliedCouponId = couponId;
-                            discountMessage.textContent = `Cupom aplicado! Desconto de R$${window.appliedDiscount.toFixed(2)}`;
-                            discountMessage.style.color = 'green';
-                            window.updateOrderSummary();
-                        } else {
-                            discountMessage.textContent = 'Este cupom é exclusivo para outro cliente.';
-                            discountMessage.style.color = 'red';
-                        }
-                    } else {
-                        window.appliedDiscount = 0;
-                        window.appliedCouponId = null;
-                        discountMessage.textContent = 'Cupom inválido ou expirado';
-                        discountMessage.style.color = 'red';
-                        window.updateOrderSummary();
-                    }
-                })
-                .catch((error) => {
-                    console.error("Erro ao verificar cupom:", error);
-                    discountMessage.textContent = 'Erro ao verificar cupom. Tente novamente.';
+    const discountCode = document.getElementById('discountCode').value;
+    const discountMessage = document.getElementById('discountMessage');
+    
+    window.db.collection('coupons')
+        .where('code', '==', discountCode)
+        .where('expirationDate', '>', new Date())
+        .get()
+        .then((querySnapshot) => {
+            if (!querySnapshot.empty) {
+                const coupon = querySnapshot.docs[0].data();
+                const couponId = querySnapshot.docs[0].id;
+                if (!coupon.customerPhone || coupon.customerPhone === window.customerInfo.phone) {
+                    window.appliedDiscount = coupon.discount;
+                    window.appliedCouponId = couponId;
+                    discountMessage.textContent = `Cupom aplicado! Desconto de R$${window.appliedDiscount.toFixed(2)}`;
+                    discountMessage.style.color = 'green';
+                } else {
+                    window.appliedDiscount = 0;
+                    window.appliedCouponId = null;
+                    discountMessage.textContent = 'Este cupom é exclusivo para outro cliente.';
                     discountMessage.style.color = 'red';
-                });
-        }
+                }
+            } else {
+                window.appliedDiscount = 0;
+                window.appliedCouponId = null;
+                discountMessage.textContent = 'Cupom inválido ou expirado';
+                discountMessage.style.color = 'red';
+            }
+            window.updateOrderSummary();
+        })
+        .catch((error) => {
+            console.error("Erro ao verificar cupom:", error);
+            discountMessage.textContent = 'Erro ao verificar cupom. Tente novamente.';
+            discountMessage.style.color = 'red';
+            window.appliedDiscount = 0;
+            window.appliedCouponId = null;
+            window.updateOrderSummary();
+        });
+}
 
         // Função global para atualizar o resumo do pedido
 window.updateOrderSummary = function() {
@@ -724,9 +728,18 @@ window.updateOrderSummary = function() {
     
     const discountedTotal = Math.max(0, subtotal - window.appliedDiscount);
     
-    summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
-    summaryHTML += `<h3>Total: R$ ${(discountedTotal + deliveryFee).toFixed(2)}</h3>`;
+    summaryHTML += `<h4>Taxa de Entrega: R$ ${window.deliveryFee.toFixed(2)}</h4>`;
+    const finalTotal = discountedTotal + window.deliveryFee;
+    summaryHTML += `<h3>Total: R$ ${finalTotal.toFixed(2)}</h3>`;
     orderSummary.innerHTML = summaryHTML;
+
+    console.log('Resumo atualizado:', {
+        subtotal,
+        appliedDiscount: window.appliedDiscount,
+        discountedTotal,
+        deliveryFee: window.deliveryFee,
+        finalTotal
+    });
 }
 
         document.addEventListener('DOMContentLoaded', function () {
