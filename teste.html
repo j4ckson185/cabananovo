@@ -24,6 +24,9 @@
             background-color: var(--primary-color);
             color: white;
             padding: 1em 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
         .header-content {
             display: flex;
@@ -42,17 +45,46 @@
         .cart-icon {
             font-size: 24px;
             cursor: pointer;
+            position: relative;
+        }
+        .cart-count {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
         }
         main {
             max-width: 1200px;
             margin: 1em auto;
             padding: 0 20px;
         }
+        .store-hours {
+            text-align: center;
+            margin-bottom: 1em;
+            font-weight: bold;
+        }
+        .search-bar {
+            margin-bottom: 1em;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+        }
         .categories {
             display: flex;
             overflow-x: auto;
             margin-bottom: 1em;
             padding-bottom: 10px;
+            position: sticky;
+            top: 100px;
+            background-color: var(--background-color);
+            z-index: 999;
         }
         .category-btn {
             margin-right: 0.5em;
@@ -70,7 +102,7 @@
         }
         .product-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: 1em;
         }
         .product-card {
@@ -79,11 +111,11 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             overflow: hidden;
             display: flex;
-            flex-direction: column;
+            cursor: pointer;
         }
         .product-image {
-            width: 100%;
-            height: 150px;
+            width: 100px;
+            height: 100px;
             object-fit: cover;
         }
         .product-info {
@@ -97,16 +129,16 @@
             font-size: 1em;
             color: var(--primary-color);
         }
-        .product-price {
-            font-weight: bold;
-            color: var(--secondary-color);
-            margin-top: auto;
-        }
         .product-description {
             font-size: 0.8em;
             color: #666;
             margin: 0.5em 0;
             flex-grow: 1;
+        }
+        .product-price {
+            font-weight: bold;
+            color: var(--secondary-color);
+            margin-top: auto;
         }
         .btn {
             display: inline-block;
@@ -397,12 +429,18 @@
         <div class="header-content">
             <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Cabana Açaí Logo" class="logo">
             <h1>Cabana Açaí</h1>
-            <div class="cart-icon" onclick="openCart()">🛒</div>
+            <div class="cart-icon" onclick="openCart()">
+                🛒
+                <span class="cart-count" id="cartCount">0</span>
+            </div>
         </div>
     </header>
     <main>
+        <div class="store-hours">
+            Aberta de Quarta à Domingo, de 12:30h às 22:30h
+        </div>
         <div class="search-bar">
-            <input type="text" placeholder="O que você quer comer hoje?" style="width: 100%; padding: 10px; border-radius: 20px; border: 1px solid #ddd;">
+            <input type="text" id="searchInput" placeholder="O que você quer comer hoje?" onkeyup="searchProducts()">
         </div>
         <div class="categories" id="categories"></div>
         <div class="product-grid" id="productGrid"></div>
@@ -426,7 +464,7 @@
     <div id="customerIdentificationModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <form id="customerIdentificationForm">
+<form id="customerIdentificationForm">
                 <h2><i class="fas fa-user"></i> Identifique-se</h2>
                 <div class="input-icon">
                     <i class="fas fa-user"></i>
@@ -593,6 +631,7 @@
                 const snapshot = await db.collection('products').get();
                 products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 displayProducts(products);
+                updateCartCount();
             }
 
             async function fetchCategories() {
@@ -625,21 +664,31 @@
                 const productGrid = document.getElementById('productGrid');
                 productGrid.innerHTML = productsToDisplay.map(product => `
                     <div class="product-card" onclick="openProductDetails(${product.id})">
-                        <img src="${product.image}" alt="${product.name}" class="product-image">
                         <div class="product-info">
                             <h3 class="product-title">${product.name}</h3>
                             <p class="product-description">${product.description.substring(0, 50)}...</p>
                             <p class="product-price">R$ ${parseFloat(product.price).toFixed(2)}</p>
-                            <button class="btn" onclick="openProductDetails(${product.id}, event)">Ver Detalhes</button>
                         </div>
+                        <img src="${product.image}" alt="${product.name}" class="product-image">
                     </div>
                 `).join('');
             }
 
-            window.openProductDetails = function(productId, event) {
-                if (event) {
-                    event.stopPropagation();
-                }
+            window.searchProducts = function() {
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                const filteredProducts = products.filter(product => 
+                    product.name.toLowerCase().includes(searchTerm) || 
+                    product.description.toLowerCase().includes(searchTerm)
+                );
+                displayProducts(filteredProducts);
+            }
+
+            function updateCartCount() {
+                const cartCount = document.getElementById('cartCount');
+                cartCount.textContent = cart.length;
+            }
+
+            window.openProductDetails = function(productId) {
                 const product = products.find(p => p.id === productId);
                 const modal = document.getElementById('productModal');
                 const modalContent = document.getElementById('modalContent');
@@ -661,7 +710,7 @@
                         <p id="accompanimentError" class="error-message"></p>
                     </div>
                     <div class="extras-list">
-                        <h3>Itens Extras:</h3>
+  <h3>Itens Extras:</h3>
                         <div class="checkbox-list" id="extras">
                             ${product.extras.map((item, index) => `
                                 <div class="checkbox-item">
@@ -713,6 +762,7 @@
                 };
                 cart.push(cartItem);
                 localStorage.setItem('cart', JSON.stringify(cart));
+                updateCartCount();
                 openCart();
             }
 
@@ -771,6 +821,7 @@
             window.removeFromCart = function(itemId) {
                 cart = cart.filter(item => item.id !== itemId);
                 localStorage.setItem('cart', JSON.stringify(cart));
+                updateCartCount();
                 openCart();
             }
 
@@ -998,7 +1049,7 @@
                     }
                 }
                 
-message += `\nItens do Pedido:\n`;
+                message += `\nItens do Pedido:\n`;
                 cart.forEach(item => {
                     if (item.acai1) {  // Se for um combo
                         message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
@@ -1089,6 +1140,7 @@ message += `\nItens do Pedido:\n`;
                         document.getElementById('paymentMethod').value = 'card';
                         handlePaymentChange();
                         document.getElementById('checkoutModal').style.display = "none";
+                        updateCartCount();
                     })
                     .catch(error => {
                         console.error('Erro ao adicionar pedido: ', error);
@@ -1185,6 +1237,7 @@ message += `\nItens do Pedido:\n`;
                             localStorage.setItem('cart', JSON.stringify(cart));
                             alert("Pedido adicionado ao carrinho!");
                             document.getElementById('myOrdersModal').style.display = "none";
+                            updateCartCount();
                             openCart();
                         } else {
                             alert("Pedido não encontrado.");
@@ -1468,6 +1521,7 @@ message += `\nItens do Pedido:\n`;
                 alert('Combo adicionado ao carrinho!');
                 document.getElementById('comboModal').style.display = 'none';
                 resetComboBuilder();
+                updateCartCount();
                 openCart();  // Abre o carrinho automaticamente após adicionar o combo
             }
 
