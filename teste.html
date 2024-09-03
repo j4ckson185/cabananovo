@@ -424,7 +424,7 @@ function showHeaderAndCategories() {
              if (event) {
                 event.stopPropagation();
             }
-                hideHeaderAndCategories() {
+                hideHeaderAndCategories();
                 const product = products.find(p => p.id === productId);
                 const modal = document.getElementById('productModal');
                 const modalContent = document.getElementById('modalContent');
@@ -514,7 +514,7 @@ function calculateTotalPrice(product, selectedExtras) {
 }
 
 window.openCart = function() {
-    hideHeaderAndCategories() {
+    hideHeaderAndCategories();
     const modal = document.getElementById('cartModal');
     const cartContent = document.getElementById('cartContent');
     const cartTotal = document.getElementById('cartTotal');
@@ -912,7 +912,7 @@ function updateLoyaltyInfo(orderCount) {
 }
 
 window.openMyOrders = function() {
-    hideHeaderAndCategories() {
+    hideHeaderAndCategories();
     const modal = document.getElementById('myOrdersModal');
     const content = document.getElementById('myOrdersContent');
     content.innerHTML = `
@@ -988,7 +988,7 @@ window.repeatOrder = function(orderId) {
 }
 
 window.openLoyaltyProgram = function() {
-    hideHeaderAndCategories() {
+    hideHeaderAndCategories();
     const modal = document.getElementById('loyaltyProgramModal');
     const content = document.getElementById('loyaltyProgramContent');
     content.innerHTML = `
