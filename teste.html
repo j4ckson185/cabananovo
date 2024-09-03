@@ -590,403 +590,66 @@
                 }
             }
 
-            window.openComboBuilder = function() {
-                hideHeaderAndCategories();
-                const modal = document.getElementById('comboModal');
-                const comboBuilder = document.getElementById('comboBuilder');
-                            <div class="combo-step">
-                <h3>Escolha seu Combo:</h3>
-                <div class="combo-options">
-                    ${combos.map(combo => 
-                        <div class="combo-option" onclick="selectCombo('${combo.name}')">
-                            <h4>${combo.name}</h4>
-                            <p>R$ ${combo.price.toFixed(2)}</p>
-                            <p>Até ${combo.maxAccompaniments} acompanhamentos por açaí</p>
-                        </div>
-                    ).join('')}
-                </div>
-            </div>
-            <div id="flavorSelection" style="display: none;"></div>
-            <div id="accompanimentSelection" style="display: none;"></div>
-            <div id="extraItemsSelection" style="display: none;"></div>
-            <div id="comboSummary"></div>
-            <button class="btn" onclick="addComboToCart()" style="display: none;">Adicionar ao Carrinho</button>
-            <button class="btn" onclick="resetComboBuilder()">Voltar</button>
-        ;
-        modal.style.display = "block";
-    }
-    window.selectCombo = function(comboName) {
-        currentCombo = combos.find(combo => combo.name === comboName);
-        document.querySelectorAll('.combo-option').forEach(option => {
-            option.classList.remove('selected');
-            if (option.textContent.includes(comboName)) {
-                option.classList.add('selected');
-            }
-        });
-        currentAcaiIndex = 0;
-        showFlavorSelection();
-    }
-function showFlavorSelection() {
-    const flavorSelection = document.getElementById('flavorSelection');
-    flavorSelection.innerHTML = 
-        <h3>Escolha até 2 sabores para o Açaí ${currentAcaiIndex + 1}:</h3>
-        <div class="combo-items">
-            ${acaiFlavors.map(flavor => 
-                <div class="combo-item" onclick="toggleFlavor('${flavor}')">
-                    <p>${flavor}</p>
-                </div>
-            ).join('')}
-        </div>
-        <button class="btn" onclick="showAccompanimentSelection()">Próximo</button>
-    ;
-    flavorSelection.style.display = 'block';
-    document.getElementById('accompanimentSelection').style.display = 'none';
-    updateFlavorSelection();
-}
-    window.toggleFlavor = function(flavor) {
-        const index = selectedFlavors[currentAcaiIndex].indexOf(flavor);
-        if (index > -1) {
-            selectedFlavors[currentAcaiIndex].splice(index, 1);
-        } else if (selectedFlavors[currentAcaiIndex].length < 2) {
-            selectedFlavors[currentAcaiIndex].push(flavor);
-        } else {
-            alert("Você só pode selecionar até 2 sabores por açaí.");
-            return;
-        }
-        updateFlavorSelection();
-    }
-function updateFlavorSelection() {
-        document.querySelectorAll('#flavorSelection .combo-item').forEach(item => {
-            const flavor = item.textContent.trim();
-            if (selectedFlavors[currentAcaiIndex].includes(flavor)) {
-                item.classList.add('selected');
-            } else {
-                item.classList.remove('selected');
-            }
-        });
-    }
-window.showAccompanimentSelection = function() {
-    if (selectedFlavors[currentAcaiIndex].length === 0) {
-        alert("Por favor, selecione pelo menos um sabor.");
-        return;
-    }
-    const accompanimentSelection = document.getElementById('accompanimentSelection');
-    accompanimentSelection.innerHTML = 
-        <h3>Escolha até ${currentCombo.maxAccompaniments} acompanhamentos para o Açaí ${currentAcaiIndex + 1}:</h3>
-        <div class="combo-items">
-            ${extraItems.map(item => 
-                <div class="combo-item" onclick="toggleAccompaniment('${item.name}')">
-                    <img src="${item.image}" alt="${item.name}">
-                    <p>${item.name}</p>
-                </div>
-            ).join('')}
-        </div>
-        <button class="btn" onclick="nextAcai()">Próximo</button>
-    ;
-    accompanimentSelection.style.display = 'block';
-    document.getElementById('flavorSelection').style.display = 'none';
-    updateAccompanimentSelection();
-}
-    window.toggleAccompaniment = function(accompaniment) {
-        const index = selectedAccompaniments[currentAcaiIndex].indexOf(accompaniment);
-        if (index > -1) {
-            selectedAccompaniments[currentAcaiIndex].splice(index, 1);
-        } else if (selectedAccompaniments[currentAcaiIndex].length < currentCombo.maxAccompaniments) {
-            selectedAccompaniments[currentAcaiIndex].push(accompaniment);
-        } else {
-            alert(Você só pode selecionar até ${currentCombo.maxAccompaniments} acompanhamentos por açaí.);
-            return;
-        }
-        updateAccompanimentSelection();
-    }
-    function updateAccompanimentSelection() {
-        document.querySelectorAll('#accompanimentSelection .combo-item').forEach(item => {
-            const accompaniment = item.querySelector('p').textContent.trim();
-            if (selectedAccompaniments[currentAcaiIndex].includes(accompaniment)) {
-                item.classList.add('selected');
-            } else {
-                item.classList.remove('selected');
-            }
-        });
-    }
-window.nextAcai = function() {
-    if (selectedAccompaniments[currentAcaiIndex].length === 0) {
-        alert("Por favor, selecione pelo menos um acompanhamento.");
-        return;
-    }
-    if (currentAcaiIndex === 0) {
-        currentAcaiIndex = 1;
-        document.getElementById('accompanimentSelection').style.display = 'none';
-        showFlavorSelection();
-    } else {
-        showExtraItemsSelection();
-    }
-}
-    window.showExtraItemsSelection = function() {
-        const extraItemsSelection = document.getElementById('extraItemsSelection');
-        extraItemsSelection.innerHTML = 
-            <h3>Escolha itens extras (R$ 1,99 cada):</h3>
-            <div class="combo-items">
-                ${extraItems.map(item => 
-                    <div class="combo-item" onclick="toggleExtra('${item.name}')">
-                        <img src="${item.image}" alt="${item.name}">
-                        <p>${item.name}</p>
-                        <p>R$ ${item.price.toFixed(2)}</p>
+window.openComboBuilder = function() {
+    hideHeaderAndCategories();
+    const modal = document.getElementById('comboModal');
+    const comboBuilder = document.getElementById('comboBuilder');
+    comboBuilder.innerHTML = `
+        <div class="combo-step">
+            <h3>Escolha seu Combo:</h3>
+            <div class="combo-options">
+                ${combos.map(combo => `
+                    <div class="combo-option" onclick="selectCombo('${combo.name}')">
+                        <h4>${combo.name}</h4>
+                        <p>R$ ${combo.price.toFixed(2)}</p>
+                        <p>Até ${combo.maxAccompaniments} acompanhamentos por açaí</p>
                     </div>
-                ).join('')}
+                `).join('')}
             </div>
-            <button class="btn" onclick="finishCombo()">Finalizar Combo</button>
-        ;
-        extraItemsSelection.style.display = 'block';
-        document.getElementById('accompanimentSelection').style.display = 'none';
-    }
-    window.toggleExtra = function(extra) {
-        const index = selectedExtras.indexOf(extra);
-        if (index > -1) {
-            selectedExtras.splice(index, 1);
-        } else {
-            selectedExtras.push(extra);
-        }
-        updateExtraItemsSelection();
-    }
-    function updateExtraItemsSelection() {
-        document.querySelectorAll('#extraItemsSelection .combo-item').forEach(item => {
-            const extra = item.querySelector('p').textContent.trim();
-            if (selectedExtras.includes(extra)) {
-                item.classList.add('selected');
-            } else {
-                item.classList.remove('selected');
-            }
-        });
-    }
-window.finishCombo = function() {
-    updateComboSummary();
-    document.querySelector('#comboModal .btn[onclick="addComboToCart()"]').style.display = 'block';
-}
-function updateComboSummary() {
-    const comboSummary = document.getElementById('comboSummary');
-    let total = currentCombo.price + (selectedExtras.length * 1.99);
-    comboSummary.innerHTML = 
-        <h3>Resumo do Combo:</h3>
-        <p><strong>Combo:</strong> ${currentCombo.name}</p>
-        <p><strong>Açaí 1:</strong></p>
-        <p>Sabores: ${selectedFlavors[0].join(', ')}</p>
-        <p>Acompanhamentos: ${selectedAccompaniments[0].join(', ')}</p>
-        <p><strong>Açaí 2:</strong></p>
-        <p>Sabores: ${selectedFlavors[1].join(', ')}</p>
-        <p>Acompanhamentos: ${selectedAccompaniments[1].join(', ')}</p>
-        <p><strong>Extras:</strong> ${selectedExtras.length > 0 ? selectedExtras.join(', ') : 'Nenhum'}</p>
-        <p><strong>Total:</strong> R$ ${total.toFixed(2)}</p>
-    ;
+        </div>
+        <div id="flavorSelection" style="display: none;"></div>
+        <div id="accompanimentSelection" style="display: none;"></div>
+        <div id="extraItemsSelection" style="display: none;"></div>
+        <div id="comboSummary"></div>
+        <button class="btn" onclick="addComboToCart()" style="display: none;">Adicionar ao Carrinho</button>
+        <button class="btn" onclick="resetComboBuilder()">Voltar</button>
+    `;
+    modal.style.display = "block";
 }
 
-function updateOrderSummary() {
-    const orderSummary = document.getElementById('orderSummary');
-    let summaryHTML = '<h3>Resumo do Pedido:</h3>';
-    let total = 0;
-
-    cart.forEach(item => {
-        if (item.acai1) {  // Se for um combo
-            summaryHTML += 
-                <p>${item.name} - R$ ${item.totalPrice.toFixed(2)}</p>
-                <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                ${item.extras && item.extras.length > 0 ? <p>Extras: ${item.extras.join(', ')}</p> : ''}
-                <hr>
-            ;
-        } else {  // Se for um item individual
-            summaryHTML += 
-                <p>${item.name} - R$ ${item.totalPrice.toFixed(2)}</p>
-                ${item.accompaniments && item.accompaniments.length > 0 ? <p>Acompanhamentos: ${item.accompaniments.join(', ')}</p> : ''}
-                ${item.extras && item.extras.length > 0 ? <p>Extras: ${item.extras.join(', ')}</p> : ''}
-                <hr>
-            ;
-        }
-        total += item.totalPrice;
-    });
-
-    const selectedExtras = document.querySelectorAll('.extra-item.selected');
-    let extrasTotal = 0;
-    selectedExtras.forEach(item => {
-        const itemName = item.querySelector('p').textContent;
-        const itemPrice = 1.99;
-        extrasTotal += itemPrice;
-        summaryHTML += <p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>;
-    });
-    total += extrasTotal;
-    summaryHTML += <h4>Subtotal: R$ ${total.toFixed(2)}</h4>;
-    summaryHTML += <h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>;
-    summaryHTML += <h3>Total: R$ ${(total + deliveryFee).toFixed(2)}</h3>;
-    orderSummary.innerHTML = summaryHTML;
+window.openMyOrders = function() {
+    hideHeaderAndCategories();
+    const modal = document.getElementById('myOrdersModal');
+    const content = document.getElementById('myOrdersContent');
+    content.innerHTML = `
+        <h3>Insira seu número de WhatsApp para ver seus pedidos:</h3>
+        <input type="tel" id="orderPhoneInput" placeholder="WhatsApp (com DDD)" required>
+        <button class="btn" onclick="fetchMyOrders()">Buscar Pedidos</button>
+        <div id="ordersList"></div>
+    `;
+    modal.style.display = "block";
 }
-    window.addComboToCart = function() {
-        const comboItem = {
-            id: Date.now(),
-            name: currentCombo.name,
-            price: currentCombo.price,
-            acai1: {
-                flavors: selectedFlavors[0],
-                accompaniments: selectedAccompaniments[0]
-            },
-            acai2: {
-                flavors: selectedFlavors[1],
-                accompaniments: selectedAccompaniments[1]
-            },
-            extras: selectedExtras,
-            totalPrice: currentCombo.price + (selectedExtras.length * 1.99)
-        };
-        cart.push(comboItem);
-        localStorage.setItem('cart', JSON.stringify(cart));
-        alert('Combo adicionado ao carrinho!');
-        document.getElementById('comboModal').style.display = 'none';
-        resetComboBuilder();
-        openCart();  // Abre o carrinho automaticamente após adicionar o combo
-    }
-    window.resetComboBuilder = function() {
-        currentCombo = null;
-        selectedFlavors = [[], []];
-        selectedAccompaniments = [[], []];
-        selectedExtras = [];
-        currentAcaiIndex = 0;
-        document.getElementById('flavorSelection').style.display = 'none';
-        document.getElementById('accompanimentSelection').style.display = 'none';
-        document.getElementById('extraItemsSelection').style.display = 'none';
-        document.getElementById('comboSummary').innerHTML = '';
-        document.querySelector('#comboModal .btn[onclick="addComboToCart()"]').style.display = 'none';
-    }
-    document.querySelectorAll('.close').forEach(closeBtn => {
-        closeBtn.onclick = function() {
-            this.closest('.modal').style.display = "none";
-        }
-    });
-    function closeAllModals() {
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.style.display = "none";
-        });
-    }
-    window.onclick = function(event) {
-        if (event.target.classList.contains('modal')) {
-            closeAllModals();
-        }
-    }
-            window.openMyOrders = function() {
-                hideHeaderAndCategories();
-                const modal = document.getElementById('myOrdersModal');
-                const content = document.getElementById('myOrdersContent');
-                <h3>Insira seu número de WhatsApp para ver seus pedidos:</h3>
-            <input type="tel" id="orderPhoneInput" placeholder="WhatsApp (com DDD)" required>
-            <button class="btn" onclick="fetchMyOrders()">Buscar Pedidos</button>
-            <div id="ordersList"></div>
-        ;
-        modal.style.display = "block";
-    }
-window.fetchMyOrders = function() {
-    const phone = document.getElementById('orderPhoneInput').value;
-    if (!phone) {
-        alert("Por favor, insira seu número de WhatsApp.");
-        return;
-    }
-    db.collection('orders')
-        .where('customerPhone', '==', phone)
-        .orderBy('createdAt', 'desc')
-        .get()
-        .then((querySnapshot) => {
-            const ordersList = document.getElementById('ordersList');
-            if (querySnapshot.empty) {
-                ordersList.innerHTML = '<p>Nenhum pedido encontrado para este número.</p>';
-            } else {
-                let ordersHtml = '<h3>Seus Pedidos:</h3>';
-                querySnapshot.forEach((doc) => {
-                    const order = doc.data();
-                    ordersHtml += 
-                        <div class="order-item">
-                            <p><strong>Data:</strong> ${order.createdAt.toDate().toLocaleString()}</p>
-                            <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
-                            <p><strong>Detalhes do Pedido:</strong> ${order.items.map(item => {
-                                if (item.acai1) {
-                                    return ${item.name} (Açaí 1: ${item.acai1.flavors.join(', ')}, Açaí 2: ${item.acai2.flavors.join(', ')});
-                                } else {
-                                    return ${item.name} ${item.accompaniments ? (${item.accompaniments.join(', ')}) : ''}${item.extras && item.extras.length > 0 ?  + Extras: ${item.extras.join(', ')} : ''};
-                                }
-                            }).join(', ')}</p>
-                            <button class="btn" onclick="repeatOrder('${doc.id}')">Repetir Este Pedido</button>
-                        </div>
-                    ;
-                });
-                ordersList.innerHTML = ordersHtml;
-            }
-        })
-        .catch((error) => {
-            console.error("Erro ao buscar pedidos: ", error);
-            alert("Ocorreu um erro ao buscar seus pedidos. Por favor, tente novamente.");
-        });
-}
-    window.repeatOrder = function(orderId) {
-        db.collection('orders').doc(orderId).get()
-            .then((doc) => {
-                if (doc.exists) {
-                    const order = doc.data();
-                    cart = order.items;
-                    localStorage.setItem('cart', JSON.stringify(cart));
-                    alert("Pedido adicionado ao carrinho!");
-                    document.getElementById('myOrdersModal').style.display = "none";
-                    openCart();
-                } else {
-                    alert("Pedido não encontrado.");
-                }
-            })
-            .catch((error) => {
-                console.error("Erro ao repetir pedido: ", error);
-                alert("Ocorreu um erro ao repetir o pedido. Por favor, tente novamente.");
-            });
-    }
-            }
 
-            window.openLoyaltyProgram = function() {
-                hideHeaderAndCategories();
-                const modal = document.getElementById('loyaltyProgramModal');
-                const content = document.getElementById('loyaltyProgramContent');
-                <h3>Programa de Fidelidade Cabana Açaí</h3>
-            <p>Nosso programa de fidelidade é simples e recompensador:</p>
-            <ul>
-                <li>A cada 10 pedidos, você ganha 50% de desconto no próximo!</li>
-                <li>Os pedidos são contabilizados dentro da janela do WhatsApp do cliente.</li>
-                <li>Se você fizer pedidos com números de WhatsApp diferentes, os pontos de fidelidade serão somados no novo número que está utilizando para compra.</li>
-            </ul>
-            <p>Para verificar seus pontos de fidelidade, insira seu número de WhatsApp:</p>
-            <input type="tel" id="loyaltyPhoneInput" placeholder="WhatsApp (com DDD)" required>
-            <button class="btn" onclick="checkLoyaltyPoints()">Verificar Pontos</button>
-            <div id="loyaltyPoints"></div>
-        ;
-        modal.style.display = "block";
-    }
-    window.checkLoyaltyPoints = function() {
-        const phone = document.getElementById('loyaltyPhoneInput').value;
-        if (!phone) {
-            alert("Por favor, insira seu número de WhatsApp.");
-            return;
-        }
-        db.collection('customers').doc(phone).get()
-            .then((doc) => {
-                const loyaltyPoints = document.getElementById('loyaltyPoints');
-                if (doc.exists) {
-                    const orderCount = doc.data().orderCount || 0;
-                    loyaltyPoints.innerHTML = 
-                        <p>Você já realizou ${orderCount} ${orderCount === 1 ? 'pedido' : 'pedidos'}.</p>
-                        ${orderCount >= 10 ? 
-                            '<p><strong>Parabéns!</strong> Você tem direito a 50% de desconto no seu próximo pedido!</p>' :
-                            <p>Faltam ${10 - orderCount} ${10 - orderCount === 1 ? 'pedido' : 'pedidos'} para você ganhar 50% de desconto!</p>
-                        }
-                    ;
-                } else {
-                    loyaltyPoints.innerHTML = '<p>Nenhum pedido encontrado para este número.</p>';
-                }
-            })
-            .catch((error) => {
-                console.error("Erro ao verificar pontos de fidelidade: ", error);
-                alert("Ocorreu um erro ao verificar seus pontos. Por favor, tente novamente.");
-            });
-    }
+window.openLoyaltyProgram = function() {
+    hideHeaderAndCategories();
+    const modal = document.getElementById('loyaltyProgramModal');
+    const content = document.getElementById('loyaltyProgramContent');
+    content.innerHTML = `
+        <h3>Programa de Fidelidade Cabana Açaí</h3>
+        <p>Nosso programa de fidelidade é simples e recompensador:</p>
+        <ul>
+            <li>A cada 10 pedidos, você ganha 50% de desconto no próximo!</li>
+            <li>Os pedidos são contabilizados dentro da janela do WhatsApp do cliente.</li>
+            <li>Se você fizer pedidos com números de WhatsApp diferentes, os pontos de fidelidade serão somados no novo número que está utilizando para compra.</li>
+        </ul>
+        <p>Para verificar seus pontos de fidelidade, insira seu número de WhatsApp:</p>
+        <input type="tel" id="loyaltyPhoneInput" placeholder="WhatsApp (com DDD)" required>
+        <button class="btn" onclick="checkLoyaltyPoints()">Verificar Pontos</button>
+        <div id="loyaltyPoints"></div>
+    `;
+    modal.style.display = "block";
+}
+
             fetchCategories();
             fetchProducts();
         });
