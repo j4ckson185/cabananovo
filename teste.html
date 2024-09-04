@@ -946,7 +946,7 @@ async function fetchProducts() {
     try {
         const snapshot = await window.db.collection('products').get();
         window.products = snapshot.docs.map(doc => {
-            const product = { id: doc.id, ...doc.data() };
+            const product = { id: doc.id.toString(), ...doc.data() };
             console.log("Produto carregado:", JSON.stringify(product, null, 2));
             return product;
         });
@@ -988,7 +988,7 @@ window.filterByCategory = function(category) {
 function displayProducts(productsToDisplay = products) {
     const productGrid = document.getElementById('productGrid');
     productGrid.innerHTML = productsToDisplay.map(product => `
-        <div class="product-card" onclick="openProductDetails('${product.id}')">
+        <div class="product-card" onclick="openProductDetails('${product.id.toString()}')">
             <div class="product-info">
                 <h3 class="product-title">${product.name}</h3>
                 <p class="product-description">${product.description.substring(0, 50)}...</p>
@@ -1011,7 +1011,7 @@ window.openProductDetails = function(productId) {
     
     console.log("Todos os produtos:", window.products.map(p => ({ id: p.id, name: p.name })));
     
-    const product = window.products.find(p => p.id === productId);
+    const product = window.products.find(p => p.id.toString() === productId.toString());
     console.log("Produto encontrado:", product);
 
     if (!product) {
