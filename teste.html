@@ -1855,6 +1855,37 @@ window.showExtraItemsSelection = function() {
     document.getElementById('accompanimentSelection').style.display = 'none';
 }
 
+            window.toggleExtraItem = function(element, itemName) {
+    console.log("Toggling extra item:", itemName); // Log para debug
+    element.classList.toggle('selected');
+    
+    // Atualizar o carrinho com o item extra
+    let extraItemIndex = window.cart.findIndex(item => item.name === itemName && item.isExtra);
+    
+    if (element.classList.contains('selected')) {
+        // Adicionar item extra ao carrinho se não existir
+        if (extraItemIndex === -1) {
+            window.cart.push({
+                id: Date.now(),
+                name: itemName,
+                price: 1.99,
+                isExtra: true,
+                totalPrice: 1.99
+            });
+        }
+    } else {
+        // Remover item extra do carrinho se existir
+        if (extraItemIndex !== -1) {
+            window.cart.splice(extraItemIndex, 1);
+        }
+    }
+    
+    // Atualizar o localStorage
+    localStorage.setItem('cart', JSON.stringify(window.cart));
+    
+    updateOrderSummaryDirectly();
+}
+
 window.toggleExtra = function(extra) {
     const index = selectedExtras.indexOf(extra);
     if (index > -1) {
