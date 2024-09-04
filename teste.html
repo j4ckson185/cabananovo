@@ -787,29 +787,31 @@ function updateOrderSummaryDirectly() {
                 <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
                 <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
                 ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
-                <hr>
             `;
         } else {
             summaryHTML += `
                 <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
                 ${item.accompaniments && item.accompaniments.length > 0 ? `<p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>` : ''}
                 ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
-                <hr>
             `;
         }
     });
 
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
     let extrasTotal = selectedExtras.length * 1.99;
-    selectedExtras.forEach(item => {
-        const itemName = item.querySelector('p').textContent;
-        summaryHTML += `<p>Extra: ${itemName} - R$ 1.99</p>`;
-    });
+    if (selectedExtras.length > 0) {
+        summaryHTML += "<h4>Itens Extras Adicionais:</h4>";
+        selectedExtras.forEach(item => {
+            const itemName = item.querySelector('p').textContent;
+            summaryHTML += `<p>${itemName} - R$ 1.99</p>`;
+        });
+    }
 
     subtotal += extrasTotal;
     const discountedTotal = Math.max(0, subtotal - window.appliedDiscount);
     const finalTotal = discountedTotal + window.deliveryFee;
 
+    summaryHTML += `<hr>`;
     summaryHTML += `<h4>Subtotal: R$ ${subtotal.toFixed(2)}</h4>`;
     if (window.appliedDiscount > 0) {
         summaryHTML += `<h4>Desconto aplicado: R$ ${window.appliedDiscount.toFixed(2)}</h4>`;
@@ -821,6 +823,7 @@ function updateOrderSummaryDirectly() {
     console.log('Resumo final:', {
         subtotal,
         appliedDiscount: window.appliedDiscount,
+        extrasTotal,
         discountedTotal,
         deliveryFee: window.deliveryFee,
         finalTotal
