@@ -947,7 +947,7 @@ async function fetchProducts() {
         const snapshot = await window.db.collection('products').get();
         window.products = snapshot.docs.map(doc => {
             const product = { id: doc.id, ...doc.data() };
-            console.log("Produto carregado:", product.id, product.name);
+            console.log("Produto carregado:", JSON.stringify(product, null, 2));
             return product;
         });
         console.log("Total de produtos carregados:", window.products.length);
@@ -958,7 +958,7 @@ async function fetchProducts() {
         alert("Ocorreu um erro ao carregar os produtos. Por favor, recarregue a página.");
     }
 }
-
+            
 async function fetchCategories() {
     const snapshot = await window.db.collection('categories').get();
     const categories = snapshot.docs.map(doc => doc.data().name);
@@ -997,14 +997,7 @@ function displayProducts(productsToDisplay = products) {
             <img src="${product.image}" alt="${product.name}" class="product-image">
         </div>
     `).join('');
-}
-window.searchProducts = function() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const filteredProducts = products.filter(product => 
-        product.name.toLowerCase().includes(searchTerm) || 
-        product.description.toLowerCase().includes(searchTerm)
-    );
-    displayProducts(filteredProducts);
+    console.log("Produtos renderizados:", productsToDisplay.map(p => ({ id: p.id, name: p.name })));
 }
 
 function updateCartCount() {
@@ -1015,8 +1008,10 @@ function updateCartCount() {
 window.openProductDetails = function(productId) {
     console.log("Abrindo detalhes do produto com ID:", productId);
     hideHeaderAndCategories();
-    // Convertendo o productId para string para garantir a comparação correta
-    const product = products.find(p => p.id === productId.toString());
+    
+    console.log("Todos os produtos:", window.products.map(p => ({ id: p.id, name: p.name })));
+    
+    const product = window.products.find(p => p.id === productId);
     console.log("Produto encontrado:", product);
 
     if (!product) {
