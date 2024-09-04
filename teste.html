@@ -1405,8 +1405,10 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         }
     }
     
-    message += `\nItens do Pedido:\n`;
     let subtotal = 0;
+    let extrasFromProducts = new Set(); // Para rastrear extras já incluídos nos produtos
+
+    message += `\nItens do Pedido:\n`;
     window.cart.forEach(item => {
         subtotal += item.totalPrice;
         message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
@@ -1418,16 +1420,24 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
                 message += `\nAcompanhamentos: ${item.accompaniments.join(', ')}`;
             }
         }
-        // A seção de extras foi removida para ser exibida apenas nos Itens Extras Adicionais
+        // Extras escolhidos na página do produto
+        if (item.extras && item.extras.length > 0) {
+            message += `\nExtras: ${item.extras.join(', ')}`;
+            item.extras.forEach(extra => extrasFromProducts.add(extra));
+        }
     });
     
     // Itens extras adicionais selecionados na página de resumo do pedido
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
-    let extrasTotal = selectedExtras.length * 1.99;
+    let extrasTotal = 0;
     if (selectedExtras.length > 0) {
         message += "\nItens Extras Adicionais:";
         selectedExtras.forEach(item => {
             const itemName = item.querySelector('p').textContent;
+            if (!extrasFromProducts.has(itemName)) {
+                message += `\n${itemName} - R$ 1,99`;
+                extrasTotal += 1.99;
+            }
         });
     }
     
@@ -1451,7 +1461,9 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         changeNeeded: changeNeeded,
         changeAmount: changeAmount,
         items: window.cart,
-        extraItems: Array.from(selectedExtras).map(item => item.querySelector('p').textContent),
+        extraItems: Array.from(selectedExtras)
+            .map(item => item.querySelector('p').textContent)
+            .filter(itemName => !extrasFromProducts.has(itemName)),
         subtotal: subtotal,
         extrasTotal: extrasTotal,
         appliedDiscount: window.appliedDiscount,
@@ -1521,7 +1533,6 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             console.error('Erro ao adicionar pedido: ', error);
         });
 });
-
 
 function getPaymentMethodText(method) {
     switch(method) {
