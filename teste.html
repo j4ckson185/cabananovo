@@ -1042,7 +1042,16 @@ window.filterByCategory = function(category) {
     displayProducts(filteredProducts);
 }
 
-function displayProducts(productsToDisplay = products) {
+    window.searchProducts = function() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const filteredProducts = window.products.filter(product => 
+        product.name.toLowerCase().includes(searchTerm) || 
+        product.description.toLowerCase().includes(searchTerm)
+    );
+    displayProducts(filteredProducts);
+}
+            
+    function displayProducts(productsToDisplay = products) {
     console.log("Iniciando displayProducts com", productsToDisplay.length, "produtos");
     const productGrid = document.getElementById('productGrid');
     if (productsToDisplay.length === 0) {
