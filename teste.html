@@ -638,56 +638,56 @@
         window.appliedCouponId = null;
 
         // Função global para aplicar desconto
-window.applyDiscount = function() {
-    console.log("Iniciando applyDiscount");
-    if (!window.db) {
-        console.error("Firebase não está inicializado");
-        alert("Erro ao aplicar cupom. Por favor, recarregue a página e tente novamente.");
-        return;
-    }
+        window.applyDiscount = function() {
+            console.log("Iniciando applyDiscount");
+            if (!window.db) {
+                console.error("Firebase não está inicializado");
+                alert("Erro ao aplicar cupom. Por favor, recarregue a página e tente novamente.");
+                return;
+            }
 
-    const discountCode = document.getElementById('discountCode').value;
-    const discountMessage = document.getElementById('discountMessage');
-    
-    window.db.collection('coupons')
-        .where('code', '==', discountCode)
-        .where('expirationDate', '>', new Date())
-        .get()
-        .then((querySnapshot) => {
-            if (!querySnapshot.empty) {
-                const coupon = querySnapshot.docs[0].data();
-                const couponId = querySnapshot.docs[0].id;
-                if (!coupon.customerPhone || coupon.customerPhone === window.customerInfo.phone) {
-                    window.appliedDiscount = parseFloat(coupon.discount);
-                    window.appliedCouponId = couponId;
-                    discountMessage.textContent = `Cupom aplicado! Desconto de R$${window.appliedDiscount.toFixed(2)}`;
-                    discountMessage.style.color = 'green';
-                    console.log("Cupom aplicado:", window.appliedDiscount);
-                } else {
+            const discountCode = document.getElementById('discountCode').value;
+            const discountMessage = document.getElementById('discountMessage');
+            
+            window.db.collection('coupons')
+                .where('code', '==', discountCode)
+                .where('expirationDate', '>', new Date())
+                .get()
+                .then((querySnapshot) => {
+                    if (!querySnapshot.empty) {
+                        const coupon = querySnapshot.docs[0].data();
+                        const couponId = querySnapshot.docs[0].id;
+                        if (!coupon.customerPhone || coupon.customerPhone === window.customerInfo.phone) {
+                            window.appliedDiscount = parseFloat(coupon.discount);
+                            window.appliedCouponId = couponId;
+                            discountMessage.textContent = `Cupom aplicado! Desconto de R$${window.appliedDiscount.toFixed(2)}`;
+                            discountMessage.style.color = 'green';
+                            console.log("Cupom aplicado:", window.appliedDiscount);
+                        } else {
+                            window.appliedDiscount = 0;
+                            window.appliedCouponId = null;
+                            discountMessage.textContent = 'Este cupom é exclusivo para outro cliente.';
+                            discountMessage.style.color = 'red';
+                        }
+                    } else {
+                        window.appliedDiscount = 0;
+                        window.appliedCouponId = null;
+                        discountMessage.textContent = 'Cupom inválido ou expirado';
+                        discountMessage.style.color = 'red';
+                    }
+                    console.log("Atualizando resumo do pedido");
+                    updateOrderSummary();
+                })
+                .catch((error) => {
+                    console.error("Erro ao verificar cupom:", error);
+                    discountMessage.textContent = 'Erro ao verificar cupom. Tente novamente.';
+                    discountMessage.style.color = 'red';
                     window.appliedDiscount = 0;
                     window.appliedCouponId = null;
-                    discountMessage.textContent = 'Este cupom é exclusivo para outro cliente.';
-                    discountMessage.style.color = 'red';
-                }
-            } else {
-                window.appliedDiscount = 0;
-                window.appliedCouponId = null;
-                discountMessage.textContent = 'Cupom inválido ou expirado';
-                discountMessage.style.color = 'red';
-            }
-            console.log("Atualizando resumo do pedido");
-            updateOrderSummary();
-        })
-        .catch((error) => {
-            console.error("Erro ao verificar cupom:", error);
-            discountMessage.textContent = 'Erro ao verificar cupom. Tente novamente.';
-            discountMessage.style.color = 'red';
-            window.appliedDiscount = 0;
-            window.appliedCouponId = null;
-            console.log("Atualizando resumo do pedido após erro");
-            updateOrderSummary();
-        });
-}
+                    console.log("Atualizando resumo do pedido após erro");
+                    updateOrderSummary();
+                });
+        }
 
 function updateOrderSummaryDirectly() {
     console.log("Iniciando updateOrderSummaryDirectly");
@@ -723,58 +723,58 @@ function updateOrderSummaryDirectly() {
 }
 
         // Função global para atualizar o resumo do pedido
-window.updateOrderSummary = function() {
-    console.log("Iniciando updateOrderSummary");
-    console.log("Desconto aplicado:", window.appliedDiscount);
-    console.log("Taxa de entrega:", window.deliveryFee);
+        function updateOrderSummary() {
+            console.log("Iniciando updateOrderSummary");
+            console.log("Desconto aplicado:", window.appliedDiscount);
+            console.log("Taxa de entrega:", window.deliveryFee);
 
-    const orderSummary = document.getElementById('orderSummary');
-    if (!orderSummary) {
-        console.error("Elemento orderSummary não encontrado");
-        return;
-    }
+            const orderSummary = document.getElementById('orderSummary');
+            if (!orderSummary) {
+                console.error("Elemento orderSummary não encontrado");
+                return;
+            }
 
-    let summaryHTML = '<h3>Resumo do Pedido:</h3>';
-    let subtotal = 0;
-    
-    console.log("Carrinho:", window.cart);
+            let summaryHTML = '<h3>Resumo do Pedido:</h3>';
+            let subtotal = 0;
+            
+            console.log("Carrinho:", window.cart);
 
-    window.cart.forEach(item => {
-        console.log("Item do carrinho:", item);
-        subtotal += item.totalPrice;
-    });
-    
-    console.log("Subtotal após itens do carrinho:", subtotal);
+            window.cart.forEach(item => {
+                console.log("Item do carrinho:", item);
+                subtotal += item.totalPrice;
+            });
+            
+            console.log("Subtotal após itens do carrinho:", subtotal);
 
-    const selectedExtras = document.querySelectorAll('.extra-item.selected');
-    let extrasTotal = selectedExtras.length * 1.99;
-    subtotal += extrasTotal;
+            const selectedExtras = document.querySelectorAll('.extra-item.selected');
+            let extrasTotal = selectedExtras.length * 1.99;
+            subtotal += extrasTotal;
 
-    console.log("Subtotal após extras:", subtotal);
+            console.log("Subtotal após extras:", subtotal);
 
-    summaryHTML += `<h4>Subtotal: R$ ${subtotal.toFixed(2)}</h4>`;
-    
-    if (window.appliedDiscount > 0) {
-        summaryHTML += `<h4>Desconto aplicado: R$ ${window.appliedDiscount.toFixed(2)}</h4>`;
-    }
-    
-    const discountedTotal = Math.max(0, subtotal - window.appliedDiscount);
-    console.log("Total após desconto:", discountedTotal);
-    
-    summaryHTML += `<h4>Taxa de Entrega: R$ ${window.deliveryFee.toFixed(2)}</h4>`;
-    const finalTotal = discountedTotal + window.deliveryFee;
-    summaryHTML += `<h3>Total: R$ ${finalTotal.toFixed(2)}</h3>`;
-    
-    orderSummary.innerHTML = summaryHTML;
+            summaryHTML += `<h4>Subtotal: R$ ${subtotal.toFixed(2)}</h4>`;
+            
+            if (window.appliedDiscount > 0) {
+                summaryHTML += `<h4>Desconto aplicado: R$ ${window.appliedDiscount.toFixed(2)}</h4>`;
+            }
+            
+            const discountedTotal = Math.max(0, subtotal - window.appliedDiscount);
+            console.log("Total após desconto:", discountedTotal);
+            
+            summaryHTML += `<h4>Taxa de Entrega: R$ ${window.deliveryFee.toFixed(2)}</h4>`;
+            const finalTotal = discountedTotal + window.deliveryFee;
+            summaryHTML += `<h3>Total: R$ ${finalTotal.toFixed(2)}</h3>`;
+            
+            orderSummary.innerHTML = summaryHTML;
 
-    console.log('Resumo final:', {
-        subtotal,
-        appliedDiscount: window.appliedDiscount,
-        discountedTotal,
-        deliveryFee: window.deliveryFee,
-        finalTotal
-    });
-}
+            console.log('Resumo final:', {
+                subtotal,
+                appliedDiscount: window.appliedDiscount,
+                discountedTotal,
+                deliveryFee: window.deliveryFee,
+                finalTotal
+            });
+        }
 
         document.addEventListener('DOMContentLoaded', function () {
             // Configuração do Firebase
