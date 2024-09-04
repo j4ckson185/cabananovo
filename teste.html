@@ -1405,9 +1405,11 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             message += `Troco para: R$ ${parseFloat(changeAmount).toFixed(2)}\n`;
         }
     }
-
+    
     message += `\nItens do Pedido:\n`;
+    let subtotal = 0;
     cart.forEach(item => {
+        subtotal += item.totalPrice;
         if (item.acai1) {
             message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
             message += `\nAçaí 1: Sabores: ${item.acai1.flavors.join(', ')}, Acompanhamentos: ${item.acai1.accompaniments.join(', ')}`;
@@ -1425,28 +1427,29 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             }
         }
     });
-
+    
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
+    let extrasTotal = 0;
     if (selectedExtras.length > 0) {
         message += "\n\nItens Extras Adicionais:";
         selectedExtras.forEach(item => {
             const itemName = item.querySelector('p').textContent;
+            extrasTotal += 1.99;
             message += `\n- ${itemName} (R$ 1,99)`;
         });
     }
-
-    const subtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-    const extrasTotal = selectedExtras.length * 1.99;
+    
     const total = subtotal + extrasTotal;
-    const discountedTotal = Math.max(0, total - appliedDiscount);
-
+    const discountedTotal = Math.max(0, total - window.appliedDiscount);
+    const finalTotal = discountedTotal + window.deliveryFee;
+    
     message += `\n\nSubtotal: R$ ${total.toFixed(2)}`;
-    if (appliedDiscount > 0) {
-        message += `\nDesconto aplicado: R$ ${appliedDiscount.toFixed(2)}`;
+    if (window.appliedDiscount > 0) {
+        message += `\nDesconto aplicado: R$ ${window.appliedDiscount.toFixed(2)}`;
     }
-    message += `\nTaxa de Entrega: R$ ${deliveryFee.toFixed(2)}`;
-    message += `\nTotal: R$ ${(discountedTotal + deliveryFee).toFixed(2)}`;
-
+    message += `\nTaxa de Entrega: R$ ${window.deliveryFee.toFixed(2)}`;
+    message += `\nTotal: R$ ${finalTotal.toFixed(2)}`;
+    
     const order = {
         id: Date.now(),
         customerName: customerInfo.name,
@@ -1459,10 +1462,10 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         extraItems: Array.from(selectedExtras).map(item => item.querySelector('p').textContent),
         subtotal: subtotal,
         extrasTotal: extrasTotal,
-        appliedDiscount: appliedDiscount,
-        appliedCouponId: appliedCouponId,
-        deliveryFee: deliveryFee,
-        total: discountedTotal + deliveryFee,
+        appliedDiscount: window.appliedDiscount,
+        appliedCouponId: window.appliedCouponId,
+        deliveryFee: window.deliveryFee,
+        total: finalTotal,
         status: 'preparing',
         createdAt: new Date()
     };
@@ -1477,7 +1480,7 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
                 orderCount = doc.data().orderCount || 0;
             }
             orderCount++;
-
+            
             return db.collection('customers').doc(customerInfo.phone).set({
                 name: customerInfo.name,
                 orderCount: orderCount
@@ -1496,8 +1499,8 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
                     message += `\nFaltam ${10 - orderCount} pedidos para o próximo desconto de fidelidade.`;
                 }
             }
-            if (appliedCouponId) {
-                return db.collection('coupons').doc(appliedCouponId).delete();
+            if (window.appliedCouponId) {
+                return db.collection('coupons').doc(window.appliedCouponId).delete();
             }
         })
         .then(() => {
