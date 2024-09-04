@@ -1418,10 +1418,7 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
                 message += `\nAcompanhamentos: ${item.accompaniments.join(', ')}`;
             }
         }
-        // Extras escolhidos na página do produto
-        if (item.extras && item.extras.length > 0) {
-            message += `\nExtras: ${item.extras.join(', ')}`;
-        }
+        // A seção de extras foi removida para ser exibida apenas nos Itens Extras Adicionais
     });
     
     // Itens extras adicionais selecionados na página de resumo do pedido
@@ -1525,6 +1522,7 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             console.error('Erro ao adicionar pedido: ', error);
         });
 });
+
 
 function getPaymentMethodText(method) {
     switch(method) {
