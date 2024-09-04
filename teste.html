@@ -892,6 +892,8 @@ function updateOrderSummaryDirectly() {
 }
 
         document.addEventListener('DOMContentLoaded', function () {
+                loadCartFromLocalStorage();
+                window.updateCartCount();
             // Configuração do Firebase
             const firebaseConfig = {
                 apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
@@ -1142,9 +1144,18 @@ window.addToCart = function(productId) {
     };
 
     window.cart.push(cartItem);
-    localStorage.setItem('cart', JSON.stringify(window.cart));
+    saveCartToLocalStorage();
     window.updateCartCount();
     window.openCart();
+}
+
+function saveCartToLocalStorage() {
+    localStorage.setItem('cart', JSON.stringify(window.cart));
+}
+
+function loadCartFromLocalStorage() {
+    const savedCart = localStorage.getItem('cart');
+    window.cart = savedCart ? JSON.parse(savedCart) : [];
 }
 
 function calculateTotalPrice(product, selectedExtras) {
@@ -1159,8 +1170,7 @@ function calculateTotalPrice(product, selectedExtras) {
 }
 
 window.openCart = function() {
-    console.log("Abrindo o carrinho"); // Log para debug
-    
+    console.log("Abrindo o carrinho");
     const cartModal = document.getElementById('cartModal');
     const cartContent = document.getElementById('cartContent');
     const cartTotal = document.getElementById('cartTotal');
@@ -1180,8 +1190,8 @@ window.openCart = function() {
                 <div class="cart-item-info">
                     <h3>${item.name}</h3>
                     <p>Preço: R$ ${item.totalPrice.toFixed(2)}</p>
-                    ${item.accompaniments ? `<p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>` : ''}
-                    ${item.extras ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+                    ${item.accompaniments && item.accompaniments.length > 0 ? `<p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>` : ''}
+                    ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
                 </div>
                 <span class="cart-item-remove" onclick="window.removeFromCart(${item.id})">🗑️</span>
             </div>
@@ -1191,8 +1201,6 @@ window.openCart = function() {
     cartContent.innerHTML = cartHTML;
     cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
     cartModal.style.display = "block";
-    
-    console.log("Carrinho aberto com", window.cart.length, "itens"); // Log para debug
 }
             
 window.continueShopping = function() {
@@ -1202,10 +1210,9 @@ window.continueShopping = function() {
 window.removeFromCart = function(itemId) {
     console.log("Removendo item do carrinho:", itemId);
     window.cart = window.cart.filter(item => item.id !== itemId);
-    localStorage.setItem('cart', JSON.stringify(window.cart));
+    saveCartToLocalStorage();
     window.updateCartCount();
     window.openCart(); // Reabrir o carrinho para atualizar a visualização
-    updateOrderSummaryDirectly();
 }
 
 window.openCustomerIdentification = function() {
