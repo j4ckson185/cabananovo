@@ -808,8 +808,12 @@ function updateOrderSummaryDirectly() {
             summaryHTML += `
                 <div class="cart-item">
                     <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                    <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                    <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+                    <p>Açaí 1:</p>
+                    <p>&nbsp;&nbsp;&nbsp;&nbsp;Sabores: ${item.acai1.flavors.join(', ')}</p>
+                    <p>&nbsp;&nbsp;&nbsp;&nbsp;Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                    <p>Açaí 2:</p>
+                    <p>&nbsp;&nbsp;&nbsp;&nbsp;Sabores: ${item.acai2.flavors.join(', ')}</p>
+                    <p>&nbsp;&nbsp;&nbsp;&nbsp;Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
                     ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
                 </div>
             `;
