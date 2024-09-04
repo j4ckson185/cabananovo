@@ -1389,6 +1389,7 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     const paymentMethod = document.getElementById('paymentMethod').value;
     const changeNeeded = document.getElementById('changeNeeded').value;
     const changeAmount = document.getElementById('changeAmount').value;
+
     let message = `Pedido confirmado!\n`;
     message += `Nome: ${customerInfo.name}\n`;
     message += `WhatsApp: ${customerInfo.phone}\n`;
@@ -1406,28 +1407,24 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     
     message += `\nItens do Pedido:\n`;
     let subtotal = 0;
-    cart.forEach(item => {
+    window.cart.forEach(item => {
         subtotal += item.totalPrice;
+        message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
         if (item.acai1) {
-            message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
             message += `\nAçaí 1: Sabores: ${item.acai1.flavors.join(', ')}, Acompanhamentos: ${item.acai1.accompaniments.join(', ')}`;
             message += `\nAçaí 2: Sabores: ${item.acai2.flavors.join(', ')}, Acompanhamentos: ${item.acai2.accompaniments.join(', ')}`;
-            if (item.extras && item.extras.length > 0) {
-                message += `\nExtras: ${item.extras.join(', ')}`;
-            }
         } else {
-            message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
             if (item.accompaniments && item.accompaniments.length > 0) {
                 message += `\nAcompanhamentos: ${item.accompaniments.join(', ')}`;
             }
-            if (item.extras && item.extras.length > 0) {
-                message += `\nExtras: ${item.extras.join(', ')}`;
-            }
+        }
+        if (item.extras && item.extras.length > 0) {
+            message += `\nExtras: ${item.extras.join(', ')}`;
         }
     });
     
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
-    let extrasTotal = 0;
+    let extrasTotal = selectedExtras.length * 1.99;
     if (selectedExtras.length > 0) {
         message += "\n\nItens Extras Adicionais:";
         selectedExtras.forEach(item => {
@@ -1437,16 +1434,17 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         });
     }
     
-    const total = subtotal + extrasTotal;
-    let discountedTotal = Math.max(0, total - window.appliedDiscount);
+    subtotal += extrasTotal;
+    let discountedTotal = Math.max(0, subtotal - window.appliedDiscount);
     let finalTotal = discountedTotal + window.deliveryFee;
     
-    message += `\n\nSubtotal: R$ ${total.toFixed(2)}`;
+    message += `\n\nSubtotal: R$ ${subtotal.toFixed(2)}`;
     if (window.appliedDiscount > 0) {
         message += `\nDesconto de cupom aplicado: R$ ${window.appliedDiscount.toFixed(2)}`;
     }
     message += `\nTaxa de Entrega: R$ ${window.deliveryFee.toFixed(2)}`;
-    
+    message += `\nTotal: R$ ${finalTotal.toFixed(2)}`;
+
     const order = {
         id: Date.now(),
         customerName: customerInfo.name,
@@ -1455,7 +1453,7 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         paymentMethod: paymentMethod,
         changeNeeded: changeNeeded,
         changeAmount: changeAmount,
-        items: cart,
+        items: window.cart,
         extraItems: Array.from(selectedExtras).map(item => item.querySelector('p').textContent),
         subtotal: subtotal,
         extrasTotal: extrasTotal,
@@ -1466,6 +1464,7 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         status: 'preparing',
         createdAt: new Date()
     };
+
     db.collection('orders').add(order)
         .then(() => {
             console.log('Pedido adicionado com sucesso!');
@@ -1480,7 +1479,6 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             
             let updateData = { orderCount: orderCount };
             let loyaltyDiscount = 0;
-
             if (orderCount >= 10) {
                 loyaltyDiscount = subtotal * 0.5; // 50% de desconto
                 updateData.orderCount = 0; // Reinicia a contagem
@@ -1491,14 +1489,11 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
                 discountedTotal = Math.max(0, discountedTotal - loyaltyDiscount);
                 finalTotal = discountedTotal + window.deliveryFee;
             }
-
             message += `\nTotal: R$ ${finalTotal.toFixed(2)}`;
-
             if (orderCount < 10) {
                 message += `\n\nEste é o ${getOrderNumberText(orderCount)} pedido do cliente.`;
                 message += `\nFaltam ${10 - orderCount} pedidos para o próximo desconto de fidelidade.`;
             }
-
             return db.collection('customers').doc(customerInfo.phone).set(updateData, { merge: true });
         })
         .then(() => {
@@ -1513,11 +1508,9 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         })
         .then(() => {
             window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
-            cart = [];
-            localStorage.setItem('cart', JSON.stringify(cart));
+            window.cart = [];
+            localStorage.setItem('cart', JSON.stringify(window.cart));
             updateCartCount();
-            document.getElementById('paymentMethod').value = 'card';
-            handlePaymentChange();
             
             // Limpar o campo de cupom e mensagem
             document.getElementById('discountCode').value = '';
