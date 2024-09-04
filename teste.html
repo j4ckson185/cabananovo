@@ -801,30 +801,30 @@ function updateOrderSummaryDirectly() {
     let summaryHTML = '<h3>Resumo do Pedido:</h3>';
     let subtotal = 0;
 
-    // Garantir que window.cart existe e é um array
-    if (!Array.isArray(window.cart)) {
-        console.error("window.cart não é um array válido");
-        window.cart = [];
-    }
-
+    // Exibir itens do carrinho
     window.cart.forEach(item => {
         subtotal += item.totalPrice;
         if (item.acai1) {
             summaryHTML += `
-                <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+                <div class="cart-item">
+                    <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
+                    <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                    <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+                    ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+                </div>
             `;
         } else {
             summaryHTML += `
-                <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                ${item.accompaniments && item.accompaniments.length > 0 ? `<p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>` : ''}
-                ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+                <div class="cart-item">
+                    <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
+                    ${item.accompaniments && item.accompaniments.length > 0 ? `<p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>` : ''}
+                    ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+                </div>
             `;
         }
     });
 
+    // Exibir itens extras selecionados
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
     let extrasTotal = selectedExtras.length * 1.99;
     if (selectedExtras.length > 0) {
@@ -849,6 +849,7 @@ function updateOrderSummaryDirectly() {
     discountedTotal = Math.max(0, discountedTotal - loyaltyDiscount);
     const finalTotal = discountedTotal + window.deliveryFee;
 
+    // Resumo final
     summaryHTML += `<hr>`;
     summaryHTML += `<h4>Subtotal: R$ ${subtotal.toFixed(2)}</h4>`;
     if (window.appliedDiscount > 0) {
