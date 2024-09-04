@@ -316,6 +316,18 @@
             cursor: pointer;
         }
 
+        .cart-item-details {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.cart-item-details p {
+    margin: 5px 0;
+}
+
+.indent {
+    margin-left: 20px;
+}
         .error-message {
             color: red;
             margin-top: 10px;
@@ -559,10 +571,10 @@
         <div class="header-content">
             <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Cabana Açaí Logo" class="logo">
             <h1>Cabana Açaí</h1>
-            <div class="cart-icon" onclick="openCart()">
-                🛒
-                <span class="cart-count" id="cartCount">0</span>
-            </div>
+            <div class="cart-icon" onclick="window.openCart()">
+    🛒
+    <span class="cart-count" id="cartCount">0</span>
+</div>
         </div>
     </header>
     <main>
@@ -800,104 +812,84 @@ function updateOrderSummaryDirectly() {
     
     let summaryHTML = '<h3>Resumo do Pedido:</h3>';
     let subtotal = 0;
-
+    
+    // Exibir itens do carrinho
     window.cart.forEach(item => {
-        subtotal += item.totalPrice;
-        if (item.acai1) {
+        if (!item.isExtra) {
+            subtotal += item.totalPrice;
             summaryHTML += `
-                <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+                <div class="cart-item">
+                    <div class="cart-item-details">
+                        <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
             `;
-        } else {
+            if (item.acai1) {
+                summaryHTML += `
+                    <p>Açaí 1:</p>
+                    <p class="indent">Sabores: ${item.acai1.flavors.join(', ')}</p>
+                    <p class="indent">Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                    <p>Açaí 2:</p>
+                    <p class="indent">Sabores: ${item.acai2.flavors.join(', ')}</p>
+                    <p class="indent">Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+                `;
+            } else {
+                if (item.accompaniments && item.accompaniments.length > 0) {
+                    summaryHTML += `<p class="indent">Acompanhamentos: ${item.accompaniments.join(', ')}</p>`;
+                }
+            }
+            if (item.extras && item.extras.length > 0) {
+                summaryHTML += `<p class="indent">Extras: ${item.extras.join(', ')}</p>`;
+            }
             summaryHTML += `
-                <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                ${item.accompaniments && item.accompaniments.length > 0 ? `<p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>` : ''}
-                ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
-            `;
+                    </div>
+                </div>`;
         }
     });
-
-    const selectedExtras = document.querySelectorAll('.extra-item.selected');
-    let extrasTotal = selectedExtras.length * 1.99;
-    if (selectedExtras.length > 0) {
+    
+    // Exibir itens extras
+    const extraItems = window.cart.filter(item => item.isExtra);
+    if (extraItems.length > 0) {
         summaryHTML += "<h4>Itens Extras Adicionais:</h4>";
-        selectedExtras.forEach(item => {
-            const itemName = item.querySelector('p').textContent;
-            summaryHTML += `<p>${itemName} - R$ 1.99</p>`;
+        extraItems.forEach(item => {
+            subtotal += item.totalPrice;
+            summaryHTML += `<p class="indent">${item.name} - R$ ${item.totalPrice.toFixed(2)}</p>`;
         });
     }
-
-    subtotal += extrasTotal;
-    const discountedTotal = Math.max(0, subtotal - window.appliedDiscount);
+    
+    let discountedTotal = Math.max(0, subtotal - (window.appliedDiscount || 0));
+    
+    // Aplicar desconto de fidelidade, se aplicável
+    let loyaltyDiscount = 0;
+    if (window.customerInfo && window.customerInfo.orderCount === 9) { // 9 porque este será o 10º pedido
+        loyaltyDiscount = subtotal * 0.5;
+        summaryHTML += `<h4 style="color: green;">Parabéns! Você ganhou 50% de desconto neste pedido!</h4>`;
+    }
+    
+    discountedTotal = Math.max(0, discountedTotal - loyaltyDiscount);
     const finalTotal = discountedTotal + window.deliveryFee;
-
+    
+    // Resumo final
     summaryHTML += `<hr>`;
     summaryHTML += `<h4>Subtotal: R$ ${subtotal.toFixed(2)}</h4>`;
     if (window.appliedDiscount > 0) {
-        summaryHTML += `<h4>Desconto aplicado: R$ ${window.appliedDiscount.toFixed(2)}</h4>`;
+        summaryHTML += `<h4>Desconto de cupom: R$ ${window.appliedDiscount.toFixed(2)}</h4>`;
+    }
+    if (loyaltyDiscount > 0) {
+        summaryHTML += `<h4>Desconto de fidelidade: R$ ${loyaltyDiscount.toFixed(2)}</h4>`;
     }
     summaryHTML += `<h4>Taxa de Entrega: R$ ${window.deliveryFee.toFixed(2)}</h4>`;
     summaryHTML += `<h3>Total: R$ ${finalTotal.toFixed(2)}</h3>`;
-
+    
     orderSummary.innerHTML = summaryHTML;
+    
     console.log('Resumo final:', {
         subtotal,
         appliedDiscount: window.appliedDiscount,
-        extrasTotal,
+        loyaltyDiscount,
         discountedTotal,
         deliveryFee: window.deliveryFee,
         finalTotal
     });
 }
-
-        // Função global para atualizar o resumo do pedido
-        function updateOrderSummary() {
-            console.log("Iniciando updateOrderSummary");
-            console.log("Desconto aplicado:", window.appliedDiscount);
-            console.log("Taxa de entrega:", window.deliveryFee);
-            const orderSummary = document.getElementById('orderSummary');
-            if (!orderSummary) {
-                console.error("Elemento orderSummary não encontrado");
-                return;
-            }
-            let summaryHTML = '<h3>Resumo do Pedido:</h3>';
-            let subtotal = 0;
-
-            console.log("Carrinho:", window.cart);
-            window.cart.forEach(item => {
-                console.log("Item do carrinho:", item);
-                subtotal += item.totalPrice;
-            });
-
-            console.log("Subtotal após itens do carrinho:", subtotal);
-            const selectedExtras = document.querySelectorAll('.extra-item.selected');
-            let extrasTotal = selectedExtras.length * 1.99;
-            subtotal += extrasTotal;
-            console.log("Subtotal após extras:", subtotal);
-            summaryHTML += `<h4>Subtotal: R$ ${subtotal.toFixed(2)}</h4>`;
-
-            if (window.appliedDiscount > 0) {
-                summaryHTML += `<h4>Desconto aplicado: R$ ${window.appliedDiscount.toFixed(2)}</h4>`;
-            }
-
-            const discountedTotal = Math.max(0, subtotal - window.appliedDiscount);
-            console.log("Total após desconto:", discountedTotal);
-
-            summaryHTML += `<h4>Taxa de Entrega: R$ ${window.deliveryFee.toFixed(2)}</h4>`;
-            const finalTotal = discountedTotal + window.deliveryFee;
-            summaryHTML += `<h3>Total: R$ ${finalTotal.toFixed(2)}</h3>`;
-
-            orderSummary.innerHTML = summaryHTML;
-            console.log('Resumo final:', {
-                subtotal,
-                appliedDiscount: window.appliedDiscount,
-                discountedTotal,
-                deliveryFee: window.deliveryFee,
-                finalTotal
-            });
-        }
 
         document.addEventListener('DOMContentLoaded', function () {
             // Configuração do Firebase
@@ -1022,7 +1014,16 @@ window.filterByCategory = function(category) {
     displayProducts(filteredProducts);
 }
 
-function displayProducts(productsToDisplay = products) {
+    window.searchProducts = function() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const filteredProducts = window.products.filter(product => 
+        product.name.toLowerCase().includes(searchTerm) || 
+        product.description.toLowerCase().includes(searchTerm)
+    );
+    displayProducts(filteredProducts);
+}
+            
+    function displayProducts(productsToDisplay = products) {
     console.log("Iniciando displayProducts com", productsToDisplay.length, "produtos");
     const productGrid = document.getElementById('productGrid');
     if (productsToDisplay.length === 0) {
@@ -1042,9 +1043,11 @@ function displayProducts(productsToDisplay = products) {
     console.log("Produtos renderizados:", productsToDisplay.map(p => ({ id: p.id, name: p.name, category: p.category })));
 }
 
-function updateCartCount() {
+window.updateCartCount = function() {
     const cartCount = document.getElementById('cartCount');
-    cartCount.textContent = cart.length;
+    if (cartCount) {
+        cartCount.textContent = window.cart.length;
+    }
 }
 
 window.openProductDetails = function(productId) {
@@ -1119,25 +1122,14 @@ function validateAccompaniments(product) {
 }
 
 window.addToCart = function(productId) {
-    console.log("Adicionando ao carrinho o produto com ID:", productId);
-    console.log("Todos os produtos:", window.products.map(p => ({ id: p.id, name: p.name })));
-    
     const product = window.products.find(p => p.id.toString() === productId.toString());
-    console.log("Produto encontrado:", product);
-    
     if (!product) {
-        console.error("Produto não encontrado para o ID:", productId);
-        alert("Desculpe, ocorreu um erro ao adicionar o produto ao carrinho.");
+        console.error("Produto não encontrado");
         return;
     }
 
     const accompaniments = Array.from(document.querySelectorAll('#accompaniments input[type="checkbox"]:checked')).map(cb => cb.value);
     const extras = Array.from(document.querySelectorAll('#extras input[type="checkbox"]:checked')).map(cb => cb.value);
-
-    if (accompaniments.length < product.minAccompaniments || accompaniments.length > product.maxAccompaniments) {
-        alert(`Por favor, selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos.`);
-        return;
-    }
 
     const cartItem = {
         id: Date.now(),
@@ -1149,13 +1141,19 @@ window.addToCart = function(productId) {
         totalPrice: calculateTotalPrice(product, extras)
     };
 
-    cart.push(cartItem);
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCartCount();
-    closeModal('productModal');
-    openCart();
-    
-    console.log("Produto adicionado ao carrinho com sucesso:", cartItem);
+    window.cart.push(cartItem);
+    saveCartToLocalStorage();
+    window.updateCartCount();
+    window.openCart();
+}
+
+function saveCartToLocalStorage() {
+    localStorage.setItem('cart', JSON.stringify(window.cart));
+}
+
+function loadCartFromLocalStorage() {
+    const savedCart = localStorage.getItem('cart');
+    window.cart = savedCart ? JSON.parse(savedCart) : [];
 }
 
 function calculateTotalPrice(product, selectedExtras) {
@@ -1170,52 +1168,49 @@ function calculateTotalPrice(product, selectedExtras) {
 }
 
 window.openCart = function() {
-    hideHeaderAndCategories();
-    const modal = document.getElementById('cartModal');
+    console.log("Abrindo o carrinho");
+    const cartModal = document.getElementById('cartModal');
     const cartContent = document.getElementById('cartContent');
     const cartTotal = document.getElementById('cartTotal');
-    cartContent.innerHTML = cart.map(item => {
-        if (item.acai1) {
-            return `
-                <div class="cart-item">
-                    <div class="cart-item-info">
-                        <h3>${item.name}</h3>
-                        <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                        <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                        <p>Extras: ${item.extras.length > 0 ? item.extras.join(', ') : 'Nenhum'}</p>
-                        <p>Preço: R$ ${item.totalPrice.toFixed(2)}</p>
-                    </div>
-                    <span class="cart-item-remove" onclick="removeFromCart(${item.id})">🗑️</span>
-                </div>
-            `;
-        } else {
-            return `
-                <div class="cart-item">
-                    <div class="cart-item-info">
-                        <h3>${item.name}</h3>
-                        <p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>
-                        <p>Extras: ${item.extras.join(', ')}</p>
-                        <p>Preço: R$ ${item.totalPrice.toFixed(2)}</p>
-                    </div>
-                    <span class="cart-item-remove" onclick="removeFromCart(${item.id})">🗑️</span>
-                </div>
-            `;
-        }
-    }).join('');
-    const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-    cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
-    modal.style.display = "block";
-}
 
+    if (!cartModal || !cartContent || !cartTotal) {
+        console.error("Elementos do carrinho não encontrados");
+        return;
+    }
+
+    let cartHTML = '';
+    let total = 0;
+
+    window.cart.forEach(item => {
+        total += item.totalPrice;
+        cartHTML += `
+            <div class="cart-item">
+                <div class="cart-item-info">
+                    <h3>${item.name}</h3>
+                    <p>Preço: R$ ${item.totalPrice.toFixed(2)}</p>
+                    ${item.accompaniments ? `<p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>` : ''}
+                    ${item.extras ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+                </div>
+                <span class="cart-item-remove" onclick="window.removeFromCart(${item.id})">🗑️</span>
+            </div>
+        `;
+    });
+
+    cartContent.innerHTML = cartHTML;
+    cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
+    cartModal.style.display = "block";
+}
+            
 window.continueShopping = function() {
     closeModal('cartModal');
 }
 
 window.removeFromCart = function(itemId) {
-    cart = cart.filter(item => item.id !== itemId);
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCartCount();
-    openCart();
+    console.log("Removendo item do carrinho:", itemId);
+    window.cart = window.cart.filter(item => item.id !== itemId);
+    saveCartToLocalStorage();
+    window.updateCartCount();
+    window.openCart(); // Reabrir o carrinho para atualizar a visualização
 }
 
 window.openCustomerIdentification = function() {
@@ -1235,16 +1230,18 @@ function loadCustomerData(phone) {
     db.collection('customers').doc(phone).get().then((doc) => {
         if (doc.exists) {
             const data = doc.data();
-            customerInfo = {
+            window.customerInfo = {
                 name: data.name,
                 phone: phone,
-                addresses: data.addresses || []
+                addresses: data.addresses || [],
+                orderCount: data.orderCount || 0
             };
             document.getElementById('customerName').value = data.name;
             savedAddresses = data.addresses || [];
             localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
             updateLoyaltyInfo(data.orderCount || 0);
         } else {
+            window.customerInfo = { phone: phone, orderCount: 0 };
             updateLoyaltyInfo(0);
         }
     }).catch((error) => {
@@ -1274,7 +1271,7 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
 function openCheckout() {
     const checkoutModal = document.getElementById('checkoutModal');
     loadSavedAddresses();
-    updateOrderSummary();
+    updateOrderSummaryDirectly(); // Alterado de updateOrderSummary para updateOrderSummaryDirectly
     document.getElementById('paymentSection').style.display = 'none';
     document.getElementById('submitOrderBtn').style.display = 'none';
     checkoutModal.style.display = "block";
@@ -1363,62 +1360,22 @@ window.handleChangeNeeded = function() {
 function displayExtraItems() {
     const extraItemsContainer = document.getElementById('extraItems');
     extraItemsContainer.innerHTML = extraItems.map(item => 
-        `<div class="extra-item" onclick="toggleExtraItem(this, '${item.name}')">
+        `<div class="extra-item" onclick="toggleExtraItem(this, '${item.name}')" data-id="${Date.now()}">
             <img src="${item.image}" alt="${item.name}">
             <p>${item.name}</p>
             <p>R$ ${item.price.toFixed(2)}</p>
         </div>`
     ).join('');
-}
-
-window.toggleExtraItem = function(element, itemName) {
-    element.classList.toggle('selected');
-    updateOrderSummaryDirectly();
-}
-
-window.updateOrderSummary = function() {
-    const orderSummary = document.getElementById('orderSummary');
-    let summaryHTML = '<h3>Resumo do Pedido:</h3>';
-    let total = 0;
-
-    cart.forEach(item => {
-        if (item.acai1) {
-            summaryHTML += `
-                <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                <p>Extras: ${item.extras.length > 0 ? item.extras.join(', ') : 'Nenhum'}</p>
-                <hr>
-            `;
-        } else {
-            summaryHTML += `
-                <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                <p>Acompanhamentos: ${item.accompaniments ? item.accompaniments.join(', ') : 'Nenhum'}</p>
-                <p>Extras: ${item.extras ? item.extras.join(', ') : 'Nenhum'}</p>
-                <hr>
-            `;
+    
+    // Marcar itens extras que já estão no carrinho
+    window.cart.forEach(item => {
+        if (item.isExtra) {
+            const extraItem = document.querySelector(`.extra-item p:contains('${item.name}')`).closest('.extra-item');
+            if (extraItem) {
+                extraItem.classList.add('selected');
+            }
         }
-        total += item.totalPrice;
     });
-
-    const selectedExtras = document.querySelectorAll('.extra-item.selected');
-    let extrasTotal = 0;
-    selectedExtras.forEach(item => {
-        const itemName = item.querySelector('p').textContent;
-        const itemPrice = 1.99;
-        extrasTotal += itemPrice;
-        summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
-    });
-    total += extrasTotal;
-    let discountedTotal = Math.max(0, total - appliedDiscount);
-
-    summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
-    if (appliedDiscount > 0) {
-        summaryHTML += `<h4>Desconto aplicado: R$ ${appliedDiscount.toFixed(2)}</h4>`;
-    }
-    summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
-    summaryHTML += `<h3>Total: R$ ${(discountedTotal + deliveryFee).toFixed(2)}</h3>`;
-    orderSummary.innerHTML = summaryHTML;
 }
 
 document.getElementById('checkoutForm').addEventListener('submit', function(e) {
@@ -1432,6 +1389,7 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     const paymentMethod = document.getElementById('paymentMethod').value;
     const changeNeeded = document.getElementById('changeNeeded').value;
     const changeAmount = document.getElementById('changeAmount').value;
+
     let message = `Pedido confirmado!\n`;
     message += `Nome: ${customerInfo.name}\n`;
     message += `WhatsApp: ${customerInfo.phone}\n`;
@@ -1447,50 +1405,53 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         }
     }
     
-    message += `\nItens do Pedido:\n`;
     let subtotal = 0;
-    cart.forEach(item => {
+    let extrasFromProducts = new Set(); // Para rastrear extras já incluídos nos produtos
+
+    message += `\nItens do Pedido:\n`;
+    window.cart.forEach(item => {
         subtotal += item.totalPrice;
+        message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
         if (item.acai1) {
-            message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
             message += `\nAçaí 1: Sabores: ${item.acai1.flavors.join(', ')}, Acompanhamentos: ${item.acai1.accompaniments.join(', ')}`;
             message += `\nAçaí 2: Sabores: ${item.acai2.flavors.join(', ')}, Acompanhamentos: ${item.acai2.accompaniments.join(', ')}`;
-            if (item.extras && item.extras.length > 0) {
-                message += `\nExtras: ${item.extras.join(', ')}`;
-            }
         } else {
-            message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
             if (item.accompaniments && item.accompaniments.length > 0) {
                 message += `\nAcompanhamentos: ${item.accompaniments.join(', ')}`;
             }
-            if (item.extras && item.extras.length > 0) {
-                message += `\nExtras: ${item.extras.join(', ')}`;
-            }
+        }
+        // Extras escolhidos na página do produto
+        if (item.extras && item.extras.length > 0) {
+            message += `\nExtras: ${item.extras.join(', ')}`;
+            item.extras.forEach(extra => extrasFromProducts.add(extra));
         }
     });
     
+    // Itens extras adicionais selecionados na página de resumo do pedido
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
     let extrasTotal = 0;
     if (selectedExtras.length > 0) {
-        message += "\n\nItens Extras Adicionais:";
+        message += "\nItens Extras Adicionais:";
         selectedExtras.forEach(item => {
             const itemName = item.querySelector('p').textContent;
-            extrasTotal += 1.99;
-            message += `\n- ${itemName} (R$ 1,99)`;
+            if (!extrasFromProducts.has(itemName)) {
+                message += `\n${itemName} - R$ 1,99`;
+                extrasTotal += 1.99;
+            }
         });
     }
     
-    const total = subtotal + extrasTotal;
-    const discountedTotal = Math.max(0, total - window.appliedDiscount);
-    const finalTotal = discountedTotal + window.deliveryFee;
+    subtotal += extrasTotal;
+    let discountedTotal = Math.max(0, subtotal - window.appliedDiscount);
+    let finalTotal = discountedTotal + window.deliveryFee;
     
-    message += `\n\nSubtotal: R$ ${total.toFixed(2)}`;
+    message += `\n\nSubtotal: R$ ${subtotal.toFixed(2)}`;
     if (window.appliedDiscount > 0) {
-        message += `\nDesconto aplicado: R$ ${window.appliedDiscount.toFixed(2)}`;
+        message += `\nDesconto de cupom aplicado: R$ ${window.appliedDiscount.toFixed(2)}`;
     }
     message += `\nTaxa de Entrega: R$ ${window.deliveryFee.toFixed(2)}`;
     message += `\nTotal: R$ ${finalTotal.toFixed(2)}`;
-    
+
     const order = {
         id: Date.now(),
         customerName: customerInfo.name,
@@ -1499,8 +1460,10 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         paymentMethod: paymentMethod,
         changeNeeded: changeNeeded,
         changeAmount: changeAmount,
-        items: cart,
-        extraItems: Array.from(selectedExtras).map(item => item.querySelector('p').textContent),
+        items: window.cart,
+        extraItems: Array.from(selectedExtras)
+            .map(item => item.querySelector('p').textContent)
+            .filter(itemName => !extrasFromProducts.has(itemName)),
         subtotal: subtotal,
         extrasTotal: extrasTotal,
         appliedDiscount: window.appliedDiscount,
@@ -1510,6 +1473,7 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         status: 'preparing',
         createdAt: new Date()
     };
+
     db.collection('orders').add(order)
         .then(() => {
             console.log('Pedido adicionado com sucesso!');
@@ -1522,41 +1486,41 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             }
             orderCount++;
             
-            return db.collection('customers').doc(customerInfo.phone).set({
-                name: customerInfo.name,
-                orderCount: orderCount
-            }, { merge: true });
+            let updateData = { orderCount: orderCount };
+            let loyaltyDiscount = 0;
+            if (orderCount >= 10) {
+                loyaltyDiscount = subtotal * 0.5; // 50% de desconto
+                updateData.orderCount = 0; // Reinicia a contagem
+                message += `\nDesconto de fidelidade aplicado: R$ ${loyaltyDiscount.toFixed(2)}`;
+                message += `\nParabéns! Você completou 10 pedidos e ganhou 50% de desconto neste pedido!`;
+                
+                // Atualiza o total com o desconto de fidelidade
+                discountedTotal = Math.max(0, discountedTotal - loyaltyDiscount);
+                finalTotal = discountedTotal + window.deliveryFee;
+                message = message.replace(/Total: R\$ [\d.]+/, `Total: R$ ${finalTotal.toFixed(2)}`);
+            }
+            if (orderCount < 10) {
+                message += `\n\nEste é o ${getOrderNumberText(orderCount)} pedido do cliente.`;
+                message += `\nFaltam ${10 - orderCount} pedidos para o próximo desconto de fidelidade.`;
+            }
+            return db.collection('customers').doc(customerInfo.phone).set(updateData, { merge: true });
         })
         .then(() => {
-            return db.collection('customers').doc(customerInfo.phone).get();
-        })
-        .then((doc) => {
-            if (doc.exists) {
-                const orderCount = doc.data().orderCount;
-                message += `\n\nEste é o ${getOrderNumberText(orderCount)} pedido do cliente.`;
-                if (orderCount >= 10) {
-                    message += `\nCliente tem direito ao desconto de fidelidade!`;
-                } else {
-                    message += `\nFaltam ${10 - orderCount} pedidos para o próximo desconto de fidelidade.`;
-                }
-            }
             if (window.appliedCouponId) {
                 return db.collection('coupons').doc(window.appliedCouponId).update({
                     usedBy: firebase.firestore.FieldValue.arrayUnion({
                         phone: customerInfo.phone,
-                        ip: window.clientIP // Vamos adicionar essa variável mais tarde
+                        ip: window.clientIP
                     })
                 });
             }
         })
         .then(() => {
             window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
-            cart = [];
-            localStorage.setItem('cart', JSON.stringify(cart));
+            window.cart = [];
+            localStorage.setItem('cart', JSON.stringify(window.cart));
             updateCartCount();
-            document.getElementById('paymentMethod').value = 'card';
-            handlePaymentChange();
-
+            
             // Limpar o campo de cupom e mensagem
             document.getElementById('discountCode').value = '';
             document.getElementById('discountMessage').textContent = '';
@@ -1590,7 +1554,7 @@ function updateLoyaltyInfo(orderCount) {
         <h3>Programa de Fidelidade</h3>
         <p>Você já realizou ${orderCount} ${orderCount === 1 ? 'pedido' : 'pedidos'}.</p>
         ${orderCount >= 10 ? 
-          '<p><strong>Parabéns!</strong> Você tem direito a 50% de desconto no seu próximo pedido!</p>' :
+          '<p><strong>Parabéns!</strong> Você tem direito a 50% de desconto neste pedido! O desconto será aplicado assim que você finalizar este pedido.</p>' :
           `<p>Faltam ${10 - orderCount} ${10 - orderCount === 1 ? 'pedido' : 'pedidos'} para você ganhar 50% de desconto!</p>`
         }
         <p>Lembre-se: O pedido só será contabilizado após ser recebido por nossa loja no WhatsApp.</p>
@@ -1657,12 +1621,23 @@ window.repeatOrder = function(orderId) {
         .then((doc) => {
             if (doc.exists) {
                 const order = doc.data();
-                cart = order.items;
-                localStorage.setItem('cart', JSON.stringify(cart));
+                // Adicionar cada item do pedido ao carrinho
+                order.items.forEach(item => {
+                    window.cart.push({
+                        ...item,
+                        id: Date.now() + Math.random() // Gera um novo ID único
+                    });
+                });
+                
+                // Salvar o carrinho atualizado
+                saveCartToLocalStorage();
+                
+                // Atualizar a contagem do carrinho
+                window.updateCartCount();
+                
                 alert("Pedido adicionado ao carrinho!");
                 closeModal('myOrdersModal');
-                updateCartCount();
-                openCart();
+                window.openCart(); // Abre o carrinho para mostrar os itens adicionados
             } else {
                 alert("Pedido não encontrado.");
             }
@@ -1882,6 +1857,37 @@ window.showExtraItemsSelection = function() {
     document.getElementById('accompanimentSelection').style.display = 'none';
 }
 
+            window.toggleExtraItem = function(element, itemName) {
+    console.log("Toggling extra item:", itemName); // Log para debug
+    element.classList.toggle('selected');
+    
+    // Atualizar o carrinho com o item extra
+    let extraItemIndex = window.cart.findIndex(item => item.name === itemName && item.isExtra);
+    
+    if (element.classList.contains('selected')) {
+        // Adicionar item extra ao carrinho se não existir
+        if (extraItemIndex === -1) {
+            window.cart.push({
+                id: Date.now(),
+                name: itemName,
+                price: 1.99,
+                isExtra: true,
+                totalPrice: 1.99
+            });
+        }
+    } else {
+        // Remover item extra do carrinho se existir
+        if (extraItemIndex !== -1) {
+            window.cart.splice(extraItemIndex, 1);
+        }
+    }
+    
+    // Atualizar o localStorage
+    localStorage.setItem('cart', JSON.stringify(window.cart));
+    
+    updateOrderSummaryDirectly();
+}
+
 window.toggleExtra = function(extra) {
     const index = selectedExtras.indexOf(extra);
     if (index > -1) {
@@ -1980,10 +1986,11 @@ window.onclick = function(event) {
     }
 }
 
-fetchCategories();
-fetchProducts();
-document.getElementById('loadingOverlay').style.display = 'none';
-        });
+        fetchCategories();
+        fetchProducts();
+        document.getElementById('loadingOverlay').style.display = 'none';
+    });
+    console.log("Script finalizado com sucesso");
     </script>
 </body>
 </html>
