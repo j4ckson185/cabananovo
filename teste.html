@@ -1609,7 +1609,8 @@ function updateLoyaltyInfo(orderCount) {
         <h3>Programa de Fidelidade</h3>
         <p>Você já realizou ${orderCount} ${orderCount === 1 ? 'pedido' : 'pedidos'}.</p>
         ${orderCount >= 10 ? 
-          '<p><strong>Parabéns!</strong> Você tem direito a 50% de desconto no seu próximo pedido!</p>' :
+          '<p><strong>Parabéns!</strong> Você tem direito a 50% de desconto neste pedido! 
+          O desconto será aplicado assim que você finalizar este pedido.</p>' :
           `<p>Faltam ${10 - orderCount} ${10 - orderCount === 1 ? 'pedido' : 'pedidos'} para você ganhar 50% de desconto!</p>`
         }
         <p>Lembre-se: O pedido só será contabilizado após ser recebido por nossa loja no WhatsApp.</p>
