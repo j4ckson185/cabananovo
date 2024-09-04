@@ -942,10 +942,17 @@ function showHeaderAndCategories() {
 }
 
 async function fetchProducts() {
-    const snapshot = await window.db.collection('products').get();
-    window.products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    displayProducts(window.products);
-    updateCartCount();
+    console.log("Iniciando fetchProducts");
+    try {
+        const snapshot = await window.db.collection('products').get();
+        window.products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log("Produtos carregados:", window.products);
+        displayProducts(window.products);
+        updateCartCount();
+    } catch (error) {
+        console.error("Erro ao buscar produtos:", error);
+        alert("Ocorreu um erro ao carregar os produtos. Por favor, recarregue a página.");
+    }
 }
 
 async function fetchCategories() {
