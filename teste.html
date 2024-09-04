@@ -676,15 +676,10 @@
         }
 
         // Atualizar a variável global do carrinho
-        window.updateCart = function() {
-            if (window.customerInfo && window.customerInfo.phone) {
-                window.cart = getCart(window.customerInfo.phone);
-            } else {
-                window.cart = [];
-            }
-            updateCartCount();
-        }
-
+function updateCartCount() {
+    const cartCount = document.getElementById('cartCount');
+    cartCount.textContent = window.cart.length;
+}
         // Função global para aplicar desconto
         window.applyDiscount = function() {
             console.log("Iniciando applyDiscount");
@@ -1073,10 +1068,7 @@
 
 window.addToCart = function(productId) {
     console.log("Adicionando ao carrinho o produto com ID:", productId);
-    console.log("Todos os produtos:", window.products.map(p => ({ id: p.id, name: p.name })));
-    
     const product = window.products.find(p => p.id.toString() === productId.toString());
-    console.log("Produto encontrado:", product);
     
     if (!product) {
         console.error("Produto não encontrado para o ID:", productId);
@@ -1102,13 +1094,11 @@ window.addToCart = function(productId) {
         totalPrice: calculateTotalPrice(product, extras)
     };
 
+    window.cart.push(cartItem);
+    
     if (window.customerInfo && window.customerInfo.phone) {
-        const currentCart = getCart(window.customerInfo.phone);
-        currentCart.push(cartItem);
-        saveCart(window.customerInfo.phone, currentCart);
-        window.cart = currentCart;
+        saveCart(window.customerInfo.phone, window.cart);
     } else {
-        window.cart.push(cartItem);
         localStorage.setItem('cart', JSON.stringify(window.cart));
     }
 
@@ -1135,7 +1125,14 @@ window.openCart = function() {
     const modal = document.getElementById('cartModal');
     const cartContent = document.getElementById('cartContent');
     const cartTotal = document.getElementById('cartTotal');
-    cartContent.innerHTML = cart.map(item => {
+
+    if (window.customerInfo && window.customerInfo.phone) {
+        window.cart = getCart(window.customerInfo.phone);
+    } else {
+        window.cart = JSON.parse(localStorage.getItem('cart')) || [];
+    }
+
+    cartContent.innerHTML = window.cart.map(item => {
         if (item.acai1) {
             return `
                 <div class="cart-item">
@@ -1163,11 +1160,11 @@ window.openCart = function() {
             `;
         }
     }).join('');
-    const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+
+    const total = window.cart.reduce((sum, item) => sum + item.totalPrice, 0);
     cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
     modal.style.display = "block";
 }
-
 window.continueShopping = function() {
     closeModal('cartModal');
 }
