@@ -1010,10 +1010,20 @@ function updateCartCount() {
 }
 
 window.openProductDetails = function(productId) {
+    console.log("Abrindo detalhes do produto com ID:", productId);
     hideHeaderAndCategories();
     const product = products.find(p => p.id === productId);
+    console.log("Produto encontrado:", product);
+
+    if (!product) {
+        console.error("Produto não encontrado para o ID:", productId);
+        alert("Desculpe, não foi possível encontrar os detalhes deste produto.");
+        return;
+    }
+
     const modal = document.getElementById('productModal');
     const modalContent = document.getElementById('modalContent');
+
     modalContent.innerHTML = `
         <h2>${product.name}</h2>
         <img src="${product.image}" alt="${product.name}" style="width:100%; max-height:300px; object-fit:cover;">
@@ -1022,33 +1032,36 @@ window.openProductDetails = function(productId) {
         <div class="extras-list">
             <h3>Acompanhamentos (escolha de ${product.minAccompaniments} a ${product.maxAccompaniments}):</h3>
             <div class="checkbox-list" id="accompaniments">
-                ${product.accompaniments.map((item, index) => 
-                    `<div class="checkbox-item">
+                ${product.accompaniments.map((item, index) => `
+                    <div class="checkbox-item">
                         <input type="checkbox" id="acc${index}" name="accompaniment" value="${item}">
                         <label for="acc${index}">${item}</label>
-                    </div>`
-                ).join('')}
+                    </div>
+                `).join('')}
             </div>
             <p id="accompanimentError" class="error-message"></p>
         </div>
         <div class="extras-list">
             <h3>Itens Extras:</h3>
             <div class="checkbox-list" id="extras">
-                ${product.extras.map((item, index) => 
-                    `<div class="checkbox-item">
+                ${product.extras.map((item, index) => `
+                    <div class="checkbox-item">
                         <input type="checkbox" id="extra${index}" name="extra" value="${item.name}">
                         <label for="extra${index}">${item.name} - R$ ${parseFloat(item.price).toFixed(2)}</label>
-                    </div>`
-                ).join('')}
+                    </div>
+                `).join('')}
             </div>
         </div>
         <button id="addToCartBtn" class="btn" onclick="addToCart(${product.id})">Adicionar ao Carrinho</button>
     `;
     modal.style.display = "block";
+
     const accCheckboxes = document.querySelectorAll('#accompaniments input[type="checkbox"]');
     accCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', () => validateAccompaniments(product));
     });
+
+    console.log("Modal de detalhes do produto aberto com sucesso");
 }
 
 function validateAccompaniments(product) {
