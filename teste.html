@@ -1498,14 +1498,13 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     
     const total = subtotal + extrasTotal;
     let discountedTotal = Math.max(0, total - window.appliedDiscount);
-    const finalTotal = discountedTotal + window.deliveryFee;
+    let finalTotal = discountedTotal + window.deliveryFee;
     
     message += `\n\nSubtotal: R$ ${total.toFixed(2)}`;
     if (window.appliedDiscount > 0) {
         message += `\nDesconto de cupom aplicado: R$ ${window.appliedDiscount.toFixed(2)}`;
     }
     message += `\nTaxa de Entrega: R$ ${window.deliveryFee.toFixed(2)}`;
-    message += `\nTotal: R$ ${finalTotal.toFixed(2)}`;
     
     const order = {
         id: Date.now(),
@@ -1544,14 +1543,17 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             if (orderCount >= 10) {
                 loyaltyDiscount = subtotal * 0.5; // 50% de desconto
                 updateData.orderCount = 0; // Reinicia a contagem
-                message += `\n\nParabéns! Você completou 10 pedidos e ganhou 50% de desconto neste pedido!`;
                 message += `\nDesconto de fidelidade aplicado: R$ ${loyaltyDiscount.toFixed(2)}`;
+                message += `\nParabéns! Você completou 10 pedidos e ganhou 50% de desconto neste pedido!`;
                 
                 // Atualiza o total com o desconto de fidelidade
                 discountedTotal = Math.max(0, discountedTotal - loyaltyDiscount);
-                const newTotal = discountedTotal + window.deliveryFee;
-                message = message.replace(`Total: R$ ${finalTotal.toFixed(2)}`, `Total: R$ ${newTotal.toFixed(2)}`);
-            } else {
+                finalTotal = discountedTotal + window.deliveryFee;
+            }
+
+            message += `\nTotal: R$ ${finalTotal.toFixed(2)}`;
+
+            if (orderCount < 10) {
                 message += `\n\nEste é o ${getOrderNumberText(orderCount)} pedido do cliente.`;
                 message += `\nFaltam ${10 - orderCount} pedidos para o próximo desconto de fidelidade.`;
             }
