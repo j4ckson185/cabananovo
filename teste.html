@@ -1242,7 +1242,7 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
 function openCheckout() {
     const checkoutModal = document.getElementById('checkoutModal');
     loadSavedAddresses();
-    updateOrderSummaryDirectly(); // Alterado de updateOrderSummary para updateOrderSummaryDirectly
+    updateOrderSummaryDirectly();
     document.getElementById('paymentSection').style.display = 'none';
     document.getElementById('submitOrderBtn').style.display = 'none';
     checkoutModal.style.display = "block";
