@@ -316,6 +316,18 @@
             cursor: pointer;
         }
 
+        .cart-item-details {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.cart-item-details p {
+    margin: 5px 0;
+}
+
+.indent {
+    margin-left: 20px;
+}
         .error-message {
             color: red;
             margin-top: 10px;
@@ -804,38 +816,44 @@ function updateOrderSummaryDirectly() {
     // Exibir itens do carrinho
     window.cart.forEach(item => {
         subtotal += item.totalPrice;
+        summaryHTML += `
+            <div class="cart-item">
+                <div class="cart-item-details">
+                    <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
+        `;
+
         if (item.acai1) {
             summaryHTML += `
-                <div class="cart-item">
-                    <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                    <p>Açaí 1:</p>
-                    <p>&nbsp;&nbsp;&nbsp;&nbsp;Sabores: ${item.acai1.flavors.join(', ')}</p>
-                    <p>&nbsp;&nbsp;&nbsp;&nbsp;Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                    <p>Açaí 2:</p>
-                    <p>&nbsp;&nbsp;&nbsp;&nbsp;Sabores: ${item.acai2.flavors.join(', ')}</p>
-                    <p>&nbsp;&nbsp;&nbsp;&nbsp;Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                    ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
-                </div>
+                <p>Açaí 1:</p>
+                <p class="indent">Sabores: ${item.acai1.flavors.join(', ')}</p>
+                <p class="indent">Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                <p>Açaí 2:</p>
+                <p class="indent">Sabores: ${item.acai2.flavors.join(', ')}</p>
+                <p class="indent">Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
             `;
         } else {
-            summaryHTML += `
-                <div class="cart-item">
-                    <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                    ${item.accompaniments && item.accompaniments.length > 0 ? `<p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>` : ''}
-                    ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
-                </div>
-            `;
+            if (item.accompaniments && item.accompaniments.length > 0) {
+                summaryHTML += `<p class="indent">Acompanhamentos: ${item.accompaniments.join(', ')}</p>`;
+            }
         }
+
+        if (item.extras && item.extras.length > 0) {
+            summaryHTML += `<p class="indent">Extras: ${item.extras.join(', ')}</p>`;
+        }
+
+        summaryHTML += `
+                </div>
+            </div>`;
     });
 
-    // Exibir itens extras selecionados
+    // Exibir itens extras selecionados na página de resumo
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
     let extrasTotal = selectedExtras.length * 1.99;
     if (selectedExtras.length > 0) {
         summaryHTML += "<h4>Itens Extras Adicionais:</h4>";
         selectedExtras.forEach(item => {
             const itemName = item.querySelector('p').textContent;
-            summaryHTML += `<p>${itemName} - R$ 1.99</p>`;
+            summaryHTML += `<p class="indent">${itemName} - R$ 1.99</p>`;
         });
     }
 
