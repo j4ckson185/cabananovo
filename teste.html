@@ -1418,9 +1418,7 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
                 message += `\nAcompanhamentos: ${item.accompaniments.join(', ')}`;
             }
         }
-        if (item.extras && item.extras.length > 0) {
-            message += `\nExtras: ${item.extras.join(', ')}`;
-        }
+        // Removemos a listagem de extras aqui para evitar duplicação
     });
     
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
