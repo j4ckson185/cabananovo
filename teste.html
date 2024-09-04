@@ -1188,8 +1188,8 @@ window.openCart = function() {
                 <div class="cart-item-info">
                     <h3>${item.name}</h3>
                     <p>Preço: R$ ${item.totalPrice.toFixed(2)}</p>
-                    ${item.accompaniments && item.accompaniments.length > 0 ? `<p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>` : ''}
-                    ${item.extras && item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+                    ${item.accompaniments ? `<p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>` : ''}
+                    ${item.extras ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
                 </div>
                 <span class="cart-item-remove" onclick="window.removeFromCart(${item.id})">🗑️</span>
             </div>
@@ -1619,12 +1619,23 @@ window.repeatOrder = function(orderId) {
         .then((doc) => {
             if (doc.exists) {
                 const order = doc.data();
-                cart = order.items;
-                localStorage.setItem('cart', JSON.stringify(cart));
+                // Adicionar cada item do pedido ao carrinho
+                order.items.forEach(item => {
+                    window.cart.push({
+                        ...item,
+                        id: Date.now() + Math.random() // Gera um novo ID único
+                    });
+                });
+                
+                // Salvar o carrinho atualizado
+                saveCartToLocalStorage();
+                
+                // Atualizar a contagem do carrinho
+                window.updateCartCount();
+                
                 alert("Pedido adicionado ao carrinho!");
                 closeModal('myOrdersModal');
-                updateCartCount();
-                openCart();
+                window.openCart(); // Abre o carrinho para mostrar os itens adicionados
             } else {
                 alert("Pedido não encontrado.");
             }
