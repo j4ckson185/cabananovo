@@ -718,6 +718,15 @@
         window.appliedDiscount = 0;
         window.appliedCouponId = null;
 
+// Obter IP do cliente
+fetch('https://api.ipify.org?format=json')
+    .then(response => response.json())
+    .then(data => {
+        window.clientIP = data.ip;
+        console.log("IP do cliente:", window.clientIP);
+    })
+    .catch(error => console.error('Erro ao obter IP do cliente:', error));
+
 // Função global para aplicar desconto
 window.applyDiscount = function() {
     console.log("Iniciando applyDiscount");
@@ -737,7 +746,19 @@ window.applyDiscount = function() {
             if (!querySnapshot.empty) {
                 const coupon = querySnapshot.docs[0].data();
                 const couponId = querySnapshot.docs[0].id;
-                if (!coupon.customerPhone || coupon.customerPhone === window.customerInfo.phone) {
+                
+                // Verificar se o cupom já foi usado por este cliente
+                const usedBy = coupon.usedBy || [];
+                const alreadyUsed = usedBy.some(usage => 
+                    usage.phone === window.customerInfo.phone || usage.ip === window.clientIP
+                );
+                
+                if (alreadyUsed) {
+                    window.appliedDiscount = 0;
+                    window.appliedCouponId = null;
+                    discountMessage.textContent = 'Este cupom já foi utilizado por você.';
+                    discountMessage.style.color = 'red';
+                } else if (!coupon.customerPhone || coupon.customerPhone === window.customerInfo.phone) {
                     window.appliedDiscount = parseFloat(coupon.discount);
                     window.appliedCouponId = couponId;
                     discountMessage.textContent = `Cupom aplicado! Desconto de R$${window.appliedDiscount.toFixed(2)}`;
@@ -768,6 +789,7 @@ window.applyDiscount = function() {
             updateOrderSummaryDirectly();
         });
 }
+        
 function updateOrderSummaryDirectly() {
     console.log("Iniciando updateOrderSummaryDirectly");
     const orderSummary = document.getElementById('orderSummary');
@@ -1519,7 +1541,12 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
                 }
             }
             if (window.appliedCouponId) {
-                return db.collection('coupons').doc(window.appliedCouponId).delete();
+                return db.collection('coupons').doc(window.appliedCouponId).update({
+                    usedBy: firebase.firestore.FieldValue.arrayUnion({
+                        phone: customerInfo.phone,
+                        ip: window.clientIP // Vamos adicionar essa variável mais tarde
+                    })
+                });
             }
         })
         .then(() => {
@@ -1529,6 +1556,13 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             updateCartCount();
             document.getElementById('paymentMethod').value = 'card';
             handlePaymentChange();
+
+            // Limpar o campo de cupom e mensagem
+            document.getElementById('discountCode').value = '';
+            document.getElementById('discountMessage').textContent = '';
+            window.appliedDiscount = 0;
+            window.appliedCouponId = null;
+            
             closeModal('checkoutModal');
         })
         .catch(error => {
