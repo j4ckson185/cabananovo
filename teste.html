@@ -810,46 +810,58 @@ function updateOrderSummaryDirectly() {
         return;
     }
     
-    let cartItemsHTML = '<h3>Resumo do Pedido:</h3>';
-    let subtotal = 0;
+    // Verifica se a seção de itens do carrinho já existe
+    let cartItemsSection = document.getElementById('cart-items-section');
+    if (!cartItemsSection) {
+        cartItemsSection = document.createElement('div');
+        cartItemsSection.id = 'cart-items-section';
+        orderSummary.appendChild(cartItemsSection);
+    }
 
-    // Exibir itens do carrinho
-    window.cart.forEach(item => {
-        subtotal += item.totalPrice;
-        cartItemsHTML += `
-            <div class="cart-item">
-                <div class="cart-item-details">
-                    <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-        `;
-
-        if (item.acai1) {
+    // Atualiza os itens do carrinho apenas se necessário
+    if (cartItemsSection.children.length === 0) {
+        let cartItemsHTML = '<h3>Resumo do Pedido:</h3>';
+        window.cart.forEach(item => {
             cartItemsHTML += `
-                <p>Açaí 1:</p>
-                <p class="indent">Sabores: ${item.acai1.flavors.join(', ')}</p>
-                <p class="indent">Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                <p>Açaí 2:</p>
-                <p class="indent">Sabores: ${item.acai2.flavors.join(', ')}</p>
-                <p class="indent">Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+                <div class="cart-item">
+                    <div class="cart-item-details">
+                        <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
             `;
-        } else {
-            if (item.accompaniments && item.accompaniments.length > 0) {
-                cartItemsHTML += `<p class="indent">Acompanhamentos: ${item.accompaniments.join(', ')}</p>`;
+
+            if (item.acai1) {
+                cartItemsHTML += `
+                    <p>Açaí 1:</p>
+                    <p class="indent">Sabores: ${item.acai1.flavors.join(', ')}</p>
+                    <p class="indent">Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                    <p>Açaí 2:</p>
+                    <p class="indent">Sabores: ${item.acai2.flavors.join(', ')}</p>
+                    <p class="indent">Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+                `;
+            } else {
+                if (item.accompaniments && item.accompaniments.length > 0) {
+                    cartItemsHTML += `<p class="indent">Acompanhamentos: ${item.accompaniments.join(', ')}</p>`;
+                }
             }
-        }
 
-        if (item.extras && item.extras.length > 0) {
-            cartItemsHTML += `<p class="indent">Extras: ${item.extras.join(', ')}</p>`;
-        }
+            if (item.extras && item.extras.length > 0) {
+                cartItemsHTML += `<p class="indent">Extras: ${item.extras.join(', ')}</p>`;
+            }
 
-        cartItemsHTML += `
-                </div>
-            </div>`;
-    });
+            cartItemsHTML += `
+                    </div>
+                </div>`;
+        });
+        cartItemsSection.innerHTML = cartItemsHTML;
+    }
 
-    // Manter os itens do carrinho sempre visíveis
-    orderSummary.innerHTML = cartItemsHTML;
+    // Atualiza a seção de extras
+    let extrasSection = document.getElementById('extras-section');
+    if (!extrasSection) {
+        extrasSection = document.createElement('div');
+        extrasSection.id = 'extras-section';
+        orderSummary.appendChild(extrasSection);
+    }
 
-    // Adicionar ou atualizar a seção de itens extras
     let extrasHTML = "";
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
     let extrasTotal = selectedExtras.length * 1.99;
@@ -860,30 +872,23 @@ function updateOrderSummaryDirectly() {
             extrasHTML += `<p class="indent">${itemName} - R$ 1.99</p>`;
         });
     }
-
-    // Atualizar ou criar a seção de extras
-    let extrasSection = orderSummary.querySelector('#extras-section');
-    if (!extrasSection) {
-        extrasSection = document.createElement('div');
-        extrasSection.id = 'extras-section';
-        orderSummary.appendChild(extrasSection);
-    }
     extrasSection.innerHTML = extrasHTML;
 
-    subtotal += extrasTotal;
+    // Calcula o total
+    let subtotal = window.cart.reduce((sum, item) => sum + item.totalPrice, 0) + extrasTotal;
     let discountedTotal = Math.max(0, subtotal - (window.appliedDiscount || 0));
     
-    // Aplicar desconto de fidelidade, se aplicável
+    // Aplica desconto de fidelidade, se aplicável
     let loyaltyDiscount = 0;
-    if (window.customerInfo && window.customerInfo.orderCount === 9) { // 9 porque este será o 10º pedido
+    if (window.customerInfo && window.customerInfo.orderCount === 9) {
         loyaltyDiscount = subtotal * 0.5;
         discountedTotal = Math.max(0, discountedTotal - loyaltyDiscount);
     }
     
     const finalTotal = discountedTotal + window.deliveryFee;
 
-    // Atualizar ou criar a seção de resumo final
-    let summarySection = orderSummary.querySelector('#summary-section');
+    // Atualiza a seção de resumo final
+    let summarySection = document.getElementById('summary-section');
     if (!summarySection) {
         summarySection = document.createElement('div');
         summarySection.id = 'summary-section';
