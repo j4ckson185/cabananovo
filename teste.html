@@ -1094,13 +1094,23 @@ function validateAccompaniments(product) {
 }
 
 window.addToCart = function(productId) {
-    const product = products.find(p => p.id === productId);
+    console.log("Adicionando ao carrinho o produto com ID:", productId);
+    const product = window.products.find(p => p.id === productId);
+    
+    if (!product) {
+        console.error("Produto não encontrado para o ID:", productId);
+        alert("Desculpe, ocorreu um erro ao adicionar o produto ao carrinho.");
+        return;
+    }
+
     const accompaniments = Array.from(document.querySelectorAll('#accompaniments input[type="checkbox"]:checked')).map(cb => cb.value);
     const extras = Array.from(document.querySelectorAll('#extras input[type="checkbox"]:checked')).map(cb => cb.value);
+
     if (accompaniments.length < product.minAccompaniments || accompaniments.length > product.maxAccompaniments) {
         alert(`Por favor, selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos.`);
         return;
     }
+
     const cartItem = {
         id: Date.now(),
         productId: product.id,
@@ -1110,6 +1120,7 @@ window.addToCart = function(productId) {
         extras: extras,
         totalPrice: calculateTotalPrice(product, extras)
     };
+
     cart.push(cartItem);
     localStorage.setItem('cart', JSON.stringify(cart));
     updateCartCount();
@@ -1332,7 +1343,7 @@ function displayExtraItems() {
 
 window.toggleExtraItem = function(element, itemName) {
     element.classList.toggle('selected');
-    updateOrderSummary();
+    updateOrderSummaryDirectly();
 }
 
 window.updateOrderSummary = function() {
