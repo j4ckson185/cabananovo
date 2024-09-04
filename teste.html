@@ -13,7 +13,6 @@
             --text-color: #333;
             --accent-color: #e74c3c;
         }
-
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
@@ -21,7 +20,6 @@
             background-color: var(--background-color);
             color: var(--text-color);
         }
-
         header {
             background-color: var(--primary-color);
             color: white;
@@ -33,7 +31,6 @@
             z-index: 1000;
             height: 60px;
         }
-
         .header-content {
             display: flex;
             justify-content: space-between;
@@ -43,20 +40,17 @@
             padding: 0 20px;
             height: 100%;
         }
-
         .logo {
             width: 40px;
             height: 40px;
             border-radius: 50%;
             object-fit: cover;
         }
-
         .cart-icon {
             font-size: 24px;
             cursor: pointer;
             position: relative;
         }
-
         .cart-count {
             position: absolute;
             top: -10px;
@@ -67,13 +61,11 @@
             padding: 2px 6px;
             font-size: 12px;
         }
-
         main {
             max-width: 1200px;
             margin: 70px auto 1em;
             padding: 0 20px;
         }
-
         .categories {
             display: flex;
             overflow-x: auto;
@@ -85,7 +77,6 @@
             z-index: 999;
             padding-top: 12px;
         }
-
         .category-btn {
             margin-right: 0.5em;
             padding: 0.5em 1em;
@@ -97,12 +88,10 @@
             transition: background-color 0.3s ease;
             white-space: nowrap;
         }
-
         .category-btn:hover,
         .category-btn.active {
             background-color: var(--primary-color);
         }
-
         .search-bar {
             margin-bottom: 20px;
             position: relative;
@@ -111,7 +100,6 @@
             margin-left: auto;
             margin-right: auto;
         }
-
         .search-bar input {
             width: 100%;
             padding: 12px 40px 12px 20px;
@@ -122,12 +110,10 @@
             transition: all 0.3s ease;
             box-sizing: border-box;
         }
-
         .search-bar input:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 8px rgba(138, 43, 226, 0.2);
         }
-
         .search-bar::before {
             content: '\1F50D';
             position: absolute;
@@ -137,28 +123,23 @@
             font-size: 20px;
             color: var(--secondary-color);
         }
-
         @media (max-width: 768px) {
             .search-bar {
                 width: 90%;
             }
-
             .search-bar input {
                 font-size: 14px;
                 padding: 10px 35px 10px 15px;
             }
-
             .search-bar::before {
                 font-size: 18px;
             }
         }
-
         .product-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: 1em;
         }
-
         .product-card {
             background-color: white;
             border-radius: 8px;
@@ -167,39 +148,33 @@
             display: flex;
             cursor: pointer;
         }
-
         .product-image {
             width: 100px;
             height: 100px;
             object-fit: cover;
         }
-
         .product-info {
             padding: 1em;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
         }
-
         .product-title {
             margin: 0;
             font-size: 1em;
             color: var(--primary-color);
         }
-
         .product-description {
             font-size: 0.8em;
             color: #666;
             margin: 0.5em 0;
             flex-grow: 1;
         }
-
         .product-price {
             font-weight: bold;
             color: var(--secondary-color);
             margin-top: auto;
         }
-
         .btn {
             display: inline-block;
             padding: 0.5em 1em;
@@ -213,17 +188,14 @@
             text-align: center;
             font-size: 0.9em;
         }
-
         .btn:hover {
             background-color: var(--secondary-color);
         }
-
         .btn:disabled {
             background-color: #cccccc;
             color: #666666;
             cursor: not-allowed;
         }
-
         .modal {
             display: none;
             position: fixed;
@@ -235,7 +207,6 @@
             overflow: auto;
             background-color: rgba(0, 0, 0, 0.4);
         }
-
         .modal-content {
             background-color: #fefefe;
             margin: 15% auto;
@@ -245,7 +216,6 @@
             max-width: 600px;
             border-radius: 8px;
         }
-
         .close {
             color: #aaa;
             float: right;
@@ -253,51 +223,41 @@
             font-weight: bold;
             cursor: pointer;
         }
-
         .close:hover,
         .close:focus {
             color: #000;
             text-decoration: none;
             cursor: pointer;
         }
-
         .extras-list {
             margin-top: 1em;
         }
-
         .extras-list h3 {
             margin-bottom: 0.5em;
         }
-
         .extras-list ul {
             list-style-type: none;
             padding-left: 0;
         }
-
         .extras-list li {
             margin-bottom: 0.5em;
         }
-
         .checkbox-list {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
         }
-
         .checkbox-item {
             display: flex;
             align-items: center;
         }
-
         .checkbox-item input {
             margin-right: 5px;
         }
-
         #cartModal .modal-content {
             max-height: 80vh;
             overflow-y: auto;
         }
-
         .cart-item {
             display: flex;
             justify-content: space-between;
@@ -306,51 +266,42 @@
             padding-bottom: 10px;
             border-bottom: 1px solid #ddd;
         }
-
         .cart-item-info {
             flex-grow: 1;
         }
-
         .cart-item-remove {
             color: red;
             cursor: pointer;
         }
-
         .cart-item-details {
-    flex-grow: 1;
-    text-align: left;
-}
-
-.cart-item-details p {
-    margin: 5px 0;
-}
-
-.indent {
-    margin-left: 20px;
-}
+            flex-grow: 1;
+            text-align: left;
+        }
+        .cart-item-details p {
+            margin: 5px 0;
+        }
+        .indent {
+            margin-left: 20px;
+        }
         .error-message {
             color: red;
             margin-top: 10px;
         }
-
         #customerIdentificationForm {
             background-color: #fff;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-
         #customerIdentificationForm h2 {
             color: var(--primary-color);
             margin-bottom: 20px;
         }
-
         #customerIdentificationForm label {
             display: block;
             margin-top: 10px;
             color: var(--secondary-color);
         }
-
         #customerIdentificationForm input {
             width: 100%;
             padding: 10px;
@@ -358,16 +309,13 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
-
         #customerIdentificationForm .btn {
             margin-top: 20px;
             width: 100%;
         }
-
         .input-icon {
             position: relative;
         }
-
         .input-icon i {
             position: absolute;
             left: 10px;
@@ -375,21 +323,17 @@
             transform: translateY(-50%);
             color: var(--secondary-color);
         }
-
         .input-icon input {
             padding-left: 35px;
             text-align: center;
         }
-
         #checkoutForm {
             margin-top: 20px;
         }
-
         #checkoutForm label {
             display: block;
             margin-top: 10px;
         }
-
         #checkoutForm input,
         #checkoutForm textarea,
         #checkoutForm select {
@@ -397,11 +341,9 @@
             padding: 5px;
             margin-top: 5px;
         }
-
         #orderSummary {
             margin-top: 20px;
         }
-
         .loyalty-info {
             background-color: #e8f5e9;
             border: 1px solid #4caf50;
@@ -409,30 +351,25 @@
             padding: 10px;
             margin-top: 10px;
         }
-
         .required-field {
             color: red;
         }
-
         .extras-suggestion {
             background-color: #f0e6ff;
             padding: 20px;
             border-radius: 8px;
             margin-top: 20px;
         }
-
         .extras-suggestion h3 {
             color: #4a0e4e;
             margin-bottom: 15px;
             text-align: center;
         }
-
         .extra-items {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             gap: 15px;
         }
-
         .extra-item {
             background-color: white;
             border: 2px solid #8e44ad;
@@ -442,7 +379,6 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-
         .extra-item img {
             width: 80px;
             height: 80px;
@@ -450,32 +386,26 @@
             border-radius: 50%;
             margin-bottom: 10px;
         }
-
         .extra-item p {
             margin: 5px 0;
             font-size: 0.9em;
         }
-
         .extra-item.selected {
             background-color: #e6e6fa;
             border-color: #4a0e4e;
             transform: scale(1.05);
         }
-
         #comboModal .modal-content {
             max-width: 800px;
         }
-
         .combo-step {
             margin-bottom: 20px;
         }
-
         .combo-options {
             display: flex;
             justify-content: space-around;
             flex-wrap: wrap;
         }
-
         .combo-option {
             background-color: #fff;
             border: 2px solid #8e44ad;
@@ -485,21 +415,18 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-
         .combo-option:hover,
         .combo-option.selected {
             background-color: #e6e6fa;
             border-color: #4a0e4e;
             transform: scale(1.05);
         }
-
         .combo-items {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 15px;
             margin-top: 20px;
         }
-
         .combo-item {
             background-color: #fff;
             border: 1px solid #ddd;
@@ -508,7 +435,6 @@
             text-align: center;
             cursor: pointer;
         }
-
         .combo-item img {
             width: 100px;
             height: 100px;
@@ -516,19 +442,16 @@
             border-radius: 50%;
             margin-bottom: 10px;
         }
-
         .combo-item.selected {
             border-color: #4a0e4e;
             background-color: #e6e6fa;
         }
-
         #comboSummary {
             margin-top: 20px;
             padding: 15px;
             background-color: #f0f0f0;
             border-radius: 8px;
         }
-
         .user-options {
             display: flex;
             justify-content: center;
@@ -536,7 +459,6 @@
             margin-bottom: 20px;
             padding-top: 15px;
         }
-
         .user-options .btn {
             margin: 0 10px;
             padding: 10px 15px;
@@ -545,7 +467,6 @@
             justify-content: center;
             height: 40px;
         }
-
         #loadingOverlay {
             display: none;
             position: fixed;
@@ -556,7 +477,6 @@
             background: rgba(0, 0, 0, 0.5);
             z-index: 9999;
         }
-
         #loadingOverlay div {
             position: absolute;
             top: 50%;
@@ -637,15 +557,15 @@
                     </select>
                     <button type="button" class="btn" onclick="showNewAddressForm()">Cadastrar Novo Endereço</button>
                     <div id="newAddressForm" style="display: none;">
-                        <label for="street">Rua: <span class="required-field"></span></label>
+                        <label for="street">Rua: <span class="required-field">*</span></label>
                         <input type="text" id="street" required>
-                        <label for="number">Número: <span class="required-field"></span></label>
+                        <label for="number">Número: <span class="required-field">*</span></label>
                         <input type="text" id="number" required>
                         <label for="complement">Complemento:</label>
                         <input type="text" id="complement">
-                        <label for="neighborhood">Bairro: <span class="required-field"></span></label>
+                        <label for="neighborhood">Bairro: <span class="required-field">*</span></label>
                         <input type="text" id="neighborhood" required>
-                        <label for="city">Cidade: <span class="required-field"></span></label>
+                        <label for="city">Cidade: <span class="required-field">*</span></label>
                         <input type="text" id="city" required>
                         <label for="state">Estado: <span class="required-field">*</span></label>
                         <input type="text" id="state" required>
@@ -730,212 +650,194 @@
         window.appliedDiscount = 0;
         window.appliedCouponId = null;
 
-// Obter IP do cliente
-fetch('https://api.ipify.org?format=json')
-    .then(response => response.json())
-    .then(data => {
-        window.clientIP = data.ip;
-        console.log("IP do cliente:", window.clientIP);
-    })
-    .catch(error => console.error('Erro ao obter IP do cliente:', error));
+        // Obter IP do cliente
+        fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => {
+                window.clientIP = data.ip;
+                console.log("IP do cliente:", window.clientIP);
+            })
+            .catch(error => console.error('Erro ao obter IP do cliente:', error));
 
-// Função global para aplicar desconto
-window.applyDiscount = function() {
-    console.log("Iniciando applyDiscount");
-    if (!window.db) {
-        console.error("Firebase não está inicializado");
-        alert("Erro ao aplicar cupom. Por favor, recarregue a página e tente novamente.");
-        return;
-    }
-    const discountCode = document.getElementById('discountCode').value;
-    const discountMessage = document.getElementById('discountMessage');
-    
-    window.db.collection('coupons')
-        .where('code', '==', discountCode)
-        .where('expirationDate', '>', new Date())
-        .get()
-        .then((querySnapshot) => {
-            if (!querySnapshot.empty) {
-                const coupon = querySnapshot.docs[0].data();
-                const couponId = querySnapshot.docs[0].id;
-                
-                // Verificar se o cupom já foi usado por este cliente
-                const usedBy = coupon.usedBy || [];
-                const alreadyUsed = usedBy.some(usage => 
-                    usage.phone === window.customerInfo.phone || usage.ip === window.clientIP
-                );
-                
-                if (alreadyUsed) {
-                    window.appliedDiscount = 0;
-                    window.appliedCouponId = null;
-                    discountMessage.textContent = 'Este cupom já foi utilizado por você.';
-                    discountMessage.style.color = 'red';
-                } else if (!coupon.customerPhone || coupon.customerPhone === window.customerInfo.phone) {
-                    window.appliedDiscount = parseFloat(coupon.discount);
-                    window.appliedCouponId = couponId;
-                    discountMessage.textContent = `Cupom aplicado! Desconto de R$${window.appliedDiscount.toFixed(2)}`;
-                    discountMessage.style.color = 'green';
-                    console.log("Cupom aplicado:", window.appliedDiscount);
-                } else {
-                    window.appliedDiscount = 0;
-                    window.appliedCouponId = null;
-                    discountMessage.textContent = 'Este cupom é exclusivo para outro cliente.';
-                    discountMessage.style.color = 'red';
-                }
+        // Função para salvar o carrinho
+        function saveCart(phone, cart) {
+            localStorage.setItem(`cart_${phone}`, JSON.stringify(cart));
+        }
+
+        // Função para recuperar o carrinho
+        function getCart(phone) {
+            const cartJson = localStorage.getItem(`cart_${phone}`);
+            return cartJson ? JSON.parse(cartJson) : [];
+        }
+
+        // Função para limpar o carrinho
+        function clearCart(phone) {
+            localStorage.removeItem(`cart_${phone}`);
+        }
+
+        // Atualizar a variável global do carrinho
+        window.updateCart = function() {
+            if (window.customerInfo && window.customerInfo.phone) {
+                window.cart = getCart(window.customerInfo.phone);
             } else {
-                window.appliedDiscount = 0;
-                window.appliedCouponId = null;
-                discountMessage.textContent = 'Cupom inválido ou expirado';
-                discountMessage.style.color = 'red';
+                window.cart = [];
             }
-            console.log("Atualizando resumo do pedido");
-            updateOrderSummaryDirectly();
-        })
-        .catch((error) => {
-            console.error("Erro ao verificar cupom:", error);
-            discountMessage.textContent = 'Erro ao verificar cupom. Tente novamente.';
-            discountMessage.style.color = 'red';
-            window.appliedDiscount = 0;
-            window.appliedCouponId = null;
-            console.log("Atualizando resumo do pedido após erro");
-            updateOrderSummaryDirectly();
-        });
-}
+            updateCartCount();
+        }
+
+        // Função global para aplicar desconto
+        window.applyDiscount = function() {
+            console.log("Iniciando applyDiscount");
+            if (!window.db) {
+                console.error("Firebase não está inicializado");
+                alert("Erro ao aplicar cupom. Por favor, recarregue a página e tente novamente.");
+                return;
+            }
+            const discountCode = document.getElementById('discountCode').value;
+            const discountMessage = document.getElementById('discountMessage');
+            
+            window.db.collection('coupons')
+                .where('code', '==', discountCode)
+                .where('expirationDate', '>', new Date())
+                .get()
+                .then((querySnapshot) => {
+                    if (!querySnapshot.empty) {
+                        const coupon = querySnapshot.docs[0].data();
+                        const couponId = querySnapshot.docs[0].id;
+                        
+                        // Verificar se o cupom já foi usado por este cliente
+                        const usedBy = coupon.usedBy || [];
+                        const alreadyUsed = usedBy.some(usage => 
+                            usage.phone === window.customerInfo.phone || usage.ip === window.clientIP
+                        );
+                        
+                        if (alreadyUsed) {
+                            window.appliedDiscount = 0;
+                            window.appliedCouponId = null;
+                            discountMessage.textContent = 'Este cupom já foi utilizado por você.';
+                            discountMessage.style.color = 'red';
+                        } else if (!coupon.customerPhone || coupon.customerPhone === window.customerInfo.phone) {
+                            window.appliedDiscount = parseFloat(coupon.discount);
+                            window.appliedCouponId = couponId;
+                            discountMessage.textContent = `Cupom aplicado! Desconto de R$${window.appliedDiscount.toFixed(2)}`;
+                            discountMessage.style.color = 'green';
+                            console.log("Cupom aplicado:", window.appliedDiscount);
+                        } else {
+                            window.appliedDiscount = 0;
+                            window.appliedCouponId = null;
+                            discountMessage.textContent = 'Este cupom é exclusivo para outro cliente.';
+                            discountMessage.style.color = 'red';
+                        }
+                    } else {
+                        window.appliedDiscount = 0;
+                        window.appliedCouponId = null;
+                        discountMessage.textContent = 'Cupom inválido ou expirado';
+                        discountMessage.style.color = 'red';
+                    }
+                    console.log("Atualizando resumo do pedido");
+                    updateOrderSummaryDirectly();
+                })
+                .catch((error) => {
+                    console.error("Erro ao verificar cupom:", error);
+                    discountMessage.textContent = 'Erro ao verificar cupom. Tente novamente.';
+                    discountMessage.style.color = 'red';
+                    window.appliedDiscount = 0;
+                    window.appliedCouponId = null;
+                    console.log("Atualizando resumo do pedido após erro");
+                    updateOrderSummaryDirectly();
+                });
+        }
         
-function updateOrderSummaryDirectly() {
-    console.log("Iniciando updateOrderSummaryDirectly");
-    const orderSummary = document.getElementById('orderSummary');
-    if (!orderSummary) {
-        console.error("Elemento orderSummary não encontrado");
-        return;
-    }
-    
-    let summaryHTML = '<h3>Resumo do Pedido:</h3>';
-    let subtotal = 0;
-
-    // Exibir itens do carrinho
-    window.cart.forEach(item => {
-        subtotal += item.totalPrice;
-        summaryHTML += `
-            <div class="cart-item">
-                <div class="cart-item-details">
-                    <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-        `;
-
-        if (item.acai1) {
-            summaryHTML += `
-                <p>Açaí 1:</p>
-                <p class="indent">Sabores: ${item.acai1.flavors.join(', ')}</p>
-                <p class="indent">Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                <p>Açaí 2:</p>
-                <p class="indent">Sabores: ${item.acai2.flavors.join(', ')}</p>
-                <p class="indent">Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-            `;
-        } else {
-            if (item.accompaniments && item.accompaniments.length > 0) {
-                summaryHTML += `<p class="indent">Acompanhamentos: ${item.accompaniments.join(', ')}</p>`;
-            }
-        }
-
-        if (item.extras && item.extras.length > 0) {
-            summaryHTML += `<p class="indent">Extras: ${item.extras.join(', ')}</p>`;
-        }
-
-        summaryHTML += `
-                </div>
-            </div>`;
-    });
-
-    // Exibir itens extras selecionados na página de resumo
-    const selectedExtras = document.querySelectorAll('.extra-item.selected');
-    let extrasTotal = selectedExtras.length * 1.99;
-    if (selectedExtras.length > 0) {
-        summaryHTML += "<h4>Itens Extras Adicionais:</h4>";
-        selectedExtras.forEach(item => {
-            const itemName = item.querySelector('p').textContent;
-            summaryHTML += `<p class="indent">${itemName} - R$ 1.99</p>`;
-        });
-    }
-
-    subtotal += extrasTotal;
-    let discountedTotal = Math.max(0, subtotal - (window.appliedDiscount || 0));
-    
-    // Aplicar desconto de fidelidade, se aplicável
-    let loyaltyDiscount = 0;
-    if (window.customerInfo && window.customerInfo.orderCount === 9) { // 9 porque este será o 10º pedido
-        loyaltyDiscount = subtotal * 0.5;
-        summaryHTML += `<h4 style="color: green;">Parabéns! Você ganhou 50% de desconto neste pedido!</h4>`;
-    }
-    
-    discountedTotal = Math.max(0, discountedTotal - loyaltyDiscount);
-    const finalTotal = discountedTotal + window.deliveryFee;
-
-    // Resumo final
-    summaryHTML += `<hr>`;
-    summaryHTML += `<h4>Subtotal: R$ ${subtotal.toFixed(2)}</h4>`;
-    if (window.appliedDiscount > 0) {
-        summaryHTML += `<h4>Desconto de cupom: R$ ${window.appliedDiscount.toFixed(2)}</h4>`;
-    }
-    if (loyaltyDiscount > 0) {
-        summaryHTML += `<h4>Desconto de fidelidade: R$ ${loyaltyDiscount.toFixed(2)}</h4>`;
-    }
-    summaryHTML += `<h4>Taxa de Entrega: R$ ${window.deliveryFee.toFixed(2)}</h4>`;
-    summaryHTML += `<h3>Total: R$ ${finalTotal.toFixed(2)}</h3>`;
-
-    orderSummary.innerHTML = summaryHTML;
-
-    console.log('Resumo final:', {
-        subtotal,
-        appliedDiscount: window.appliedDiscount,
-        loyaltyDiscount,
-        extrasTotal,
-        discountedTotal,
-        deliveryFee: window.deliveryFee,
-        finalTotal
-    });
-}
-
-        // Função global para atualizar o resumo do pedido
-        function updateOrderSummary() {
-            console.log("Iniciando updateOrderSummary");
-            console.log("Desconto aplicado:", window.appliedDiscount);
-            console.log("Taxa de entrega:", window.deliveryFee);
+        function updateOrderSummaryDirectly() {
+            console.log("Iniciando updateOrderSummaryDirectly");
             const orderSummary = document.getElementById('orderSummary');
             if (!orderSummary) {
                 console.error("Elemento orderSummary não encontrado");
                 return;
             }
+            
+            // Garantir que estamos usando o carrinho correto
+            window.updateCart();
+
             let summaryHTML = '<h3>Resumo do Pedido:</h3>';
             let subtotal = 0;
 
-            console.log("Carrinho:", window.cart);
+            // Exibir itens do carrinho
             window.cart.forEach(item => {
-                console.log("Item do carrinho:", item);
                 subtotal += item.totalPrice;
+                summaryHTML += `
+                    <div class="cart-item">
+                        <div class="cart-item-details">
+                            <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
+                `;
+
+                if (item.acai1) {
+                    summaryHTML += `
+                        <p>Açaí 1:</p>
+                        <p class="indent">Sabores: ${item.acai1.flavors.join(', ')}</p>
+                        <p class="indent">Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                        <p>Açaí 2:</p>
+                        <p class="indent">Sabores: ${item.acai2.flavors.join(', ')}</p>
+                        <p class="indent">Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+                    `;
+                } else {
+                    if (item.accompaniments && item.accompaniments.length > 0) {
+                        summaryHTML += `<p class="indent">Acompanhamentos: ${item.accompaniments.join(', ')}</p>`;
+                    }
+                }
+
+                if (item.extras && item.extras.length > 0) {
+                    summaryHTML += `<p class="indent">Extras: ${item.extras.join(', ')}</p>`;
+                }
+
+                summaryHTML += `
+                        </div>
+                    </div>`;
             });
 
-            console.log("Subtotal após itens do carrinho:", subtotal);
+// Exibir itens extras selecionados
             const selectedExtras = document.querySelectorAll('.extra-item.selected');
             let extrasTotal = selectedExtras.length * 1.99;
-            subtotal += extrasTotal;
-            console.log("Subtotal após extras:", subtotal);
-            summaryHTML += `<h4>Subtotal: R$ ${subtotal.toFixed(2)}</h4>`;
-
-            if (window.appliedDiscount > 0) {
-                summaryHTML += `<h4>Desconto aplicado: R$ ${window.appliedDiscount.toFixed(2)}</h4>`;
+            if (selectedExtras.length > 0) {
+                summaryHTML += "<h4>Itens Extras Adicionais:</h4>";
+                selectedExtras.forEach(item => {
+                    const itemName = item.querySelector('p').textContent;
+                    summaryHTML += `<p class="indent">${itemName} - R$ 1.99</p>`;
+                });
             }
 
-            const discountedTotal = Math.max(0, subtotal - window.appliedDiscount);
-            console.log("Total após desconto:", discountedTotal);
-
-            summaryHTML += `<h4>Taxa de Entrega: R$ ${window.deliveryFee.toFixed(2)}</h4>`;
+            subtotal += extrasTotal;
+            let discountedTotal = Math.max(0, subtotal - (window.appliedDiscount || 0));
+            
+            // Aplicar desconto de fidelidade, se aplicável
+            let loyaltyDiscount = 0;
+            if (window.customerInfo && window.customerInfo.orderCount === 9) { // 9 porque este será o 10º pedido
+                loyaltyDiscount = subtotal * 0.5;
+                summaryHTML += `<h4 style="color: green;">Parabéns! Você ganhou 50% de desconto neste pedido!</h4>`;
+            }
+            
+            discountedTotal = Math.max(0, discountedTotal - loyaltyDiscount);
             const finalTotal = discountedTotal + window.deliveryFee;
+
+            // Resumo final
+            summaryHTML += `<hr>`;
+            summaryHTML += `<h4>Subtotal: R$ ${subtotal.toFixed(2)}</h4>`;
+            if (window.appliedDiscount > 0) {
+                summaryHTML += `<h4>Desconto de cupom: R$ ${window.appliedDiscount.toFixed(2)}</h4>`;
+            }
+            if (loyaltyDiscount > 0) {
+                summaryHTML += `<h4>Desconto de fidelidade: R$ ${loyaltyDiscount.toFixed(2)}</h4>`;
+            }
+            summaryHTML += `<h4>Taxa de Entrega: R$ ${window.deliveryFee.toFixed(2)}</h4>`;
             summaryHTML += `<h3>Total: R$ ${finalTotal.toFixed(2)}</h3>`;
 
             orderSummary.innerHTML = summaryHTML;
+
             console.log('Resumo final:', {
                 subtotal,
                 appliedDiscount: window.appliedDiscount,
+                loyaltyDiscount,
+                extrasTotal,
                 discountedTotal,
                 deliveryFee: window.deliveryFee,
                 finalTotal
@@ -955,209 +857,208 @@ function updateOrderSummaryDirectly() {
                 measurementId: "G-96Y337GYT8"
             };
 
-                                  // Inicialize o Firebase
-firebase.initializeApp(firebaseConfig);
-window.db = firebase.firestore();
-let products = [];
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
-const deliveryFee = 3.00;
-let customerInfo = {};
-let savedAddresses = [];
-let appliedDiscount = 0;
-let appliedCouponId = null;
+            // Inicialize o Firebase
+            firebase.initializeApp(firebaseConfig);
+            window.db = firebase.firestore();
 
-// Dados dos itens extras
-const extraItems = [
-    { name: "Ovomaltine", price: 1.99, image: "https://images.tcdn.com.br/img/img_prod/919170/ovomaltine_flocos_extra_crocante_750g_425_1_e9d3c08b8341c4e7818b1759c877a213.jpg" },
-    { name: "Amendoim", price: 1.99, image: "https://cdn.entrypoint.directory/assets/39790/produtos/3053/xerem-amendoim-secundaria-relva-verde-500g.jpg" },
-    { name: "Granola", price: 1.99, image: "https://jardimdaservas.com.br/wp-content/uploads/2023/05/GRANOLAAAIGUARANEMEL-1.jpg" },
-    { name: "Chocoball", price: 1.99, image: "https://lojasantoantonio.vtexassets.com/arquivos/ids/156826/562-Choco-Power-Ball-Mini-Preto-e-Branco-500G-MAVALERIO.jpg?v=637254329101230000" },
-    { name: "M&M", price: 1.99, image: "https://static.welban.com.br/public/welban/imagens/produtos/confete-de-chocolate-colorido-500g-chococandy-dori-64029a15a016e.jpg" },
-    { name: "Côco Ralado", price: 1.99, image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_Mt3NOWlBbg-Yv0ttYPiXwNdMIxdh1aSuxJOIg50WN-1FOjiagSbr7MDjQf9OE0b2hnU&usqp=CAU" },
-    { name: "Leite em pó", price: 1.99, image: "https://acougueamigos.com/cdn/shop/products/acougue-amigos_1_27.jpg?v=1615589403" },
-    { name: "Leite condensado", price: 1.99, image: "https://static.escolakids.uol.com.br/conteudo_legenda/07795c263fc55bd57242ef71ae55cee8.jpg" },
-    { name: "Calda de Morango", price: 1.99, image: "https://i.ytimg.com/vi/3K6gWHdjyUU/maxresdefault.jpg" },
-    { name: "Calda de Chocolate", price: 1.99, image: "https://img.cybercook.com.br/receitas/53/calda-de-chocolate.jpeg" }
-];
+            let products = [];
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const deliveryFee = 3.00;
+            let customerInfo = {};
+            let savedAddresses = [];
+            let appliedDiscount = 0;
+            let appliedCouponId = null;
 
-// Dados dos combos
-const combos = [
-    { name: "Combo 2 de 300ml", price: 20.00, maxAccompaniments: 3 },
-    { name: "Combo 2 de 500ml", price: 26.99, maxAccompaniments: 4 },
-    { name: "Combo 2 de 1 Litro", price: 49.99, maxAccompaniments: 8 }
-];
+            // Dados dos itens extras
+            const extraItems = [
+                { name: "Ovomaltine", price: 1.99, image: "https://images.tcdn.com.br/img/img_prod/919170/ovomaltine_flocos_extra_crocante_750g_425_1_e9d3c08b8341c4e7818b1759c877a213.jpg" },
+                { name: "Amendoim", price: 1.99, image: "https://cdn.entrypoint.directory/assets/39790/produtos/3053/xerem-amendoim-secundaria-relva-verde-500g.jpg" },
+                { name: "Granola", price: 1.99, image: "https://jardimdaservas.com.br/wp-content/uploads/2023/05/GRANOLAAAIGUARANEMEL-1.jpg" },
+                { name: "Chocoball", price: 1.99, image: "https://lojasantoantonio.vtexassets.com/arquivos/ids/156826/562-Choco-Power-Ball-Mini-Preto-e-Branco-500G-MAVALERIO.jpg?v=637254329101230000" },
+                { name: "M&M", price: 1.99, image: "https://static.welban.com.br/public/welban/imagens/produtos/confete-de-chocolate-colorido-500g-chococandy-dori-64029a15a016e.jpg" },
+                { name: "Côco Ralado", price: 1.99, image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_Mt3NOWlBbg-Yv0ttYPiXwNdMIxdh1aSuxJOIg50WN-1FOjiagSbr7MDjQf9OE0b2hnU&usqp=CAU" },
+                { name: "Leite em pó", price: 1.99, image: "https://acougueamigos.com/cdn/shop/products/acougue-amigos_1_27.jpg?v=1615589403" },
+                { name: "Leite condensado", price: 1.99, image: "https://static.escolakids.uol.com.br/conteudo_legenda/07795c263fc55bd57242ef71ae55cee8.jpg" },
+                { name: "Calda de Morango", price: 1.99, image: "https://i.ytimg.com/vi/3K6gWHdjyUU/maxresdefault.jpg" },
+                { name: "Calda de Chocolate", price: 1.99, image: "https://img.cybercook.com.br/receitas/53/calda-de-chocolate.jpeg" }
+            ];
 
-// Dados dos sabores de açaí
-const acaiFlavors = [
-    "Açaí Tradicional", "Creme de Ninho", "Creme de Cupuaçu", "Creme de Ovomaltine",
-    "Creme de Morango", "Creme de Maracujá", "Creme de Amendoim"
-];
+            // Dados dos combos
+            const combos = [
+                { name: "Combo 2 de 300ml", price: 20.00, maxAccompaniments: 3 },
+                { name: "Combo 2 de 500ml", price: 26.99, maxAccompaniments: 4 },
+                { name: "Combo 2 de 1 Litro", price: 49.99, maxAccompaniments: 8 }
+            ];
 
-let currentCombo = null;
-let selectedFlavors = [[], []];
-let selectedAccompaniments = [[], []];
-let selectedExtras = [];
-let currentAcaiIndex = 0;
+            // Dados dos sabores de açaí
+            const acaiFlavors = [
+                "Açaí Tradicional", "Creme de Ninho", "Creme de Cupuaçu", "Creme de Ovomaltine",
+                "Creme de Morango", "Creme de Maracujá", "Creme de Amendoim"
+            ];
 
-function hideHeaderAndCategories() {
-    document.getElementById('mainHeader').style.display = 'none';
-    document.getElementById('categoriesContainer').style.display = 'none';
-}
+            let currentCombo = null;
+            let selectedFlavors = [[], []];
+            let selectedAccompaniments = [[], []];
+            let selectedExtras = [];
+            let currentAcaiIndex = 0;
 
-function showHeaderAndCategories() {
-    document.getElementById('mainHeader').style.display = 'block';
-    document.getElementById('categoriesContainer').style.display = 'flex';
-}
+            function hideHeaderAndCategories() {
+                document.getElementById('mainHeader').style.display = 'none';
+                document.getElementById('categoriesContainer').style.display = 'none';
+            }
 
-async function fetchProducts() {
-    console.log("Iniciando fetchProducts");
-    try {
-        const snapshot = await window.db.collection('products').get();
-        window.products = snapshot.docs.map(doc => {
-            const product = { id: doc.id.toString(), ...doc.data() };
-            console.log("Produto carregado:", JSON.stringify({ id: product.id, name: product.name, category: product.category }, null, 2));
-            return product;
-        });
-        console.log("Total de produtos carregados:", window.products.length);
-        displayProducts(window.products);
-        updateCartCount();
-    } catch (error) {
-        console.error("Erro ao buscar produtos:", error);
-        alert("Ocorreu um erro ao carregar os produtos. Por favor, recarregue a página.");
-    }
-}
-            
-async function fetchCategories() {
-    const snapshot = await window.db.collection('categories').get();
-    const categories = snapshot.docs.map(doc => doc.data().name);
-    displayCategories(categories);
-}
+            function showHeaderAndCategories() {
+                document.getElementById('mainHeader').style.display = 'block';
+                document.getElementById('categoriesContainer').style.display = 'flex';
+            }
 
-function displayCategories(categories) {
-    const categoriesContainer = document.getElementById('categoriesContainer');
-    categoriesContainer.innerHTML = categories.map(category => 
-        `<button class="category-btn" onclick="filterByCategory('${category}')">${category}</button>`
-    ).join('');
-    const allButton = document.createElement('button');
-    allButton.className = 'category-btn active';
-    allButton.textContent = 'Todos';
-    allButton.onclick = () => filterByCategory('all');
-    categoriesContainer.insertBefore(allButton, categoriesContainer.firstChild);
-}
+            async function fetchProducts() {
+                console.log("Iniciando fetchProducts");
+                try {
+                    const snapshot = await window.db.collection('products').get();
+                    window.products = snapshot.docs.map(doc => {
+                        const product = { id: doc.id.toString(), ...doc.data() };
+                        console.log("Produto carregado:", JSON.stringify({ id: product.id, name: product.name, category: product.category }, null, 2));
+                        return product;
+                    });
+                    console.log("Total de produtos carregados:", window.products.length);
+                    displayProducts(window.products);
+                    updateCartCount();
+                } catch (error) {
+                    console.error("Erro ao buscar produtos:", error);
+                    alert("Ocorreu um erro ao carregar os produtos. Por favor, recarregue a página.");
+                }
+            }
 
-window.filterByCategory = function(category) {
-    console.log("Filtrando por categoria:", category);
-    const buttons = document.querySelectorAll('.category-btn');
-    buttons.forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+            async function fetchCategories() {
+                const snapshot = await window.db.collection('categories').get();
+                const categories = snapshot.docs.map(doc => doc.data().name);
+                displayCategories(categories);
+            }
 
-    let filteredProducts;
-    if (category === 'all') {
-        filteredProducts = window.products;
-    } else {
-        filteredProducts = window.products.filter(product => {
-            console.log(`Produto: ${product.name}, Categoria: ${product.category}, Comparando com: ${category}`);
-            return product.category.toLowerCase() === category.toLowerCase();
-        });
-    }
+            function displayCategories(categories) {
+                const categoriesContainer = document.getElementById('categoriesContainer');
+                categoriesContainer.innerHTML = categories.map(category => 
+                    `<button class="category-btn" onclick="filterByCategory('${category}')">${category}</button>`
+                ).join('');
+                const allButton = document.createElement('button');
+                allButton.className = 'category-btn active';
+                allButton.textContent = 'Todos';
+                allButton.onclick = () => filterByCategory('all');
+                categoriesContainer.insertBefore(allButton, categoriesContainer.firstChild);
+            }
 
-    console.log(`Produtos filtrados para a categoria '${category}':`, filteredProducts);
-    displayProducts(filteredProducts);
-}
+            window.filterByCategory = function(category) {
+                console.log("Filtrando por categoria:", category);
+                const buttons = document.querySelectorAll('.category-btn');
+                buttons.forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                let filteredProducts;
+                if (category === 'all') {
+                    filteredProducts = window.products;
+                } else {
+                    filteredProducts = window.products.filter(product => {
+                        console.log(`Produto: ${product.name}, Categoria: ${product.category}, Comparando com: ${category}`);
+                        return product.category.toLowerCase() === category.toLowerCase();
+                    });
+                }
+                console.log(`Produtos filtrados para a categoria '${category}':`, filteredProducts);
+                displayProducts(filteredProducts);
+            }
 
-    window.searchProducts = function() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const filteredProducts = window.products.filter(product => 
-        product.name.toLowerCase().includes(searchTerm) || 
-        product.description.toLowerCase().includes(searchTerm)
-    );
-    displayProducts(filteredProducts);
-}
-            
-    function displayProducts(productsToDisplay = products) {
-    console.log("Iniciando displayProducts com", productsToDisplay.length, "produtos");
-    const productGrid = document.getElementById('productGrid');
-    if (productsToDisplay.length === 0) {
-        productGrid.innerHTML = '<p>Nenhum produto encontrado nesta categoria.</p>';
-    } else {
-        productGrid.innerHTML = productsToDisplay.map(product => `
-            <div class="product-card" onclick="openProductDetails('${product.id.toString()}')">
-                <div class="product-info">
-                    <h3 class="product-title">${product.name}</h3>
-                    <p class="product-description">${product.description.substring(0, 50)}...</p>
-                    <p class="product-price">R$ ${parseFloat(product.price).toFixed(2)}</p>
-                </div>
-                <img src="${product.image}" alt="${product.name}" class="product-image">
-            </div>
-        `).join('');
-    }
-    console.log("Produtos renderizados:", productsToDisplay.map(p => ({ id: p.id, name: p.name, category: p.category })));
-}
+            window.searchProducts = function() {
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                const filteredProducts = window.products.filter(product => 
+                    product.name.toLowerCase().includes(searchTerm) || 
+                    product.description.toLowerCase().includes(searchTerm)
+                );
+                displayProducts(filteredProducts);
+            }
 
-function updateCartCount() {
-    const cartCount = document.getElementById('cartCount');
-    cartCount.textContent = cart.length;
-}
+            function displayProducts(productsToDisplay = products) {
+                console.log("Iniciando displayProducts com", productsToDisplay.length, "produtos");
+                const productGrid = document.getElementById('productGrid');
+                if (productsToDisplay.length === 0) {
+                    productGrid.innerHTML = '<p>Nenhum produto encontrado nesta categoria.</p>';
+                } else {
+                    productGrid.innerHTML = productsToDisplay.map(product => `
+                        <div class="product-card" onclick="openProductDetails('${product.id.toString()}')">
+                            <div class="product-info">
+                                <h3 class="product-title">${product.name}</h3>
+                                <p class="product-description">${product.description.substring(0, 50)}...</p>
+                                <p class="product-price">R$ ${parseFloat(product.price).toFixed(2)}</p>
+                            </div>
+                            <img src="${product.image}" alt="${product.name}" class="product-image">
+                        </div>
+                    `).join('');
+                }
+                console.log("Produtos renderizados:", productsToDisplay.map(p => ({ id: p.id, name: p.name, category: p.category })));
+            }
 
-window.openProductDetails = function(productId) {
-    console.log("Abrindo detalhes do produto com ID:", productId);
-    hideHeaderAndCategories();
-    
-    console.log("Todos os produtos:", window.products.map(p => ({ id: p.id, name: p.name })));
-    
-    const product = window.products.find(p => p.id.toString() === productId.toString());
-    console.log("Produto encontrado:", product);
+            function updateCartCount() {
+                const cartCount = document.getElementById('cartCount');
+                cartCount.textContent = cart.length;
+            }
 
-    if (!product) {
-        console.error("Produto não encontrado para o ID:", productId);
-        alert("Desculpe, não foi possível encontrar os detalhes deste produto.");
-        return;
-    }
+            window.openProductDetails = function(productId) {
+                console.log("Abrindo detalhes do produto com ID:", productId);
+                hideHeaderAndCategories();
+                
+                console.log("Todos os produtos:", window.products.map(p => ({ id: p.id, name: p.name })));
+                
+                const product = window.products.find(p => p.id.toString() === productId.toString());
+                console.log("Produto encontrado:", product);
 
-    const modal = document.getElementById('productModal');
-    const modalContent = document.getElementById('modalContent');
+                if (!product) {
+                    console.error("Produto não encontrado para o ID:", productId);
+                    alert("Desculpe, não foi possível encontrar os detalhes deste produto.");
+                    return;
+                }
 
-    modalContent.innerHTML = `
-        <h2>${product.name}</h2>
-        <img src="${product.image}" alt="${product.name}" style="width:100%; max-height:300px; object-fit:cover;">
-        <p>${product.description}</p>
-        <p class="product-price">Preço: R$ ${parseFloat(product.price).toFixed(2)}</p>
-        <div class="extras-list">
-            <h3>Acompanhamentos (escolha de ${product.minAccompaniments} a ${product.maxAccompaniments}):</h3>
-            <div class="checkbox-list" id="accompaniments">
-                ${product.accompaniments.map((item, index) => `
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="acc${index}" name="accompaniment" value="${item}">
-                        <label for="acc${index}">${item}</label>
+                const modal = document.getElementById('productModal');
+                const modalContent = document.getElementById('modalContent');
+
+                modalContent.innerHTML = `
+                    <h2>${product.name}</h2>
+                    <img src="${product.image}" alt="${product.name}" style="width:100%; max-height:300px; object-fit:cover;">
+                    <p>${product.description}</p>
+                    <p class="product-price">Preço: R$ ${parseFloat(product.price).toFixed(2)}</p>
+                    <div class="extras-list">
+                        <h3>Acompanhamentos (escolha de ${product.minAccompaniments} a ${product.maxAccompaniments}):</h3>
+                        <div class="checkbox-list" id="accompaniments">
+                            ${product.accompaniments.map((item, index) => `
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="acc${index}" name="accompaniment" value="${item}">
+                                    <label for="acc${index}">${item}</label>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <p id="accompanimentError" class="error-message"></p>
                     </div>
-                `).join('')}
-            </div>
-            <p id="accompanimentError" class="error-message"></p>
-        </div>
-        <div class="extras-list">
-            <h3>Itens Extras:</h3>
-            <div class="checkbox-list" id="extras">
-                ${product.extras.map((item, index) => `
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="extra${index}" name="extra" value="${item.name}">
-                        <label for="extra${index}">${item.name} - R$ ${parseFloat(item.price).toFixed(2)}</label>
+                    <div class="extras-list">
+                        <h3>Itens Extras:</h3>
+                        <div class="checkbox-list" id="extras">
+                            ${product.extras.map((item, index) => `
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="extra${index}" name="extra" value="${item.name}">
+                                    <label for="extra${index}">${item.name} - R$ ${parseFloat(item.price).toFixed(2)}</label>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
-                `).join('')}
-            </div>
-        </div>
-        <button id="addToCartBtn" class="btn" onclick="addToCart('${product.id}')">Adicionar ao Carrinho</button>
-    `;
-    modal.style.display = "block";
+                    <button id="addToCartBtn" class="btn" onclick="addToCart('${product.id}')">Adicionar ao Carrinho</button>
+                `;
+                modal.style.display = "block";
 
-    const accCheckboxes = document.querySelectorAll('#accompaniments input[type="checkbox"]');
-    accCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', () => validateAccompaniments(product));
-    });
+                const accCheckboxes = document.querySelectorAll('#accompaniments input[type="checkbox"]');
+                accCheckboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', () => validateAccompaniments(product));
+                });
 
-    console.log("Modal de detalhes do produto aberto com sucesso");
-}
+                console.log("Modal de detalhes do produto aberto com sucesso");
+            }
 
-function validateAccompaniments(product) {
+            function validateAccompaniments(product) {
     const checkedAccompaniments = document.querySelectorAll('#accompaniments input[type="checkbox"]:checked');
     const addToCartBtn = document.getElementById('addToCartBtn');
     const errorMessage = document.getElementById('accompanimentError');
@@ -1201,8 +1102,16 @@ window.addToCart = function(productId) {
         totalPrice: calculateTotalPrice(product, extras)
     };
 
-    cart.push(cartItem);
-    localStorage.setItem('cart', JSON.stringify(cart));
+    if (window.customerInfo && window.customerInfo.phone) {
+        const currentCart = getCart(window.customerInfo.phone);
+        currentCart.push(cartItem);
+        saveCart(window.customerInfo.phone, currentCart);
+        window.cart = currentCart;
+    } else {
+        window.cart.push(cartItem);
+        localStorage.setItem('cart', JSON.stringify(window.cart));
+    }
+
     updateCartCount();
     closeModal('productModal');
     openCart();
@@ -1265,7 +1174,11 @@ window.continueShopping = function() {
 
 window.removeFromCart = function(itemId) {
     cart = cart.filter(item => item.id !== itemId);
-    localStorage.setItem('cart', JSON.stringify(cart));
+    if (window.customerInfo && window.customerInfo.phone) {
+        saveCart(window.customerInfo.phone, cart);
+    } else {
+        localStorage.setItem('cart', JSON.stringify(cart));
+    }
     updateCartCount();
     openCart();
 }
@@ -1353,7 +1266,7 @@ window.handleSavedAddressChange = function() {
         document.getElementById('neighborhood').value = address.neighborhood;
         document.getElementById('city').value = address.city;
         document.getElementById('state').value = address.state;
-
+        
         document.getElementById('paymentSection').style.display = 'block';
         document.getElementById('submitOrderBtn').style.display = 'block';
     } else {
@@ -1375,21 +1288,22 @@ window.saveNewAddress = function() {
         city: document.getElementById('city').value,
         state: document.getElementById('state').value
     };
-
+    
     let missingFields = [];
     if (!newAddress.street) missingFields.push('Rua');
     if (!newAddress.number) missingFields.push('Número');
     if (!newAddress.neighborhood) missingFields.push('Bairro');
     if (!newAddress.city) missingFields.push('Cidade');
     if (!newAddress.state) missingFields.push('Estado');
-
+    
     if (missingFields.length > 0) {
         alert(`Por favor, preencha os seguintes campos obrigatórios: ${missingFields.join(', ')}`);
         return;
     }
+
     savedAddresses.push(newAddress);
     localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
-
+    
     db.collection('customers').doc(customerInfo.phone).update({
         addresses: savedAddresses
     }).then(() => {
@@ -1416,63 +1330,18 @@ window.handleChangeNeeded = function() {
 
 function displayExtraItems() {
     const extraItemsContainer = document.getElementById('extraItems');
-    extraItemsContainer.innerHTML = extraItems.map(item => 
-        `<div class="extra-item" onclick="toggleExtraItem(this, '${item.name}')">
+    extraItemsContainer.innerHTML = extraItems.map(item => `
+        <div class="extra-item" onclick="toggleExtraItem(this, '${item.name}')">
             <img src="${item.image}" alt="${item.name}">
             <p>${item.name}</p>
             <p>R$ ${item.price.toFixed(2)}</p>
-        </div>`
-    ).join('');
+        </div>
+    `).join('');
 }
 
 window.toggleExtraItem = function(element, itemName) {
     element.classList.toggle('selected');
     updateOrderSummaryDirectly();
-}
-
-window.updateOrderSummary = function() {
-    const orderSummary = document.getElementById('orderSummary');
-    let summaryHTML = '<h3>Resumo do Pedido:</h3>';
-    let total = 0;
-
-    cart.forEach(item => {
-        if (item.acai1) {
-            summaryHTML += `
-                <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                <p>Açaí 1: ${item.acai1.flavors.join(', ')} - Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
-                <p>Açaí 2: ${item.acai2.flavors.join(', ')} - Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
-                <p>Extras: ${item.extras.length > 0 ? item.extras.join(', ') : 'Nenhum'}</p>
-                <hr>
-            `;
-        } else {
-            summaryHTML += `
-                <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
-                <p>Acompanhamentos: ${item.accompaniments ? item.accompaniments.join(', ') : 'Nenhum'}</p>
-                <p>Extras: ${item.extras ? item.extras.join(', ') : 'Nenhum'}</p>
-                <hr>
-            `;
-        }
-        total += item.totalPrice;
-    });
-
-    const selectedExtras = document.querySelectorAll('.extra-item.selected');
-    let extrasTotal = 0;
-    selectedExtras.forEach(item => {
-        const itemName = item.querySelector('p').textContent;
-        const itemPrice = 1.99;
-        extrasTotal += itemPrice;
-        summaryHTML += `<p>Extra: ${itemName} - R$ ${itemPrice.toFixed(2)}</p>`;
-    });
-    total += extrasTotal;
-    let discountedTotal = Math.max(0, total - appliedDiscount);
-
-    summaryHTML += `<h4>Subtotal: R$ ${total.toFixed(2)}</h4>`;
-    if (appliedDiscount > 0) {
-        summaryHTML += `<h4>Desconto aplicado: R$ ${appliedDiscount.toFixed(2)}</h4>`;
-    }
-    summaryHTML += `<h4>Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}</h4>`;
-    summaryHTML += `<h3>Total: R$ ${(discountedTotal + deliveryFee).toFixed(2)}</h3>`;
-    orderSummary.innerHTML = summaryHTML;
 }
 
 document.getElementById('checkoutForm').addEventListener('submit', function(e) {
@@ -1788,13 +1657,13 @@ window.openComboBuilder = function() {
         <div class="combo-step">
             <h3>Escolha seu Combo:</h3>
             <div class="combo-options">
-                ${combos.map(combo => 
-                    `<div class="combo-option" onclick="selectCombo('${combo.name}')">
+                ${combos.map(combo => `
+                    <div class="combo-option" onclick="selectCombo('${combo.name}')">
                         <h4>${combo.name}</h4>
                         <p>R$ ${combo.price.toFixed(2)}</p>
                         <p>Até ${combo.maxAccompaniments} acompanhamentos por açaí</p>
-                    </div>`
-                ).join('')}
+                    </div>
+                `).join('')}
             </div>
         </div>
         <div id="flavorSelection" style="display: none;"></div>
@@ -1824,11 +1693,11 @@ function showFlavorSelection() {
     flavorSelection.innerHTML = `
         <h3>Escolha até 2 sabores para o Açaí ${currentAcaiIndex + 1}:</h3>
         <div class="combo-items">
-            ${acaiFlavors.map(flavor => 
-                `<div class="combo-item" onclick="toggleFlavor('${flavor}')">
+            ${acaiFlavors.map(flavor => `
+                <div class="combo-item" onclick="toggleFlavor('${flavor}')">
                     <p>${flavor}</p>
-                </div>`
-            ).join('')}
+                </div>
+            `).join('')}
         </div>
         <button class="btn" onclick="showAccompanimentSelection()">Próximo</button>
     `;
@@ -1870,12 +1739,12 @@ window.showAccompanimentSelection = function() {
     accompanimentSelection.innerHTML = `
         <h3>Escolha até ${currentCombo.maxAccompaniments} acompanhamentos para o Açaí ${currentAcaiIndex + 1}:</h3>
         <div class="combo-items">
-            ${extraItems.map(item => 
-                `<div class="combo-item" onclick="toggleAccompaniment('${item.name}')">
+            ${extraItems.map(item => `
+                <div class="combo-item" onclick="toggleAccompaniment('${item.name}')">
                     <img src="${item.image}" alt="${item.name}">
                     <p>${item.name}</p>
-                </div>`
-            ).join('')}
+                </div>
+            `).join('')}
         </div>
         <button class="btn" onclick="nextAcai()">Próximo</button>
     `;
@@ -1927,13 +1796,13 @@ window.showExtraItemsSelection = function() {
     extraItemsSelection.innerHTML = `
         <h3>Escolha itens extras (R$ 1,99 cada):</h3>
         <div class="combo-items">
-            ${extraItems.map(item => 
-                `<div class="combo-item" onclick="toggleExtra('${item.name}')">
+            ${extraItems.map(item => `
+                <div class="combo-item" onclick="toggleExtra('${item.name}')">
                     <img src="${item.image}" alt="${item.name}">
                     <p>${item.name}</p>
                     <p>R$ ${item.price.toFixed(2)}</p>
-                </div>`
-            ).join('')}
+                </div>
+            `).join('')}
         </div>
         <button class="btn" onclick="finishCombo()">Finalizar Combo</button>
     `;
