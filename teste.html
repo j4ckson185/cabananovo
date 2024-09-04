@@ -809,6 +809,88 @@ function updateOrderSummaryDirectly() {
         console.error("Elemento orderSummary não encontrado");
         return;
     }
+    
+    let summaryHTML = '<h3>Resumo do Pedido:</h3>';
+    let subtotal = 0;
+    
+    // Exibir itens do carrinho
+    window.cart.forEach(item => {
+        subtotal += item.totalPrice;
+        summaryHTML += `
+            <div class="cart-item">
+                <div class="cart-item-details">
+                    <p><strong>${item.name}</strong> - R$ ${item.totalPrice.toFixed(2)}</p>
+        `;
+        if (item.acai1) {
+            summaryHTML += `
+                <p>Açaí 1:</p>
+                <p class="indent">Sabores: ${item.acai1.flavors.join(', ')}</p>
+                <p class="indent">Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                <p>Açaí 2:</p>
+                <p class="indent">Sabores: ${item.acai2.flavors.join(', ')}</p>
+                <p class="indent">Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+            `;
+        } else {
+            if (item.accompaniments && item.accompaniments.length > 0) {
+                summaryHTML += `<p class="indent">Acompanhamentos: ${item.accompaniments.join(', ')}</p>`;
+            }
+        }
+        if (item.extras && item.extras.length > 0) {
+            summaryHTML += `<p class="indent">Extras: ${item.extras.join(', ')}</p>`;
+        }
+        summaryHTML += `
+                </div>
+            </div>`;
+    });
+    
+    // Exibir itens extras selecionados na página de resumo
+    const selectedExtras = document.querySelectorAll('.extra-item.selected');
+    let extrasTotal = selectedExtras.length * 1.99;
+    if (selectedExtras.length > 0) {
+        summaryHTML += "<h4>Itens Extras Adicionais:</h4>";
+        selectedExtras.forEach(item => {
+            const itemName = item.querySelector('p').textContent;
+            summaryHTML += `<p class="indent">${itemName} - R$ 1.99</p>`;
+        });
+    }
+    
+    subtotal += extrasTotal;
+    let discountedTotal = Math.max(0, subtotal - (window.appliedDiscount || 0));
+    
+    // Aplicar desconto de fidelidade, se aplicável
+    let loyaltyDiscount = 0;
+    if (window.customerInfo && window.customerInfo.orderCount === 9) { // 9 porque este será o 10º pedido
+        loyaltyDiscount = subtotal * 0.5;
+        summaryHTML += `<h4 style="color: green;">Parabéns! Você ganhou 50% de desconto neste pedido!</h4>`;
+    }
+    
+    discountedTotal = Math.max(0, discountedTotal - loyaltyDiscount);
+    const finalTotal = discountedTotal + window.deliveryFee;
+    
+    // Resumo final
+    summaryHTML += `<hr>`;
+    summaryHTML += `<h4>Subtotal: R$ ${subtotal.toFixed(2)}</h4>`;
+    if (window.appliedDiscount > 0) {
+        summaryHTML += `<h4>Desconto de cupom: R$ ${window.appliedDiscount.toFixed(2)}</h4>`;
+    }
+    if (loyaltyDiscount > 0) {
+        summaryHTML += `<h4>Desconto de fidelidade: R$ ${loyaltyDiscount.toFixed(2)}</h4>`;
+    }
+    summaryHTML += `<h4>Taxa de Entrega: R$ ${window.deliveryFee.toFixed(2)}</h4>`;
+    summaryHTML += `<h3>Total: R$ ${finalTotal.toFixed(2)}</h3>`;
+    
+    orderSummary.innerHTML = summaryHTML;
+    
+    console.log('Resumo final:', {
+        subtotal,
+        appliedDiscount: window.appliedDiscount,
+        loyaltyDiscount,
+        extrasTotal,
+        discountedTotal,
+        deliveryFee: window.deliveryFee,
+        finalTotal
+    });
+}
 
         // Função global para atualizar o resumo do pedido
         function updateOrderSummary() {
