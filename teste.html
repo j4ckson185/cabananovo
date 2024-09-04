@@ -801,6 +801,12 @@ function updateOrderSummaryDirectly() {
     let summaryHTML = '<h3>Resumo do Pedido:</h3>';
     let subtotal = 0;
 
+    // Garantir que window.cart existe e é um array
+    if (!Array.isArray(window.cart)) {
+        console.error("window.cart não é um array válido");
+        window.cart = [];
+    }
+
     window.cart.forEach(item => {
         subtotal += item.totalPrice;
         if (item.acai1) {
@@ -830,7 +836,7 @@ function updateOrderSummaryDirectly() {
     }
 
     subtotal += extrasTotal;
-    let discountedTotal = Math.max(0, subtotal - window.appliedDiscount);
+    let discountedTotal = Math.max(0, subtotal - (window.appliedDiscount || 0));
     
     // Aplicar desconto de fidelidade, se aplicável
     let loyaltyDiscount = 0;
