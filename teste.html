@@ -1095,7 +1095,10 @@ function validateAccompaniments(product) {
 
 window.addToCart = function(productId) {
     console.log("Adicionando ao carrinho o produto com ID:", productId);
-    const product = window.products.find(p => p.id === productId);
+    console.log("Todos os produtos:", window.products.map(p => ({ id: p.id, name: p.name })));
+    
+    const product = window.products.find(p => p.id.toString() === productId.toString());
+    console.log("Produto encontrado:", product);
     
     if (!product) {
         console.error("Produto não encontrado para o ID:", productId);
@@ -1126,6 +1129,8 @@ window.addToCart = function(productId) {
     updateCartCount();
     closeModal('productModal');
     openCart();
+    
+    console.log("Produto adicionado ao carrinho com sucesso:", cartItem);
 }
 
 function calculateTotalPrice(product, selectedExtras) {
