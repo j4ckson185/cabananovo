@@ -830,13 +830,26 @@ function updateOrderSummaryDirectly() {
     }
 
     subtotal += extrasTotal;
-    const discountedTotal = Math.max(0, subtotal - window.appliedDiscount);
+    let discountedTotal = Math.max(0, subtotal - window.appliedDiscount);
+    
+    // Aplicar desconto de fidelidade, se aplicável
+    let loyaltyDiscount = 0;
+    if (window.customerInfo && window.customerInfo.orderCount === 9) { // 9 porque este será o 10º pedido
+        loyaltyDiscount = subtotal * 0.5;
+        summaryHTML += `<h4 style="color: green;">Parabéns! Você ganhou 50% de desconto neste pedido!</h4>`;
+        summaryHTML += `<h4>Desconto de fidelidade: R$ ${loyaltyDiscount.toFixed(2)}</h4>`;
+    }
+    
+    discountedTotal = Math.max(0, discountedTotal - loyaltyDiscount);
     const finalTotal = discountedTotal + window.deliveryFee;
 
     summaryHTML += `<hr>`;
     summaryHTML += `<h4>Subtotal: R$ ${subtotal.toFixed(2)}</h4>`;
     if (window.appliedDiscount > 0) {
-        summaryHTML += `<h4>Desconto aplicado: R$ ${window.appliedDiscount.toFixed(2)}</h4>`;
+        summaryHTML += `<h4>Desconto de cupom: R$ ${window.appliedDiscount.toFixed(2)}</h4>`;
+    }
+    if (loyaltyDiscount > 0) {
+        summaryHTML += `<h4>Desconto de fidelidade: R$ ${loyaltyDiscount.toFixed(2)}</h4>`;
     }
     summaryHTML += `<h4>Taxa de Entrega: R$ ${window.deliveryFee.toFixed(2)}</h4>`;
     summaryHTML += `<h3>Total: R$ ${finalTotal.toFixed(2)}</h3>`;
@@ -845,6 +858,7 @@ function updateOrderSummaryDirectly() {
     console.log('Resumo final:', {
         subtotal,
         appliedDiscount: window.appliedDiscount,
+        loyaltyDiscount,
         extrasTotal,
         discountedTotal,
         deliveryFee: window.deliveryFee,
@@ -1235,16 +1249,18 @@ function loadCustomerData(phone) {
     db.collection('customers').doc(phone).get().then((doc) => {
         if (doc.exists) {
             const data = doc.data();
-            customerInfo = {
+            window.customerInfo = {
                 name: data.name,
                 phone: phone,
-                addresses: data.addresses || []
+                addresses: data.addresses || [],
+                orderCount: data.orderCount || 0
             };
             document.getElementById('customerName').value = data.name;
             savedAddresses = data.addresses || [];
             localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
             updateLoyaltyInfo(data.orderCount || 0);
         } else {
+            window.customerInfo = { phone: phone, orderCount: 0 };
             updateLoyaltyInfo(0);
         }
     }).catch((error) => {
@@ -1481,12 +1497,12 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     }
     
     const total = subtotal + extrasTotal;
-    const discountedTotal = Math.max(0, total - window.appliedDiscount);
+    let discountedTotal = Math.max(0, total - window.appliedDiscount);
     const finalTotal = discountedTotal + window.deliveryFee;
     
     message += `\n\nSubtotal: R$ ${total.toFixed(2)}`;
     if (window.appliedDiscount > 0) {
-        message += `\nDesconto aplicado: R$ ${window.appliedDiscount.toFixed(2)}`;
+        message += `\nDesconto de cupom aplicado: R$ ${window.appliedDiscount.toFixed(2)}`;
     }
     message += `\nTaxa de Entrega: R$ ${window.deliveryFee.toFixed(2)}`;
     message += `\nTotal: R$ ${finalTotal.toFixed(2)}`;
@@ -1522,29 +1538,32 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             }
             orderCount++;
             
-            return db.collection('customers').doc(customerInfo.phone).set({
-                name: customerInfo.name,
-                orderCount: orderCount
-            }, { merge: true });
+            let updateData = { orderCount: orderCount };
+            let loyaltyDiscount = 0;
+
+            if (orderCount >= 10) {
+                loyaltyDiscount = subtotal * 0.5; // 50% de desconto
+                updateData.orderCount = 0; // Reinicia a contagem
+                message += `\n\nParabéns! Você completou 10 pedidos e ganhou 50% de desconto neste pedido!`;
+                message += `\nDesconto de fidelidade aplicado: R$ ${loyaltyDiscount.toFixed(2)}`;
+                
+                // Atualiza o total com o desconto de fidelidade
+                discountedTotal = Math.max(0, discountedTotal - loyaltyDiscount);
+                const newTotal = discountedTotal + window.deliveryFee;
+                message = message.replace(`Total: R$ ${finalTotal.toFixed(2)}`, `Total: R$ ${newTotal.toFixed(2)}`);
+            } else {
+                message += `\n\nEste é o ${getOrderNumberText(orderCount)} pedido do cliente.`;
+                message += `\nFaltam ${10 - orderCount} pedidos para o próximo desconto de fidelidade.`;
+            }
+
+            return db.collection('customers').doc(customerInfo.phone).set(updateData, { merge: true });
         })
         .then(() => {
-            return db.collection('customers').doc(customerInfo.phone).get();
-        })
-        .then((doc) => {
-            if (doc.exists) {
-                const orderCount = doc.data().orderCount;
-                message += `\n\nEste é o ${getOrderNumberText(orderCount)} pedido do cliente.`;
-                if (orderCount >= 10) {
-                    message += `\nCliente tem direito ao desconto de fidelidade!`;
-                } else {
-                    message += `\nFaltam ${10 - orderCount} pedidos para o próximo desconto de fidelidade.`;
-                }
-            }
             if (window.appliedCouponId) {
                 return db.collection('coupons').doc(window.appliedCouponId).update({
                     usedBy: firebase.firestore.FieldValue.arrayUnion({
                         phone: customerInfo.phone,
-                        ip: window.clientIP // Vamos adicionar essa variável mais tarde
+                        ip: window.clientIP
                     })
                 });
             }
@@ -1556,7 +1575,7 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             updateCartCount();
             document.getElementById('paymentMethod').value = 'card';
             handlePaymentChange();
-
+            
             // Limpar o campo de cupom e mensagem
             document.getElementById('discountCode').value = '';
             document.getElementById('discountMessage').textContent = '';
