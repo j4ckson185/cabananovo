@@ -1426,10 +1426,9 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
     let extrasTotal = selectedExtras.length * 1.99;
     if (selectedExtras.length > 0) {
-        message += "\n\nItens Extras Adicionais:";
+        message += "\nItens Extras Adicionais:";
         selectedExtras.forEach(item => {
             const itemName = item.querySelector('p').textContent;
-            extrasTotal += 1.99;
             message += `\n- ${itemName} (R$ 1,99)`;
         });
     }
@@ -1488,8 +1487,8 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
                 // Atualiza o total com o desconto de fidelidade
                 discountedTotal = Math.max(0, discountedTotal - loyaltyDiscount);
                 finalTotal = discountedTotal + window.deliveryFee;
+                message = message.replace(/Total: R\$ [\d.]+/, `Total: R$ ${finalTotal.toFixed(2)}`);
             }
-            message += `\nTotal: R$ ${finalTotal.toFixed(2)}`;
             if (orderCount < 10) {
                 message += `\n\nEste é o ${getOrderNumberText(orderCount)} pedido do cliente.`;
                 message += `\nFaltam ${10 - orderCount} pedidos para o próximo desconto de fidelidade.`;
