@@ -947,7 +947,7 @@ async function fetchProducts() {
         const snapshot = await window.db.collection('products').get();
         window.products = snapshot.docs.map(doc => {
             const product = { id: doc.id.toString(), ...doc.data() };
-            console.log("Produto carregado:", JSON.stringify(product, null, 2));
+            console.log("Produto carregado:", JSON.stringify({ id: product.id, name: product.name, category: product.category }, null, 2));
             return product;
         });
         console.log("Total de produtos carregados:", window.products.length);
@@ -978,26 +978,43 @@ function displayCategories(categories) {
 }
 
 window.filterByCategory = function(category) {
+    console.log("Filtrando por categoria:", category);
     const buttons = document.querySelectorAll('.category-btn');
     buttons.forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
-    const filteredProducts = category === 'all' ? products : products.filter(product => product.category === category);
+
+    let filteredProducts;
+    if (category === 'all') {
+        filteredProducts = window.products;
+    } else {
+        filteredProducts = window.products.filter(product => {
+            console.log(`Produto: ${product.name}, Categoria: ${product.category}, Comparando com: ${category}`);
+            return product.category.toLowerCase() === category.toLowerCase();
+        });
+    }
+
+    console.log(`Produtos filtrados para a categoria '${category}':`, filteredProducts);
     displayProducts(filteredProducts);
 }
 
 function displayProducts(productsToDisplay = products) {
+    console.log("Iniciando displayProducts com", productsToDisplay.length, "produtos");
     const productGrid = document.getElementById('productGrid');
-    productGrid.innerHTML = productsToDisplay.map(product => `
-        <div class="product-card" onclick="openProductDetails('${product.id.toString()}')">
-            <div class="product-info">
-                <h3 class="product-title">${product.name}</h3>
-                <p class="product-description">${product.description.substring(0, 50)}...</p>
-                <p class="product-price">R$ ${parseFloat(product.price).toFixed(2)}</p>
+    if (productsToDisplay.length === 0) {
+        productGrid.innerHTML = '<p>Nenhum produto encontrado nesta categoria.</p>';
+    } else {
+        productGrid.innerHTML = productsToDisplay.map(product => `
+            <div class="product-card" onclick="openProductDetails('${product.id.toString()}')">
+                <div class="product-info">
+                    <h3 class="product-title">${product.name}</h3>
+                    <p class="product-description">${product.description.substring(0, 50)}...</p>
+                    <p class="product-price">R$ ${parseFloat(product.price).toFixed(2)}</p>
+                </div>
+                <img src="${product.image}" alt="${product.name}" class="product-image">
             </div>
-            <img src="${product.image}" alt="${product.name}" class="product-image">
-        </div>
-    `).join('');
-    console.log("Produtos renderizados:", productsToDisplay.map(p => ({ id: p.id, name: p.name })));
+        `).join('');
+    }
+    console.log("Produtos renderizados:", productsToDisplay.map(p => ({ id: p.id, name: p.name, category: p.category })));
 }
 
 function updateCartCount() {
