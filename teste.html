@@ -1122,27 +1122,17 @@ function validateAccompaniments(product) {
 }
 
 window.addToCart = function(productId) {
-    console.log("Adicionando ao carrinho o produto com ID:", productId);
-    
     const product = window.products.find(p => p.id.toString() === productId.toString());
-    console.log("Produto encontrado:", product);
-    
     if (!product) {
-        console.error("Produto não encontrado para o ID:", productId);
-        alert("Desculpe, ocorreu um erro ao adicionar o produto ao carrinho.");
+        console.error("Produto não encontrado");
         return;
     }
-    
+
     const accompaniments = Array.from(document.querySelectorAll('#accompaniments input[type="checkbox"]:checked')).map(cb => cb.value);
     const extras = Array.from(document.querySelectorAll('#extras input[type="checkbox"]:checked')).map(cb => cb.value);
-    
-    if (accompaniments.length < product.minAccompaniments || accompaniments.length > product.maxAccompaniments) {
-        alert(`Por favor, selecione de ${product.minAccompaniments} a ${product.maxAccompaniments} acompanhamentos.`);
-        return;
-    }
-    
+
     const cartItem = {
-        id: Date.now(), // Use um timestamp como ID único
+        id: Date.now(),
         productId: product.id,
         name: product.name,
         price: product.price,
@@ -1150,14 +1140,11 @@ window.addToCart = function(productId) {
         extras: extras,
         totalPrice: calculateTotalPrice(product, extras)
     };
-    
-    cart.push(cartItem);
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCartCount();
-    closeModal('productModal');
-    openCart();
-    
-    console.log("Produto adicionado ao carrinho com sucesso:", cartItem);
+
+    window.cart.push(cartItem);
+    localStorage.setItem('cart', JSON.stringify(window.cart));
+    window.updateCartCount();
+    window.openCart();
 }
 
 function calculateTotalPrice(product, selectedExtras) {
