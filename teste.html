@@ -1106,7 +1106,7 @@ window.addToCart = function(productId) {
     }
     
     const cartItem = {
-        id: Date.now(),
+        id: Date.now(), // Use um timestamp como ID único
         productId: product.id,
         name: product.name,
         price: product.price,
@@ -1179,7 +1179,7 @@ window.continueShopping = function() {
 
 window.removeFromCart = function(itemId) {
     cart = cart.filter(item => item.id !== itemId);
-    localStorage.setItem('cart', JSON.stringify(cart));
+    localStorage.setItem('cart', JSON.stringify(cart)); // Adicione esta linha
     updateCartCount();
     openCart();
 }
