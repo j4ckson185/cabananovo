@@ -571,10 +571,10 @@
         <div class="header-content">
             <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Cabana Açaí Logo" class="logo">
             <h1>Cabana Açaí</h1>
-            <div class="cart-icon" onclick="openCart()">
-                🛒
-                <span class="cart-count" id="cartCount">0</span>
-            </div>
+            <div class="cart-icon" onclick="window.openCart()">
+    🛒
+    <span class="cart-count" id="cartCount">0</span>
+</div>
         </div>
     </header>
     <main>
@@ -1043,7 +1043,7 @@ window.filterByCategory = function(category) {
     console.log("Produtos renderizados:", productsToDisplay.map(p => ({ id: p.id, name: p.name, category: p.category })));
 }
 
-function updateCartCount() {
+window.updateCartCount = function() {
     const cartCount = document.getElementById('cartCount');
     if (cartCount) {
         cartCount.textContent = window.cart.length;
@@ -1171,7 +1171,9 @@ function calculateTotalPrice(product, selectedExtras) {
     return total;
 }
 
-function openCart() {
+window.openCart = function() {
+    console.log("Abrindo o carrinho"); // Log para debug
+    
     const cartModal = document.getElementById('cartModal');
     const cartContent = document.getElementById('cartContent');
     const cartTotal = document.getElementById('cartTotal');
@@ -1202,36 +1204,21 @@ function openCart() {
     cartContent.innerHTML = cartHTML;
     cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
     cartModal.style.display = "block";
+    
+    console.log("Carrinho aberto com", window.cart.length, "itens"); // Log para debug
 }
+            
 window.continueShopping = function() {
     closeModal('cartModal');
 }
 
 window.removeFromCart = function(itemId) {
-    console.log("Removendo item do carrinho:", itemId); // Log para debug
-
-    // Remover o item do carrinho
+    console.log("Removendo item do carrinho:", itemId);
     window.cart = window.cart.filter(item => item.id !== itemId);
-
-    // Atualizar o localStorage
     localStorage.setItem('cart', JSON.stringify(window.cart));
-
-    // Atualizar a contagem do carrinho
-    updateCartCount();
-
-    // Atualizar a exibição do carrinho
-    openCart();
-
-    // Atualizar o resumo do pedido
+    window.updateCartCount();
+    window.openCart(); // Reabrir o carrinho para atualizar a visualização
     updateOrderSummaryDirectly();
-
-    // Desmarcar o item extra correspondente, se houver
-    const extraItem = document.querySelector(`.extra-item[data-id="${itemId}"]`);
-    if (extraItem) {
-        extraItem.classList.remove('selected');
-    }
-
-    console.log("Carrinho atualizado:", window.cart); // Log para debug
 }
 
 window.openCustomerIdentification = function() {
