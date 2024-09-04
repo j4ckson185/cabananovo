@@ -1418,9 +1418,13 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
                 message += `\nAcompanhamentos: ${item.accompaniments.join(', ')}`;
             }
         }
-        // Removemos a listagem de extras aqui para evitar duplicação
+        // Extras escolhidos na página do produto
+        if (item.extras && item.extras.length > 0) {
+            message += `\nExtras: ${item.extras.join(', ')}`;
+        }
     });
     
+    // Itens extras adicionais selecionados na página de resumo do pedido
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
     let extrasTotal = selectedExtras.length * 1.99;
     if (selectedExtras.length > 0) {
