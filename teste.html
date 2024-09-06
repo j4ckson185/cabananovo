@@ -1932,6 +1932,13 @@ function updateComboSummary() {
 }
 
 window.addComboToCart = function() {
+    console.log("Iniciando addComboToCart");
+    if (!currentCombo) {
+        console.error("Nenhum combo selecionado");
+        alert("Por favor, selecione um combo antes de adicionar ao carrinho.");
+        return;
+    }
+
     const comboItem = {
         id: Date.now(),
         name: currentCombo.name,
@@ -1947,13 +1954,19 @@ window.addComboToCart = function() {
         extras: selectedExtras,
         totalPrice: currentCombo.price + (selectedExtras.length * 1.99)
     };
-    cart.push(comboItem);
-    localStorage.setItem('cart', JSON.stringify(cart));
+
+    console.log("Combo item criado:", comboItem);
+
+    window.cart.push(comboItem);
+    localStorage.setItem('cart', JSON.stringify(window.cart));
+
+    console.log("Combo adicionado ao carrinho. Novo tamanho do carrinho:", window.cart.length);
+
     alert('Combo adicionado ao carrinho!');
     closeModal('comboModal');
     resetComboBuilder();
-    updateCartCount();
-    openCart();
+    window.updateCartCount();
+    window.openCart();
 }
 
 window.resetComboBuilder = function() {
@@ -1992,5 +2005,17 @@ window.onclick = function(event) {
     });
     console.log("Script finalizado com sucesso");
     </script>
+    <script>
+window.embeddedChatbotConfig = {
+chatbotId: "PpgNSIgeYN1FCucFGP4w3",
+domain: "www.chatbase.co"
+}
+</script>
+<script
+src="https://www.chatbase.co/embed.min.js"
+chatbotId="PpgNSIgeYN1FCucFGP4w3"
+domain="www.chatbase.co"
+defer>
+</script>
 </body>
 </html>
