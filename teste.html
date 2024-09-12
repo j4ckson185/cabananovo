@@ -989,8 +989,10 @@ function hideHeaderAndCategories() {
 }
 
 function showHeaderAndCategories() {
-    document.getElementById('mainHeader').style.display = 'block';
-    document.getElementById('categoriesContainer').style.display = 'flex';
+    const header = document.getElementById('mainHeader');
+    const categories = document.getElementById('categoriesContainer');
+    if (header) header.style.display = 'block';
+    if (categories) categories.style.display = 'flex';
 }
 
 async function fetchProducts() {
@@ -1248,7 +1250,6 @@ window.removeFromCart = function(itemId) {
 }
 
 window.openCustomerIdentification = function() {
-    hideHeaderAndCategories();
     closeModal('cartModal');
     const modal = document.getElementById('customerIdentificationModal');
     modal.style.display = "block";
@@ -1303,35 +1304,13 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
 });
         
 function openCheckout() {
+    hideHeaderAndCategories(); // Agora, escondemos o cabeçalho e categorias aqui
     const checkoutModal = document.getElementById('checkoutModal');
-    if (checkoutModal) {
-        checkoutModal.style.display = "block";
-    }
-
-    const checkoutForm = document.getElementById('checkoutForm');
-    if (checkoutForm) {
-        checkoutForm.style.display = "block";
-    }
-
-    const deliveryAddressSection = document.getElementById('deliveryAddressSection');
-    if (deliveryAddressSection) {
-        deliveryAddressSection.style.display = "block";
-    }
-
     loadSavedAddresses();
     updateOrderSummaryDirectly();
-
-    // Inicialmente, oculte a seção de pagamento até que um endereço seja selecionado
-    const paymentSection = document.getElementById('paymentSection');
-    if (paymentSection) {
-        paymentSection.style.display = 'none';
-    }
-
-    const submitOrderBtn = document.getElementById('submitOrderBtn');
-    if (submitOrderBtn) {
-        submitOrderBtn.style.display = 'none';
-    }
-
+    document.getElementById('paymentSection').style.display = 'none';
+    document.getElementById('submitOrderBtn').style.display = 'none';
+    checkoutModal.style.display = "block";
     displayExtraItems();
 }
 
@@ -1765,7 +1744,6 @@ function updateLoyaltyInfo(orderCount) {
 }
 
 window.openMyOrders = function() {
-    hideHeaderAndCategories();
     const modal = document.getElementById('myOrdersModal');
     const content = document.getElementById('myOrdersContent');
     content.innerHTML = `
@@ -1852,7 +1830,6 @@ window.repeatOrder = function(orderId) {
 }
 
 window.openLoyaltyProgram = function() {
-    hideHeaderAndCategories();
     const modal = document.getElementById('loyaltyProgramModal');
     const content = document.getElementById('loyaltyProgramContent');
     content.innerHTML = `
@@ -1900,7 +1877,6 @@ window.checkLoyaltyPoints = function() {
 }
 
 window.openComboBuilder = function() {
-    hideHeaderAndCategories();
     const modal = document.getElementById('comboModal');
     const comboBuilder = document.getElementById('comboBuilder');
     comboBuilder.innerHTML = `
