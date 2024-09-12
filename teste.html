@@ -765,13 +765,14 @@ function showMainPage() {
     const mainContent = document.getElementById('mainContent');
     const orderSummary = document.getElementById('orderSummary');
     
-    if (mainContent) {
-        mainContent.style.display = 'block';
-    }
+    if (mainContent) mainContent.style.display = 'block';
+    if (orderSummary) orderSummary.style.display = 'none';
     
-    if (orderSummary) {
-        orderSummary.style.display = 'none';
-    }
+    // Certifique-se de que o cabeçalho e as categorias estejam visíveis
+    const header = document.getElementById('mainHeader');
+    const categories = document.getElementById('categoriesContainer');
+    if (header) header.style.display = 'block';
+    if (categories) categories.style.display = 'flex';
 }
         
 // Função global para aplicar desconto
@@ -926,7 +927,15 @@ function updateOrderSummaryDirectly() {
     });
 }
 
-        document.addEventListener('DOMContentLoaded', initPage);
+ document.addEventListener('DOMContentLoaded', function() {
+    const myOrdersBtn = document.querySelector('.btn[onclick="openMyOrders()"]');
+    const comboBuildBtn = document.querySelector('.btn[onclick="openComboBuilder()"]');
+    const loyaltyBtn = document.querySelector('.btn[onclick="openLoyaltyProgram()"]');
+
+    if (myOrdersBtn) myOrdersBtn.addEventListener('click', openMyOrders);
+    if (comboBuildBtn) comboBuildBtn.addEventListener('click', openComboBuilder);
+    if (loyaltyBtn) loyaltyBtn.addEventListener('click', openLoyaltyProgram);
+});
             // Configuração do Firebase
             const firebaseConfig = {
                 apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
@@ -984,8 +993,10 @@ let selectedExtras = [];
 let currentAcaiIndex = 0;
 
 function hideHeaderAndCategories() {
-    document.getElementById('mainHeader').style.display = 'none';
-    document.getElementById('categoriesContainer').style.display = 'none';
+    const header = document.getElementById('mainHeader');
+    const categories = document.getElementById('categoriesContainer');
+    if (header) header.style.display = 'none';
+    if (categories) categories.style.display = 'none';
 }
 
 function showHeaderAndCategories() {
@@ -1745,6 +1756,10 @@ function updateLoyaltyInfo(orderCount) {
 
 window.openMyOrders = function() {
     const modal = document.getElementById('myOrdersModal');
+    if (!modal) {
+        console.error("Modal 'myOrdersModal' não encontrado");
+        return;
+    }
     const content = document.getElementById('myOrdersContent');
     content.innerHTML = `
         <h3>Insira seu número de WhatsApp para ver seus pedidos:</h3>
@@ -1831,6 +1846,10 @@ window.repeatOrder = function(orderId) {
 
 window.openLoyaltyProgram = function() {
     const modal = document.getElementById('loyaltyProgramModal');
+    if (!modal) {
+        console.error("Modal 'loyaltyProgramModal' não encontrado");
+        return;
+    }
     const content = document.getElementById('loyaltyProgramContent');
     content.innerHTML = `
         <h3>Programa de Fidelidade Cabana Açaí</h3>
@@ -1878,6 +1897,10 @@ window.checkLoyaltyPoints = function() {
 
 window.openComboBuilder = function() {
     const modal = document.getElementById('comboModal');
+    if (!modal) {
+        console.error("Modal 'comboModal' não encontrado");
+        return;
+    }
     const comboBuilder = document.getElementById('comboBuilder');
     comboBuilder.innerHTML = `
         <div class="combo-step">
@@ -2162,9 +2185,10 @@ window.resetComboBuilder = function() {
 }
 
 function closeModal(modalId) {
-    document.getElementById(modalId).style.display = "none";
-    showHeaderAndCategories();
-}
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = "none";
+    }
 
 document.querySelectorAll('.close').forEach(closeBtn => {
     closeBtn.onclick = function() {
