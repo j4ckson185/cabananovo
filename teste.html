@@ -1207,7 +1207,6 @@ window.openCart = function() {
     const cartModal = document.getElementById('cartModal');
     const cartContent = document.getElementById('cartContent');
     const cartTotal = document.getElementById('cartTotal');
-
     if (!cartModal || !cartContent || !cartTotal) {
         console.error("Elementos do carrinho não encontrados");
         return;
@@ -1302,27 +1301,55 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
         console.error("Error saving customer data: ", error);
     });
 });
-
+        
 function openCheckout() {
     const checkoutModal = document.getElementById('checkoutModal');
+    if (checkoutModal) {
+        checkoutModal.style.display = "block";
+    }
+
+    const checkoutForm = document.getElementById('checkoutForm');
+    if (checkoutForm) {
+        checkoutForm.style.display = "block";
+    }
+
+    const deliveryAddressSection = document.getElementById('deliveryAddressSection');
+    if (deliveryAddressSection) {
+        deliveryAddressSection.style.display = "block";
+    }
+
     loadSavedAddresses();
-    updateOrderSummaryDirectly(); // Alterado de updateOrderSummary para updateOrderSummaryDirectly
-    document.getElementById('paymentSection').style.display = 'none';
-    document.getElementById('submitOrderBtn').style.display = 'none';
-    checkoutModal.style.display = "block";
+    updateOrderSummaryDirectly();
+
+    // Inicialmente, oculte a seção de pagamento até que um endereço seja selecionado
+    const paymentSection = document.getElementById('paymentSection');
+    if (paymentSection) {
+        paymentSection.style.display = 'none';
+    }
+
+    const submitOrderBtn = document.getElementById('submitOrderBtn');
+    if (submitOrderBtn) {
+        submitOrderBtn.style.display = 'none';
+    }
+
     displayExtraItems();
 }
 
 function loadSavedAddresses() {
     const select = document.getElementById('savedAddresses');
-    select.innerHTML = '<option value="">Selecione um endereço salvo ou cadastre um novo</option>';
-    savedAddresses.forEach((address, index) => {
-        select.innerHTML += `<option value="${index}">${address.street}, ${address.number} - ${address.neighborhood}</option>`;
-    });
+    if (select) {
+        select.innerHTML = '<option value="">Selecione um endereço salvo ou cadastre um novo</option>';
+        savedAddresses.forEach((address, index) => {
+            select.innerHTML += `<option value="${index}">${address.street}, ${address.number} - ${address.neighborhood}</option>`;
+        });
+    }
 }
 
 window.handleSavedAddressChange = function() {
     const selectedIndex = document.getElementById('savedAddresses').value;
+    const paymentSection = document.getElementById('paymentSection');
+    const submitOrderBtn = document.getElementById('submitOrderBtn');
+
     if (selectedIndex !== "") {
         const address = savedAddresses[selectedIndex];
         document.getElementById('street').value = address.street;
@@ -1331,15 +1358,22 @@ window.handleSavedAddressChange = function() {
         document.getElementById('neighborhood').value = address.neighborhood;
         document.getElementById('city').value = address.city;
         document.getElementById('state').value = address.state;
-
-        document.getElementById('paymentSection').style.display = 'block';
-        document.getElementById('submitOrderBtn').style.display = 'block';
+        
+        if (paymentSection) {
+            paymentSection.style.display = 'block';
+        }
+        if (submitOrderBtn) {
+            submitOrderBtn.style.display = 'block';
+        }
     } else {
-        document.getElementById('paymentSection').style.display = 'none';
-        document.getElementById('submitOrderBtn').style.display = 'none';
+        if (paymentSection) {
+            paymentSection.style.display = 'none';
+        }
+        if (submitOrderBtn) {
+            submitOrderBtn.style.display = 'none';
+        }
     }
 }
-
 window.showNewAddressForm = function() {
     document.getElementById('newAddressForm').style.display = 'block';
 }
