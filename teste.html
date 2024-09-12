@@ -758,12 +758,20 @@ function initPage() {
     } else {
         showMainPage();
     }
-}        
+}
 
     // Função para mostrar a página principal
 function showMainPage() {
-    document.getElementById('mainContent').style.display = 'block';
-    document.getElementById('orderSummary').style.display = 'none';
+    const mainContent = document.getElementById('mainContent');
+    const orderSummary = document.getElementById('orderSummary');
+    
+    if (mainContent) {
+        mainContent.style.display = 'block';
+    }
+    
+    if (orderSummary) {
+        orderSummary.style.display = 'none';
+    }
 }
         
 // Função global para aplicar desconto
@@ -1534,19 +1542,26 @@ window.resetOrderForm = function() {
 
 
 function showOrderConfirmation(order) {
-    document.getElementById('mainContent').style.display = 'none';
+    const mainContent = document.getElementById('mainContent');
     const orderSummary = document.getElementById('orderSummary');
-    orderSummary.style.display = 'block';
-    let summaryHTML = `
-        <h3>Pedido Realizado com Sucesso!</h3>
-        <p>Seu pedido foi recebido e está sendo preparado.</p>
-        <div id="orderStatus" class="order-status status-preparing">Status: Preparando</div>
-        <button id="whatsappButton" class="btn" onclick="window.redirectToWhatsApp()">
-            <i class="fab fa-whatsapp"></i> Acompanhar pelo WhatsApp
-        </button>
-        <button id="newOrderButton" class="btn" onclick="window.resetOrderForm()">Novo Pedido</button>
-        <h4>Resumo do Pedido:</h4>
-    `;
+    const checkoutForm = document.getElementById('checkoutForm');
+    
+    if (mainContent) {
+        mainContent.style.display = 'none';
+    }
+    
+    if (orderSummary) {
+        orderSummary.style.display = 'block';
+        let summaryHTML = `
+            <h3>Pedido Realizado com Sucesso!</h3>
+            <p>Seu pedido foi recebido e está sendo preparado.</p>
+            <div id="orderStatus" class="order-status status-preparing">Status: Preparando</div>
+            <button id="whatsappButton" class="btn" onclick="window.redirectToWhatsApp()">
+                <i class="fab fa-whatsapp"></i> Acompanhar pelo WhatsApp
+            </button>
+            <button id="newOrderButton" class="btn" onclick="window.resetOrderForm()">Novo Pedido</button>
+            <h4>Resumo do Pedido:</h4>
+        `;
 
     order.items.forEach(item => {
         summaryHTML += `
@@ -1581,6 +1596,12 @@ function showOrderConfirmation(order) {
     `;
 
     orderSummary.innerHTML = summaryHTML;
+    }
+
+    if (checkoutForm) {
+        checkoutForm.style.display = 'none';
+    }
+}
 
     // Esconder o formulário de checkout
     document.getElementById('checkoutForm').style.display = 'none';
