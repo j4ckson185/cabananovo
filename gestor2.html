@@ -84,7 +84,7 @@
     border-radius: 5px;
 }
 
-        .order-status-actions {
+.order-status-actions {
     display: flex;
     justify-content: space-between;
     margin-top: 1em;
@@ -309,6 +309,7 @@ db.collection('orders')
         updateNoOrdersMessage();
     });
 
+
         // Função para criar um card de pedido
 function createOrderCard(order) {
     const card = document.createElement('div');
@@ -366,7 +367,7 @@ function createOrderCard(order) {
     `;
     return card;
 }
-
+        
         // Função para adicionar um novo pedido
 function addNewOrder(order) {
     const orderList = document.getElementById('orderList');
@@ -385,12 +386,12 @@ function removeOrder(orderId) {
 }
 
         // Função para imprimir um pedido
-        function printOrder(orderId) {
-            const orderCard = document.getElementById(`order-${orderId}`);
-            orderCard.classList.add('printing');
-            window.print();
-            orderCard.classList.remove('printing');
-        }
+function printOrder(orderId) {
+    const orderCard = document.getElementById(`order-${orderId}`);
+    orderCard.classList.add('printing');
+    window.print();
+    orderCard.classList.remove('printing');
+}
 
         // Listener para novos pedidos
         db.collection('orders')
