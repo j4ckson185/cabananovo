@@ -728,6 +728,7 @@ window.deliveryFee = 3.00;
 window.customerInfo = {};
 window.appliedDiscount = 0;
 window.appliedCouponId = null;
+window.orderId = localStorage.getItem('lastOrderId');
 
 // Obter IP do cliente
 fetch('https://api.ipify.org?format=json')
@@ -738,6 +739,33 @@ fetch('https://api.ipify.org?format=json')
     })
     .catch(error => console.error('Erro ao obter IP do cliente:', error));
 
+// Função para inicializar a página
+function initPage() {
+    if (window.orderId) {
+        db.collection('orders').doc(window.orderId).get().then((doc) => {
+            if (doc.exists) {
+                const order = doc.data();
+                showOrderConfirmation(order);
+                startOrderStatusMonitoring();
+            } else {
+                console.log("Nenhum pedido encontrado, mostrando página principal");
+                showMainPage();
+            }
+        }).catch((error) => {
+            console.log("Erro ao buscar pedido:", error);
+            showMainPage();
+        });
+    } else {
+        showMainPage();
+    }
+}        
+
+    // Função para mostrar a página principal
+function showMainPage() {
+    document.getElementById('mainContent').style.display = 'block';
+    document.getElementById('orderSummary').style.display = 'none';
+}
+        
 // Função global para aplicar desconto
 window.applyDiscount = function() {
     console.log("Iniciando applyDiscount");
@@ -890,7 +918,7 @@ function updateOrderSummaryDirectly() {
     });
 }
 
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', initPage);
             // Configuração do Firebase
             const firebaseConfig = {
                 apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
@@ -1451,6 +1479,7 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         .then((docRef) => {
             console.log('Pedido adicionado com sucesso!');
             window.orderId = docRef.id;
+            localStorage.setItem('lastOrderId', window.orderId);
             updateCustomerOrderCount();
             showOrderConfirmation(order);
             startOrderStatusMonitoring();
@@ -1496,13 +1525,18 @@ window.resetOrderForm = function() {
     document.getElementById('changeNeeded').value = 'no';
     document.getElementById('changeAmount').value = '';
     window.orderId = null;
+    localStorage.removeItem('lastOrderId');
     window.cart = [];
     localStorage.setItem('cart', JSON.stringify(window.cart));
     updateCartCount();
+    showMainPage();
 }
 
+
 function showOrderConfirmation(order) {
+    document.getElementById('mainContent').style.display = 'none';
     const orderSummary = document.getElementById('orderSummary');
+    orderSummary.style.display = 'block';
     let summaryHTML = `
         <h3>Pedido Realizado com Sucesso!</h3>
         <p>Seu pedido foi recebido e está sendo preparado.</p>
@@ -1587,7 +1621,7 @@ function getStatusText(status) {
     };
     return statusTexts[status] || 'Desconhecido';
 }
-
+            
 // Função para redirecionar para o WhatsApp
 // Adicione esta função ao escopo global
 window.redirectToWhatsApp = function() {
@@ -1610,10 +1644,10 @@ window.redirectToWhatsApp = function() {
             console.error('Erro ao buscar detalhes do pedido:', error);
         });
 }
-
+            
 // Função para compor a mensagem do WhatsApp
 function composeWhatsAppMessage(order) {
-    let message = `Pedido #${order.id}\n`;
+    let message = `Pedido #${window.orderId}\n`;
     message += `Nome: ${order.customerName}\n`;
     message += `Telefone: ${order.customerPhone}\n`;
     message += `Endereço: ${order.address.street}, ${order.address.number}, ${order.address.neighborhood}, ${order.address.city} - ${order.address.state}\n`;
@@ -1650,12 +1684,12 @@ function composeWhatsAppMessage(order) {
 }
 
 function getPaymentMethodText(method) {
-    switch(method) {
-        case 'money': return 'Dinheiro';
-        case 'card': return 'Cartão na entrega';
-        case 'pix': return 'PIX';
-        default: return method;
-    }
+    const methods = {
+        'card': 'Cartão na entrega',
+        'money': 'Dinheiro',
+        'pix': 'PIX'
+    };
+    return methods[method] || method;
 }
 
 function getOrderNumberText(number) {
