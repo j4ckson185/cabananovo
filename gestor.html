@@ -1,256 +1,275 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gestor de Pedidos - Cabana Açaí</title>
-<style>
-:root {
-  --primary-color: #4a0e4e;
-  --secondary-color: #8e44ad;
-  --background-color: #f5f5f5;
-  --text-color: #333;
-}
-body {
-  font-family: 'Arial', sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: var(--background-color);
-  color: var(--text-color);
-}
-header {
-  background-color: var(--primary-color);
-  color: white;
-  padding: 1em 0;
-  text-align: center;
-}
-.header-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-.logo {
-  width: 150px;
-  height: auto;
-  margin-bottom: 10px;
-}
-main {
-  max-width: 1200px;
-  margin: 2em auto;
-  padding: 0 20px;
-}
-.columns {
-  display: flex;
-  justify-content: space-between;
-}
-.column {
-  width: 32%;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  padding: 1em;
-  box-sizing: border-box;
-}
-.column h2 {
-  text-align: center;
-  margin-bottom: 1em;
-  color: var(--primary-color);
-}
-.order {
-  background-color: var(--background-color);
-  border-radius: 4px;
-  padding: 1em;
-  margin-bottom: 1em;
-}
-.order h3 {
-  margin: 0 0 0.5em 0;
-}
-.order p {
-  margin: 0.5em 0;
-}
-.btn {
-  display: inline-block;
-  padding: 0.5em 1em;
-  background-color: var(--primary-color);
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
-  border: none;
-  cursor: pointer;
-}
-.btn:hover {
-  background-color: var(--secondary-color);
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Pedidos - Cabana Açaí</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        :root {
+            --primary-color: #4a0e4e;
+            --secondary-color: #8e44ad;
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --accent-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1em;
+            text-align: center;
+        }
+        
+        main {
+            max-width: 1200px;
+            margin: 2em auto;
+            padding: 0 20px;
+        }
+        
+        .order-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1em;
+        }
+        
+        .order-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 1em;
+            transition: all 0.3s ease;
+        }
+        
+        .order-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1em;
+            padding-bottom: 0.5em;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .order-id {
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+        
+        .order-status {
+            padding: 0.3em 0.6em;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .status-preparing {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        
+        .status-ready {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .status-delivered {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        .order-details {
+            margin-bottom: 1em;
+        }
+        
+        .order-items {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .order-total {
+            font-weight: bold;
+            margin-top: 1em;
+        }
+        
+        .order-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1em;
+        }
+        
+        .btn {
+            padding: 0.5em 1em;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn-status {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-status:hover {
+            background-color: var(--primary-color);
+        }
+        
+        .btn-remove {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        .btn-remove:hover {
+            background-color: #c0392b;
+        }
+    </style>
 </head>
 <body>
-<header>
-  <div class="header-content">
-    <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Cabana Açaí Logo" class="logo">
-    <h1>Gestor de Pedidos - Cabana Açaí</h1>
-  </div>
-</header>
-<main>
-  <div class="columns">
-    <div class="column" id="preparingColumn">
-      <h2>Em preparo</h2>
-    </div>
-    <div class="column" id="deliveryColumn">
-      <h2>Saiu pra entrega</h2>
-    </div>
-    <div class="column" id="finishedColumn">
-      <h2>Finalizado</h2>
-    </div>
-  </div>
-</main>
+    <header>
+        <h1>Gestor de Pedidos - Cabana Açaí</h1>
+    </header>
+    
+    <main>
+        <div class="order-list" id="orderList">
+            <!-- Os pedidos serão adicionados aqui dinamicamente -->
+        </div>
+    </main>
 
-<!-- Adicione o Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-<script>
-  // Configuração do Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
-    authDomain: "cabana-8d55e.firebaseapp.com",
-    databaseURL: "https://cabana-8d55e-default-rtdb.firebaseio.com",
-    projectId: "cabana-8d55e",
-    storageBucket: "cabana-8d55e.appspot.com",
-    messagingSenderId: "706144237954",
-    appId: "1:706144237954:web:345c10370972486afc779b",
-    measurementId: "G-96Y337GYT8"
-  };
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {
+                apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
+                authDomain: "cabana-8d55e.firebaseapp.com",
+                databaseURL: "https://cabana-8d55e-default-rtdb.firebaseio.com",
+                projectId: "cabana-8d55e",
+                storageBucket: "cabana-8d55e.appspot.com",
+                messagingSenderId: "706144237954",
+                appId: "1:706144237954:web:345c10370972486afc779b",
+                measurementId: "G-96Y337GYT8"
+        };
 
-  // Inicialize o Firebase
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-  let orders = [];
+        // Função para criar um card de pedido
+        function createOrderCard(order) {
+            const card = document.createElement('div');
+            card.className = 'order-card';
+            card.id = `order-${order.id}`;
 
-  function addOrderToColumn(order, columnId) {
-    const column = document.getElementById(columnId);
-    const orderDiv = document.createElement('div');
-    orderDiv.className = 'order';
-    orderDiv.id = `order-${order.id}`;
-    orderDiv.innerHTML = `
-      <h3>Pedido #${order.id}</h3>
-      <p><strong>Nome:</strong> ${order.name}</p>
-      <p><strong>Endereço:</strong> ${order.address}</p>
-      <p><strong>Telefone:</strong> ${order.phone}</p>
-      <p><strong>Método de Pagamento:</strong> ${order.paymentMethod}</p>
-      ${order.changeNeeded ? `<p><strong>Precisa de troco:</strong> ${order.changeNeeded}</p>` : ''}
-      ${order.changeAmount ? `<p><strong>Quanto de troco:</strong> R$ ${parseFloat(order.changeAmount).toFixed(2)}</p>` : ''}
-      <p><strong>Itens do Pedido:</strong></p>
-      <ul>
-        ${order.items.map(item => `
-          <li>${item.name} - R$ ${item.totalPrice.toFixed(2)}</li>
-          ${item.accompaniments.length > 0 ? `<p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>` : ''}
-          ${item.extras.length > 0 ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
-        `).join('')}
-      </ul>
-      <p><strong>Subtotal:</strong> R$ ${order.subtotal.toFixed(2)}</p>
-      <p><strong>Taxa de Entrega:</strong> R$ ${order.deliveryFee.toFixed(2)}</p>
-      <p><strong>Total:</strong> R$ ${order.total.toFixed(2)}</p>
-      ${order.status !== 'finished' 
-        ? `<button class="btn" onclick="advanceOrder('${order.id}')">Avançar</button>`
-        : ''}
-      <button class="btn" onclick="removeOrder('${order.id}')">Finalizar</button>
-    `;
-    column.appendChild(orderDiv);
-  }
+            const statusText = {
+                'preparing': 'Preparando',
+                'ready': 'Pronto',
+                'delivered': 'Entregue'
+            };
 
-  function displayOrders() {
-    document.getElementById('preparingColumn').innerHTML = '<h2>Em preparo</h2>';
-    document.getElementById('deliveryColumn').innerHTML = '<h2>Saiu pra entrega</h2>';
-    document.getElementById('finishedColumn').innerHTML = '<h2>Finalizado</h2>';
+            card.innerHTML = `
+                <div class="order-header">
+                    <span class="order-id">Pedido #${order.id}</span>
+                    <span class="order-status status-${order.status}">${statusText[order.status]}</span>
+                </div>
+                <div class="order-details">
+                    <p><strong>Cliente:</strong> ${order.customerName}</p>
+                    <p><strong>Telefone:</strong> ${order.customerPhone}</p>
+                    <p><strong>Endereço:</strong> ${order.address.street}, ${order.address.number}, ${order.address.neighborhood}</p>
+                    <h4>Itens:</h4>
+                    <ul class="order-items">
+                        ${order.items.map(item => `<li>${item.name} - R$ ${item.totalPrice.toFixed(2)}</li>`).join('')}
+                    </ul>
+                    <p class="order-total">Total: R$ ${order.total.toFixed(2)}</p>
+                </div>
+                <div class="order-actions">
+                    <button class="btn btn-status" onclick="changeStatus('${order.id}')">Mudar Status</button>
+                    <button class="btn btn-remove" onclick="removeOrder('${order.id}')">Remover</button>
+                </div>
+            `;
 
-    orders.forEach(order => {
-      if (order.status === 'preparing') {
-        addOrderToColumn(order, 'preparingColumn');
-      } else if (order.status === 'delivery') {
-        addOrderToColumn(order, 'deliveryColumn');
-      } else if (order.status === 'finished') {
-        addOrderToColumn(order, 'finishedColumn');
-      }
-    });
-  }
-
-  function advanceOrder(orderId) {
-    console.log('Tentando avançar pedido:', orderId);
-    const orderRef = db.collection('orders').doc(orderId);
-    orderRef.get().then((doc) => {
-      if (doc.exists) {
-        const order = doc.data();
-        console.log('Pedido encontrado:', order);
-        if (order.status === 'preparing') {
-          orderRef.update({ status: 'delivery' }).then(() => {
-            console.log('Status do pedido atualizado para "delivery".');
-            updateLocalOrder(orderId, 'delivery');
-          }).catch(error => {
-            console.error('Erro ao atualizar status do pedido:', error);
-          });
-        } else if (order.status === 'delivery') {
-          orderRef.update({ status: 'finished' }).then(() => {
-            console.log('Status do pedido atualizado para "finished".');
-            updateLocalOrder(orderId, 'finished');
-          }).catch(error => {
-            console.error('Erro ao atualizar status do pedido:', error);
-          });
+            return card;
         }
-      } else {
-        console.error('Pedido não encontrado:', orderId);
-      }
-    }).catch((error) => {
-      console.error('Erro ao buscar o pedido:', error);
-    });
-  }
 
-  function updateLocalOrder(orderId, newStatus) {
-    const orderIndex = orders.findIndex(order => order.id === orderId);
-    if (orderIndex !== -1) {
-      orders[orderIndex].status = newStatus;
-      displayOrders();
-    }
-  }
+        // Função para adicionar um novo pedido
+        function addNewOrder(order) {
+            const orderList = document.getElementById('orderList');
+            const orderCard = createOrderCard(order);
+            orderList.prepend(orderCard);
+        }
 
-  function removeOrder(orderId) {
-    console.log('Removendo pedido:', orderId);
-    db.collection('orders').doc(orderId).delete().then(() => {
-      console.log('Pedido removido com sucesso do Firestore!');
-      // Atualizar a lista de pedidos na memória
-      orders = orders.filter(order => order.id !== orderId);
-      console.log('Pedidos atualizados na memória:', orders);
-      // Remover pedido da interface
-      const orderElement = document.getElementById(`order-${orderId}`);
-      if (orderElement) {
-        orderElement.remove();
-      }
-    }).catch((error) => {
-      console.error('Erro ao remover pedido do Firestore:', error);
-    });
-  }
+        // Função para mudar o status do pedido
+        function changeStatus(orderId) {
+            const orderRef = db.collection('orders').doc(orderId);
+            orderRef.get().then((doc) => {
+                if (doc.exists) {
+                    const currentStatus = doc.data().status;
+                    let newStatus;
+                    switch (currentStatus) {
+                        case 'preparing':
+                            newStatus = 'ready';
+                            break;
+                        case 'ready':
+                            newStatus = 'delivered';
+                            break;
+                        default:
+                            newStatus = 'preparing';
+                    }
+                    orderRef.update({ status: newStatus }).then(() => {
+                        const statusElement = document.querySelector(`#order-${orderId} .order-status`);
+                        statusElement.className = `order-status status-${newStatus}`;
+                        statusElement.textContent = newStatus === 'preparing' ? 'Preparando' : 
+                                                    newStatus === 'ready' ? 'Pronto' : 'Entregue';
+                    });
+                }
+            });
+        }
 
-  db.collection('orders').onSnapshot((snapshot) => {
-    orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    console.log('Pedidos recebidos:', orders);
-    displayOrders();
-  });
+        // Função para remover um pedido
+        function removeOrder(orderId) {
+            if (confirm('Tem certeza que deseja remover este pedido?')) {
+                const orderElement = document.getElementById(`order-${orderId}`);
+                orderElement.remove();
+                db.collection('orders').doc(orderId).delete();
+            }
+        }
 
-  // Garantir que as funções estão disponíveis no escopo global
-  window.advanceOrder = advanceOrder;
-  window.removeOrder = removeOrder;
+        // Listener para novos pedidos
+        db.collection('orders')
+            .where('status', '!=', 'delivered')
+            .onSnapshot((snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added") {
+                        const newOrder = { id: change.doc.id, ...change.doc.data() };
+                        addNewOrder(newOrder);
+                    }
+                });
+            });
 
-  // Desativar o service worker
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then((registrations) => {
-      registrations.forEach((registration) => {
-        registration.unregister();
-      });
-    });
-  }
-</script>
+        // Carregar pedidos existentes ao iniciar
+        db.collection('orders')
+            .where('status', '!=', 'delivered')
+            .get()
+            .then((querySnapshot) => {
+                querySnapshot.forEach((doc) => {
+                    const order = { id: doc.id, ...doc.data() };
+                    addNewOrder(order);
+                });
+            });
+    </script>
 </body>
 </html>
