@@ -1489,15 +1489,26 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     updateCartCount();
 }
 
+    function resetOrderForm() {
+    document.getElementById('checkoutForm').style.display = 'block';
+    document.getElementById('orderSummary').innerHTML = '';
+    document.getElementById('savedAddresses').value = '';
+    document.getElementById('paymentMethod').value = 'card';
+    document.getElementById('changeNeeded').value = 'no';
+    document.getElementById('changeAmount').value = '';
+    window.orderId = null;
+}
+
 function showOrderConfirmation(order) {
     const orderSummary = document.getElementById('orderSummary');
     let summaryHTML = `
         <h3>Pedido Realizado com Sucesso!</h3>
         <p>Seu pedido foi recebido e está sendo preparado.</p>
-        <div id="orderStatus">Status: Preparando</div>
+        <div id="orderStatus" class="order-status">Status: Preparando</div>
         <button id="whatsappButton" class="btn" onclick="window.redirectToWhatsApp()">
             <i class="fab fa-whatsapp"></i> Acompanhar pelo WhatsApp
         </button>
+        <button id="newOrderButton" class="btn" onclick="resetOrderForm()">Novo Pedido</button>
         <h4>Resumo do Pedido:</h4>
     `;
 
@@ -1575,7 +1586,8 @@ function getStatusText(status) {
 }
 
 // Função para redirecionar para o WhatsApp
-function redirectToWhatsApp() {
+// Adicione esta função ao escopo global
+window.redirectToWhatsApp = function() {
     if (!window.orderId) {
         console.error('ID do pedido não disponível');
         return;
