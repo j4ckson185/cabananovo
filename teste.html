@@ -1431,7 +1431,6 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     let finalTotal = discountedTotal + window.deliveryFee;
 
     const order = {
-        id: Date.now().toString(),
         customerName: customerInfo.name,
         customerPhone: customerInfo.phone,
         address: selectedAddress,
@@ -1496,7 +1495,7 @@ function showOrderConfirmation(order) {
         <h3>Pedido Realizado com Sucesso!</h3>
         <p>Seu pedido foi recebido e está sendo preparado.</p>
         <div id="orderStatus">Status: Preparando</div>
-        <button id="whatsappButton" class="btn" onclick="redirectToWhatsApp()">
+        <button id="whatsappButton" class="btn" onclick="window.redirectToWhatsApp()">
             <i class="fab fa-whatsapp"></i> Acompanhar pelo WhatsApp
         </button>
         <h4>Resumo do Pedido:</h4>
