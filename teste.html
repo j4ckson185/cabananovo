@@ -723,12 +723,11 @@
         // Mostrar overlay de carregamento
         document.getElementById('loadingOverlay').style.display = 'block';
         // Variáveis globais
-        window.db = null;
-        window.cart = JSON.parse(localStorage.getItem('cart')) || [];
-        window.deliveryFee = 3.00;
-        window.customerInfo = {};
-        window.appliedDiscount = 0;
-        window.appliedCouponId = null;
+window.cart = JSON.parse(localStorage.getItem('cart')) || [];
+window.deliveryFee = 3.00;
+window.customerInfo = {};
+window.appliedDiscount = 0;
+window.appliedCouponId = null;
 
 // Obter IP do cliente
 fetch('https://api.ipify.org?format=json')
@@ -1489,7 +1488,7 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     updateCartCount();
 }
 
-    function resetOrderForm() {
+window.resetOrderForm = function() {
     document.getElementById('checkoutForm').style.display = 'block';
     document.getElementById('orderSummary').innerHTML = '';
     document.getElementById('savedAddresses').value = '';
@@ -1497,6 +1496,9 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     document.getElementById('changeNeeded').value = 'no';
     document.getElementById('changeAmount').value = '';
     window.orderId = null;
+    window.cart = [];
+    localStorage.setItem('cart', JSON.stringify(window.cart));
+    updateCartCount();
 }
 
 function showOrderConfirmation(order) {
@@ -1504,11 +1506,11 @@ function showOrderConfirmation(order) {
     let summaryHTML = `
         <h3>Pedido Realizado com Sucesso!</h3>
         <p>Seu pedido foi recebido e está sendo preparado.</p>
-        <div id="orderStatus" class="order-status">Status: Preparando</div>
+        <div id="orderStatus" class="order-status status-preparing">Status: Preparando</div>
         <button id="whatsappButton" class="btn" onclick="window.redirectToWhatsApp()">
             <i class="fab fa-whatsapp"></i> Acompanhar pelo WhatsApp
         </button>
-        <button id="newOrderButton" class="btn" onclick="resetOrderForm()">Novo Pedido</button>
+        <button id="newOrderButton" class="btn" onclick="window.resetOrderForm()">Novo Pedido</button>
         <h4>Resumo do Pedido:</h4>
     `;
 
@@ -1546,10 +1548,10 @@ function showOrderConfirmation(order) {
 
     orderSummary.innerHTML = summaryHTML;
 
-    // Desabilitar o formulário de checkout
+    // Esconder o formulário de checkout
     document.getElementById('checkoutForm').style.display = 'none';
 }
-
+            
 function startOrderStatusMonitoring() {
     if (!window.orderId) {
         console.error('ID do pedido não disponível');
