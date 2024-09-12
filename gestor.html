@@ -93,11 +93,6 @@
             color: white;
         }
         
-        .status-delivered {
-            background-color: var(--accent-color);
-            color: white;
-        }
-        
         .order-details {
             margin-bottom: 1em;
         }
@@ -135,15 +130,6 @@
             font-weight: bold;
         }
         
-        .btn-status {
-            background-color: var(--secondary-color);
-            color: white;
-        }
-        
-        .btn-status:hover {
-            background-color: var(--primary-color);
-        }
-        
         .btn-remove {
             background-color: var(--accent-color);
             color: white;
@@ -151,6 +137,15 @@
         
         .btn-remove:hover {
             background-color: #c0392b;
+        }
+        
+        .btn-print {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-print:hover {
+            background-color: var(--primary-color);
         }
         
         .order-date {
@@ -164,6 +159,23 @@
             font-size: 1.2em;
             color: #777;
             margin-top: 2em;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .order-card.printing, .order-card.printing * {
+                visibility: visible;
+            }
+            .order-card.printing {
+                position: absolute;
+                left: 0;
+                top: 0;
+            }
+            .order-actions {
+                display: none !important;
+            }
         }
     </style>
 </head>
@@ -264,8 +276,8 @@
                     <p class="order-date">Data do Pedido: ${orderDate}</p>
                 </div>
                 <div class="order-actions">
-                    <button class="btn btn-status" onclick="changeStatus('${order.id}')">Mudar Status</button>
-                    <button class="btn btn-remove" onclick="removeOrder('${order.id}')">Remover</button>
+                    <button class="btn btn-print" onclick="printOrder('${order.id}')"><i class="fas fa-print"></i> Imprimir</button>
+                    <button class="btn btn-remove" onclick="removeOrder('${order.id}')"><i class="fas fa-trash"></i> Remover</button>
                 </div>
             `;
 
@@ -280,32 +292,6 @@
             document.getElementById('newOrderSound').play();
         }
 
-        // Função para mudar o status do pedido
-        function changeStatus(orderId) {
-            const orderRef = db.collection('orders').doc(orderId);
-            orderRef.get().then((doc) => {
-                if (doc.exists) {
-                    const currentStatus = doc.data().status;
-                    let newStatus;
-                    switch (currentStatus) {
-                        case 'preparing':
-                            newStatus = 'ready';
-                            break;
-                        case 'ready':
-                            newStatus = 'delivered';
-                            break;
-                        default:
-                            newStatus = 'preparing';
-                    }
-                    orderRef.update({ status: newStatus }).then(() => {
-                        const statusElement = document.querySelector(`#order-${orderId} .order-status`);
-                        statusElement.className = `order-status status-${newStatus}`;
-                        statusElement.textContent = statusText[newStatus];
-                    });
-                }
-            });
-        }
-
         // Função para remover um pedido
         function removeOrder(orderId) {
             if (confirm('Tem certeza que deseja remover este pedido?')) {
@@ -315,9 +301,18 @@
             }
         }
 
+        // Função para imprimir um pedido
+        function printOrder(orderId) {
+            const orderCard = document.getElementById(`order-${orderId}`);
+            orderCard.classList.add('printing');
+            window.print();
+            orderCard.classList.remove('printing');
+        }
+
         // Listener para novos pedidos
         db.collection('orders')
             .where('status', 'in', ['preparing', 'ready'])
+            .where('createdAt', '>', firebase.firestore.Timestamp.fromDate(new Date(Date.now() - 12 * 60 * 60 * 1000)))
             .onSnapshot((snapshot) => {
                 snapshot.docChanges().forEach((change) => {
                     if (change.type === "added") {
@@ -342,6 +337,7 @@
         // Carregar pedidos existentes ao iniciar
         db.collection('orders')
             .where('status', 'in', ['preparing', 'ready'])
+            .where('createdAt', '>', firebase.firestore.Timestamp.fromDate(new Date(Date.now() - 12 * 60 * 60 * 1000)))
             .get()
             .then((querySnapshot) => {
                 querySnapshot.forEach((doc) => {
