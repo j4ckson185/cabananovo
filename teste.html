@@ -1390,67 +1390,45 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     const changeNeeded = document.getElementById('changeNeeded').value;
     const changeAmount = document.getElementById('changeAmount').value;
 
-    let message = `Pedido confirmado!\n`;
-    message += `Nome: ${customerInfo.name}\n`;
-    message += `WhatsApp: ${customerInfo.phone}\n`;
-    message += `Endereço: ${selectedAddress.street}, ${selectedAddress.number}, ${selectedAddress.neighborhood}, ${selectedAddress.city} - ${selectedAddress.state}\n`;
-    if (selectedAddress.complement) {
-        message += `Complemento: ${selectedAddress.complement}\n`;
-    }
-    message += `Método de Pagamento: ${getPaymentMethodText(paymentMethod)}\n`;
-    if (paymentMethod === 'money') {
-        message += `Precisa de troco: ${changeNeeded === 'yes' ? 'Sim' : 'Não'}\n`;
-        if (changeNeeded === 'yes') {
-            message += `Troco para: R$ ${parseFloat(changeAmount).toFixed(2)}\n`;
-        }
-    }
-    
     let subtotal = 0;
-    let extrasFromProducts = new Set(); // Para rastrear extras já incluídos nos produtos
-
-    message += `\nItens do Pedido:\n`;
-    window.cart.forEach(item => {
+    let extrasFromProducts = new Set();
+    let orderItems = window.cart.map(item => {
         subtotal += item.totalPrice;
-        message += `\n${item.name} - R$ ${item.totalPrice.toFixed(2)}`;
+        let itemDetails = {
+            name: item.name,
+            price: item.totalPrice
+        };
         if (item.acai1) {
-            message += `\nAçaí 1: Sabores: ${item.acai1.flavors.join(', ')}, Acompanhamentos: ${item.acai1.accompaniments.join(', ')}`;
-            message += `\nAçaí 2: Sabores: ${item.acai2.flavors.join(', ')}, Acompanhamentos: ${item.acai2.accompaniments.join(', ')}`;
+            itemDetails.acai1 = item.acai1;
+            itemDetails.acai2 = item.acai2;
         } else {
-            if (item.accompaniments && item.accompaniments.length > 0) {
-                message += `\nAcompanhamentos: ${item.accompaniments.join(', ')}`;
-            }
+            if (item.accompaniments) itemDetails.accompaniments = item.accompaniments;
         }
-        // Extras escolhidos na página do produto
-        if (item.extras && item.extras.length > 0) {
-            message += `\nExtras: ${item.extras.join(', ')}`;
+        if (item.extras) {
+            itemDetails.extras = item.extras;
             item.extras.forEach(extra => extrasFromProducts.add(extra));
         }
+        return itemDetails;
     });
-    
-    // Itens extras adicionais selecionados na página de resumo do pedido
+
+    // Itens extras adicionais
     const selectedExtras = document.querySelectorAll('.extra-item.selected');
     let extrasTotal = 0;
-    if (selectedExtras.length > 0) {
-        message += "\nItens Extras Adicionais:";
-        selectedExtras.forEach(item => {
-            const itemName = item.querySelector('p').textContent;
-            if (!extrasFromProducts.has(itemName)) {
-                message += `\n${itemName} - R$ 1,99`;
-                extrasTotal += 1.99;
-            }
-        });
-    }
-    
+    selectedExtras.forEach(item => {
+        const itemName = item.querySelector('p').textContent;
+        if (!extrasFromProducts.has(itemName)) {
+            orderItems.push({
+                name: itemName,
+                price: 1.99,
+                isExtra: true
+            });
+            extrasTotal += 1.99;
+        }
+    });
+
     subtotal += extrasTotal;
     let discountedTotal = Math.max(0, subtotal - window.appliedDiscount);
     let finalTotal = discountedTotal + window.deliveryFee;
-    
-    message += `\n\nSubtotal: R$ ${subtotal.toFixed(2)}`;
-    if (window.appliedDiscount > 0) {
-        message += `\nDesconto de cupom aplicado: R$ ${window.appliedDiscount.toFixed(2)}`;
-    }
-    message += `\nTaxa de Entrega: R$ ${window.deliveryFee.toFixed(2)}`;
-    message += `\nTotal: R$ ${finalTotal.toFixed(2)}`;
 
     const order = {
         id: Date.now(),
@@ -1460,10 +1438,7 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         paymentMethod: paymentMethod,
         changeNeeded: changeNeeded,
         changeAmount: changeAmount,
-        items: window.cart,
-        extraItems: Array.from(selectedExtras)
-            .map(item => item.querySelector('p').textContent)
-            .filter(itemName => !extrasFromProducts.has(itemName)),
+        items: orderItems,
         subtotal: subtotal,
         extrasTotal: extrasTotal,
         appliedDiscount: window.appliedDiscount,
@@ -1475,64 +1450,154 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     };
 
     db.collection('orders').add(order)
-        .then(() => {
+        .then((docRef) => {
             console.log('Pedido adicionado com sucesso!');
-            return db.collection('customers').doc(customerInfo.phone).get();
-        })
-        .then((doc) => {
-            let orderCount = 0;
-            if (doc.exists) {
-                orderCount = doc.data().orderCount || 0;
-            }
-            orderCount++;
-            
-            let updateData = { orderCount: orderCount };
-            let loyaltyDiscount = 0;
-            if (orderCount >= 10) {
-                loyaltyDiscount = subtotal * 0.5; // 50% de desconto
-                updateData.orderCount = 0; // Reinicia a contagem
-                message += `\nDesconto de fidelidade aplicado: R$ ${loyaltyDiscount.toFixed(2)}`;
-                message += `\nParabéns! Você completou 10 pedidos e ganhou 50% de desconto neste pedido!`;
-                
-                // Atualiza o total com o desconto de fidelidade
-                discountedTotal = Math.max(0, discountedTotal - loyaltyDiscount);
-                finalTotal = discountedTotal + window.deliveryFee;
-                message = message.replace(/Total: R\$ [\d.]+/, `Total: R$ ${finalTotal.toFixed(2)}`);
-            }
-            if (orderCount < 10) {
-                message += `\n\nEste é o ${getOrderNumberText(orderCount)} pedido do cliente.`;
-                message += `\nFaltam ${10 - orderCount} pedidos para o próximo desconto de fidelidade.`;
-            }
-            return db.collection('customers').doc(customerInfo.phone).set(updateData, { merge: true });
-        })
-        .then(() => {
-            if (window.appliedCouponId) {
-                return db.collection('coupons').doc(window.appliedCouponId).update({
-                    usedBy: firebase.firestore.FieldValue.arrayUnion({
-                        phone: customerInfo.phone,
-                        ip: window.clientIP
-                    })
-                });
-            }
-        })
-        .then(() => {
-            window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
-            window.cart = [];
-            localStorage.setItem('cart', JSON.stringify(window.cart));
-            updateCartCount();
-            
-            // Limpar o campo de cupom e mensagem
-            document.getElementById('discountCode').value = '';
-            document.getElementById('discountMessage').textContent = '';
-            window.appliedDiscount = 0;
-            window.appliedCouponId = null;
-            
-            closeModal('checkoutModal');
+            window.orderId = docRef.id; // Armazenar o ID do pedido
+            updateCustomerOrderCount();
+            clearCart();
+            showOrderConfirmation();
         })
         .catch(error => {
             console.error('Erro ao adicionar pedido: ', error);
+            alert('Ocorreu um erro ao finalizar o pedido. Por favor, tente novamente.');
         });
 });
+
+            function updateCustomerOrderCount() {
+    db.collection('customers').doc(customerInfo.phone).get()
+        .then((doc) => {
+            let orderCount = doc.exists ? (doc.data().orderCount || 0) : 0;
+            orderCount++;
+            
+            let updateData = { orderCount: orderCount };
+            if (orderCount >= 10) {
+                updateData.orderCount = 0; // Reinicia a contagem
+            }
+            
+            return db.collection('customers').doc(customerInfo.phone).set(updateData, { merge: true });
+        })
+        .then(() => {
+            console.log('Contagem de pedidos do cliente atualizada');
+        })
+        .catch(error => {
+            console.error('Erro ao atualizar contagem de pedidos: ', error);
+        });
+}
+
+    function clearCart() {
+    window.cart = [];
+    localStorage.setItem('cart', JSON.stringify(window.cart));
+    updateCartCount();
+}
+
+    function showOrderConfirmation() {
+    const checkoutModal = document.getElementById('checkoutModal');
+    checkoutModal.innerHTML = `
+        <h2>Pedido Realizado com Sucesso!</h2>
+        <p>Seu pedido foi recebido e está sendo preparado.</p>
+        <div id="orderStatus">Status: Preparando</div>
+        <button id="whatsappButton" class="btn" onclick="redirectToWhatsApp()">
+            <i class="fab fa-whatsapp"></i> Acompanhar pelo WhatsApp
+        </button>
+    `;
+    
+    // Iniciar o monitoramento do status do pedido
+    startOrderStatusMonitoring();
+}
+
+    function startOrderStatusMonitoring() {
+    if (!window.orderId) {
+        console.error('ID do pedido não disponível');
+        return;
+    }
+
+    db.collection('orders').doc(window.orderId)
+        .onSnapshot((doc) => {
+            if (doc.exists) {
+                const order = doc.data();
+                updateOrderStatus(order.status);
+            }
+        }, (error) => {
+            console.error("Erro ao monitorar status do pedido:", error);
+        });
+}
+
+// Função para atualizar o status do pedido na interface
+function updateOrderStatus(status) {
+    const statusElement = document.getElementById('orderStatus');
+    if (statusElement) {
+        statusElement.textContent = `Status: ${getStatusText(status)}`;
+    }
+}
+
+// Função para obter o texto do status
+function getStatusText(status) {
+    const statusTexts = {
+        'preparing': 'Preparando',
+        'ready': 'Pronto para entrega',
+        'delivered': 'Entregue'
+    };
+    return statusTexts[status] || 'Desconhecido';
+}
+
+    function redirectToWhatsApp() {
+    if (!window.orderId) {
+        console.error('ID do pedido não disponível');
+        return;
+    }
+
+    db.collection('orders').doc(window.orderId).get()
+        .then((doc) => {
+            if (doc.exists) {
+                const order = doc.data();
+                let message = composeWhatsAppMessage(order);
+                window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
+            } else {
+                console.error('Pedido não encontrado');
+            }
+        })
+        .catch((error) => {
+            console.error('Erro ao buscar detalhes do pedido:', error);
+        });
+}
+
+// Função para compor a mensagem do WhatsApp
+function composeWhatsAppMessage(order) {
+    let message = `Pedido #${order.id}\n`;
+    message += `Nome: ${order.customerName}\n`;
+    message += `Telefone: ${order.customerPhone}\n`;
+    message += `Endereço: ${order.address.street}, ${order.address.number}, ${order.address.neighborhood}, ${order.address.city} - ${order.address.state}\n`;
+    if (order.address.complement) {
+        message += `Complemento: ${order.address.complement}\n`;
+    }
+    message += `Método de Pagamento: ${getPaymentMethodText(order.paymentMethod)}\n`;
+    if (order.paymentMethod === 'money' && order.changeNeeded === 'yes') {
+        message += `Troco para: R$ ${order.changeAmount}\n`;
+    }
+
+    message += `\nItens do Pedido:\n`;
+    order.items.forEach(item => {
+        message += `\n${item.name} - R$ ${item.price.toFixed(2)}`;
+        if (item.acai1) {
+            message += `\nAçaí 1: Sabores: ${item.acai1.flavors.join(', ')}, Acompanhamentos: ${item.acai1.accompaniments.join(', ')}`;
+            message += `\nAçaí 2: Sabores: ${item.acai2.flavors.join(', ')}, Acompanhamentos: ${item.acai2.accompaniments.join(', ')}`;
+        } else if (item.accompaniments) {
+            message += `\nAcompanhamentos: ${item.accompaniments.join(', ')}`;
+        }
+        if (item.extras && item.extras.length > 0) {
+            message += `\nExtras: ${item.extras.join(', ')}`;
+        }
+    });
+
+    message += `\n\nSubtotal: R$ ${order.subtotal.toFixed(2)}`;
+    if (order.appliedDiscount > 0) {
+        message += `\nDesconto: R$ ${order.appliedDiscount.toFixed(2)}`;
+    }
+    message += `\nTaxa de Entrega: R$ ${order.deliveryFee.toFixed(2)}`;
+    message += `\nTotal: R$ ${order.total.toFixed(2)}`;
+
+    return message;
+}
 
 function getPaymentMethodText(method) {
     switch(method) {
