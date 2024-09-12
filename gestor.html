@@ -31,6 +31,9 @@
             color: white;
             padding: 1em;
             text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
         
         main {
@@ -41,21 +44,21 @@
         
         .order-list {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1em;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5em;
         }
         
         .order-card {
             background-color: white;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 1em;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5em;
             transition: all 0.3s ease;
         }
         
         .order-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
         
         .order-header {
@@ -70,12 +73,13 @@
         .order-id {
             font-weight: bold;
             color: var(--secondary-color);
+            font-size: 1.2em;
         }
         
         .order-status {
-            padding: 0.3em 0.6em;
+            padding: 0.5em 1em;
             border-radius: 20px;
-            font-size: 0.8em;
+            font-size: 0.9em;
             font-weight: bold;
         }
         
@@ -103,23 +107,32 @@
             padding-left: 0;
         }
         
+        .order-items li {
+            margin-bottom: 0.5em;
+            padding-bottom: 0.5em;
+            border-bottom: 1px solid #eee;
+        }
+        
         .order-total {
             font-weight: bold;
             margin-top: 1em;
+            font-size: 1.1em;
+            color: var(--primary-color);
         }
         
         .order-actions {
             display: flex;
             justify-content: space-between;
-            margin-top: 1em;
+            margin-top: 1.5em;
         }
         
         .btn {
-            padding: 0.5em 1em;
+            padding: 0.7em 1.2em;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: all 0.3s ease;
+            font-weight: bold;
         }
         
         .btn-status {
@@ -139,6 +152,19 @@
         .btn-remove:hover {
             background-color: #c0392b;
         }
+        
+        .order-date {
+            font-size: 0.9em;
+            color: #777;
+            margin-top: 0.5em;
+        }
+        
+        .no-orders {
+            text-align: center;
+            font-size: 1.2em;
+            color: #777;
+            margin-top: 2em;
+        }
     </style>
 </head>
 <body>
@@ -152,22 +178,38 @@
         </div>
     </main>
 
+    <audio id="newOrderSound" src="https://soundbible.com/grab.php?id=2206&type=mp3" preload="auto"></audio>
+
     <script>
         // Configuração do Firebase
         const firebaseConfig = {
-                apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
-                authDomain: "cabana-8d55e.firebaseapp.com",
-                databaseURL: "https://cabana-8d55e-default-rtdb.firebaseio.com",
-                projectId: "cabana-8d55e",
-                storageBucket: "cabana-8d55e.appspot.com",
-                messagingSenderId: "706144237954",
-                appId: "1:706144237954:web:345c10370972486afc779b",
-                measurementId: "G-96Y337GYT8"
+            apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
+            authDomain: "cabana-8d55e.firebaseapp.com",
+            databaseURL: "https://cabana-8d55e-default-rtdb.firebaseio.com",
+            projectId: "cabana-8d55e",
+            storageBucket: "cabana-8d55e.appspot.com",
+            messagingSenderId: "706144237954",
+            appId: "1:706144237954:web:345c10370972486afc779b",
+            measurementId: "G-96Y337GYT8"
         };
 
         // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+
+        // Função para formatar a data
+        function formatDate(date) {
+            const options = { 
+                timeZone: 'America/Sao_Paulo',
+                year: 'numeric', 
+                month: 'numeric', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: 'numeric', 
+                second: 'numeric' 
+            };
+            return new Date(date).toLocaleString('pt-BR', options);
+        }
 
         // Função para criar um card de pedido
         function createOrderCard(order) {
@@ -181,20 +223,40 @@
                 'delivered': 'Entregue'
             };
 
+            let itemsHtml = '';
+            if (order.items && Array.isArray(order.items)) {
+                itemsHtml = order.items.map(item => {
+                    let itemDetails = `${item.name || 'Item sem nome'}`;
+                    if (item.acai1) {
+                        itemDetails += `<br>Açaí 1: ${item.acai1.flavors.join(', ')}, ${item.acai1.accompaniments.join(', ')}`;
+                        itemDetails += `<br>Açaí 2: ${item.acai2.flavors.join(', ')}, ${item.acai2.accompaniments.join(', ')}`;
+                    } else if (item.accompaniments) {
+                        itemDetails += `<br>Acompanhamentos: ${item.accompaniments.join(', ')}`;
+                    }
+                    if (item.extras && item.extras.length > 0) {
+                        itemDetails += `<br>Extras: ${item.extras.join(', ')}`;
+                    }
+                    return `<li>${itemDetails} - R$ ${(item.totalPrice || 0).toFixed(2)}</li>`;
+                }).join('');
+            }
+
             card.innerHTML = `
                 <div class="order-header">
                     <span class="order-id">Pedido #${order.id}</span>
                     <span class="order-status status-${order.status}">${statusText[order.status]}</span>
                 </div>
                 <div class="order-details">
-                    <p><strong>Cliente:</strong> ${order.customerName}</p>
-                    <p><strong>Telefone:</strong> ${order.customerPhone}</p>
-                    <p><strong>Endereço:</strong> ${order.address.street}, ${order.address.number}, ${order.address.neighborhood}</p>
+                    <p><strong>Cliente:</strong> ${order.customerName || 'N/A'}</p>
+                    <p><strong>Telefone:</strong> ${order.customerPhone || 'N/A'}</p>
+                    <p><strong>Endereço:</strong> ${order.address ? `${order.address.street}, ${order.address.number}, ${order.address.neighborhood}, ${order.address.city} - ${order.address.state}` : 'N/A'}</p>
+                    <p><strong>Método de Pagamento:</strong> ${order.paymentMethod || 'N/A'}</p>
+                    ${order.changeNeeded === 'yes' ? `<p><strong>Troco para:</strong> R$ ${order.changeAmount || 'N/A'}</p>` : ''}
                     <h4>Itens:</h4>
                     <ul class="order-items">
-                        ${order.items.map(item => `<li>${item.name} - R$ ${item.totalPrice.toFixed(2)}</li>`).join('')}
+                        ${itemsHtml}
                     </ul>
-                    <p class="order-total">Total: R$ ${order.total.toFixed(2)}</p>
+                    <p class="order-total">Total: R$ ${(order.total || 0).toFixed(2)}</p>
+                    <p class="order-date">Data do Pedido: ${formatDate(order.createdAt.toDate())}</p>
                 </div>
                 <div class="order-actions">
                     <button class="btn btn-status" onclick="changeStatus('${order.id}')">Mudar Status</button>
@@ -210,6 +272,7 @@
             const orderList = document.getElementById('orderList');
             const orderCard = createOrderCard(order);
             orderList.prepend(orderCard);
+            document.getElementById('newOrderSound').play();
         }
 
         // Função para mudar o status do pedido
@@ -232,8 +295,7 @@
                     orderRef.update({ status: newStatus }).then(() => {
                         const statusElement = document.querySelector(`#order-${orderId} .order-status`);
                         statusElement.className = `order-status status-${newStatus}`;
-                        statusElement.textContent = newStatus === 'preparing' ? 'Preparando' : 
-                                                    newStatus === 'ready' ? 'Pronto' : 'Entregue';
+                        statusElement.textContent = statusText[newStatus];
                     });
                 }
             });
@@ -244,32 +306,69 @@
             if (confirm('Tem certeza que deseja remover este pedido?')) {
                 const orderElement = document.getElementById(`order-${orderId}`);
                 orderElement.remove();
-                db.collection('orders').doc(orderId).delete();
+                db.collection('orders').doc(orderId).update({ status: 'delivered' });
             }
         }
 
         // Listener para novos pedidos
         db.collection('orders')
-            .where('status', '!=', 'delivered')
+            .where('status', 'in', ['preparing', 'ready'])
             .onSnapshot((snapshot) => {
                 snapshot.docChanges().forEach((change) => {
                     if (change.type === "added") {
                         const newOrder = { id: change.doc.id, ...change.doc.data() };
                         addNewOrder(newOrder);
+                    } else if (change.type === "modified") {
+                        const updatedOrder = { id: change.doc.id, ...change.doc.data() };
+                        const existingCard = document.getElementById(`order-${updatedOrder.id}`);
+                        if (existingCard) {
+                            existingCard.replaceWith(createOrderCard(updatedOrder));
+                        }
+                    } else if (change.type === "removed") {
+                        const orderElement = document.getElementById(`order-${change.doc.id}`);
+                        if (orderElement) {
+                            orderElement.remove();
+                        }
                     }
                 });
+                updateNoOrdersMessage();
             });
 
         // Carregar pedidos existentes ao iniciar
         db.collection('orders')
-            .where('status', '!=', 'delivered')
+            .where('status', 'in', ['preparing', 'ready'])
             .get()
             .then((querySnapshot) => {
                 querySnapshot.forEach((doc) => {
                     const order = { id: doc.id, ...doc.data() };
                     addNewOrder(order);
                 });
+                updateNoOrdersMessage();
             });
+
+        // Função para atualizar a mensagem de "Sem pedidos"
+        function updateNoOrdersMessage() {
+            const orderList = document.getElementById('orderList');
+            const noOrdersMessage = document.querySelector('.no-orders');
+            
+            if (orderList.children.length === 0) {
+                if (!noOrdersMessage) {
+                    const message = document.createElement('p');
+                    message.className = 'no-orders';
+                    message.textContent = 'Não há pedidos no momento.';
+                    orderList.appendChild(message);
+                }
+            } else if (noOrdersMessage) {
+                noOrdersMessage.remove();
+            }
+        }
+
+        // Objeto para mapear status do pedido
+        const statusText = {
+            'preparing': 'Preparando',
+            'ready': 'Pronto',
+            'delivered': 'Entregue'
+        };
     </script>
 </body>
 </html>
