@@ -1572,6 +1572,7 @@ function updateOrderStatus(status) {
     const statusElement = document.getElementById('orderStatus');
     if (statusElement) {
         statusElement.textContent = `Status: ${getStatusText(status)}`;
+        statusElement.className = `order-status status-${status}`;
     }
 }
 
