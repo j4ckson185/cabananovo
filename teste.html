@@ -1431,7 +1431,7 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     let finalTotal = discountedTotal + window.deliveryFee;
 
     const order = {
-        id: Date.now(),
+        id: Date.now().toString(),
         customerName: customerInfo.name,
         customerPhone: customerInfo.phone,
         address: selectedAddress,
@@ -1452,10 +1452,10 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     db.collection('orders').add(order)
         .then((docRef) => {
             console.log('Pedido adicionado com sucesso!');
-            window.orderId = docRef.id; // Armazenar o ID do pedido
+            window.orderId = docRef.id;
             updateCustomerOrderCount();
-            clearCart();
-            showOrderConfirmation();
+            showOrderConfirmation(order);
+            startOrderStatusMonitoring();
         })
         .catch(error => {
             console.error('Erro ao adicionar pedido: ', error);
@@ -1490,22 +1490,57 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     updateCartCount();
 }
 
-    function showOrderConfirmation() {
-    const checkoutModal = document.getElementById('checkoutModal');
-    checkoutModal.innerHTML = `
-        <h2>Pedido Realizado com Sucesso!</h2>
+function showOrderConfirmation(order) {
+    const orderSummary = document.getElementById('orderSummary');
+    let summaryHTML = `
+        <h3>Pedido Realizado com Sucesso!</h3>
         <p>Seu pedido foi recebido e está sendo preparado.</p>
         <div id="orderStatus">Status: Preparando</div>
         <button id="whatsappButton" class="btn" onclick="redirectToWhatsApp()">
             <i class="fab fa-whatsapp"></i> Acompanhar pelo WhatsApp
         </button>
+        <h4>Resumo do Pedido:</h4>
     `;
-    
-    // Iniciar o monitoramento do status do pedido
-    startOrderStatusMonitoring();
+
+    order.items.forEach(item => {
+        summaryHTML += `
+            <div class="cart-item">
+                <div class="cart-item-details">
+                    <p><strong>${item.name}</strong> - R$ ${item.price.toFixed(2)}</p>
+        `;
+        if (item.acai1) {
+            summaryHTML += `
+                <p>Açaí 1:</p>
+                <p class="indent">Sabores: ${item.acai1.flavors.join(', ')}</p>
+                <p class="indent">Acompanhamentos: ${item.acai1.accompaniments.join(', ')}</p>
+                <p>Açaí 2:</p>
+                <p class="indent">Sabores: ${item.acai2.flavors.join(', ')}</p>
+                <p class="indent">Acompanhamentos: ${item.acai2.accompaniments.join(', ')}</p>
+            `;
+        } else if (item.accompaniments) {
+            summaryHTML += `<p class="indent">Acompanhamentos: ${item.accompaniments.join(', ')}</p>`;
+        }
+        if (item.extras && item.extras.length > 0) {
+            summaryHTML += `<p class="indent">Extras: ${item.extras.join(', ')}</p>`;
+        }
+        summaryHTML += `
+                </div>
+            </div>`;
+    });
+
+    summaryHTML += `
+        <h4>Subtotal: R$ ${order.subtotal.toFixed(2)}</h4>
+        <h4>Taxa de Entrega: R$ ${order.deliveryFee.toFixed(2)}</h4>
+        <h3>Total: R$ ${order.total.toFixed(2)}</h3>
+    `;
+
+    orderSummary.innerHTML = summaryHTML;
+
+    // Desabilitar o formulário de checkout
+    document.getElementById('checkoutForm').style.display = 'none';
 }
 
-    function startOrderStatusMonitoring() {
+function startOrderStatusMonitoring() {
     if (!window.orderId) {
         console.error('ID do pedido não disponível');
         return;
@@ -1521,7 +1556,7 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             console.error("Erro ao monitorar status do pedido:", error);
         });
 }
-
+            
 // Função para atualizar o status do pedido na interface
 function updateOrderStatus(status) {
     const statusElement = document.getElementById('orderStatus');
@@ -1540,7 +1575,8 @@ function getStatusText(status) {
     return statusTexts[status] || 'Desconhecido';
 }
 
-    function redirectToWhatsApp() {
+// Função para redirecionar para o WhatsApp
+function redirectToWhatsApp() {
     if (!window.orderId) {
         console.error('ID do pedido não disponível');
         return;
@@ -1551,7 +1587,7 @@ function getStatusText(status) {
             if (doc.exists) {
                 const order = doc.data();
                 let message = composeWhatsAppMessage(order);
-                window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
+                window.open(`https://wa.me/5584987673202?text=${encodeURIComponent(message)}`, '_blank');
             } else {
                 console.error('Pedido não encontrado');
             }
