@@ -199,6 +199,9 @@
 
         // Função para formatar a data
         function formatDate(date) {
+            if (!(date instanceof Date)) {
+                date = new Date(date);
+            }
             const options = { 
                 timeZone: 'America/Sao_Paulo',
                 year: 'numeric', 
@@ -208,7 +211,7 @@
                 minute: 'numeric', 
                 second: 'numeric' 
             };
-            return new Date(date).toLocaleString('pt-BR', options);
+            return date.toLocaleString('pt-BR', options);
         }
 
         // Função para criar um card de pedido
@@ -240,6 +243,8 @@
                 }).join('');
             }
 
+            const orderDate = order.createdAt ? formatDate(order.createdAt.toDate()) : 'Data não disponível';
+
             card.innerHTML = `
                 <div class="order-header">
                     <span class="order-id">Pedido #${order.id}</span>
@@ -256,7 +261,7 @@
                         ${itemsHtml}
                     </ul>
                     <p class="order-total">Total: R$ ${(order.total || 0).toFixed(2)}</p>
-                    <p class="order-date">Data do Pedido: ${formatDate(order.createdAt.toDate())}</p>
+                    <p class="order-date">Data do Pedido: ${orderDate}</p>
                 </div>
                 <div class="order-actions">
                     <button class="btn btn-status" onclick="changeStatus('${order.id}')">Mudar Status</button>
