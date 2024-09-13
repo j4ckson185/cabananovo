@@ -76,22 +76,34 @@
             font-size: 1.2em;
         }
         
-        .order-status {
-            padding: 0.5em 1em;
-            border-radius: 20px;
-            font-size: 0.9em;
-            font-weight: bold;
-        }
+.order-status {
+    padding: 10px;
+    margin: 10px 0;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 5px;
+}
+
+.order-status-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1em;
+}
         
-        .status-preparing {
-            background-color: var(--warning-color);
-            color: white;
-        }
-        
-        .status-ready {
-            background-color: var(--success-color);
-            color: white;
-        }
+.status-preparing {
+    background-color: #ffa500;
+    color: white;
+}
+
+.status-ready {
+    background-color: #4caf50;
+    color: white;
+}
+
+.status-delivered {
+    background-color: #2196f3;
+    color: white;
+}
         
         .order-details {
             margin-bottom: 1em;
@@ -147,7 +159,23 @@
         .btn-print:hover {
             background-color: var(--primary-color);
         }
-        
+
+.btn-status {
+    flex: 1;
+    padding: 0.5em 1em;
+    margin: 0 0.25em;
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-status:hover {
+    background-color: var(--primary-color);
+}
+      
         .order-date {
             font-size: 0.9em;
             color: #777;
@@ -209,167 +237,191 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Função para formatar a data
-        function formatDate(date) {
-            if (!(date instanceof Date)) {
-                date = new Date(date);
+// Função para formatar a data
+function formatDate(date) {
+    if (!(date instanceof Date)) {
+        date = new Date(date);
+    }
+    const options = { 
+        timeZone: 'America/Sao_Paulo',
+        year: 'numeric', 
+        month: 'numeric', 
+        day: 'numeric', 
+        hour: 'numeric', 
+        minute: 'numeric', 
+        second: 'numeric' 
+    };
+    return date.toLocaleString('pt-BR', options);
+}
+
+// Função para criar um card de pedido
+function createOrderCard(order) {
+    const card = document.createElement('div');
+    card.className = 'order-card';
+    card.id = `order-${order.id}`;
+    const statusText = {
+        'preparing': 'Preparando',
+        'ready': 'Pronto',
+        'delivered': 'Entregue'
+    };
+    let itemsHtml = '';
+    if (order.items && Array.isArray(order.items)) {
+        itemsHtml = order.items.map(item => {
+            let itemDetails = `${item.name || 'Item sem nome'}`;
+            if (item.acai1) {
+                itemDetails += `<br>Açaí 1: ${item.acai1.flavors.join(', ')}, ${item.acai1.accompaniments.join(', ')}`;
+                itemDetails += `<br>Açaí 2: ${item.acai2.flavors.join(', ')}, ${item.acai2.accompaniments.join(', ')}`;
+            } else if (item.accompaniments) {
+                itemDetails += `<br>Acompanhamentos: ${item.accompaniments.join(', ')}`;
             }
-            const options = { 
-                timeZone: 'America/Sao_Paulo',
-                year: 'numeric', 
-                month: 'numeric', 
-                day: 'numeric', 
-                hour: 'numeric', 
-                minute: 'numeric', 
-                second: 'numeric' 
-            };
-            return date.toLocaleString('pt-BR', options);
-        }
-
-        // Função para criar um card de pedido
-        function createOrderCard(order) {
-            const card = document.createElement('div');
-            card.className = 'order-card';
-            card.id = `order-${order.id}`;
-
-            const statusText = {
-                'preparing': 'Preparando',
-                'ready': 'Pronto',
-                'delivered': 'Entregue'
-            };
-
-            let itemsHtml = '';
-            if (order.items && Array.isArray(order.items)) {
-                itemsHtml = order.items.map(item => {
-                    let itemDetails = `${item.name || 'Item sem nome'}`;
-                    if (item.acai1) {
-                        itemDetails += `<br>Açaí 1: ${item.acai1.flavors.join(', ')}, ${item.acai1.accompaniments.join(', ')}`;
-                        itemDetails += `<br>Açaí 2: ${item.acai2.flavors.join(', ')}, ${item.acai2.accompaniments.join(', ')}`;
-                    } else if (item.accompaniments) {
-                        itemDetails += `<br>Acompanhamentos: ${item.accompaniments.join(', ')}`;
-                    }
-                    if (item.extras && item.extras.length > 0) {
-                        itemDetails += `<br>Extras: ${item.extras.join(', ')}`;
-                    }
-                    return `<li>${itemDetails} - R$ ${(item.totalPrice || 0).toFixed(2)}</li>`;
-                }).join('');
+            if (item.extras && item.extras.length > 0) {
+                itemDetails += `<br>Extras: ${item.extras.join(', ')}`;
             }
+            return `<li>${itemDetails} - R$ ${(item.price || 0).toFixed(2)}</li>`;
+        }).join('');
+    }
+    const orderDate = order.createdAt ? formatDate(order.createdAt.toDate()) : 'Data não disponível';
+    card.innerHTML = `
+        <div class="order-header">
+            <span class="order-id">Pedido #${order.id}</span>
+            <span class="order-status status-${order.status}">${statusText[order.status]}</span>
+        </div>
+        <div class="order-details">
+            <p><strong>Cliente:</strong> ${order.customerName || 'N/A'}</p>
+            <p><strong>Telefone:</strong> ${order.customerPhone || 'N/A'}</p>
+            <p><strong>Endereço:</strong> ${order.address ? `${order.address.street}, ${order.address.number}, ${order.address.neighborhood}, ${order.address.city} - ${order.address.state}` : 'N/A'}</p>
+            <p><strong>Método de Pagamento:</strong> ${order.paymentMethod || 'N/A'}</p>
+            ${order.changeNeeded === 'yes' ? `<p><strong>Troco para:</strong> R$ ${order.changeAmount || 'N/A'}</p>` : ''}
+            <h4>Itens:</h4>
+            <ul class="order-items">
+                ${itemsHtml}
+            </ul>
+            <p class="order-total">Total: R$ ${(order.total || 0).toFixed(2)}</p>
+            <p class="order-date">Data do Pedido: ${orderDate}</p>
+        </div>
+        <div class="order-actions">
+            <button class="btn btn-print" onclick="printOrder('${order.id}')"><i class="fas fa-print"></i> Imprimir</button>
+            <button class="btn btn-remove" onclick="removeOrder('${order.id}')"><i class="fas fa-trash"></i> Remover</button>
+        </div>
+        <div class="order-status-actions">
+            <button class="btn btn-status" onclick="updateOrderStatus('${order.id}', 'preparing')">Preparando</button>
+            <button class="btn btn-status" onclick="updateOrderStatus('${order.id}', 'ready')">Pronto</button>
+            <button class="btn btn-status" onclick="updateOrderStatus('${order.id}', 'delivered')">Entregue</button>
+        </div>
+    `;
+    return card;
+}
 
-            const orderDate = order.createdAt ? formatDate(order.createdAt.toDate()) : 'Data não disponível';
+// Função para adicionar um novo pedido
+function addNewOrder(order) {
+    const orderList = document.getElementById('orderList');
+    const existingOrder = document.getElementById(`order-${order.id}`);
+    if (existingOrder) {
+        existingOrder.remove(); // Remove o pedido existente para evitar duplicatas
+    }
+    const orderCard = createOrderCard(order);
+    orderList.prepend(orderCard);
+    document.getElementById('newOrderSound').play();
+}
 
-            card.innerHTML = `
-                <div class="order-header">
-                    <span class="order-id">Pedido #${order.id}</span>
-                    <span class="order-status status-${order.status}">${statusText[order.status]}</span>
-                </div>
-                <div class="order-details">
-                    <p><strong>Cliente:</strong> ${order.customerName || 'N/A'}</p>
-                    <p><strong>Telefone:</strong> ${order.customerPhone || 'N/A'}</p>
-                    <p><strong>Endereço:</strong> ${order.address ? `${order.address.street}, ${order.address.number}, ${order.address.neighborhood}, ${order.address.city} - ${order.address.state}` : 'N/A'}</p>
-                    <p><strong>Método de Pagamento:</strong> ${order.paymentMethod || 'N/A'}</p>
-                    ${order.changeNeeded === 'yes' ? `<p><strong>Troco para:</strong> R$ ${order.changeAmount || 'N/A'}</p>` : ''}
-                    <h4>Itens:</h4>
-                    <ul class="order-items">
-                        ${itemsHtml}
-                    </ul>
-                    <p class="order-total">Total: R$ ${(order.total || 0).toFixed(2)}</p>
-                    <p class="order-date">Data do Pedido: ${orderDate}</p>
-                </div>
-                <div class="order-actions">
-                    <button class="btn btn-print" onclick="printOrder('${order.id}')"><i class="fas fa-print"></i> Imprimir</button>
-                    <button class="btn btn-remove" onclick="removeOrder('${order.id}')"><i class="fas fa-trash"></i> Remover</button>
-                </div>
-            `;
-
-            return card;
-        }
-
-        // Função para adicionar um novo pedido
-        function addNewOrder(order) {
-            const orderList = document.getElementById('orderList');
-            const orderCard = createOrderCard(order);
-            orderList.prepend(orderCard);
-            document.getElementById('newOrderSound').play();
-        }
-
-        // Função para remover um pedido
-        function removeOrder(orderId) {
-            if (confirm('Tem certeza que deseja remover este pedido?')) {
-                const orderElement = document.getElementById(`order-${orderId}`);
+// Função para remover um pedido
+function removeOrder(orderId) {
+    if (confirm('Tem certeza que deseja remover este pedido?')) {
+        db.collection('orders').doc(orderId).delete().then(() => {
+            console.log("Pedido removido com sucesso do Firebase");
+            const orderElement = document.getElementById(`order-${orderId}`);
+            if (orderElement) {
                 orderElement.remove();
-                db.collection('orders').doc(orderId).update({ status: 'delivered' });
             }
+            updateNoOrdersMessage();
+        }).catch((error) => {
+            console.error("Erro ao remover pedido: ", error);
+        });
+    }
+}
+
+// Função para imprimir um pedido
+function printOrder(orderId) {
+    const orderCard = document.getElementById(`order-${orderId}`);
+    orderCard.classList.add('printing');
+    window.print();
+    orderCard.classList.remove('printing');
+}
+
+// Função para atualizar o status do pedido
+function updateOrderStatus(orderId, newStatus) {
+    db.collection('orders').doc(orderId).update({
+        status: newStatus
+    })
+    .then(() => {
+        console.log("Status do pedido atualizado com sucesso");
+        const orderCard = document.getElementById(`order-${orderId}`);
+        if (orderCard) {
+            const statusElement = orderCard.querySelector('.order-status');
+            statusElement.textContent = statusText[newStatus];
+            statusElement.className = `order-status status-${newStatus}`;
         }
+    })
+    .catch((error) => {
+        console.error("Erro ao atualizar status do pedido: ", error);
+    });
+}
 
-        // Função para imprimir um pedido
-        function printOrder(orderId) {
-            const orderCard = document.getElementById(`order-${orderId}`);
-            orderCard.classList.add('printing');
-            window.print();
-            orderCard.classList.remove('printing');
-        }
-
-        // Listener para novos pedidos
-        db.collection('orders')
-            .where('status', 'in', ['preparing', 'ready'])
-            .where('createdAt', '>', firebase.firestore.Timestamp.fromDate(new Date(Date.now() - 12 * 60 * 60 * 1000)))
-            .onSnapshot((snapshot) => {
-                snapshot.docChanges().forEach((change) => {
-                    if (change.type === "added") {
-                        const newOrder = { id: change.doc.id, ...change.doc.data() };
-                        addNewOrder(newOrder);
-                    } else if (change.type === "modified") {
-                        const updatedOrder = { id: change.doc.id, ...change.doc.data() };
-                        const existingCard = document.getElementById(`order-${updatedOrder.id}`);
-                        if (existingCard) {
-                            existingCard.replaceWith(createOrderCard(updatedOrder));
-                        }
-                    } else if (change.type === "removed") {
-                        const orderElement = document.getElementById(`order-${change.doc.id}`);
-                        if (orderElement) {
-                            orderElement.remove();
-                        }
-                    }
-                });
-                updateNoOrdersMessage();
-            });
-
-        // Carregar pedidos existentes ao iniciar
-        db.collection('orders')
-            .where('status', 'in', ['preparing', 'ready'])
-            .where('createdAt', '>', firebase.firestore.Timestamp.fromDate(new Date(Date.now() - 12 * 60 * 60 * 1000)))
-            .get()
-            .then((querySnapshot) => {
-                querySnapshot.forEach((doc) => {
-                    const order = { id: doc.id, ...doc.data() };
-                    addNewOrder(order);
-                });
-                updateNoOrdersMessage();
-            });
-
-        // Função para atualizar a mensagem de "Sem pedidos"
-        function updateNoOrdersMessage() {
-            const orderList = document.getElementById('orderList');
-            const noOrdersMessage = document.querySelector('.no-orders');
-            
-            if (orderList.children.length === 0) {
-                if (!noOrdersMessage) {
-                    const message = document.createElement('p');
-                    message.className = 'no-orders';
-                    message.textContent = 'Não há pedidos no momento.';
-                    orderList.appendChild(message);
+// Listener para novos pedidos
+db.collection('orders')
+    .where('status', 'in', ['preparing', 'ready'])
+    .where('createdAt', '>', firebase.firestore.Timestamp.fromDate(new Date(Date.now() - 12 * 60 * 60 * 1000)))
+    .onSnapshot((snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+            if (change.type === "added" || change.type === "modified") {
+                const order = { id: change.doc.id, ...change.doc.data() };
+                addNewOrder(order);
+            } else if (change.type === "removed") {
+                const orderElement = document.getElementById(`order-${change.doc.id}`);
+                if (orderElement) {
+                    orderElement.remove();
                 }
-            } else if (noOrdersMessage) {
-                noOrdersMessage.remove();
             }
-        }
+        });
+        updateNoOrdersMessage();
+    });
 
-        // Objeto para mapear status do pedido
-        const statusText = {
-            'preparing': 'Preparando',
-            'ready': 'Pronto',
-            'delivered': 'Entregue'
-        };
+// Carregar pedidos existentes ao iniciar
+db.collection('orders')
+    .where('status', 'in', ['preparing', 'ready'])
+    .where('createdAt', '>', firebase.firestore.Timestamp.fromDate(new Date(Date.now() - 12 * 60 * 60 * 1000)))
+    .get()
+    .then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+            const order = { id: doc.id, ...doc.data() };
+            addNewOrder(order);
+        });
+        updateNoOrdersMessage();
+    });
+
+// Função para atualizar a mensagem de "Sem pedidos"
+function updateNoOrdersMessage() {
+    const orderList = document.getElementById('orderList');
+    const noOrdersMessage = document.querySelector('.no-orders');
+    
+    if (orderList.children.length === 0) {
+        if (!noOrdersMessage) {
+            const message = document.createElement('p');
+            message.className = 'no-orders';
+            message.textContent = 'Não há pedidos no momento.';
+            orderList.appendChild(message);
+        }
+    } else if (noOrdersMessage) {
+        noOrdersMessage.remove();
+    }
+}
+
+// Objeto para mapear status do pedido
+const statusText = {
+    'preparing': 'Preparando',
+    'ready': 'Pronto',
+    'delivered': 'Entregue'
+};
     </script>
 </body>
 </html>
