@@ -2201,20 +2201,23 @@ window.onclick = function(event) {
         closeModal(event.target.id);
     }
 }
-        fetchCategories();
+fetchCategories();
         fetchProducts();
         document.getElementById('loadingOverlay').style.display = 'none';
+    });
     console.log("Script finalizado com sucesso");
-}
-<script>
-    // Configuração do chatbot
-    window.embeddedChatbotConfig = {
-        chatbotId: "PpgNSIgeYN1FCucFGP4w3",
-        domain: "www.chatbase.co"
-    };
-</script>
-
-<!-- Link para o script do Chatbase -->
-<script src="https://www.chatbase.co/embed.min.js" chatbotId="PpgNSIgeYN1FCucFGP4w3" domain="www.chatbase.co" defer></script>
+    </script>
+    <script>
+        window.embeddedChatbotConfig = {
+            chatbotId: "PpgNSIgeYN1FCucFGP4w3",
+            domain: "www.chatbase.co"
+        }
+    </script>
+    <script
+        src="https://www.chatbase.co/embed.min.js"
+        chatbotId="PpgNSIgeYN1FCucFGP4w3"
+        domain="www.chatbase.co"
+        defer>
+    </script>
 </body>
 </html>
