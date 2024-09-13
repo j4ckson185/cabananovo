@@ -959,35 +959,36 @@ function hideHeaderAndCategories() {
             return total;
         }
 
-        window.openCart = function() {
-            console.log("Abrindo o carrinho");
-            const cartModal = document.getElementById('cartModal');
-            const cartContent = document.getElementById('cartContent');
-            const cartTotal = document.getElementById('cartTotal');
-            if (!cartModal || !cartContent || !cartTotal) {
-                console.error("Elementos do carrinho não encontrados");
-                return;
-            }
-            let cartHTML = '';
-            let total = 0;
-            window.cart.forEach(item => {
-                total += item.totalPrice;
-                cartHTML += `
-                    <div class="cart-item">
-                        <div class="cart-item-info">
-                            <h3>${item.name}</h3>
-                            <p>Preço: R$ ${item.totalPrice.toFixed(2)}</p>
-                            ${item.accompaniments ? `<p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>` : ''}
-                            ${item.extras ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
-                        </div>
-                        <span class="cart-item-remove" onclick="window.removeFromCart(${item.id})">🗑️</span>
-                    </div>
-                `;
-            });
-            cartContent.innerHTML = cartHTML;
-            cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
-            cartModal.style.display = "block";
-        }
+window.openCart = function() {
+    console.log("Abrindo o carrinho");
+    const cartModal = document.getElementById('cartModal');
+    const cartContent = document.getElementById('cartContent');
+    const cartTotal = document.getElementById('cartTotal');
+    if (!cartModal || !cartContent || !cartTotal) {
+        console.error("Elementos do carrinho não encontrados");
+        return;
+    }
+    let cartHTML = '';
+    let total = 0;
+    window.cart.forEach(item => {
+        const itemPrice = parseFloat(item.totalPrice) || parseFloat(item.price) || 0;
+        total += itemPrice;
+        cartHTML += `
+            <div class="cart-item">
+                <div class="cart-item-info">
+                    <h3>${item.name}</h3>
+                    <p>Preço: R$ ${itemPrice.toFixed(2)}</p>
+                    ${item.accompaniments ? `<p>Acompanhamentos: ${item.accompaniments.join(', ')}</p>` : ''}
+                    ${item.extras ? `<p>Extras: ${item.extras.join(', ')}</p>` : ''}
+                </div>
+                <span class="cart-item-remove" onclick="window.removeFromCart(${item.id})">🗑️</span>
+            </div>
+        `;
+    });
+    cartContent.innerHTML = cartHTML;
+    cartTotal.innerHTML = `<h3>Total: R$ ${total.toFixed(2)}</h3>`;
+    cartModal.style.display = "block";
+}
 
         window.continueShopping = function() {
             closeModal('cartModal');
@@ -1520,37 +1521,38 @@ function hideHeaderAndCategories() {
                 });
         }
 
-        window.repeatOrder = function(orderId) {
-            db.collection('orders').doc(orderId).get()
-                .then((doc) => {
-                    if (doc.exists) {
-                        const order = doc.data();
-                        // Adicionar cada item do pedido ao carrinho
-                        order.items.forEach(item => {
-                            window.cart.push({
-                                ...item,
-                                id: Date.now() + Math.random() // Gera um novo ID único
-                            });
-                        });
-                        
-                        // Salvar o carrinho atualizado
-                        saveCartToLocalStorage();
-                        
-                        // Atualizar a contagem do carrinho
-                        window.updateCartCount();
-                        
-                        alert("Pedido adicionado ao carrinho!");
-                        closeModal('myOrdersModal');
-                        window.openCart(); // Abre o carrinho para mostrar os itens adicionados
-                    } else {
-                        alert("Pedido não encontrado.");
-                    }
-                })
-                .catch((error) => {
-                    console.error("Erro ao repetir pedido: ", error);
-                    alert("Ocorreu um erro ao repetir o pedido. Por favor, tente novamente.");
+window.repeatOrder = function(orderId) {
+    db.collection('orders').doc(orderId).get()
+        .then((doc) => {
+            if (doc.exists) {
+                const order = doc.data();
+                // Adicionar cada item do pedido ao carrinho
+                order.items.forEach(item => {
+                    window.cart.push({
+                        ...item,
+                        id: Date.now() + Math.random(), // Gera um novo ID único
+                        totalPrice: item.price || 0 // Garante que totalPrice seja um número
+                    });
                 });
-        }
+                
+                // Salvar o carrinho atualizado
+                saveCartToLocalStorage();
+                
+                // Atualizar a contagem do carrinho
+                window.updateCartCount();
+                
+                alert("Pedido adicionado ao carrinho!");
+                closeModal('myOrdersModal');
+                window.openCart(); // Abre o carrinho para mostrar os itens adicionados
+            } else {
+                alert("Pedido não encontrado.");
+            }
+        })
+        .catch((error) => {
+            console.error("Erro ao repetir pedido: ", error);
+            alert("Ocorreu um erro ao repetir o pedido. Por favor, tente novamente.");
+        });
+}
 
         window.openLoyaltyProgram = function() {
             const modal = document.getElementById('loyaltyProgramModal');
