@@ -1056,16 +1056,34 @@ window.openCart = function() {
             });
         });
 
-        function openCheckout() {
-            hideHeaderAndCategories(); // Agora, escondemos o cabeçalho e categorias aqui
-            const checkoutModal = document.getElementById('checkoutModal');
-            loadSavedAddresses();
-            updateOrderSummaryDirectly();
-            document.getElementById('paymentSection').style.display = 'none';
-            document.getElementById('submitOrderBtn').style.display = 'none';
-            checkoutModal.style.display = "block";
-            displayExtraItems();
-        }
+function openCheckout() {
+    hideHeaderAndCategories();
+    const checkoutModal = document.getElementById('checkoutModal');
+    if (!checkoutModal) {
+        console.error("Elemento checkoutModal não encontrado");
+        return;
+    }
+    
+    loadSavedAddresses();
+    updateOrderSummaryDirectly();
+    
+    // Exibir o modal de checkout
+    checkoutModal.style.display = "block";
+    
+    // Garantir que o resumo do pedido seja visível
+    const orderSummary = document.getElementById('orderSummary');
+    if (orderSummary) {
+        orderSummary.style.display = 'block';
+    }
+    
+    // Inicialmente, ocultar a seção de pagamento e o botão de fazer pedido
+    const paymentSection = document.getElementById('paymentSection');
+    const submitOrderBtn = document.getElementById('submitOrderBtn');
+    if (paymentSection) paymentSection.style.display = 'none';
+    if (submitOrderBtn) submitOrderBtn.style.display = 'none';
+    
+    displayExtraItems();
+}
 
         function loadSavedAddresses() {
             const select = document.getElementById('savedAddresses');
@@ -1077,27 +1095,35 @@ window.openCart = function() {
             }
         }
 
-        window.handleSavedAddressChange = function() {
-            const selectedIndex = document.getElementById('savedAddresses').value;
-            const paymentSection = document.getElementById('paymentSection');
-            const submitOrderBtn = document.getElementById('submitOrderBtn');
-            if (selectedIndex !== "") {
-                const address = savedAddresses[selectedIndex];
-                document.getElementById('street').value = address.street;
-                document.getElementById('number').value = address.number;
-                document.getElementById('complement').value = address.complement || '';
-                document.getElementById('neighborhood').value = address.neighborhood;
-                document.getElementById('city').value = address.city;
-                document.getElementById('state').value = address.state;
-                
-                if (paymentSection) {
-                    paymentSection.style.display = 'none';
-                }
-                if (submitOrderBtn) {
-                    submitOrderBtn.style.display = 'none';
-                }
-            }
+window.handleSavedAddressChange = function() {
+    const selectedIndex = document.getElementById('savedAddresses').value;
+    const paymentSection = document.getElementById('paymentSection');
+    const submitOrderBtn = document.getElementById('submitOrderBtn');
+    
+    if (selectedIndex !== "") {
+        const address = savedAddresses[selectedIndex];
+        document.getElementById('street').value = address.street;
+        document.getElementById('number').value = address.number;
+        document.getElementById('complement').value = address.complement || '';
+        document.getElementById('neighborhood').value = address.neighborhood;
+        document.getElementById('city').value = address.city;
+        document.getElementById('state').value = address.state;
+        
+        if (paymentSection) {
+            paymentSection.style.display = 'block';
         }
+        if (submitOrderBtn) {
+            submitOrderBtn.style.display = 'block';
+        }
+    } else {
+        if (paymentSection) {
+            paymentSection.style.display = 'none';
+        }
+        if (submitOrderBtn) {
+            submitOrderBtn.style.display = 'none';
+        }
+    }
+}
 
         window.showNewAddressForm = function() {
             document.getElementById('newAddressForm').style.display = 'block';
