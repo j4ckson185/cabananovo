@@ -709,6 +709,62 @@
         let selectedExtras = [];
         let currentAcaiIndex = 0;
 
+            function loadStoreHours() {
+        return window.db.collection('config').doc('storeHours').get().then((doc) => {
+            if (doc.exists) {
+                window.storeHours = doc.data();
+            } else {
+                console.error("Configuração de horário não encontrada.");
+                window.storeHours = null;
+            }
+        }).catch((error) => {
+            console.error("Erro ao carregar configuração de horário:", error);
+            window.storeHours = null;
+        });
+    }
+
+    function checkStoreOpen() {
+        if (!window.storeHours) {
+            // Se não conseguiu carregar a configuração, assume que a loja está aberta
+            return true;
+        }
+
+        const now = new Date();
+        const day = now.getDay(); // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
+        const currentTime = now.getHours() * 60 + now.getMinutes(); // minutos desde meia-noite
+
+        // Verifica se o dia atual está nos dias de funcionamento
+        if (!window.storeHours.openDays.includes(day)) {
+            return false;
+        }
+
+        // Converter horários de abertura e fechamento em minutos desde meia-noite
+        const [openHour, openMinute] = window.storeHours.openTime.split(':').map(Number);
+        const [closeHour, closeMinute] = window.storeHours.closeTime.split(':').map(Number);
+
+        const openTimeMinutes = openHour * 60 + openMinute;
+        const closeTimeMinutes = closeHour * 60 + closeMinute;
+
+        if (closeTimeMinutes > openTimeMinutes) {
+            // Horário normal
+            return currentTime >= openTimeMinutes && currentTime <= closeTimeMinutes;
+        } else {
+            // Horário passando pela meia-noite
+            return currentTime >= openTimeMinutes || currentTime <= closeTimeMinutes;
+        }
+    }
+
+    // Mostrar popup se a loja estiver fechada
+function showClosedPopup() {
+    if (!window.storeHours) {
+        return;
+    }
+    const dayNames = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+    const openDaysNames = window.storeHours.openDays.map(dayIndex => dayNames[dayIndex]);
+    const message = `Nosso horário de funcionamento é de ${openDaysNames.join(', ')} das ${window.storeHours.openTime} às ${window.storeHours.closeTime} e no momento não estamos recebendo pedidos.`;
+    alert(message);
+}
+
         // Função para inicializar a página
         function initPage() {
             if (window.orderId) {
@@ -1402,7 +1458,7 @@ window.handleSavedAddressChange = function() {
         function getStatusText(status) {
             const statusTexts = {
                 'preparing': 'Preparando',
-                'ready': 'Pronto para entrega',
+                'ready': 'Saiu para entrega',
                 'delivered': 'Entregue'
             };
             return statusTexts[status] || 'Desconhecido';
@@ -2126,6 +2182,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (myOrdersBtn) myOrdersBtn.addEventListener('click', openMyOrders);
     if (comboBuildBtn) comboBuildBtn.addEventListener('click', openComboBuilder);
     if (loyaltyBtn) loyaltyBtn.addEventListener('click', openLoyaltyProgram);
+
+        // Carregar configuração de horário de funcionamento
+        loadStoreHours().then(() => {
+            // Verificar se a loja está aberta
+            if (!checkStoreOpen()) {
+                showClosedPopup();
+            }
 
     fetchCategories();
     fetchProducts();
