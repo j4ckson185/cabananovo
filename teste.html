@@ -1054,12 +1054,27 @@ document.getElementById('customerIdentificationForm').addEventListener('submit',
     // Preparar os dados para salvar no Firestore
     const customerData = {
         name: name,
-        // Não incluímos 'addresses' aqui, pois ele será gerenciado separadamente
     };
 
-    // Se já tivermos endereços salvos, incluí-los nos dados do cliente
-    if (savedAddresses && savedAddresses.length > 0) {
-        customerData.addresses = savedAddresses;
+    // Tratar os endereços salvos
+    let addressesToSave = [];
+    if (typeof savedAddresses !== 'undefined' && Array.isArray(savedAddresses)) {
+        addressesToSave = savedAddresses.map(address => {
+            // Garantir que cada endereço seja um objeto simples
+            return {
+                street: address.street || '',
+                number: address.number || '',
+                complement: address.complement || '',
+                neighborhood: address.neighborhood || '',
+                city: address.city || '',
+                state: address.state || ''
+            };
+        });
+    }
+
+    // Adicionar endereços tratados aos dados do cliente
+    if (addressesToSave.length > 0) {
+        customerData.addresses = addressesToSave;
     }
 
     // Salvar no Firestore
@@ -1111,16 +1126,18 @@ function openCheckout() {
     displayExtraItems();
 }
 
-        function loadSavedAddresses() {
-            const select = document.getElementById('savedAddresses');
-            if (select) {
-                select.innerHTML = '<option value="">Selecione um endereço salvo ou cadastre um novo</option>';
-                savedAddresses.forEach((address, index) => {
-                    select.innerHTML += `<option value="${index}">${address.street}, ${address.number} - ${address.neighborhood}</option>`;
-                });
-            }
+// Função para carregar endereços salvos
+function loadSavedAddresses() {
+    const select = document.getElementById('savedAddresses');
+    if (select) {
+        select.innerHTML = '<option value="">Selecione um endereço salvo ou cadastre um novo</option>';
+        if (Array.isArray(savedAddresses)) {
+            savedAddresses.forEach((address, index) => {
+                select.innerHTML += `<option value="${index}">${address.street}, ${address.number} - ${address.neighborhood}</option>`;
+            });
         }
-
+    }
+}
 window.handleSavedAddressChange = function() {
     const selectedIndex = document.getElementById('savedAddresses').value;
     const paymentSection = document.getElementById('paymentSection');
