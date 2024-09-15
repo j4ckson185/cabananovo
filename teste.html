@@ -1131,13 +1131,23 @@ function loadSavedAddresses() {
     const select = document.getElementById('savedAddresses');
     if (select) {
         select.innerHTML = '<option value="">Selecione um endereço salvo ou cadastre um novo</option>';
-        if (Array.isArray(savedAddresses)) {
-            savedAddresses.forEach((address, index) => {
-                select.innerHTML += `<option value="${index}">${address.street}, ${address.number} - ${address.neighborhood}</option>`;
-            });
-        }
+        window.savedAddresses.forEach((address, index) => {
+            select.innerHTML += `<option value="${index}">${address.street}, ${address.number} - ${address.neighborhood}</option>`;
+        });
     }
 }
+
+// Carregar endereços salvos do localStorage ao iniciar a página
+document.addEventListener('DOMContentLoaded', function() {
+    const savedAddressesJSON = localStorage.getItem('savedAddresses');
+    if (savedAddressesJSON) {
+        window.savedAddresses = JSON.parse(savedAddressesJSON);
+    } else {
+        window.savedAddresses = [];
+    }
+    loadSavedAddresses();
+});
+        
 window.handleSavedAddressChange = function() {
     const selectedIndex = document.getElementById('savedAddresses').value;
     const paymentSection = document.getElementById('paymentSection');
@@ -1172,39 +1182,62 @@ window.handleSavedAddressChange = function() {
             document.getElementById('newAddressForm').style.display = 'block';
         }
 
-        window.saveNewAddress = function() {
-            const newAddress = {
-                street: document.getElementById('street').value,
-                number: document.getElementById('number').value,
-                complement: document.getElementById('complement').value,
-                neighborhood: document.getElementById('neighborhood').value,
-                city: document.getElementById('city').value,
-                state: document.getElementById('state').value
-            };
-            let missingFields = [];
-            if (!newAddress.street) missingFields.push('Rua');
-            if (!newAddress.number) missingFields.push('Número');
-            if (!newAddress.neighborhood) missingFields.push('Bairro');
-            if (!newAddress.city) missingFields.push('Cidade');
-            if (!newAddress.state) missingFields.push('Estado');
-            if (missingFields.length > 0) {
-                alert(`Por favor, preencha os seguintes campos obrigatórios: ${missingFields.join(', ')}`);
-                return;
-            }
-            savedAddresses.push(newAddress);
-            localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
-            db.collection('customers').doc(customerInfo.phone).update({
-                addresses: savedAddresses
-            }).then(() => {
-                loadSavedAddresses();
-                alert('Novo endereço salvo com sucesso!');
-                document.getElementById('newAddressForm').style.display = 'none';
-                document.getElementById('paymentSection').style.display = 'block';
-                document.getElementById('submitOrderBtn').style.display = 'block';
-            }).catch((error) => {
-                console.error("Error updating addresses: ", error);
-            });
-        }
+// Inicialização de savedAddresses
+if (typeof savedAddresses === 'undefined' || !Array.isArray(savedAddresses)) {
+    window.savedAddresses = [];
+}
+
+window.saveNewAddress = function() {
+    const newAddress = {
+        street: document.getElementById('street').value,
+        number: document.getElementById('number').value,
+        complement: document.getElementById('complement').value,
+        neighborhood: document.getElementById('neighborhood').value,
+        city: document.getElementById('city').value,
+        state: document.getElementById('state').value
+    };
+
+    let missingFields = [];
+    if (!newAddress.street) missingFields.push('Rua');
+    if (!newAddress.number) missingFields.push('Número');
+    if (!newAddress.neighborhood) missingFields.push('Bairro');
+    if (!newAddress.city) missingFields.push('Cidade');
+    if (!newAddress.state) missingFields.push('Estado');
+
+    if (missingFields.length > 0) {
+        alert(`Por favor, preencha os seguintes campos obrigatórios: ${missingFields.join(', ')}`);
+        return;
+    }
+
+    // Garantir que savedAddresses seja um array
+    if (!Array.isArray(window.savedAddresses)) {
+        window.savedAddresses = [];
+    }
+
+    window.savedAddresses.push(newAddress);
+    localStorage.setItem('savedAddresses', JSON.stringify(window.savedAddresses));
+
+    if (window.customerInfo && window.customerInfo.phone) {
+        db.collection('customers').doc(window.customerInfo.phone).update({
+            addresses: window.savedAddresses
+        }).then(() => {
+            loadSavedAddresses();
+            alert('Novo endereço salvo com sucesso!');
+            document.getElementById('newAddressForm').style.display = 'none';
+            document.getElementById('paymentSection').style.display = 'block';
+            document.getElementById('submitOrderBtn').style.display = 'block';
+        }).catch((error) => {
+            console.error("Error updating addresses: ", error);
+            alert('Erro ao salvar o endereço. Por favor, tente novamente.');
+        });
+    } else {
+        loadSavedAddresses();
+        alert('Novo endereço salvo com sucesso!');
+        document.getElementById('newAddressForm').style.display = 'none';
+        document.getElementById('paymentSection').style.display = 'block';
+        document.getElementById('submitOrderBtn').style.display = 'block';
+    }
+}
 
         window.handlePaymentChange = function() {
             const paymentMethod = document.getElementById('paymentMethod').value;
