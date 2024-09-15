@@ -1039,23 +1039,48 @@ window.removeFromCart = function(itemId) {
             });
         }
 
-        document.getElementById('customerIdentificationForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const phone = document.getElementById('customerPhone').value;
-            const name = document.getElementById('customerName').value;
-            customerInfo = { phone, name };
-            localStorage.setItem('customerPhone', phone);
-            localStorage.setItem('customerName', name);
-            db.collection('customers').doc(phone).set({
-                name: name,
-                addresses: savedAddresses
-            }, { merge: true }).then(() => {
-                closeModal('customerIdentificationModal');
-                openCheckout();
-            }).catch((error) => {
-                console.error("Error saving customer data: ", error);
-            });
+document.getElementById('customerIdentificationForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const phone = document.getElementById('customerPhone').value;
+    const name = document.getElementById('customerName').value;
+    
+    // Atualizar customerInfo com os dados do formulário
+    window.customerInfo = { phone, name };
+    
+    // Salvar informações no localStorage
+    localStorage.setItem('customerPhone', phone);
+    localStorage.setItem('customerName', name);
+
+    // Preparar os dados para salvar no Firestore
+    const customerData = {
+        name: name,
+        // Não incluímos 'addresses' aqui, pois ele será gerenciado separadamente
+    };
+
+    // Se já tivermos endereços salvos, incluí-los nos dados do cliente
+    if (savedAddresses && savedAddresses.length > 0) {
+        customerData.addresses = savedAddresses;
+    }
+
+    // Salvar no Firestore
+    db.collection('customers').doc(phone).set(customerData, { merge: true })
+        .then(() => {
+            console.log("Dados do cliente salvos com sucesso");
+            closeModal('customerIdentificationModal');
+            openCheckout();
+        })
+        .catch((error) => {
+            console.error("Erro ao salvar dados do cliente: ", error);
+            alert("Ocorreu um erro ao salvar seus dados. Por favor, tente novamente.");
         });
+});
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
 
 function openCheckout() {
     hideHeaderAndCategories();
@@ -1946,13 +1971,6 @@ window.resetComboBuilder = function() {
     document.getElementById('extraItemsSelection').style.display = 'none';
     document.getElementById('comboSummary').innerHTML = '';
     document.querySelector('#comboModal .btn[onclick="addComboToCart()"]').style.display = 'none';
-}
-
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.style.display = "none";
-    }
 }
 
 document.querySelectorAll('.close').forEach(closeBtn => {
