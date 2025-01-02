@@ -1,0 +1,60 @@
+<!-- cardapio.html - Cardápio Digital -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cabana Açaí - Cardápio</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="scripts.js" defer></script>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Logo Cabana Açaí">
+    </div>
+    <h1>Cabana Açaí</h1>
+    <div class="cart">
+      <span id="cart-count">0</span>
+      <img src="cart-icon.png" alt="Carrinho de Compras">
+    </div>
+  </header>
+
+  <nav class="categories">
+    <button onclick="filterCategory('all')">Todos</button>
+    <button onclick="filterCategory('cremes')">Apenas Cremes</button>
+    <button onclick="filterCategory('ninho')">Açaí com Creme de Ninho</button>
+    <button onclick="filterCategory('ovomaltine')">Açaí com Creme de Ovomaltine</button>
+    <button onclick="filterCategory('amendoim')">Açaí com Creme de Amendoim</button>
+    <button onclick="filterCategory('puro')">Açaí Puro</button>
+    <button onclick="filterCategory('monte')">Monte seu Açaí</button>
+  </nav>
+
+  <div class="search-bar">
+    <input type="text" id="search" placeholder="O que você quer comer hoje?" oninput="searchProducts()">
+  </div>
+
+  <main id="product-list" class="products">
+    <!-- Produtos serão carregados aqui dinamicamente pelo JS -->
+  </main>
+
+  <!-- Popup do Produto -->
+  <div id="product-popup" class="popup hidden">
+    <div class="popup-content">
+      <span class="close" onclick="closePopup()">&times;</span>
+      <div id="popup-details"></div>
+      <button id="add-to-cart">Adicionar ao Carrinho</button>
+    </div>
+  </div>
+
+  <!-- Popup do Carrinho -->
+  <div id="cart-popup" class="popup hidden">
+    <div class="popup-content">
+      <span class="close" onclick="closeCartPopup()">&times;</span>
+      <div id="cart-details"></div>
+      <button onclick="checkout()">Finalizar Pedido</button>
+      <button onclick="closeCartPopup()">Continuar Comprando</button>
+    </div>
+  </div>
+</body>
+</html>
