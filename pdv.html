@@ -525,6 +525,10 @@
                     <i class="fas fa-puzzle-piece"></i>
                     <span>Acompanhamentos</span>
                 </li>
+                <li class="nav-item" data-view="extras">
+               <i class="fas fa-plus-circle"></i>
+               <span>Itens Extras</span>
+                </li>
                 <li class="nav-item" data-view="schedule">
                     <i class="fas fa-clock"></i>
                     <span>Horários</span>
@@ -1065,6 +1069,38 @@ async function uploadImage(file) {
            }
        }
 
+        function loadExtras() {
+    db.ref('extras').on('value', snapshot => {
+        const tbody = document.getElementById('extrasTableBody');
+        tbody.innerHTML = '';
+        const extras = snapshot.val() || {};
+        
+        Object.entries(extras).forEach(([id, extra]) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${extra.name}</td>
+                    <td>R$ ${extra.price.toFixed(2)}</td>
+                    <td>
+                        <label class="switch">
+                            <input type="checkbox" ${extra.available ? 'checked' : ''} 
+                                   onchange="updateExtraStatus('${id}', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="editExtra('${id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete-btn" onclick="deleteExtra('${id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    });
+}
+
        // Schedule Management
        function updateSchedule(day, field, value) {
            const scheduleRef = db.ref(`schedule/${day}`);
@@ -1339,6 +1375,7 @@ async function uploadImage(file) {
            loadCategories();
            loadToppings();
            loadSchedule();
+           loadExtras();
        });
 
        // Error Handling
