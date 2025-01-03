@@ -570,6 +570,57 @@ header {
    .modal-buttons {
        gap: 0.8rem;
    }
+
+    .cart-items {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+}
+
+.cart-total {
+    border-top: 1px solid var(--glass-border);
+    padding-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.delivery-fee {
+    color: var(--text);
+    margin: 0.5rem 0;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass);
+    color: white;
+}
+
+.payment-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.payment-options label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    cursor: pointer;
+}
 }
 </style>
 </head>
@@ -681,6 +732,186 @@ header {
             </div>
         </div>
     </div>
+
+    <!-- Cart Modal -->
+<div class="modal" id="cartModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Seu Carrinho</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="cart-items"></div>
+        <div class="cart-total">
+            <div class="subtotal">Subtotal: R$ <span>0.00</span></div>
+            <div class="delivery-fee">
+                <i class="fas fa-motorcycle"></i> Taxa de Entrega: R$ 3,00
+            </div>
+            <div class="total">Total: R$ <span>0.00</span></div>
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn continue-shopping">Continuar Comprando</button>
+            <button class="modal-btn checkout">Finalizar Pedido</button>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Info Modal -->
+<div class="modal" id="customerInfoModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Seus Dados</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <form id="customerInfoForm">
+            <div class="form-group">
+                <label>Nome Completo</label>
+                <input type="text" required name="fullName">
+            </div>
+            <div class="form-group">
+                <label>WhatsApp (com DDD)</label>
+                <input type="tel" required name="whatsapp" pattern="[0-9]{11}">
+            </div>
+            <button type="submit" class="modal-btn">Avançar</button>
+        </form>
+    </div>
+</div>
+
+<!-- Delivery Info Modal -->
+<div class="modal" id="deliveryInfoModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Endereço de Entrega</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <form id="deliveryInfoForm">
+            <div class="form-group">
+                <label>Endereço</label>
+                <input type="text" required name="address">
+            </div>
+            <div class="form-group">
+                <label>Complemento</label>
+                <input type="text" name="complement">
+            </div>
+            <div class="form-group">
+                <label>Apto/Bloco</label>
+                <input type="text" name="apt">
+            </div>
+            <div class="form-group">
+                <label>Bairro</label>
+                <input type="text" required name="neighborhood">
+            </div>
+            <div class="form-group">
+                <label>CEP</label>
+                <input type="text" required name="zipcode">
+            </div>
+            <div class="form-group">
+                <label>Forma de Pagamento</label>
+                <div class="payment-options">
+                    <label>
+                        <input type="radio" name="payment" value="money">
+                        <i class="fas fa-money-bill"></i> Dinheiro
+                    </label>
+                    <label>
+                        <input type="radio" name="payment" value="card">
+                        <i class="fas fa-credit-card"></i> Cartão na Entrega
+                    </label>
+                    <label>
+                        <input type="radio" name="payment" value="pix">
+                        <i class="fas fa-qrcode"></i> PIX
+                    </label>
+                </div>
+            </div>
+            <div id="changeContainer" style="display: none;">
+                <label>Troco para quanto?</label>
+                <input type="number" name="change" step="0.01">
+            </div>
+            <div id="pixInfo" style="display: none;">
+                <p>Envie o PIX para 84 9 8873-1028 - Santander - Jackson</p>
+            </div>
+            <div class="order-summary"></div>
+            <button type="submit" class="modal-btn">Finalizar Pedido</button>
+        </form>
+    </div>
+</div>
+
+    <!-- Customer Info Modal -->
+<div class="modal" id="customerInfoModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Seus Dados</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <form id="customerInfoForm">
+            <div class="form-group">
+                <label>Nome Completo</label>
+                <input type="text" required name="fullName">
+            </div>
+            <div class="form-group">
+                <label>WhatsApp (com DDD)</label>
+                <input type="tel" required name="whatsapp" pattern="[0-9]{11}">
+            </div>
+            <button type="submit" class="modal-btn">Avançar</button>
+        </form>
+    </div>
+</div>
+
+<!-- Delivery Info Modal -->
+<div class="modal" id="deliveryInfoModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Endereço de Entrega</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <form id="deliveryInfoForm">
+            <div class="form-group">
+                <label>Endereço</label>
+                <input type="text" required name="address">
+            </div>
+            <div class="form-group">
+                <label>Complemento</label>
+                <input type="text" name="complement">
+            </div>
+            <div class="form-group">
+                <label>Apto/Bloco</label>
+                <input type="text" name="apt">
+            </div>
+            <div class="form-group">
+                <label>Bairro</label>
+                <input type="text" required name="neighborhood">
+            </div>
+            <div class="form-group">
+                <label>CEP</label>
+                <input type="text" required name="zipcode">
+            </div>
+            <div class="form-group">
+                <label>Forma de Pagamento</label>
+                <div class="payment-options">
+                    <label>
+                        <input type="radio" name="payment" value="money">
+                        <i class="fas fa-money-bill"></i> Dinheiro
+                    </label>
+                    <label>
+                        <input type="radio" name="payment" value="card">
+                        <i class="fas fa-credit-card"></i> Cartão na Entrega
+                    </label>
+                    <label>
+                        <input type="radio" name="payment" value="pix">
+                        <i class="fas fa-qrcode"></i> PIX
+                    </label>
+                </div>
+            </div>
+            <div id="changeContainer" style="display: none;">
+                <label>Troco para quanto?</label>
+                <input type="number" name="change" step="0.01">
+            </div>
+            <div id="pixInfo" style="display: none;">
+                <p>Envie o PIX para 84 9 8873-1028 - Santander - Jackson</p>
+            </div>
+            <div class="order-summary"></div>
+            <button type="submit" class="modal-btn">Finalizar Pedido</button>
+        </form>
+    </div>
+</div>
 
 <script>
 // Firebase initialization
@@ -908,6 +1139,86 @@ function addToCart(product, selectedToppings) {
     updateCartCount();
 }
 
+function showCartModal() {
+    const cartModal = document.getElementById('cartModal');
+    const cartItems = cartModal.querySelector('.cart-items');
+    cartItems.innerHTML = '';
+    
+    let subtotal = 0;
+    cart.forEach((item, index) => {
+        const itemTotal = item.price + calculateToppingsPrice(item.selectedToppings);
+        subtotal += itemTotal;
+        
+        cartItems.innerHTML += `
+            <div class="cart-item">
+                <h3>${item.name}</h3>
+                <p>Acompanhamentos: ${item.selectedToppings.join(', ')}</p>
+                <p>R$ ${itemTotal.toFixed(2)}</p>
+                <button onclick="removeFromCart(${index})">Remover</button>
+            </div>
+        `;
+    });
+    
+    const total = subtotal + 3.00; // Taxa de entrega
+    cartModal.querySelector('.subtotal span').textContent = subtotal.toFixed(2);
+    cartModal.querySelector('.total span').textContent = total.toFixed(2);
+    cartModal.style.display = 'block';
+}
+
+function validateToppingsSelection(min, max) {
+    const selectedToppings = document.querySelectorAll('.topping-item.selected').length;
+    const addToCartBtn = document.querySelector('.modal-btn.add-to-cart');
+    
+    if (selectedToppings < min) {
+        showNotification(`Selecione no mínimo ${min} acompanhamento${min > 1 ? 's' : ''}`);
+        addToCartBtn.disabled = true;
+        return false;
+    }
+    
+    if (selectedToppings > max) {
+        showNotification(`Selecione no máximo ${max} acompanhamento${max > 1 ? 's' : ''}`);
+        addToCartBtn.disabled = true;
+        return false;
+    }
+    
+    addToCartBtn.disabled = false;
+    return true;
+}
+
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+}
+
+function handleCheckout() {
+    document.getElementById('cartModal').style.display = 'none';
+    document.getElementById('customerInfoModal').style.display = 'block';
+}
+
+function handleCustomerInfo(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    customerInfo = Object.fromEntries(formData);
+    
+    document.getElementById('customerInfoModal').style.display = 'none';
+    document.getElementById('deliveryInfoModal').style.display = 'block';
+}
+
+function handleDeliveryInfo(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const deliveryInfo = Object.fromEntries(formData);
+    
+    // Prepara mensagem para WhatsApp
+    const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
+    const encodedMessage = encodeURIComponent(message);
+    
+    window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
+}
+
 function updateCartCount() {
     const cartCount = document.querySelector('.cart-count');
     cartCount.textContent = cart.length;
@@ -916,9 +1227,74 @@ function updateCartCount() {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    loadMenuProducts();
-    loadCategories();
+   // Firebase listeners
+   loadMenuProducts();
+   loadCategories();
+   
+   // Categories
+   document.querySelectorAll('.category-btn').forEach(button => {
+       button.addEventListener('click', () => {
+           document.querySelector('.category-btn.active')?.classList.remove('active');
+           button.classList.add('active');
+           
+           const category = button.textContent.trim();
+           const filteredProducts = category === 'Todos' 
+               ? currentProducts 
+               : currentProducts.filter(p => p.category === category);
+           displayProducts(filteredProducts);
+       });
+   });
+
+   // Search
+   document.getElementById('searchInput').addEventListener('input', (e) => {
+       const searchTerm = e.target.value.toLowerCase();
+       const filteredProducts = currentProducts.filter(product => 
+           product.name.toLowerCase().includes(searchTerm) ||
+           product.description.toLowerCase().includes(searchTerm)
+       );
+       displayProducts(filteredProducts);
+   });
+
+   // Modal closes
+   document.querySelectorAll('.close-modal').forEach(button => {
+       button.addEventListener('click', () => {
+           document.querySelectorAll('.modal').forEach(modal => {
+               modal.style.display = 'none';
+           });
+       });
+   });
+
+   // Cart
+   document.querySelector('.cart-icon').addEventListener('click', showCartModal);
+   document.querySelector('.checkout').addEventListener('click', handleCheckout);
+   document.getElementById('customerInfoForm').addEventListener('submit', handleCustomerInfo);
+   document.getElementById('deliveryInfoForm').addEventListener('submit', handleDeliveryInfo);
+   
+   // Payment options
+   document.querySelectorAll('input[name="payment"]').forEach(radio => {
+       radio.addEventListener('change', (e) => {
+           document.getElementById('changeContainer').style.display = 
+               e.target.value === 'money' ? 'block' : 'none';
+           document.getElementById('pixInfo').style.display = 
+               e.target.value === 'pix' ? 'block' : 'none';
+       });
+   });
+
+   // Continue shopping
+   document.querySelector('.continue-shopping').addEventListener('click', () => {
+       document.getElementById('cartModal').style.display = 'none';
+   });
+
+   // Add to cart from modal
+   document.querySelector('.add-to-cart').addEventListener('click', () => {
+       const selectedToppings = Array.from(document.querySelectorAll('.topping-item.selected'))
+           .map(item => item.textContent.trim());
+       if (validateToppingsSelection(currentProduct.toppings.min, currentProduct.toppings.max)) {
+           addToCart(currentProduct, selectedToppings);
+           document.getElementById('productModal').style.display = 'none';
+       }
+   });
 });
-    </script>
+</script>
 </body>
 </html>
