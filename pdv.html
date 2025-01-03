@@ -902,29 +902,6 @@
             </div>
         </div>
 
-async function handleExtraSubmit(event) {
-    event.preventDefault();
-    const formData = new FormData(event.target);
-    const extraData = {
-        id: formData.get('extraId') || Date.now().toString(),
-        name: formData.get('name'),
-        price: parseFloat(formData.get('price')),
-        available: formData.get('available') === 'on',
-        updatedAt: firebase.database.ServerValue.TIMESTAMP
-    };
-
-    try {
-        await db.ref(`extras/${extraData.id}`).set(extraData);
-        await db.ref(`menu/extras/${extraData.id}`).set(extraData);
-        showAlert('success', 'Item extra salvo com sucesso!');
-        document.getElementById('extraForm').style.display = 'none';
-        loadExtras();
-    } catch (error) {
-        console.error('Error:', error);
-        showAlert('error', 'Erro ao salvar item extra.');
-    }
-}
-
 function updateExtraStatus(id, available) {
     Promise.all([
         db.ref(`extras/${id}`).update({ available }),
