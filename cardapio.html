@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cabana Açaí - Menu Premium</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-database-compat.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
         
@@ -659,154 +661,229 @@
         </div>
     </div>
 
-    <script>
-        // Sample data structure
-        const products = [
-            {
-                id: 1,
-                category: 'Açaí com Ninho',
-                title: 'Açaí com Leite Ninho',
-                description: 'Açaí cremoso coberto com leite ninho em pó e frutas selecionadas.',
-                price: 18.90,
-                image: '/api/placeholder/300/200',
-                toppings: {
-                    min: 1,
-                    max: 3,
-                    options: ['Granola', 'Leite em Pó', 'Morango', 'Banana', 'Kiwi', 'Paçoca']
-                }
-            },
-            // Add more products here
-        ];
+<script>
+// Firebase initialization
+const firebaseConfig = {
+    apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
+    authDomain: "cabana-8d55e.firebaseapp.com",
+    databaseURL: "https://cabana-8d55e-default-rtdb.firebaseio.com",
+    projectId: "cabana-8d55e",
+    storageBucket: "cabana-8d55e.appspot.com",
+    messagingSenderId: "706144237954",
+    appId: "1:706144237954:web:345c10370972486afc779b",
+    measurementId: "G-96Y337GYT8"
+};
 
-        let cart = [];
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            setupEventListeners();
-            displayProducts(products);
+let cart = [];
+let currentProducts = [];
+
+// Load products from Firebase
+function loadMenuProducts() {
+    db.ref('menu/products').on('value', snapshot => {
+        const products = snapshot.val() || {};
+        currentProducts = Object.values(products).filter(product => product.status);
+        displayProducts(currentProducts);
+    });
+}
+
+// Load categories from Firebase
+function loadCategories() {
+    db.ref('menu/categories').on('value', snapshot => {
+        const categories = snapshot.val() || {};
+        updateCategoryButtons(categories);
+    });
+}
+
+function updateCategoryButtons(categories) {
+    const categoriesNav = document.querySelector('.categories');
+    categoriesNav.innerHTML = `
+        <button class="category-btn active">
+            <i class="fas fa-star"></i>
+            Todos
+        </button>
+    `;
+    
+    Object.values(categories).forEach(category => {
+        categoriesNav.innerHTML += `
+            <button class="category-btn">
+                <i class="fas fa-${category.icon || 'circle'}"></i>
+                ${category.name}
+            </button>
+        `;
+    });
+    
+    setupEventListeners();
+}
+
+function setupEventListeners() {
+    // Category buttons
+    document.querySelectorAll('.category-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelector('.category-btn.active')?.classList.remove('active');
+            button.classList.add('active');
+            
+            const category = button.textContent.trim();
+            const filteredProducts = category === 'Todos' 
+                ? currentProducts 
+                : currentProducts.filter(p => p.category === category);
+            displayProducts(filteredProducts);
         });
+    });
 
-        function setupEventListeners() {
-            // Category buttons
-            document.querySelectorAll('.category-btn').forEach(button => {
-                button.addEventListener('click', () => {
-                    document.querySelector('.category-btn.active').classList.remove('active');
-                    button.classList.add('active');
-                    
-                    const category = button.textContent.trim();
-                    const filteredProducts = category === 'Todos' 
-                        ? products 
-                        : products.filter(p => p.category === category);
-                    displayProducts(filteredProducts);
-                });
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const filteredProducts = currentProducts.filter(product => 
+            product.name.toLowerCase().includes(searchTerm) ||
+            product.description.toLowerCase().includes(searchTerm)
+        );
+        displayProducts(filteredProducts);
+    });
+
+    // Modal close buttons
+    document.querySelectorAll('.close-modal').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.style.display = 'none';
             });
+        });
+    });
 
-            // Search functionality
-            document.getElementById('searchInput').addEventListener('input', (e) => {
-                const searchTerm = e.target.value.toLowerCase();
-                const filteredProducts = products.filter(product => 
-                    product.title.toLowerCase().includes(searchTerm) ||
-                    product.description.toLowerCase().includes(searchTerm)
-                );
-                displayProducts(filteredProducts);
-            });
+    // Continue shopping button
+    document.querySelector('.continue-shopping').addEventListener('click', () => {
+        document.getElementById('productModal').style.display = 'none';
+    });
 
-            // Modal close buttons
-            document.querySelectorAll('.close-modal').forEach(button => {
-                button.addEventListener('click', () => {
-                    document.querySelectorAll('.modal').forEach(modal => {
-                        modal.style.display = 'none';
-                    });
-                });
-            });
-        }
+    // Add to cart button
+    document.querySelector('.add-to-cart').addEventListener('click', () => {
+        const selectedToppings = Array.from(document.querySelectorAll('.topping-item.selected'))
+            .map(item => item.textContent);
+        addToCart(currentProduct, selectedToppings);
+        document.getElementById('productModal').style.display = 'none';
+    });
+}
 
-        function displayProducts(productsToShow) {
-            const grid = document.getElementById('productsGrid');
-            grid.innerHTML = '';
+function displayProducts(productsToShow) {
+    const grid = document.getElementById('productsGrid');
+    grid.innerHTML = '';
 
-            productsToShow.forEach(product => {
-                const card = createProductCard(product);
-                grid.appendChild(card);
-            });
-        }
+    productsToShow.forEach(product => {
+        const card = createProductCard(product);
+        grid.appendChild(card);
+    });
+}
 
-        function createProductCard(product) {
-            const card = document.createElement('div');
-            card.className = 'product-card';
-            card.innerHTML = `
-                <img src="${product.image}" alt="${product.title}" class="product-image">
-                <div class="product-info">
-                    <div class="product-category">${product.category}</div>
-                    <h3 class="product-title">${product.title}</h3>
-                    <p class="product-description">${product.description}</p>
-                    <div class="product-footer">
-                        <div class="product-price">R$ ${product.price.toFixed(2)}</div>
-                        <button class="add-to-cart-btn">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </div>
+function createProductCard(product) {
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    card.innerHTML = `
+        <img src="${product.imageUrl || '/api/placeholder/300/200'}" alt="${product.name}" class="product-image">
+        <div class="product-info">
+            <div class="product-category">${product.category}</div>
+            <h3 class="product-title">${product.name}</h3>
+            <p class="product-description">${product.description}</p>
+            <div class="product-footer">
+                <div class="product-price">R$ ${product.price.toFixed(2)}</div>
+                <button class="add-to-cart-btn">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    card.addEventListener('click', () => openProductModal(product));
+    return card;
+}
+
+let currentProduct = null;
+
+function openProductModal(product) {
+    currentProduct = product;
+    const modal = document.getElementById('productModal');
+    
+    modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
+    modal.querySelector('.modal-product-title').textContent = product.name;
+    modal.querySelector('.modal-product-description').textContent = product.description;
+    modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
+
+    // Load available toppings from Firebase
+    db.ref('menu/toppings').once('value', snapshot => {
+        const toppings = snapshot.val() || {};
+        const toppingsGrid = modal.querySelector('.toppings-grid');
+        toppingsGrid.innerHTML = Object.values(toppings)
+            .filter(topping => topping.available)
+            .map(topping => `
+                <div class="topping-item" data-topping="${topping.name}">
+                    ${topping.name}
+                    ${topping.price > 0 ? `<span class="topping-price">+R$ ${topping.price.toFixed(2)}</span>` : ''}
                 </div>
-            `;
-            
-            card.addEventListener('click', () => openProductModal(product));
-            return card;
-        }
-
-        function openProductModal(product) {
-            const modal = document.getElementById('productModal');
-            
-            // Update modal content with product details
-            modal.querySelector('.modal-product-image').src = product.image;
-            modal.querySelector('.modal-product-title').textContent = product.title;
-            modal.querySelector('.modal-product-description').textContent = product.description;
-            modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
-
-            // Update toppings
-            const toppingsGrid = modal.querySelector('.toppings-grid');
-            toppingsGrid.innerHTML = product.toppings.options.map(topping => `
-                <div class="topping-item" data-topping="${topping}">${topping}</div>
             `).join('');
 
-            // Setup topping selection
-            const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
-            toppingItems.forEach(item => {
-                item.addEventListener('click', () => {
-                    item.classList.toggle('selected');
-                    validateToppingsSelection(product.toppings.min, product.toppings.max);
-                });
+        // Setup topping selection
+        const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
+        toppingItems.forEach(item => {
+            item.addEventListener('click', () => {
+                item.classList.toggle('selected');
+                validateToppingsSelection(product.toppings.min, product.toppings.max);
+                updateTotalPrice(product);
             });
+        });
+    });
 
-            modal.style.display = 'block';
-        }
+    modal.style.display = 'block';
+}
 
-        function validateToppingsSelection(min, max) {
-            const selectedToppings = document.querySelectorAll('.topping-item.selected').length;
-            const addToCartBtn = document.querySelector('.modal-btn.add-to-cart');
-            
-            if (selectedToppings >= min && selectedToppings <= max) {
-                addToCartBtn.disabled = false;
-                addToCartBtn.style.opacity = '1';
-            } else {
-                addToCartBtn.disabled = true;
-                addToCartBtn.style.opacity = '0.5';
-            }
-        }
+function validateToppingsSelection(min, max) {
+    const selectedToppings = document.querySelectorAll('.topping-item.selected').length;
+    const addToCartBtn = document.querySelector('.modal-btn.add-to-cart');
+    
+    if (selectedToppings >= min && selectedToppings <= max) {
+        addToCartBtn.disabled = false;
+        addToCartBtn.style.opacity = '1';
+    } else {
+        addToCartBtn.disabled = true;
+        addToCartBtn.style.opacity = '0.5';
+    }
+}
 
-        function addToCart(product, selectedToppings) {
-            cart.push({
-                ...product,
-                selectedToppings,
-                quantity: 1
-            });
-            updateCartCount();
+function updateTotalPrice(product) {
+    const selectedToppings = document.querySelectorAll('.topping-item.selected');
+    let totalPrice = product.price;
+    
+    selectedToppings.forEach(topping => {
+        const priceText = topping.querySelector('.topping-price')?.textContent;
+        if (priceText) {
+            const extraPrice = parseFloat(priceText.replace(/[^0-9.,]/g, '').replace(',', '.'));
+            totalPrice += extraPrice;
         }
+    });
 
-        function updateCartCount() {
-            const cartCount = document.querySelector('.cart-count');
-            cartCount.textContent = cart.length;
-            cartCount.style.display = cart.length ? 'flex' : 'none';
-        }
+    document.querySelector('.modal-product-price').textContent = `R$ ${totalPrice.toFixed(2)}`;
+}
+
+function addToCart(product, selectedToppings) {
+    cart.push({
+        ...product,
+        selectedToppings,
+        quantity: 1
+    });
+    updateCartCount();
+}
+
+function updateCartCount() {
+    const cartCount = document.querySelector('.cart-count');
+    cartCount.textContent = cart.length;
+    cartCount.style.display = cart.length ? 'flex' : 'none';
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    loadMenuProducts();
+    loadCategories();
+});
     </script>
 </body>
 </html>
