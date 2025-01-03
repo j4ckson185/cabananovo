@@ -1375,27 +1375,26 @@ function openProductModal(product) {
 
 function validateToppingsSelection(min, max) {
     const selectedToppings = document.querySelectorAll('.topping-item.selected').length;
-    const addToCartBtn = document.querySelector('.modal-btn.add-to-cart');
     
     if (selectedToppings < min) {
-        showAlert(`Selecione no mínimo ${min} acompanhamento${min > 1 ? 's' : ''}`);
+        showNotification(`Selecione no mínimo ${min} acompanhamento${min > 1 ? 's' : ''}!`);
         return false;
     }
     
     if (selectedToppings > max) {
-        showAlert(`Selecione no máximo ${max} acompanhamento${max > 1 ? 's' : ''}`);
+        showNotification(`Você pode selecionar no máximo ${max} acompanhamento${max > 1 ? 's' : ''}!`);
         return false;
     }
     
     return true;
 }
 
-function showAlert(message) {
-    const alert = document.createElement('div');
-    alert.className = 'alert';
-    alert.textContent = message;
-    document.body.appendChild(alert);
-    setTimeout(() => alert.remove(), 3000);
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
 }
 
 function updateTotalPrice(product) {
@@ -1423,29 +1422,31 @@ function addToCart(product, selectedToppings) {
 }
 
 function showCartModal() {
-    const cartModal = document.getElementById('cartModal');
-    const cartItems = cartModal.querySelector('.cart-items');
+    const modal = document.getElementById('cartModal');
+    const cartItems = modal.querySelector('.cart-items');
     cartItems.innerHTML = '';
     
     let subtotal = 0;
     cart.forEach((item, index) => {
-        const itemTotal = item.price + calculateToppingsPrice(item.selectedToppings);
-        subtotal += itemTotal;
-        
+        subtotal += item.price;
         cartItems.innerHTML += `
             <div class="cart-item">
-                <h3>${item.name}</h3>
-                <p>Acompanhamentos: ${item.selectedToppings.join(', ')}</p>
-                <p>R$ ${itemTotal.toFixed(2)}</p>
-                <button onclick="removeFromCart(${index})">Remover</button>
+                <div class="cart-item-details">
+                    <h3 class="cart-item-title">${item.name}</h3>
+                    <p class="cart-item-toppings">${item.selectedToppings.join(', ')}</p>
+                </div>
+                <div class="cart-item-price">R$ ${item.price.toFixed(2)}</div>
+                <button class="remove-item" onclick="removeFromCart(${index})">
+                    <i class="fas fa-trash"></i>
+                </button>
             </div>
         `;
     });
-    
+
     const total = subtotal + 3.00; // Taxa de entrega
-    cartModal.querySelector('.subtotal span').textContent = subtotal.toFixed(2);
-    cartModal.querySelector('.total span').textContent = total.toFixed(2);
-    cartModal.style.display = 'block';
+    modal.querySelector('.subtotal span').textContent = subtotal.toFixed(2);
+    modal.querySelector('.total span').textContent = total.toFixed(2);
+    modal.style.display = 'block';
 }
 
 function validateToppingsSelection(min, max) {
@@ -1481,6 +1482,17 @@ function handleCheckout() {
     document.getElementById('customerInfoModal').style.display = 'block';
 }
 
+function calculateToppingsPrice(selectedToppings) {
+    let total = 0;
+    selectedToppings.forEach(topping => {
+        const price = topping.split(' - R$')[1];
+        if (price) {
+            total += parseFloat(price);
+        }
+    });
+    return total;
+}
+
 function handleCustomerInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -1510,6 +1522,7 @@ function updateCartCount() {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+document.querySelector('.cart-icon').addEventListener('click', showCartModal);
    // Firebase listeners
    loadMenuProducts();
    loadCategories();
