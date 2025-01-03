@@ -802,6 +802,11 @@ function createProductCard(product) {
     card.className = 'product-card';
     card.innerHTML = `
         <img src="${product.imageUrl || '/api/placeholder/300/200'}" alt="${product.name}" class="product-image">
+                <img src="${product.imageUrl || '/api/placeholder/300/200'}" alt="${product.name}" class="product-image">
+        <div class="product-info">
+            <div class="product-category">
+                ${getCategoryName(product.category)}
+            </div>
         <div class="product-info">
             <div class="product-category">${product.category}</div>
             <h3 class="product-title">${product.name}</h3>
