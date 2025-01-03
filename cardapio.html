@@ -1389,32 +1389,64 @@ function openProductModal(product) {
         });
     });
 
-    // Load available extras from Firebase
-    db.ref('extras').once('value', snapshot => {
-        const extras = snapshot.val() || {};
-        const extrasGrid = modal.querySelector('.extras-grid');
-        extrasGrid.innerHTML = Object.values(extras)
-            .filter(extra => extra.available)
-            .map(extra => `
-                <div class="extra-item" data-extra="${extra.name}">
-                    ${extra.name}
-                    ${extra.price > 0 ? `<span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>` : ''}
-                </div>
-            `).join('');
+// Load available toppings and extras from Firebase
+Promise.all([
+    db.ref('menu/toppings').once('value'),
+    db.ref('extras').once('value')
+]).then(([toppingsSnapshot, extrasSnapshot]) => {
+    const toppings = toppingsSnapshot.val() || {};
+    const extras = extrasSnapshot.val() || {};
 
+    // Populate toppings grid
+    const toppingsGrid = modal.querySelector('.toppings-grid');
+    toppingsGrid.innerHTML = Object.values(toppings)
+        .filter(topping => topping.available)
+        .map(topping => `
+            <div class="topping-item" data-topping="${topping.name}">
+                ${topping.name}
+                ${topping.price > 0 ? `<span class="topping-price">+R$ ${topping.price.toFixed(2)}</span>` : ''}
+            </div>
+        `).join('');
 
-// Setup extras selection
-const extraItems = extrasGrid.querySelectorAll('.extra-item');
-extraItems.forEach(item => {
-    item.addEventListener('click', () => {
-        item.classList.toggle('selected');
-        updateTotalPrice(product);
+    // Populate extras grid
+    const extrasGrid = modal.querySelector('.extras-grid');
+    extrasGrid.innerHTML = Object.values(extras)
+        .filter(extra => extra.available)
+        .map(extra => `
+            <div class="extra-item" data-extra="${extra.name}">
+                ${extra.name}
+                ${extra.price > 0 ? `<span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>` : ''}
+            </div>
+        `).join('');
+
+    // Setup topping selection
+    const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
+    toppingItems.forEach(item => {
+        item.addEventListener('click', () => {
+            if (item.classList.contains('selected')) {
+                item.classList.remove('selected');
+            } else {
+                const selectedToppings = document.querySelectorAll('.topping-item.selected');
+                if (selectedToppings.length < product.toppings.max) {
+                    item.classList.add('selected');
+                } else {
+                    showNotification(`Você pode selecionar no máximo ${product.toppings.max} acompanhamento${product.toppings.max > 1 ? 's' : ''}`);
+                }
+            }
+            validateToppingsSelection(product.toppings.min, product.toppings.max);
+            updateTotalPrice(product);
+        });
+    });
+
+    // Setup extras selection
+    const extraItems = extrasGrid.querySelectorAll('.extra-item');
+    extraItems.forEach(item => {
+        item.addEventListener('click', () => {
+            item.classList.toggle('selected');
+            updateTotalPrice(product);
+        });
     });
 });
-    });
-
-    modal.style.display = 'block';
-}
     
 function validateToppingsSelection(min, max) {
     const selectedToppings = document.querySelectorAll('.topping-item.selected').length;
