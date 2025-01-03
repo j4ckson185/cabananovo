@@ -885,13 +885,6 @@
             </div>
         </div>
 
-    // Adicione após as outras funções de management
-function showAddExtraForm() {
-    document.getElementById('extraForm').style.display = 'block';
-    document.getElementById('addExtraForm').reset();
-    document.getElementById('editExtraId').value = '';
-}
-
 async function handleExtraSubmit(event) {
     event.preventDefault();
     const formData = new FormData(event.target);
@@ -1140,6 +1133,13 @@ async function uploadImage(file) {
     });
 }
 
+// Adicione após as outras funções de management
+function showAddExtraForm() {
+    document.getElementById('extraForm').style.display = 'block';
+    document.getElementById('addExtraForm').reset();
+    document.getElementById('editExtraId').value = '';
+}
+
        // Schedule Management
        function updateSchedule(day, field, value) {
            const scheduleRef = db.ref(`schedule/${day}`);
@@ -1379,12 +1379,6 @@ async function uploadImage(file) {
            .then(() => showAlert('success', 'Status atualizado com sucesso!'))
            .catch(error => showAlert('error', 'Erro ao atualizar status.'));
        }
-
-        function showAddExtraForm() {
-    document.getElementById('extraForm').style.display = 'block';
-    document.getElementById('addExtraForm').reset();
-    document.getElementById('editExtraId').value = '';
-}
 
         function editExtra(id) {
     db.ref(`extras/${id}`).once('value', snapshot => {
