@@ -40,7 +40,7 @@
             display: flex;
         }
 
-        /* Sidebar */
+        /* Sidebar Styles */
         .sidebar {
             width: 250px;
             background: var(--surface);
@@ -50,6 +50,7 @@
             flex-direction: column;
             position: fixed;
             height: 100vh;
+            z-index: 1000;
         }
 
         .sidebar-header {
@@ -69,6 +70,7 @@
             height: 40px;
             border-radius: 50%;
             overflow: hidden;
+            border: 2px solid var(--accent);
         }
 
         .logo img {
@@ -95,12 +97,14 @@
             display: flex;
             align-items: center;
             gap: 1rem;
+            color: var(--text);
         }
 
         .nav-item:hover,
         .nav-item.active {
             background: var(--glass);
             border-left: 4px solid var(--accent);
+            color: white;
         }
 
         .nav-item i {
@@ -114,6 +118,17 @@
             flex: 1;
             margin-left: 250px;
             padding: 2rem;
+            min-height: 100vh;
+            background: var(--background);
+        }
+
+        .view {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .page-header {
@@ -121,12 +136,15 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--glass-border);
         }
 
         .page-title {
             font-size: 1.8rem;
             font-weight: 600;
             color: white;
+            text-shadow: 0 0 10px rgba(247, 37, 133, 0.3);
         }
 
         /* Cards Grid */
@@ -147,6 +165,7 @@
 
         .stat-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(247, 37, 133, 0.2);
         }
 
         .stat-title {
@@ -168,6 +187,25 @@
             border-radius: 15px;
             padding: 2rem;
             margin-bottom: 2rem;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 1.5rem;
         }
 
         .form-group {
@@ -232,6 +270,7 @@
         .btn-primary:hover {
             background: #d91a6d;
             transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
         }
 
         .btn-secondary {
@@ -250,6 +289,7 @@
             border: 1px solid var(--glass-border);
             border-radius: 15px;
             overflow: hidden;
+            margin-top: 2rem;
         }
 
         .custom-table {
@@ -286,6 +326,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             color: white;
+            margin-right: 0.5rem;
         }
 
         .edit-btn {
@@ -298,27 +339,7 @@
 
         .action-btn:hover {
             transform: scale(1.1);
-        }
-
-        /* Tabs */
-        .tabs {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .tab {
-            padding: 0.8rem 1.5rem;
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .tab.active {
-            background: var(--accent);
-            border-color: var(--accent);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         /* File Upload */
@@ -341,49 +362,14 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            color: var(--text);
         }
 
         .file-upload-label:hover {
             background: rgba(255, 255, 255, 0.2);
         }
 
-        /* Alerts */
-        .alert {
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-
-        .alert-success {
-            background: rgba(76, 175, 80, 0.1);
-            border: 1px solid var(--success);
-            color: var(--success);
-        }
-
-        .alert-error {
-            background: rgba(255, 82, 82, 0.1);
-            border: 1px solid var(--error);
-            color: var(--error);
-        }
-
-        /* Time picker */
-        .time-picker {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .time-input {
-            width: 100px;
-            padding: 0.8rem;
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            border-radius: 8px;
-            color: white;
-            font-size: 1rem;
-        }
-
-        /* Toggle switch */
+        /* Switch Toggle */
         .switch {
             position: relative;
             display: inline-block;
@@ -428,330 +414,525 @@
         input:checked + .slider:before {
             transform: translateX(26px);
         }
+
+        /* Schedule Time Picker */
+        .time-config {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .time-picker {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .time-input {
+            padding: 0.8rem;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: white;
+            width: 120px;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .alert-success {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .alert-error {
+            background: rgba(255, 82, 82, 0.1);
+            border: 1px solid var(--error);
+            color: var(--error);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 200px;
+            }
+            .main-content {
+                margin-left: 200px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+            }
+            .sidebar .nav-item span,
+            .sidebar .admin-title {
+                display: none;
+            }
+            .main-content {
+                margin-left: 70px;
+                padding: 1rem;
+            }
+            .cards-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+            .time-picker {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
     </style>
 </head>
 <body>
     <nav class="sidebar">
         <div class="sidebar-header">
             <div class="logo-container">
-                <div class="logo">
-                    <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Cabana Açaí Logo">
-                </div>
-                <span class="admin-title">PDV Admin</span>
-            </div>
-        </div>
-        <ul class="nav-menu">
-            <li class="nav-item active">
-                <i class="fas fa-home"></i>
-                <span>Dashboard</span>
-            </li>
-            <li class="nav-item">
-                <i class="fas fa-box"></i>
-                <span>Produtos</span>
-            </li>
-            <li class="nav-item">
-                <i class="fas fa-tags"></i>
-                <span>Categorias</span>
-            </li>
-            <li class="nav-item">
-                <i class="fas fa-puzzle-piece"></i>
-                <span>Acompanhamentos</span>
-            </li>
-            <li class="nav-item">
-                <i class="fas fa-clock"></i>
-                <span>Horários</span>
-            </li>
-            <li class="nav-item">
-                <i class="fas fa-star"></i>
-                <span>Fidelidade</span>
-            </li>
-            <li class="nav-item">
-                <i class="fas fa-users"></i>
-                <span>Clientes</span>
-            </li>
-            <li class="nav-item">
-                <i class="fas fa-cog"></i>
-                <span>Configurações</span>
-            </li>
-        </ul>
-    </nav>
-
-    <main class="main-content">
-        <!-- Dashboard -->
-        <div class="page-header">
-            <h1 class="page-title">Dashboard</h1>
-            <button class="btn btn-primary">
-                <i class="fas fa-plus"></i>
-                Novo Produto
-            </button>
-        </div>
-
-        <div class="cards-grid">
-            <div class="stat-card">
-                <h3 class="stat-title">Produtos Cadastrados</h3>
-                <div class="stat-value">42</div>
-            </div>
-            <div class="stat-card">
-                <h3 class="stat-title">Categorias</h3>
-                <div class="stat-value">8</div>
-            </div>
-            <div class="stat-card">
-                <h3 class="stat-title">Acompanhamentos</h3>
-                <div class="stat-value">24</div>
-            </div>
-            <div class="stat-card">
-                <h3 class="stat-title">Clientes Cadastrados</h3>
-                <div class="stat-value">156</div>
-            </div>
-        </div>
-
-        <!-- Product Form -->
-        <div class="form-container">
-            <h2 class="section-title">Adicionar Novo Produto</h2>
-            <form id="productForm">
-                <div class="form-group">
-                    <label class="form-label">Nome do Produto</label>
-                    <input type="text" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Categoria</label>
-                    <select class="form-select" required>
-                        <option value="">Selecione uma categoria</option>
-                        <option value="acai-ninho">Açaí com Ninho</option>
-                        <option value="acai-ovomaltine">Açaí com Ovomaltine</option>
-                        <option value="acai-amendoim">Açaí com Amendoim</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Descrição</label>
-                    <textarea class="form-textarea" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Preço (R$)</label>
-                    <input type="number" step="0.01" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Imagem do Produto</label>
-                    <div class="file-upload">
-                        <label class="file-upload-label">
-                            <i class="fas fa-upload"></i>
-                            Escolher Arquivo
-                            <input type="file" accept="image/*">
-                        </label>
+                    <div class="logo">
+                        <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Cabana Açaí Logo">
                     </div>
+                    <span class="admin-title">PDV Admin</span>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Acompanhamentos</label>
-                    <div class="toppings-config">
-                        <label class="form-label">Mínimo de Acompanhamentos</label>
-                        <input type="number" class="form-input" min="0" required>
-                        <label class="form-label">Máximo de Acompanhamentos</label>
-                        <input type="number" class="form-input" min="0" required>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i>
-                    Salvar Produto
-                </button>
-            </form>
-        </div>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item active" data-view="dashboard">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li class="nav-item" data-view="products">
+                    <i class="fas fa-box"></i>
+                    <span>Produtos</span>
+                </li>
+                <li class="nav-item" data-view="categories">
+                    <i class="fas fa-tags"></i>
+                    <span>Categorias</span>
+                </li>
+                <li class="nav-item" data-view="toppings">
+                    <i class="fas fa-puzzle-piece"></i>
+                    <span>Acompanhamentos</span>
+                </li>
+                <li class="nav-item" data-view="schedule">
+                    <i class="fas fa-clock"></i>
+                    <span>Horários</span>
+                </li>
+                <li class="nav-item" data-view="loyalty">
+                    <i class="fas fa-star"></i>
+                    <span>Fidelidade</span>
+                </li>
+                <li class="nav-item" data-view="customers">
+                    <i class="fas fa-users"></i>
+                    <span>Clientes</span>
+                </li>
+                <li class="nav-item" data-view="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Configurações</span>
+                </li>
+            </ul>
+        </nav>
 
-        <!-- Store Hours -->
-        <div class="form-container">
-            <h2 class="section-title">Horário de Funcionamento</h2>
-            <div class="time-config">
-                <div class="form-group">
-                    <label class="form-label">Segunda a Sexta</label>
-                    <div class="time-picker">
-                        <input type="time" class="time-input" value="10:00">
-                        <span>até</span>
-                        <input type="time" class="time-input" value="22:00">
-                        <label class="switch">
-                            <input type="checkbox" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <div id="dashboardView" class="view">
+                <div class="page-header">
+                    <h1 class="page-title">Dashboard</h1>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Sábado</label>
-                    <div class="time-picker">
-                        <input type="time" class="time-input" value="10:00">
-                        <span>até</span>
-                        <input type="time" class="time-input" value="23:00">
-                        <label class="switch">
-                            <input type="checkbox" checked>
-                            <span class="slider"></span>
-                        </label>
+
+                <div class="cards-grid">
+                    <div class="stat-card">
+                        <h3 class="stat-title">Produtos Cadastrados</h3>
+                        <div class="stat-value" id="productCount">0</div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Domingo</label>
-                    <div class="time-picker">
-                        <input type="time" class="time-input" value="12:00">
-                        <span>até</span>
-                        <input type="time" class="time-input" value="20:00">
-                        <label class="switch">
-                            <input type="checkbox" checked>
-                            <span class="slider"></span>
-                        </label>
+                    <div class="stat-card">
+                        <h3 class="stat-title">Categorias</h3>
+                        <div class="stat-value" id="categoryCount">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3 class="stat-title">Acompanhamentos</h3>
+                        <div class="stat-value" id="toppingsCount">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3 class="stat-title">Clientes Cadastrados</h3>
+                        <div class="stat-value" id="customerCount">0</div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Product List -->
-        <div class="table-container">
-            <table class="custom-table">
-                <thead>
-                    <tr>
-                        <th>Produto</th>
-                        <th>Categoria</th>
-                        <th>Preço</th>
-                        <th>Status</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Açaí com Leite Ninho</td>
-                        <td>Açaí com Ninho</td>
-                        <td>R$ 18,90</td>
-                        <td>
-                            <label class="switch">
-                                <input type="checkbox" checked>
-                                <span class="slider"></span>
-                            </label>
-                        </td>
-                        <td>
-                            <button class="action-btn edit-btn">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="action-btn delete-btn">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </main>
+            <!-- Products View -->
+            <div id="productsView" class="view" style="display: none;">
+                <div class="page-header">
+                    <h1 class="page-title">Gerenciar Produtos</h1>
+                    <button class="btn btn-primary" onclick="showAddProductForm()">
+                        <i class="fas fa-plus"></i>
+                        Novo Produto
+                    </button>
+                </div>
 
-    <script>
-        // Inicialização do Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
-            authDomain: "cabana-8d55e.firebaseapp.com",
-            databaseURL: "https://cabana-8d55e-default-rtdb.firebaseio.com",
-            projectId: "cabana-8d55e",
-            storageBucket: "cabana-8d55e.appspot.com",
-            messagingSenderId: "706144237954",
-            appId: "1:706144237954:web:345c10370972486afc779b",
-            measurementId: "G-96Y337GYT8"
-        };
+                <div class="form-container" id="productForm" style="display: none;">
+                    <h2 class="section-title">Adicionar Novo Produto</h2>
+                    <form id="addProductForm" onsubmit="handleProductSubmit(event)">
+                        <div class="form-group">
+                            <label class="form-label">Nome do Produto</label>
+                            <input type="text" name="name" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Categoria</label>
+                            <select name="category" class="form-select" required id="categorySelect">
+                                <!-- Categories will be loaded dynamically -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Descrição</label>
+                            <textarea name="description" class="form-textarea" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Preço (R$)</label>
+                            <input type="number" name="price" step="0.01" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Imagem do Produto</label>
+                            <div class="file-upload">
+                                <label class="file-upload-label">
+                                    <i class="fas fa-upload"></i>
+                                    Escolher Arquivo
+                                    <input type="file" name="image" accept="image/*" onchange="handleImageSelect(event)">
+                                </label>
+                            </div>
+                            <div id="imagePreview" style="margin-top: 1rem;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Acompanhamentos</label>
+                            <div class="toppings-config">
+                                <label class="form-label">Mínimo</label>
+                                <input type="number" name="minToppings" class="form-input" min="0" required>
+                                <label class="form-label">Máximo</label>
+                                <input type="number" name="maxToppings" class="form-input" min="0" required>
+                            </div>
+                        </div>
+                        <input type="hidden" name="productId" id="editProductId">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Salvar Produto
+                        </button>
+                    </form>
+                </div>
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const storage = firebase.storage();
+                <div class="table-container">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Categoria</th>
+                                <th>Preço</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <!-- Products will be loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-        // Funções de gerenciamento de produtos
-        function addProduct(productData) {
-            return db.ref('products').push(productData);
-        }
+            <!-- Schedule View -->
+            <div id="scheduleView" class="view" style="display: none;">
+                <div class="page-header">
+                    <h1 class="page-title">Horário de Funcionamento</h1>
+                </div>
 
-        function updateProduct(productId, productData) {
-            return db.ref(`products/${productId}`).update(productData);
-        }
+                <div class="form-container">
+                    <div class="time-config">
+                        <div class="form-group" data-day="monday">
+                            <label class="form-label">Segunda-feira</label>
+                            <div class="time-picker">
+                                <input type="time" class="time-input" data-field="open" value="10:00">
+                                <span>até</span>
+                                <input type="time" class="time-input" data-field="close" value="22:00">
+                                <label class="switch">
+                                    <input type="checkbox" class="schedule-switch" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- Repeat for other days -->
+                        <!-- Repeat the same structure for Tuesday through Sunday -->
+                    </div>
+                </div>
+            </div>
+        </main>
 
-        function deleteProduct(productId) {
-            return db.ref(`products/${productId}`).remove();
-        }
-
-        // Funções de gerenciamento de categorias
-        function addCategory(categoryData) {
-            return db.ref('categories').push(categoryData);
-        }
-
-        function updateCategory(categoryId, categoryData) {
-            return db.ref(`categories/${categoryId}`).update(categoryData);
-        }
-
-        function deleteCategory(categoryId) {
-            return db.ref(`categories/${categoryId}`).remove();
-        }
-
-        // Funções de upload de imagem
-        async function uploadProductImage(file) {
-            const storageRef = storage.ref();
-            const imageRef = storageRef.child(`products/${Date.now()}_${file.name}`);
-            await imageRef.put(file);
-            return imageRef.getDownloadURL();
-        }
-
-        // Event Listeners
-        document.getElementById('productForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            const productData = {
-                name: formData.get('name'),
-                category: formData.get('category'),
-                description: formData.get('description'),
-                price: parseFloat(formData.get('price')),
-                toppings: {
-                    min: parseInt(formData.get('minToppings')),
-                    max: parseInt(formData.get('maxToppings'))
-                },
-                status: true,
-                createdAt: firebase.database.ServerValue.TIMESTAMP
+        <script>
+            // Firebase initialization
+            const firebaseConfig = {
+                apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
+                authDomain: "cabana-8d55e.firebaseapp.com",
+                databaseURL: "https://cabana-8d55e-default-rtdb.firebaseio.com",
+                projectId: "cabana-8d55e",
+                storageBucket: "cabana-8d55e.appspot.com",
+                messagingSenderId: "706144237954",
+                appId: "1:706144237954:web:345c10370972486afc779b",
+                measurementId: "G-96Y337GYT8"
             };
 
-            const imageFile = formData.get('image');
-            if (imageFile) {
-                productData.imageUrl = await uploadProductImage(imageFile);
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.database();
+            const storage = firebase.storage();
+
+            // Navigation
+            function showView(viewName) {
+                document.querySelectorAll('.view').forEach(view => view.style.display = 'none');
+                document.getElementById(viewName + 'View').style.display = 'block';
             }
 
-            try {
-                await addProduct(productData);
-                alert('Produto adicionado com sucesso!');
-                e.target.reset();
-            } catch (error) {
-                console.error('Erro ao adicionar produto:', error);
-                alert('Erro ao adicionar produto. Tente novamente.');
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    document.querySelector('.nav-item.active').classList.remove('active');
+                    item.classList.add('active');
+                    showView(item.getAttribute('data-view'));
+                });
+            });
+
+            // Products Management
+            let currentProductId = null;
+            const productForm = document.getElementById('productForm');
+            const addProductForm = document.getElementById('addProductForm');
+
+            function showAddProductForm() {
+                productForm.style.display = 'block';
+                addProductForm.reset();
+                currentProductId = null;
+                document.getElementById('editProductId').value = '';
             }
-        });
 
-        // Inicialização da navegação
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', () => {
-                document.querySelector('.nav-item.active').classList.remove('active');
-                item.classList.add('active');
-                // Adicionar lógica para trocar de página/conteúdo
+            function handleImageSelect(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const preview = document.getElementById('imagePreview');
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        preview.innerHTML = `<img src="${e.target.result}" style="max-width: 200px; border-radius: 8px;">`;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+
+            async function handleProductSubmit(event) {
+                event.preventDefault();
+                const formData = new FormData(event.target);
+                const productData = {
+                    name: formData.get('name'),
+                    category: formData.get('category'),
+                    description: formData.get('description'),
+                    price: parseFloat(formData.get('price')),
+                    toppings: {
+                        min: parseInt(formData.get('minToppings')),
+                        max: parseInt(formData.get('maxToppings'))
+                    },
+                    status: true,
+                    updatedAt: firebase.database.ServerValue.TIMESTAMP
+                };
+
+                try {
+                    const imageFile = formData.get('image');
+                    if (imageFile.size > 0) {
+                        const imageUrl = await uploadImage(imageFile);
+                        productData.imageUrl = imageUrl;
+                    }
+
+                    const productId = currentProductId || db.ref('products').push().key;
+                    await db.ref(`products/${productId}`).update(productData);
+                    
+                    showAlert('success', `Produto ${currentProductId ? 'atualizado' : 'adicionado'} com sucesso!`);
+                    productForm.style.display = 'none';
+                    loadProducts();
+                } catch (error) {
+                    console.error('Error:', error);
+                    showAlert('error', 'Erro ao salvar produto. Tente novamente.');
+                }
+            }
+
+            async function uploadImage(file) {
+                const storageRef = storage.ref();
+                const imageRef = storageRef.child(`products/${Date.now()}_${file.name}`);
+                await imageRef.put(file);
+                return await imageRef.getDownloadURL();
+            }
+
+            function editProduct(productId) {
+                db.ref(`products/${productId}`).once('value', snapshot => {
+                    const product = snapshot.val();
+                    if (product) {
+                        currentProductId = productId;
+                        document.getElementById('editProductId').value = productId;
+                        
+                        const form = document.getElementById('addProductForm');
+                        form.elements['name'].value = product.name;
+                        form.elements['category'].value = product.category;
+                        form.elements['description'].value = product.description;
+                        form.elements['price'].value = product.price;
+                        form.elements['minToppings'].value = product.toppings.min;
+                        form.elements['maxToppings'].value = product.toppings.max;
+
+                        if (product.imageUrl) {
+                            document.getElementById('imagePreview').innerHTML = 
+                                `<img src="${product.imageUrl}" style="max-width: 200px; border-radius: 8px;">`;
+                        }
+
+                        productForm.style.display = 'block';
+                        window.scrollTo({ top: productForm.offsetTop - 20, behavior: 'smooth' });
+                    }
+                });
+            }
+
+            function deleteProduct(productId) {
+                if (confirm('Tem certeza que deseja excluir este produto?')) {
+                    db.ref(`products/${productId}`).remove()
+                        .then(() => showAlert('success', 'Produto excluído com sucesso!'))
+                        .catch(error => showAlert('error', 'Erro ao excluir produto.'));
+                }
+            }
+
+            function updateProductStatus(productId, status) {
+                db.ref(`products/${productId}`).update({ status })
+                    .then(() => showAlert('success', 'Status atualizado com sucesso!'))
+                    .catch(error => showAlert('error', 'Erro ao atualizar status.'));
+            }
+
+            // Schedule Management
+            function updateSchedule(day, field, value) {
+                const scheduleRef = db.ref(`schedule/${day}`);
+                const update = {};
+                update[field] = value;
+                scheduleRef.update(update)
+                    .then(() => showAlert('success', 'Horário atualizado com sucesso!'))
+                    .catch(error => showAlert('error', 'Erro ao atualizar horário.'));
+            }
+
+            document.querySelectorAll('.time-input').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const day = e.target.closest('[data-day]').getAttribute('data-day');
+                    const field = e.target.getAttribute('data-field');
+                    updateSchedule(day, field, e.target.value);
+                });
             });
-        });
 
-        // Inicialização dos switches de horário
-        document.querySelectorAll('.switch input').forEach(switch => {
-            switch.addEventListener('change', () => {
-                // Adicionar lógica para salvar estado do horário
-            });
-        });
-
-        // Carregar dados iniciais
-        async function loadInitialData() {
-            const productsRef = db.ref('products');
-            productsRef.on('value', (snapshot) => {
-                const products = snapshot.val();
-                // Atualizar a tabela de produtos
+            document.querySelectorAll('.schedule-switch').forEach(switchEl => {
+                switchEl.addEventListener('change', (e) => {
+                    const day = e.target.closest('[data-day]').getAttribute('data-day');
+                    updateSchedule(day, 'isOpen', e.target.checked);
+                });
             });
 
-            const categoriesRef = db.ref('categories');
-            categoriesRef.on('value', (snapshot) => {
-                const categories = snapshot.val();
-                // Atualizar o select de categorias
-            });
-        }
+            // Utility Functions
+            function showAlert(type, message) {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type}`;
+                alertDiv.innerHTML = `
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                    ${message}
+                `;
+                document.querySelector('.main-content').insertAdjacentElement('afterbegin', alertDiv);
+                setTimeout(() => alertDiv.remove(), 3000);
+            }
 
-        loadInitialData();
-    </script>
-</body>
+            // Load Initial Data
+            function loadProducts() {
+                const tbody = document.getElementById('productsTableBody');
+                db.ref('products').on('value', snapshot => {
+                    tbody.innerHTML = '';
+                    const products = snapshot.val();
+                    if (products) {
+                        Object.entries(products).forEach(([id, product]) => {
+                            tbody.innerHTML += `
+                                <tr>
+                                    <td>${product.name}</td>
+                                    <td>${product.category}</td>
+                                    <td>R$ ${product.price.toFixed(2)}</td>
+                                    <td>
+                                        <label class="switch">
+                                            <input type="checkbox" ${product.status ? 'checked' : ''}
+                                                onchange="updateProductStatus('${id}', this.checked)">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </td>
+                                    <td>
+                                        <button class="action-btn edit-btn" onclick="editProduct('${id}')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="action-btn delete-btn" onclick="deleteProduct('${id}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        document.getElementById('productCount').textContent = Object.keys(products).length;
+                    }
+                });
+            }
+
+            function loadCategories() {
+                const select = document.getElementById('categorySelect');
+                db.ref('categories').on('value', snapshot => {
+                    const categories = snapshot.val();
+                    if (categories) {
+                        select.innerHTML = '<option value="">Selecione uma categoria</option>';
+                        Object.values(categories).forEach(category => {
+                            select.innerHTML += `<option value="${category.id}">${category.name}</option>`;
+                        });
+                        document.getElementById('categoryCount').textContent = Object.keys(categories).length;
+                    }
+                });
+            }
+
+            function loadSchedule() {
+                db.ref('schedule').on('value', snapshot => {
+                    const schedule = snapshot.val();
+                    if (schedule) {
+                        Object.entries(schedule).forEach(([day, data]) => {
+                            const dayElement = document.querySelector(`[data-day="${day}"]`);
+                            if (dayElement) {
+                                dayElement.querySelector('[data-field="open"]').value = data.open;
+                                dayElement.querySelector('[data-field="close"]').value = data.close;
+                                dayElement.querySelector('.schedule-switch').checked = data.isOpen;
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Initialize
+            document.addEventListener('DOMContentLoaded', () => {
+                loadProducts();
+                loadCategories();
+                loadSchedule();
+            });
+
+            // Error Handling
+            function handleError(error) {
+                console.error('Error:', error);
+                showAlert('error', 'Ocorreu um erro. Por favor, tente novamente.');
+            }
+
+            window.onerror = function(msg, url, line) {
+                console.error('JavaScript error:', msg, 'at', url, ':', line);
+                showAlert('error', 'Ocorreu um erro na aplicação.');
+                return false;
+            };
+        </script>
+    </body>
 </html>
