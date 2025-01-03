@@ -1,60 +1,812 @@
-<!-- cardapio.html - Cardápio Digital -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cabana Açaí - Cardápio</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="scripts.js" defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cabana Açaí - Menu Premium</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #7209B7;
+            --secondary: #3A0CA3;
+            --accent: #F72585;
+            --background: #10002B;
+            --surface: #240046;
+            --text: #E0AAFF;
+            --gradient: linear-gradient(135deg, #F72585 0%, #7209B7 50%, #3A0CA3 100%);
+            --glass: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 0% 0%, rgba(247, 37, 133, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 100% 0%, rgba(114, 9, 183, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 50% 100%, rgba(58, 12, 163, 0.15) 0%, transparent 50%);
+            animation: backgroundFlow 15s ease infinite alternate;
+        }
+
+        @keyframes backgroundFlow {
+            0% { transform: scale(1) rotate(0deg); }
+            100% { transform: scale(1.1) rotate(5deg); }
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(16, 0, 43, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            z-index: 1000;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--accent);
+            animation: logoPulse 2s infinite ease-in-out;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .store-name {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .cart-icon {
+            position: relative;
+            font-size: 2rem;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .cart-icon:hover {
+            transform: scale(1.1);
+            color: var(--accent);
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: var(--accent);
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 2px solid var(--glass-border);
+            animation: cartBounce 1s infinite;
+        }
+
+        @keyframes cartBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .categories {
+            margin-top: 100px;
+            padding: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+            background: rgba(36, 0, 70, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .categories::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-btn {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: var(--text);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            min-width: max-content;
+        }
+
+        .category-btn i {
+            font-size: 1.2rem;
+        }
+
+        .category-btn:hover,
+        .category-btn.active {
+            background: var(--gradient);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
+            color: white;
+        }
+
+        .search-container {
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .search-bar {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1.2rem 3.5rem;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            color: var(--text);
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(247, 37, 133, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text);
+            font-size: 1.3rem;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .product-card {
+            background: rgba(36, 0, 70, 0.7);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--gradient);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(114, 9, 183, 0.3);
+        }
+
+        .product-card:hover::before {
+            opacity: 0.1;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .product-card:hover .product-image {
+            transform: scale(1.1);
+        }
+
+        .product-info {
+            padding: 1.5rem;
+        }
+
+        .product-category {
+            color: var(--accent);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .product-description {
+            color: var(--text);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .product-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .product-price {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .add-to-cart-btn {
+            background: var(--gradient);
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-to-cart-btn:hover {
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 0 20px rgba(247, 37, 133, 0.4);
+        }
+
+        .add-to-cart-btn i {
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        /* Product Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(16, 0, 43, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            width: 90%;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 2.5rem;
+            position: relative;
+            animation: modalSlide 0.3s ease;
+        }
+
+        @keyframes modalSlide {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 0;
+            top: 0;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .close-modal:hover {
+            color: var(--accent);
+            transform: rotate(90deg);
+        }
+
+        .modal-product-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .modal-product-info {
+            margin-bottom: 2rem;
+        }
+
+        .modal-product-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .modal-product-description {
+            color: var(--text);
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-product-price {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .toppings-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .toppings-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 1.5rem;
+        }
+
+        .toppings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .topping-item {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .topping-item:hover {
+            background: var(--gradient);
+            transform: translateY(-3px);
+        }
+
+        .topping-item.selected {
+            background: var(--gradient);
+            box-shadow: 0 0 15px rgba(247, 37, 133, 0.3);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 1.2rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-to-cart {
+            background: var(--gradient);
+            color: white;
+        }
+
+        .add-to-cart:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
+        }
+
+        .continue-shopping {
+            background: var(--glass);
+            color: var(--text);
+            border: 1px solid var(--glass-border);
+        }
+
+        .continue-shopping:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .store-name {
+                font-size: 1.8rem;
+            }
+
+            .logo {
+                width: 50px;
+                height: 50px;
+            }
+
+            .category-btn {
+                padding: 0.8rem 1.5rem;
+                font-size: 0.9rem;
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                padding: 1rem;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 20px auto;
+                padding: 1.5rem;
+            }
+
+            .modal-buttons {
+                flex-direction: column;
+            }
+
+            .modal-product-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .store-name {
+                font-size: 1.4rem;
+            }
+
+            .search-input {
+                padding: 1rem 3rem;
+                font-size: 1rem;
+            }
+
+            .product-card {
+                margin: 0 1rem;
+            }
+
+            .modal-content {
+                padding: 1rem;
+            }
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <div class="logo">
-      <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Logo Cabana Açaí">
+    <div class="background-animation"></div>
+    
+    <header>
+        <div class="header-content">
+            <div class="logo-container">
+                <div class="logo">
+                    <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Cabana Açaí Logo">
+                </div>
+                <h1 class="store-name">Cabana Açaí</h1>
+            </div>
+            <div class="cart-icon">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count">0</span>
+            </div>
+        </div>
+    </header>
+
+    <nav class="categories">
+        <button class="category-btn active">
+            <i class="fas fa-star"></i>
+            Todos
+        </button>
+        <button class="category-btn">
+            <i class="fas fa-ice-cream"></i>
+            Apenas Cremes
+        </button>
+        <button class="category-btn">
+            <i class="fas fa-cloud"></i>
+            Açaí com Ninho
+        </button>
+        <button class="category-btn">
+            <i class="fas fa-cookie"></i>
+            Açaí com Ovomaltine
+        </button>
+        <button class="category-btn">
+            <i class="fas fa-seedling"></i>
+            Açaí com Amendoim
+        </button>
+        <button class="category-btn">
+            <i class="fas fa-leaf"></i>
+            Açaí Puro
+        </button>
+        <button class="category-btn">
+            <i class="fas fa-paint-brush"></i>
+            Monte seu Açaí
+        </button>
+    </nav>
+
+    <div class="search-container">
+        <div class="search-bar">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" placeholder="O que você quer comer hoje?" id="searchInput">
+        </div>
     </div>
-    <h1>Cabana Açaí</h1>
-    <div class="cart">
-      <span id="cart-count">0</span>
-      <img src="cart-icon.png" alt="Carrinho de Compras">
+
+    <div class="products-grid" id="productsGrid">
+        <!-- Sample Product Card -->
+        <div class="product-card">
+            <img src="/api/placeholder/300/200" alt="Açaí com Ninho" class="product-image">
+            <div class="product-info">
+                <div class="product-category">Açaí com Ninho</div>
+                <h3 class="product-title">Açaí com Leite Ninho</h3>
+                <p class="product-description">Açaí cremoso coberto com leite ninho em pó e frutas selecionadas.</p>
+                <div class="product-footer">
+                    <div class="product-price">R$ 18,90</div>
+                    <button class="add-to-cart-btn">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- More product cards will be added dynamically -->
     </div>
-  </header>
 
-  <nav class="categories">
-    <button onclick="filterCategory('all')">Todos</button>
-    <button onclick="filterCategory('cremes')">Apenas Cremes</button>
-    <button onclick="filterCategory('ninho')">Açaí com Creme de Ninho</button>
-    <button onclick="filterCategory('ovomaltine')">Açaí com Creme de Ovomaltine</button>
-    <button onclick="filterCategory('amendoim')">Açaí com Creme de Amendoim</button>
-    <button onclick="filterCategory('puro')">Açaí Puro</button>
-    <button onclick="filterCategory('monte')">Monte seu Açaí</button>
-  </nav>
+    <!-- Product Modal -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="close-modal">&times;</button>
+            </div>
+            <img src="/api/placeholder/800/400" alt="" class="modal-product-image">
+            <div class="modal-product-info">
+                <h2 class="modal-product-title">Açaí com Leite Ninho</h2>
+                <p class="modal-product-description">
+                    Açaí cremoso coberto com leite ninho em pó e frutas selecionadas da melhor qualidade.
+                </p>
+                <div class="modal-product-price">R$ 18,90</div>
+            </div>
+            
+            <div class="toppings-section">
+                <h3 class="toppings-title">Escolha seus Acompanhamentos</h3>
+                <div class="toppings-grid">
+                    <div class="topping-item">Granola</div>
+                    <div class="topping-item">Leite em Pó</div>
+                    <div class="topping-item">Morango</div>
+                    <div class="topping-item">Banana</div>
+                    <div class="topping-item">Kiwi</div>
+                    <div class="topping-item">Paçoca</div>
+                </div>
+            </div>
 
-  <div class="search-bar">
-    <input type="text" id="search" placeholder="O que você quer comer hoje?" oninput="searchProducts()">
-  </div>
-
-  <main id="product-list" class="products">
-    <!-- Produtos serão carregados aqui dinamicamente pelo JS -->
-  </main>
-
-  <!-- Popup do Produto -->
-  <div id="product-popup" class="popup hidden">
-    <div class="popup-content">
-      <span class="close" onclick="closePopup()">&times;</span>
-      <div id="popup-details"></div>
-      <button id="add-to-cart">Adicionar ao Carrinho</button>
+            <div class="modal-buttons">
+                <button class="modal-btn add-to-cart">Adicionar ao Carrinho</button>
+                <button class="modal-btn continue-shopping">Continuar Comprando</button>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <!-- Popup do Carrinho -->
-  <div id="cart-popup" class="popup hidden">
-    <div class="popup-content">
-      <span class="close" onclick="closeCartPopup()">&times;</span>
-      <div id="cart-details"></div>
-      <button onclick="checkout()">Finalizar Pedido</button>
-      <button onclick="closeCartPopup()">Continuar Comprando</button>
-    </div>
-  </div>
+    <script>
+        // Sample data structure
+        const products = [
+            {
+                id: 1,
+                category: 'Açaí com Ninho',
+                title: 'Açaí com Leite Ninho',
+                description: 'Açaí cremoso coberto com leite ninho em pó e frutas selecionadas.',
+                price: 18.90,
+                image: '/api/placeholder/300/200',
+                toppings: {
+                    min: 1,
+                    max: 3,
+                    options: ['Granola', 'Leite em Pó', 'Morango', 'Banana', 'Kiwi', 'Paçoca']
+                }
+            },
+            // Add more products here
+        ];
+
+        let cart = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            displayProducts(products);
+        });
+
+        function setupEventListeners() {
+            // Category buttons
+            document.querySelectorAll('.category-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    document.querySelector('.category-btn.active').classList.remove('active');
+                    button.classList.add('active');
+                    
+                    const category = button.textContent.trim();
+                    const filteredProducts = category === 'Todos' 
+                        ? products 
+                        : products.filter(p => p.category === category);
+                    displayProducts(filteredProducts);
+                });
+            });
+
+            // Search functionality
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredProducts = products.filter(product => 
+                    product.title.toLowerCase().includes(searchTerm) ||
+                    product.description.toLowerCase().includes(searchTerm)
+                );
+                displayProducts(filteredProducts);
+            });
+
+            // Modal close buttons
+            document.querySelectorAll('.close-modal').forEach(button => {
+                button.addEventListener('click', () => {
+                    document.querySelectorAll('.modal').forEach(modal => {
+                        modal.style.display = 'none';
+                    });
+                });
+            });
+        }
+
+        function displayProducts(productsToShow) {
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = '';
+
+            productsToShow.forEach(product => {
+                const card = createProductCard(product);
+                grid.appendChild(card);
+            });
+        }
+
+        function createProductCard(product) {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.innerHTML = `
+                <img src="${product.image}" alt="${product.title}" class="product-image">
+                <div class="product-info">
+                    <div class="product-category">${product.category}</div>
+                    <h3 class="product-title">${product.title}</h3>
+                    <p class="product-description">${product.description}</p>
+                    <div class="product-footer">
+                        <div class="product-price">R$ ${product.price.toFixed(2)}</div>
+                        <button class="add-to-cart-btn">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            card.addEventListener('click', () => openProductModal(product));
+            return card;
+        }
+
+        function openProductModal(product) {
+            const modal = document.getElementById('productModal');
+            
+            // Update modal content with product details
+            modal.querySelector('.modal-product-image').src = product.image;
+            modal.querySelector('.modal-product-title').textContent = product.title;
+            modal.querySelector('.modal-product-description').textContent = product.description;
+            modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
+
+            // Update toppings
+            const toppingsGrid = modal.querySelector('.toppings-grid');
+            toppingsGrid.innerHTML = product.toppings.options.map(topping => `
+                <div class="topping-item" data-topping="${topping}">${topping}</div>
+            `).join('');
+
+            // Setup topping selection
+            const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
+            toppingItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    item.classList.toggle('selected');
+                    validateToppingsSelection(product.toppings.min, product.toppings.max);
+                });
+            });
+
+            modal.style.display = 'block';
+        }
+
+        function validateToppingsSelection(min, max) {
+            const selectedToppings = document.querySelectorAll('.topping-item.selected').length;
+            const addToCartBtn = document.querySelector('.modal-btn.add-to-cart');
+            
+            if (selectedToppings >= min && selectedToppings <= max) {
+                addToCartBtn.disabled = false;
+                addToCartBtn.style.opacity = '1';
+            } else {
+                addToCartBtn.disabled = true;
+                addToCartBtn.style.opacity = '0.5';
+            }
+        }
+
+        function addToCart(product, selectedToppings) {
+            cart.push({
+                ...product,
+                selectedToppings,
+                quantity: 1
+            });
+            updateCartCount();
+        }
+
+        function updateCartCount() {
+            const cartCount = document.querySelector('.cart-count');
+            cartCount.textContent = cart.length;
+            cartCount.style.display = cart.length ? 'flex' : 'none';
+        }
+    </script>
 </body>
 </html>
