@@ -787,6 +787,42 @@ function setupEventListeners() {
     });
 }
 
+    function createProductCard(product) {
+   const card = document.createElement('div');
+   card.className = 'product-card';
+   
+   db.ref(`categories/${product.category}`).once('value')
+       .then(snapshot => {
+           const category = snapshot.val();
+           const categoryName = category ? category.name : 'Categoria';
+           
+           card.innerHTML = `
+               <img src="${product.imageUrl || '/api/placeholder/300/200'}" alt="${product.name}" class="product-image">
+               <div class="product-info">
+                   <div class="product-category">${categoryName}</div>
+                   <h3 class="product-title">${product.name}</h3>
+                   <p class="product-description">${product.description}</p>
+                   <div class="product-footer">
+                       <div class="product-price">R$ ${product.price.toFixed(2)}</div>
+                       <button class="add-to-cart-btn">
+                           <i class="fas fa-plus"></i>
+                       </button>
+                   </div>
+               </div>
+           `;
+           
+           card.addEventListener('click', () => openProductModal(product));
+       });
+   
+   return card;
+}
+
+async function getCategoryName(categoryId) {
+   const snapshot = await db.ref(`categories/${categoryId}`).once('value');
+   const category = snapshot.val();
+   return category ? category.name : 'Categoria';
+}
+
 function displayProducts(productsToShow) {
     const grid = document.getElementById('productsGrid');
     grid.innerHTML = '';
@@ -796,44 +832,8 @@ function displayProducts(productsToShow) {
         grid.appendChild(card);
     });
 }
-
-function createProductCard(product) {
-    const card = document.createElement('div');
-    card.className = 'product-card';
-    card.innerHTML = `
-        <img src="${product.imageUrl || '/api/placeholder/300/200'}" alt="${product.name}" class="product-image">
-                <img src="${product.imageUrl || '/api/placeholder/300/200'}" alt="${product.name}" class="product-image">
-        <div class="product-info">
-            <div class="product-category">
-                ${getCategoryName(product.category)}
-            </div>
-        <div class="product-info">
-            <div class="product-category">${product.category}</div>
-            <h3 class="product-title">${product.name}</h3>
-            <p class="product-description">${product.description}</p>
-            <div class="product-footer">
-                <div class="product-price">R$ ${product.price.toFixed(2)}</div>
-                <button class="add-to-cart-btn">
-                    <i class="fas fa-plus"></i>
-                </button>
-            </div>
-        </div>
-    `;
     
-    card.addEventListener('click', () => openProductModal(product));
-    return card;
-}
-
 let currentProduct = null;
-
-function getCategoryName(categoryId) {
-    return new Promise((resolve) => {
-        db.ref(`categories/${categoryId}`).once('value', snapshot => {
-            const category = snapshot.val();
-            resolve(category ? category.name : 'Categoria');
-        });
-    });
-}
 
 function openProductModal(product) {
     currentProduct = product;
