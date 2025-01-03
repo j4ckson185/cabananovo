@@ -902,15 +902,6 @@
             </div>
         </div>
 
-function updateExtraStatus(id, available) {
-    Promise.all([
-        db.ref(`extras/${id}`).update({ available }),
-        db.ref(`menu/extras/${id}`).update({ available })
-    ])
-    .then(() => showAlert('success', 'Status atualizado com sucesso!'))
-    .catch(error => showAlert('error', 'Erro ao atualizar status.'));
-}
-
         <!-- Other views can be added here -->
         <div id="loyaltyView" class="view" style="display: none;">
             <div class="page-header">
@@ -1156,6 +1147,16 @@ function showAddExtraForm() {
     document.getElementById('addExtraForm').reset();
     document.getElementById('editExtraId').value = '';
 }
+        
+    function updateExtraStatus(id, available) {
+    Promise.all([
+        db.ref(`extras/${id}`).update({ available }),
+        db.ref(`menu/extras/${id}`).update({ available })
+    ])
+    .then(() => showAlert('success', 'Status atualizado com sucesso!'))
+    .catch(error => showAlert('error', 'Erro ao atualizar status.'));
+}
+
 
        // Schedule Management
        function updateSchedule(day, field, value) {
