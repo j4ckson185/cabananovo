@@ -1520,6 +1520,55 @@ function updateCartCount() {
     cartCount.style.display = cart.length ? 'flex' : 'none';
 }
 
+function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
+    let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
+    
+    // Informações do cliente
+    message += `*Cliente:* ${customerInfo.fullName}\n`;
+    message += `*WhatsApp:* ${customerInfo.whatsapp}\n\n`;
+    
+    // Endereço
+    message += `*📍 Endereço de Entrega:*\n`;
+    message += `${deliveryInfo.address}\n`;
+    if (deliveryInfo.complement) message += `Complemento: ${deliveryInfo.complement}\n`;
+    if (deliveryInfo.apt) message += `Apto/Bloco: ${deliveryInfo.apt}\n`;
+    message += `Bairro: ${deliveryInfo.neighborhood}\n`;
+    message += `CEP: ${deliveryInfo.zipcode}\n\n`;
+    
+    // Itens do pedido
+    message += `*🍨 Itens do Pedido:*\n`;
+    let subtotal = 0;
+    cart.forEach(item => {
+        message += `\n- ${item.name}\n`;
+        message += `  Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
+        message += `  R$ ${item.price.toFixed(2)}\n`;
+        subtotal += item.price;
+    });
+    
+    // Totais
+    message += `\n*Subtotal:* R$ ${subtotal.toFixed(2)}`;
+    message += `\n*Taxa de Entrega:* R$ 3,00`;
+    message += `\n*Total:* R$ ${(subtotal + 3).toFixed(2)}\n\n`;
+    
+    // Pagamento
+    message += `*💳 Forma de Pagamento:* ${deliveryInfo.payment.toUpperCase()}`;
+    if (deliveryInfo.payment === 'money' && deliveryInfo.change) {
+        message += `\nTroco para: R$ ${deliveryInfo.change}`;
+    }
+    
+    return message;
+}
+
+document.getElementById('deliveryInfoForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const deliveryInfo = Object.fromEntries(formData);
+    
+    const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
+    const whatsappNumber = "5584987673202";
+    window.location.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+});
+    
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
 document.querySelector('.cart-icon').addEventListener('click', showCartModal);
