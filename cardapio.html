@@ -826,6 +826,15 @@ function createProductCard(product) {
 
 let currentProduct = null;
 
+function getCategoryName(categoryId) {
+    return new Promise((resolve) => {
+        db.ref(`categories/${categoryId}`).once('value', snapshot => {
+            const category = snapshot.val();
+            resolve(category ? category.name : 'Categoria');
+        });
+    });
+}
+
 function openProductModal(product) {
     currentProduct = product;
     const modal = document.getElementById('productModal');
