@@ -1380,6 +1380,39 @@ async function uploadImage(file) {
            .catch(error => showAlert('error', 'Erro ao atualizar status.'));
        }
 
+        function showAddExtraForm() {
+    document.getElementById('extraForm').style.display = 'block';
+    document.getElementById('addExtraForm').reset();
+    document.getElementById('editExtraId').value = '';
+}
+
+        function editExtra(id) {
+    db.ref(`extras/${id}`).once('value', snapshot => {
+        const extra = snapshot.val();
+        if (extra) {
+            document.getElementById('editExtraId').value = id;
+            const form = document.getElementById('addExtraForm');
+            form.elements['name'].value = extra.name;
+            form.elements['price'].value = extra.price;
+            form.elements['available'].checked = extra.available;
+
+            document.getElementById('extraForm').style.display = 'block';
+            form.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+}
+
+function deleteExtra(id) {
+    if (confirm('Tem certeza que deseja excluir este item extra?')) {
+        Promise.all([
+            db.ref(`extras/${id}`).remove(),
+            db.ref(`menu/extras/${id}`).remove()
+        ])
+        .then(() => showAlert('success', 'Item extra excluído com sucesso!'))
+        .catch(error => showAlert('error', 'Erro ao excluir item extra.'));
+    }
+}
+
        // Utility Functions
        function showAlert(type, message) {
            const alertDiv = document.createElement('div');
