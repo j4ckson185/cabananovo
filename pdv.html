@@ -783,6 +783,49 @@
         </button>
     </div>
 
+    <div class="form-container" id="extraForm" style="display: none;">
+        <h2 class="section-title">Adicionar Novo Item Extra</h2>
+        <form id="addExtraForm" onsubmit="handleExtraSubmit(event)">
+            <div class="form-group">
+                <label class="form-label">Nome do Item</label>
+                <input type="text" name="name" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Preço (R$)</label>
+                <input type="number" name="price" step="0.01" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Disponível</label>
+                <label class="switch">
+                    <input type="checkbox" name="available" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <input type="hidden" name="extraId" id="editExtraId">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i>
+                Salvar Item Extra
+            </button>
+        </form>
+    </div>
+    
+    <div class="table-container">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Preço</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="extrasTableBody">
+                <!-- Itens extras serão carregados aqui -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
         <!-- Schedule View -->
         <div id="scheduleView" class="view" style="display: none;">
             <div class="page-header">
@@ -1101,7 +1144,7 @@ async function uploadImage(file) {
            }
        }
 
-        function loadExtras() {
+function loadExtras() {
     db.ref('extras').on('value', snapshot => {
         const tbody = document.getElementById('extrasTableBody');
         tbody.innerHTML = '';
