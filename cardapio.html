@@ -1636,6 +1636,10 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     cart.forEach(item => {
         message += `\n- ${item.name}\n`;
         message += `  Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
+        // Add extras to the message if any are selected
+        if (item.selectedExtras && item.selectedExtras.length > 0) {
+            message += `  Extras: ${item.selectedExtras.join(', ')}\n`;
+        }
         message += `  R$ ${item.price.toFixed(2)}\n`;
         subtotal += item.price;
     });
@@ -1704,6 +1708,19 @@ document.querySelector('.cart-icon').addEventListener('click', showCartModal);
        });
    });
 
+// Continue shopping buttons
+document.querySelectorAll('.continue-shopping').forEach(button => {
+    button.addEventListener('click', () => {
+        // Close all modals
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.style.display = 'none';
+        });
+        
+        // Scroll to top of the page
+        window.scrollTo(0, 0);
+    });
+});
+    
    // Cart
    document.querySelector('.cart-icon').addEventListener('click', showCartModal);
    document.querySelector('.checkout').addEventListener('click', handleCheckout);
