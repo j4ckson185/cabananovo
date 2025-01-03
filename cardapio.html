@@ -1353,9 +1353,15 @@ function openProductModal(product) {
     modal.querySelector('.modal-product-description').textContent = product.description;
     modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
 
-    // Load available toppings from Firebase
-    db.ref('menu/toppings').once('value', snapshot => {
-        const toppings = snapshot.val() || {};
+    // Load available toppings and extras from Firebase
+    Promise.all([
+        db.ref('menu/toppings').once('value'),
+        db.ref('extras').once('value')
+    ]).then(([toppingsSnapshot, extrasSnapshot]) => {
+        const toppings = toppingsSnapshot.val() || {};
+        const extras = extrasSnapshot.val() || {};
+
+        // Populate toppings grid
         const toppingsGrid = modal.querySelector('.toppings-grid');
         toppingsGrid.innerHTML = Object.values(toppings)
             .filter(topping => topping.available)
@@ -1366,16 +1372,24 @@ function openProductModal(product) {
                 </div>
             `).join('');
 
+        // Populate extras grid
+        const extrasGrid = modal.querySelector('.extras-grid');
+        extrasGrid.innerHTML = Object.values(extras)
+            .filter(extra => extra.available)
+            .map(extra => `
+                <div class="extra-item" data-extra="${extra.name}">
+                    ${extra.name}
+                    ${extra.price > 0 ? `<span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>` : ''}
+                </div>
+            `).join('');
+
         // Setup topping selection
         const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
         toppingItems.forEach(item => {
             item.addEventListener('click', () => {
-                // Se já está selecionado, deseleciona
                 if (item.classList.contains('selected')) {
                     item.classList.remove('selected');
-                } 
-                // Se não está selecionado, verifica o limite
-                else {
+                } else {
                     const selectedToppings = document.querySelectorAll('.topping-item.selected');
                     if (selectedToppings.length < product.toppings.max) {
                         item.classList.add('selected');
@@ -1387,66 +1401,19 @@ function openProductModal(product) {
                 updateTotalPrice(product);
             });
         });
-    });
 
-// Load available toppings and extras from Firebase
-Promise.all([
-    db.ref('menu/toppings').once('value'),
-    db.ref('extras').once('value')
-]).then(([toppingsSnapshot, extrasSnapshot]) => {
-    const toppings = toppingsSnapshot.val() || {};
-    const extras = extrasSnapshot.val() || {};
-
-    // Populate toppings grid
-    const toppingsGrid = modal.querySelector('.toppings-grid');
-    toppingsGrid.innerHTML = Object.values(toppings)
-        .filter(topping => topping.available)
-        .map(topping => `
-            <div class="topping-item" data-topping="${topping.name}">
-                ${topping.name}
-                ${topping.price > 0 ? `<span class="topping-price">+R$ ${topping.price.toFixed(2)}</span>` : ''}
-            </div>
-        `).join('');
-
-    // Populate extras grid
-    const extrasGrid = modal.querySelector('.extras-grid');
-    extrasGrid.innerHTML = Object.values(extras)
-        .filter(extra => extra.available)
-        .map(extra => `
-            <div class="extra-item" data-extra="${extra.name}">
-                ${extra.name}
-                ${extra.price > 0 ? `<span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>` : ''}
-            </div>
-        `).join('');
-
-    // Setup topping selection
-    const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
-    toppingItems.forEach(item => {
-        item.addEventListener('click', () => {
-            if (item.classList.contains('selected')) {
-                item.classList.remove('selected');
-            } else {
-                const selectedToppings = document.querySelectorAll('.topping-item.selected');
-                if (selectedToppings.length < product.toppings.max) {
-                    item.classList.add('selected');
-                } else {
-                    showNotification(`Você pode selecionar no máximo ${product.toppings.max} acompanhamento${product.toppings.max > 1 ? 's' : ''}`);
-                }
-            }
-            validateToppingsSelection(product.toppings.min, product.toppings.max);
-            updateTotalPrice(product);
+        // Setup extras selection
+        const extraItems = extrasGrid.querySelectorAll('.extra-item');
+        extraItems.forEach(item => {
+            item.addEventListener('click', () => {
+                item.classList.toggle('selected');
+                updateTotalPrice(product);
+            });
         });
     });
 
-    // Setup extras selection
-    const extraItems = extrasGrid.querySelectorAll('.extra-item');
-    extraItems.forEach(item => {
-        item.addEventListener('click', () => {
-            item.classList.toggle('selected');
-            updateTotalPrice(product);
-        });
-    });
-});
+    modal.style.display = 'block';
+}
         
 function validateToppingsSelection(min, max) {
     const selectedToppings = document.querySelectorAll('.topping-item.selected').length;
@@ -1474,6 +1441,7 @@ function showNotification(message) {
 
 function updateTotalPrice(product) {
     const selectedToppings = document.querySelectorAll('.topping-item.selected');
+    const selectedExtras = document.querySelectorAll('.extra-item.selected');
     let totalPrice = product.price;
     
     selectedToppings.forEach(topping => {
@@ -1484,18 +1452,29 @@ function updateTotalPrice(product) {
         }
     });
 
+    selectedExtras.forEach(extra => {
+        const priceText = extra.querySelector('.extra-price')?.textContent;
+        if (priceText) {
+            const extraPrice = parseFloat(priceText.replace(/[^0-9.,]/g, '').replace(',', '.'));
+            totalPrice += extraPrice;
+        }
+    });
+
     document.querySelector('.modal-product-price').textContent = `R$ ${totalPrice.toFixed(2)}`;
 }
 
 function addToCart(product, selectedToppings) {
+    const selectedExtras = Array.from(document.querySelectorAll('.extra-item.selected'))
+        .map(item => item.textContent.trim());
+
     cart.push({
         ...product,
         selectedToppings,
+        selectedExtras,
         quantity: 1
     });
     updateCartCount();
 }
-
 function showCartModal() {
     const modal = document.getElementById('cartModal');
     const cartItems = modal.querySelector('.cart-items');
