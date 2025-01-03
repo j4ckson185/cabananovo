@@ -964,6 +964,13 @@ header {
                 </div>
             </div>
 
+            <div class="extras-section">
+    <h3 class="extras-title">Adicione Itens Extras (opcional)</h3>
+    <div class="extras-grid">
+        <!-- Items will be loaded dynamically -->
+    </div>
+</div>
+            
             <div class="modal-buttons">
                 <button class="modal-btn add-to-cart">Adicionar ao Carrinho</button>
                 <button class="modal-btn continue-shopping">Continuar Comprando</button>
@@ -1447,6 +1454,12 @@ function showCartModal() {
     modal.querySelector('.subtotal span').textContent = subtotal.toFixed(2);
     modal.querySelector('.total span').textContent = total.toFixed(2);
     modal.style.display = 'block';
+}
+
+function removeFromCart(index) {
+    cart.splice(index, 1);
+    updateCartCount();
+    showCartModal(); // Atualiza a exibição do carrinho
 }
 
 function validateToppingsSelection(min, max) {
