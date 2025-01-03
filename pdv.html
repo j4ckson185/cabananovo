@@ -905,43 +905,46 @@
            document.getElementById('imagePreview').innerHTML = '';
        }
 
-       async function handleProductSubmit(event) {
-           event.preventDefault();
-           const formData = new FormData(event.target);
-           
-           const productData = {
-               id: formData.get('productId') || Date.now().toString(),
-               name: formData.get('name'),
-               category: formData.get('category'),
-               description: formData.get('description'),
-               price: parseFloat(formData.get('price')),
-               toppings: {
-                   min: parseInt(formData.get('minToppings')),
-                   max: parseInt(formData.get('maxToppings'))
-               },
-               status: true,
-               updatedAt: firebase.database.ServerValue.TIMESTAMP
-           };
+async function handleProductSubmit(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    
+    const productData = {
+        id: formData.get('productId') || Date.now().toString(),
+        name: formData.get('name'),
+        category: formData.get('category'),
+        description: formData.get('description'),
+        price: parseFloat(formData.get('price')),
+        toppings: {
+            min: parseInt(formData.get('minToppings')),
+            max: parseInt(formData.get('maxToppings'))
+        },
+        status: true,
+        updatedAt: firebase.database.ServerValue.TIMESTAMP,
+        displayOrder: Date.now()
+    };
 
-           try {
-               const imageFile = formData.get('image');
-               if (imageFile.size > 0) {
-                   const imageUrl = await uploadImage(imageFile);
-                   productData.imageUrl = imageUrl;
-               }
+    try {
+        const imageFile = formData.get('image');
+        if (imageFile.size > 0) {
+            const imageUrl = await uploadImage(imageFile);
+            productData.imageUrl = imageUrl;
+        }
 
-               await db.ref(`products/${productData.id}`).set(productData);
-               await db.ref(`menu/products/${productData.id}`).set(productData);
-               
-               showAlert('success', 'Produto salvo com sucesso!');
-               document.getElementById('productForm').style.display = 'none';
-               loadProducts();
-           } catch (error) {
-               console.error('Error:', error);
-               showAlert('error', 'Erro ao salvar produto. Tente novamente.');
-           }
-       }
-
+        // Salva no PDV e no cardápio simultaneamente
+        await Promise.all([
+            db.ref(`products/${productData.id}`).set(productData),
+            db.ref(`menu/products/${productData.id}`).set(productData)
+        ]);
+        
+        showAlert('success', 'Produto salvo com sucesso!');
+        document.getElementById('productForm').style.display = 'none';
+        loadProducts();
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('error', 'Erro ao salvar produto.');
+    }
+}
        async function uploadImage(file) {
            const storageRef = storage.ref();
            const imageRef = storageRef.child(`products/${Date.now()}_${file.name}`);
