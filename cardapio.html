@@ -1485,16 +1485,28 @@ function updateTotalPrice(product) {
 
 function addToCart(product, selectedToppings) {
     const selectedExtras = Array.from(document.querySelectorAll('.extra-item.selected'))
-        .map(item => item.textContent.trim());
+        .map(extra => {
+            const priceText = extra.querySelector('.extra-price')?.textContent;
+            const extraPrice = priceText ? parseFloat(priceText.replace(/[^0-9.,]/g, '').replace(',', '.')) : 0;
+            return {
+                name: extra.textContent.trim(),
+                price: extraPrice
+            };
+        });
+
+    const totalExtrasPrice = selectedExtras.reduce((total, extra) => total + extra.price, 0);
+    const totalPrice = product.price + totalExtrasPrice;
 
     cart.push({
         ...product,
         selectedToppings,
-        selectedExtras,
-        quantity: 1
+        selectedExtras: selectedExtras.map(extra => extra.name),
+        price: totalPrice,
+        originalPrice: product.price
     });
     updateCartCount();
 }
+
 function showCartModal() {
     const modal = document.getElementById('cartModal');
     const cartItems = modal.querySelector('.cart-items');
@@ -1508,6 +1520,9 @@ function showCartModal() {
                 <div class="cart-item-details">
                     <h3 class="cart-item-title">${item.name}</h3>
                     <p class="cart-item-toppings">${item.selectedToppings.join(', ')}</p>
+                    ${item.selectedExtras.length > 0 ? 
+                        `<p class="cart-item-extras">Extras: ${item.selectedExtras.join(', ')}</p>` : 
+                        ''}
                 </div>
                 <div class="cart-item-price">R$ ${item.price.toFixed(2)}</div>
                 <button class="remove-item" onclick="removeFromCart(${index})">
