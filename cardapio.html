@@ -473,6 +473,26 @@ header {
    box-shadow: 0 0 15px rgba(247, 37, 133, 0.3);
 }
 
+        .extra-item {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.extra-item:hover {
+    background: var(--gradient);
+    transform: translateY(-3px);
+}
+
+.extra-item.selected {
+    background: var(--gradient);
+    box-shadow: 0 0 15px rgba(247, 37, 133, 0.3);
+}
+
 .modal-buttons {
    display: flex;
    gap: 1rem;
@@ -1373,15 +1393,15 @@ function openProductModal(product) {
             `).join('');
 
         // Populate extras grid
-        const extrasGrid = modal.querySelector('.extras-grid');
-        extrasGrid.innerHTML = Object.values(extras)
-            .filter(extra => extra.available)
-            .map(extra => `
-                <div class="extra-item" data-extra="${extra.name}">
-                    ${extra.name}
-                    ${extra.price > 0 ? `<span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>` : ''}
-                </div>
-            `).join('');
+const extrasGrid = modal.querySelector('.extras-grid');
+extrasGrid.innerHTML = Object.values(extras)
+    .filter(extra => extra.available)
+    .map(extra => `
+        <div class="extra-item" data-extra="${extra.name}">
+            ${extra.name}
+            ${extra.price > 0 ? `<span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>` : ''}
+        </div>
+    `).join('');
 
         // Setup topping selection
         const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
