@@ -1402,14 +1402,15 @@ function openProductModal(product) {
                 </div>
             `).join('');
 
-        // Setup extras selection
-        const extraItems = extrasGrid.querySelectorAll('.extra-item');
-        extraItems.forEach(item => {
-            item.addEventListener('click', () => {
-                item.classList.toggle('selected');
-                updateTotalPrice(product);
-            });
-        });
+
+// Setup extras selection
+const extraItems = extrasGrid.querySelectorAll('.extra-item');
+extraItems.forEach(item => {
+    item.addEventListener('click', () => {
+        item.classList.toggle('selected');
+        updateTotalPrice(product);
+    });
+});
     });
 
     modal.style.display = 'block';
