@@ -913,6 +913,28 @@ header {
     </div>
 </div>
 
+    <!-- Antes de fechar o </body> -->
+<div class="modal" id="cartModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Seu Carrinho</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="cart-items"></div>
+        <div class="cart-total">
+            <div class="subtotal">Subtotal: R$ <span>0.00</span></div>
+            <div class="delivery-fee">
+                <i class="fas fa-motorcycle"></i> Taxa de Entrega: R$ 3,00
+            </div>
+            <div class="total">Total: R$ <span>0.00</span></div>
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn continue-shopping">Continuar Comprando</button>
+            <button class="modal-btn checkout">Finalizar Pedido</button>
+        </div>
+    </div>
+</div>
+
 <script>
 // Firebase initialization
 const firebaseConfig = {
@@ -952,22 +974,33 @@ function loadCategories() {
 function updateCategoryButtons(categories) {
     const categoriesNav = document.querySelector('.categories');
     categoriesNav.innerHTML = `
-        <button class="category-btn active">
+        <button class="category-btn active" data-category="all">
             <i class="fas fa-star"></i>
             Todos
         </button>
     `;
     
-    Object.values(categories).forEach(category => {
+    Object.entries(categories).forEach(([id, category]) => {
         categoriesNav.innerHTML += `
-            <button class="category-btn">
+            <button class="category-btn" data-category="${id}">
                 <i class="fas fa-${category.icon || 'circle'}"></i>
                 ${category.name}
             </button>
         `;
     });
     
-    setupEventListeners();
+    categoriesNav.querySelectorAll('.category-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelector('.category-btn.active')?.classList.remove('active');
+            button.classList.add('active');
+            
+            const categoryId = button.dataset.category;
+            const filteredProducts = categoryId === 'all' 
+                ? currentProducts 
+                : currentProducts.filter(p => p.category === categoryId);
+            displayProducts(filteredProducts);
+        });
+    });
 }
 
 function setupEventListeners() {
@@ -1106,13 +1139,25 @@ function validateToppingsSelection(min, max) {
     const selectedToppings = document.querySelectorAll('.topping-item.selected').length;
     const addToCartBtn = document.querySelector('.modal-btn.add-to-cart');
     
-    if (selectedToppings >= min && selectedToppings <= max) {
-        addToCartBtn.disabled = false;
-        addToCartBtn.style.opacity = '1';
-    } else {
-        addToCartBtn.disabled = true;
-        addToCartBtn.style.opacity = '0.5';
+    if (selectedToppings < min) {
+        showAlert(`Selecione no mínimo ${min} acompanhamento${min > 1 ? 's' : ''}`);
+        return false;
     }
+    
+    if (selectedToppings > max) {
+        showAlert(`Selecione no máximo ${max} acompanhamento${max > 1 ? 's' : ''}`);
+        return false;
+    }
+    
+    return true;
+}
+
+function showAlert(message) {
+    const alert = document.createElement('div');
+    alert.className = 'alert';
+    alert.textContent = message;
+    document.body.appendChild(alert);
+    setTimeout(() => alert.remove(), 3000);
 }
 
 function updateTotalPrice(product) {
@@ -1295,6 +1340,7 @@ document.addEventListener('DOMContentLoaded', () => {
        }
    });
 });
+    
 </script>
 </body>
 </html>
