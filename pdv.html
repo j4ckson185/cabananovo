@@ -544,397 +544,764 @@
             </ul>
         </nav>
 
-        <main class="main-content">
-            <!-- Dashboard View -->
-            <div id="dashboardView" class="view">
-                <div class="page-header">
-                    <h1 class="page-title">Dashboard</h1>
-                </div>
-
-                <div class="cards-grid">
-                    <div class="stat-card">
-                        <h3 class="stat-title">Produtos Cadastrados</h3>
-                        <div class="stat-value" id="productCount">0</div>
-                    </div>
-                    
-                    <div id="categoriesView" class="view" style="display: none;">
-                    <div class="stat-card">
-                        <h3 class="stat-title">Categorias</h3>
-                        <div class="stat-value" id="categoryCount">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3 class="stat-title">Acompanhamentos</h3>
-                        <div class="stat-value" id="toppingsCount">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3 class="stat-title">Clientes Cadastrados</h3>
-                        <div class="stat-value" id="customerCount">0</div>
-                    </div>
-                </div>
+<main class="main-content">
+        <!-- Dashboard View -->
+        <div id="dashboardView" class="view">
+            <div class="page-header">
+                <h1 class="page-title">Dashboard</h1>
             </div>
 
-            <!-- Products View -->
-            <div id="productsView" class="view" style="display: none;">
-                <div class="page-header">
-                    <h1 class="page-title">Gerenciar Produtos</h1>
-                    <button class="btn btn-primary" onclick="showAddProductForm()">
-                        <i class="fas fa-plus"></i>
-                        Novo Produto
+            <div class="cards-grid">
+                <div class="stat-card">
+                    <h3 class="stat-title">Produtos Cadastrados</h3>
+                    <div class="stat-value" id="productCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3 class="stat-title">Categorias</h3>
+                    <div class="stat-value" id="categoryCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3 class="stat-title">Acompanhamentos</h3>
+                    <div class="stat-value" id="toppingsCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3 class="stat-title">Clientes Cadastrados</h3>
+                    <div class="stat-value" id="customerCount">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products View -->
+        <div id="productsView" class="view" style="display: none;">
+            <div class="page-header">
+                <h1 class="page-title">Gerenciar Produtos</h1>
+                <button class="btn btn-primary" onclick="showAddProductForm()">
+                    <i class="fas fa-plus"></i>
+                    Novo Produto
+                </button>
+            </div>
+
+            <div class="form-container" id="productForm" style="display: none;">
+                <h2 class="section-title">Adicionar Novo Produto</h2>
+                <form id="addProductForm" onsubmit="handleProductSubmit(event)">
+                    <div class="form-group">
+                        <label class="form-label">Nome do Produto</label>
+                        <input type="text" name="name" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Categoria</label>
+                        <select name="category" class="form-select" required id="categorySelect">
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Descrição</label>
+                        <textarea name="description" class="form-textarea" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Preço (R$)</label>
+                        <input type="number" name="price" step="0.01" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Imagem do Produto</label>
+                        <div class="file-upload">
+                            <label class="file-upload-label">
+                                <i class="fas fa-upload"></i>
+                                Escolher Arquivo
+                                <input type="file" name="image" accept="image/*" onchange="handleImageSelect(event)">
+                            </label>
+                        </div>
+                        <div id="imagePreview" style="margin-top: 1rem;"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Acompanhamentos</label>
+                        <div class="toppings-config">
+                            <label class="form-label">Mínimo</label>
+                            <input type="number" name="minToppings" class="form-input" min="0" required>
+                            <label class="form-label">Máximo</label>
+                            <input type="number" name="maxToppings" class="form-input" min="0" required>
+                        </div>
+                    </div>
+                    <input type="hidden" name="productId" id="editProductId">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Salvar Produto
                     </button>
-                </div>
-
-                <div class="form-container" id="productForm" style="display: none;">
-                    <h2 class="section-title">Adicionar Novo Produto</h2>
-                    <form id="addProductForm" onsubmit="handleProductSubmit(event)">
-                        <div class="form-group">
-                            <label class="form-label">Nome do Produto</label>
-                            <input type="text" name="name" class="form-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Categoria</label>
-                            <select name="category" class="form-select" required id="categorySelect">
-                                <!-- Categories will be loaded dynamically -->
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Descrição</label>
-                            <textarea name="description" class="form-textarea" required></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Preço (R$)</label>
-                            <input type="number" name="price" step="0.01" class="form-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Imagem do Produto</label>
-                            <div class="file-upload">
-                                <label class="file-upload-label">
-                                    <i class="fas fa-upload"></i>
-                                    Escolher Arquivo
-                                    <input type="file" name="image" accept="image/*" onchange="handleImageSelect(event)">
-                                </label>
-                            </div>
-                            <div id="imagePreview" style="margin-top: 1rem;"></div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Acompanhamentos</label>
-                            <div class="toppings-config">
-                                <label class="form-label">Mínimo</label>
-                                <input type="number" name="minToppings" class="form-input" min="0" required>
-                                <label class="form-label">Máximo</label>
-                                <input type="number" name="maxToppings" class="form-input" min="0" required>
-                            </div>
-                        </div>
-                        <input type="hidden" name="productId" id="editProductId">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i>
-                            Salvar Produto
-                        </button>
-                    </form>
-                </div>
-
-                <div class="table-container">
-                    <table class="custom-table">
-                        <thead>
-                            <tr>
-                                <th>Produto</th>
-                                <th>Categoria</th>
-                                <th>Preço</th>
-                                <th>Status</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="productsTableBody">
-                            <!-- Products will be loaded dynamically -->
-                        </tbody>
-                    </table>
-                </div>
+                </form>
             </div>
 
-            <!-- Schedule View -->
-            <div id="scheduleView" class="view" style="display: none;">
-                <div class="page-header">
-                    <h1 class="page-title">Horário de Funcionamento</h1>
-                </div>
+            <div class="table-container">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Categoria</th>
+                            <th>Preço</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-                <div class="form-container">
-                    <div class="time-config">
-                        <div class="form-group" data-day="monday">
-                            <label class="form-label">Segunda-feira</label>
-                            <div class="time-picker">
-                                <input type="time" class="time-input" data-field="open" value="10:00">
-                                <span>até</span>
-                                <input type="time" class="time-input" data-field="close" value="22:00">
-                                <label class="switch">
-                                    <input type="checkbox" class="schedule-switch" checked>
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
+        <!-- Categories View -->
+        <div id="categoriesView" class="view" style="display: none;">
+            <div class="page-header">
+                <h1 class="page-title">Gerenciar Categorias</h1>
+                <button class="btn btn-primary" onclick="showAddCategoryForm()">
+                    <i class="fas fa-plus"></i>
+                    Nova Categoria
+                </button>
+            </div>
+
+            <div class="form-container" id="categoryForm" style="display: none;">
+                <h2 class="section-title">Adicionar Nova Categoria</h2>
+                <form id="addCategoryForm" onsubmit="handleCategorySubmit(event)">
+                    <div class="form-group">
+                        <label class="form-label">Nome da Categoria</label>
+                        <input type="text" name="name" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Descrição</label>
+                        <textarea name="description" class="form-textarea"></textarea>
+                    </div>
+                    <input type="hidden" name="categoryId" id="editCategoryId">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Salvar Categoria
+                    </button>
+                </form>
+            </div>
+
+            <div class="table-container">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Descrição</th>
+                            <th>Produtos</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="categoriesTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Toppings View -->
+        <div id="toppingsView" class="view" style="display: none;">
+            <div class="page-header">
+                <h1 class="page-title">Gerenciar Acompanhamentos</h1>
+                <button class="btn btn-primary" onclick="showAddToppingForm()">
+                    <i class="fas fa-plus"></i>
+                    Novo Acompanhamento
+                </button>
+            </div>
+
+            <div class="form-container" id="toppingForm" style="display: none;">
+                <h2 class="section-title">Adicionar Novo Acompanhamento</h2>
+                <form id="addToppingForm" onsubmit="handleToppingSubmit(event)">
+                    <div class="form-group">
+                        <label class="form-label">Nome do Acompanhamento</label>
+                        <input type="text" name="name" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Preço Adicional (R$)</label>
+                        <input type="number" name="price" step="0.01" class="form-input" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Disponível</label>
+                        <label class="switch">
+                            <input type="checkbox" name="available" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <input type="hidden" name="toppingId" id="editToppingId">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Salvar Acompanhamento
+                    </button>
+                </form>
+            </div>
+
+            <div class="table-container">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Preço Adicional</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="toppingsTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Schedule View -->
+        <div id="scheduleView" class="view" style="display: none;">
+            <div class="page-header">
+                <h1 class="page-title">Horário de Funcionamento</h1>
+            </div>
+
+            <div class="form-container">
+                <div class="time-config">
+                    <div class="form-group" data-day="monday">
+                        <label class="form-label">Segunda-feira</label>
+                        <div class="time-picker">
+                            <input type="time" class="time-input" data-field="open" value="10:00">
+                            <span>até</span>
+                            <input type="time" class="time-input" data-field="close" value="22:00">
+                            <label class="switch">
+                                <input type="checkbox" class="schedule-switch" checked>
+                                <span class="slider"></span>
+                            </label>
                         </div>
-                        <!-- Repeat for other days -->
-                        <!-- Repeat the same structure for Tuesday through Sunday -->
+                    </div>
+
+                    <div class="form-group" data-day="tuesday">
+                        <label class="form-label">Terça-feira</label>
+                        <div class="time-picker">
+                            <input type="time" class="time-input" data-field="open" value="10:00">
+                            <span>até</span>
+                            <input type="time" class="time-input" data-field="close" value="22:00">
+                            <label class="switch">
+                                <input type="checkbox" class="schedule-switch" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" data-day="wednesday">
+                        <label class="form-label">Quarta-feira</label>
+                        <div class="time-picker">
+                            <input type="time" class="time-input" data-field="open" value="10:00">
+                            <span>até</span>
+                            <input type="time" class="time-input" data-field="close" value="22:00">
+                            <label class="switch">
+                                <input type="checkbox" class="schedule-switch" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" data-day="thursday">
+                        <label class="form-label">Quinta-feira</label>
+                        <div class="time-picker">
+                            <input type="time" class="time-input" data-field="open" value="10:00">
+                            <span>até</span>
+                            <input type="time" class="time-input" data-field="close" value="22:00">
+                            <label class="switch">
+                                <input type="checkbox" class="schedule-switch" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" data-day="friday">
+                        <label class="form-label">Sexta-feira</label>
+                        <div class="time-picker">
+                            <input type="time" class="time-input" data-field="open" value="10:00">
+                            <span>até</span>
+                            <input type="time" class="time-input" data-field="close" value="22:00">
+                            <label class="switch">
+                                <input type="checkbox" class="schedule-switch" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" data-day="saturday">
+                        <label class="form-label">Sábado</label>
+                        <div class="time-picker">
+                            <input type="time" class="time-input" data-field="open" value="10:00">
+                            <span>até</span>
+                            <input type="time" class="time-input" data-field="close" value="23:00">
+                            <label class="switch">
+                                <input type="checkbox" class="schedule-switch" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" data-day="sunday">
+                        <label class="form-label">Domingo</label>
+                        <div class="time-picker">
+                            <input type="time" class="time-input" data-field="open" value="12:00">
+                            <span>até</span>
+                            <input type="time" class="time-input" data-field="close" value="20:00">
+                            <label class="switch">
+                                <input type="checkbox" class="schedule-switch" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
 
-        <script>
-            // Firebase initialization
-            const firebaseConfig = {
-                apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
-                authDomain: "cabana-8d55e.firebaseapp.com",
-                databaseURL: "https://cabana-8d55e-default-rtdb.firebaseio.com",
-                projectId: "cabana-8d55e",
-                storageBucket: "cabana-8d55e.appspot.com",
-                messagingSenderId: "706144237954",
-                appId: "1:706144237954:web:345c10370972486afc779b",
-                measurementId: "G-96Y337GYT8"
-            };
+        <!-- Other views can be added here -->
+        <div id="loyaltyView" class="view" style="display: none;">
+            <div class="page-header">
+                <h1 class="page-title">Programa de Fidelidade</h1>
+            </div>
+        </div>
 
-            firebase.initializeApp(firebaseConfig);
-            const db = firebase.database();
-            const storage = firebase.storage();
+        <div id="customersView" class="view" style="display: none;">
+            <div class="page-header">
+                <h1 class="page-title">Clientes</h1>
+            </div>
+        </div>
 
-            // Navigation
-            function showView(viewName) {
-                document.querySelectorAll('.view').forEach(view => view.style.display = 'none');
-                document.getElementById(viewName + 'View').style.display = 'block';
-            }
+        <div id="settingsView" class="view" style="display: none;">
+            <div class="page-header">
+                <h1 class="page-title">Configurações</h1>
+            </div>
+        </div>
+    </main>
 
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    document.querySelector('.nav-item.active').classList.remove('active');
-                    item.classList.add('active');
-                    showView(item.getAttribute('data-view'));
-                });
-            });
+    <script>
+        // Firebase initialization
+        const firebaseConfig = {
+            apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
+            authDomain: "cabana-8d55e.firebaseapp.com",
+            databaseURL: "https://cabana-8d55e-default-rtdb.firebaseio.com",
+            projectId: "cabana-8d55e",
+            storageBucket: "cabana-8d55e.appspot.com",
+            messagingSenderId: "706144237954",
+            appId: "1:706144237954:web:345c10370972486afc779b",
+            measurementId: "G-96Y337GYT8"
+        };
 
-            // Products Management
-            let currentProductId = null;
-            const productForm = document.getElementById('productForm');
-            const addProductForm = document.getElementById('addProductForm');
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const storage = firebase.storage();
 
-            function showAddProductForm() {
-                productForm.style.display = 'block';
-                addProductForm.reset();
-                currentProductId = null;
-                document.getElementById('editProductId').value = '';
-            }
+        // Navigation Functions
+       document.querySelectorAll('.nav-item').forEach(item => {
+           item.addEventListener('click', () => {
+               const viewName = item.getAttribute('data-view');
+               showView(viewName);
+               document.querySelector('.nav-item.active')?.classList.remove('active');
+               item.classList.add('active');
+           });
+       });
 
-            function handleImageSelect(event) {
-                const file = event.target.files[0];
-                if (file) {
-                    const preview = document.getElementById('imagePreview');
-                    const reader = new FileReader();
-                    reader.onload = e => {
-                        preview.innerHTML = `<img src="${e.target.result}" style="max-width: 200px; border-radius: 8px;">`;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            }
+       function showView(viewName) {
+           document.querySelectorAll('.view').forEach(view => view.style.display = 'none');
+           document.getElementById(viewName + 'View').style.display = 'block';
+       }
 
-            async function handleProductSubmit(event) {
-                event.preventDefault();
-                const formData = new FormData(event.target);
-                const productData = {
-                    name: formData.get('name'),
-                    category: formData.get('category'),
-                    description: formData.get('description'),
-                    price: parseFloat(formData.get('price')),
-                    toppings: {
-                        min: parseInt(formData.get('minToppings')),
-                        max: parseInt(formData.get('maxToppings'))
-                    },
-                    status: true,
-                    updatedAt: firebase.database.ServerValue.TIMESTAMP
-                };
+       // Products Management
+       function showAddProductForm() {
+           document.getElementById('productForm').style.display = 'block';
+           document.getElementById('addProductForm').reset();
+           document.getElementById('editProductId').value = '';
+           document.getElementById('imagePreview').innerHTML = '';
+       }
 
-                try {
-                    const imageFile = formData.get('image');
-                    if (imageFile.size > 0) {
-                        const imageUrl = await uploadImage(imageFile);
-                        productData.imageUrl = imageUrl;
-                    }
+       async function handleProductSubmit(event) {
+           event.preventDefault();
+           const formData = new FormData(event.target);
+           
+           const productData = {
+               id: formData.get('productId') || Date.now().toString(),
+               name: formData.get('name'),
+               category: formData.get('category'),
+               description: formData.get('description'),
+               price: parseFloat(formData.get('price')),
+               toppings: {
+                   min: parseInt(formData.get('minToppings')),
+                   max: parseInt(formData.get('maxToppings'))
+               },
+               status: true,
+               updatedAt: firebase.database.ServerValue.TIMESTAMP
+           };
 
-                    const productId = currentProductId || db.ref('products').push().key;
-                    await db.ref(`products/${productId}`).update(productData);
-                    
-                    showAlert('success', `Produto ${currentProductId ? 'atualizado' : 'adicionado'} com sucesso!`);
-                    productForm.style.display = 'none';
-                    loadProducts();
-                } catch (error) {
-                    console.error('Error:', error);
-                    showAlert('error', 'Erro ao salvar produto. Tente novamente.');
-                }
-            }
+           try {
+               const imageFile = formData.get('image');
+               if (imageFile.size > 0) {
+                   const imageUrl = await uploadImage(imageFile);
+                   productData.imageUrl = imageUrl;
+               }
 
-            async function uploadImage(file) {
-                const storageRef = storage.ref();
-                const imageRef = storageRef.child(`products/${Date.now()}_${file.name}`);
-                await imageRef.put(file);
-                return await imageRef.getDownloadURL();
-            }
+               await db.ref(`products/${productData.id}`).set(productData);
+               await db.ref(`menu/products/${productData.id}`).set(productData);
+               
+               showAlert('success', 'Produto salvo com sucesso!');
+               document.getElementById('productForm').style.display = 'none';
+               loadProducts();
+           } catch (error) {
+               console.error('Error:', error);
+               showAlert('error', 'Erro ao salvar produto. Tente novamente.');
+           }
+       }
 
-            function editProduct(productId) {
-                db.ref(`products/${productId}`).once('value', snapshot => {
-                    const product = snapshot.val();
-                    if (product) {
-                        currentProductId = productId;
-                        document.getElementById('editProductId').value = productId;
-                        
-                        const form = document.getElementById('addProductForm');
-                        form.elements['name'].value = product.name;
-                        form.elements['category'].value = product.category;
-                        form.elements['description'].value = product.description;
-                        form.elements['price'].value = product.price;
-                        form.elements['minToppings'].value = product.toppings.min;
-                        form.elements['maxToppings'].value = product.toppings.max;
+       async function uploadImage(file) {
+           const storageRef = storage.ref();
+           const imageRef = storageRef.child(`products/${Date.now()}_${file.name}`);
+           await imageRef.put(file);
+           return await imageRef.getDownloadURL();
+       }
 
-                        if (product.imageUrl) {
-                            document.getElementById('imagePreview').innerHTML = 
-                                `<img src="${product.imageUrl}" style="max-width: 200px; border-radius: 8px;">`;
-                        }
+       function handleImageSelect(event) {
+           const file = event.target.files[0];
+           if (file) {
+               const reader = new FileReader();
+               reader.onload = e => {
+                   document.getElementById('imagePreview').innerHTML = 
+                       `<img src="${e.target.result}" style="max-width: 200px; border-radius: 8px;">`;
+               };
+               reader.readAsDataURL(file);
+           }
+       }
 
-                        productForm.style.display = 'block';
-                        window.scrollTo({ top: productForm.offsetTop - 20, behavior: 'smooth' });
-                    }
-                });
-            }
+       // Categories Management
+       function showAddCategoryForm() {
+           document.getElementById('categoryForm').style.display = 'block';
+           document.getElementById('addCategoryForm').reset();
+           document.getElementById('editCategoryId').value = '';
+       }
 
-            function deleteProduct(productId) {
-                if (confirm('Tem certeza que deseja excluir este produto?')) {
-                    db.ref(`products/${productId}`).remove()
-                        .then(() => showAlert('success', 'Produto excluído com sucesso!'))
-                        .catch(error => showAlert('error', 'Erro ao excluir produto.'));
-                }
-            }
+       async function handleCategorySubmit(event) {
+           event.preventDefault();
+           const formData = new FormData(event.target);
+           const categoryData = {
+               id: formData.get('categoryId') || Date.now().toString(),
+               name: formData.get('name'),
+               description: formData.get('description'),
+               updatedAt: firebase.database.ServerValue.TIMESTAMP
+           };
 
-            function updateProductStatus(productId, status) {
-                db.ref(`products/${productId}`).update({ status })
-                    .then(() => showAlert('success', 'Status atualizado com sucesso!'))
-                    .catch(error => showAlert('error', 'Erro ao atualizar status.'));
-            }
+           try {
+               await db.ref(`categories/${categoryData.id}`).set(categoryData);
+               await db.ref(`menu/categories/${categoryData.id}`).set(categoryData);
+               showAlert('success', 'Categoria salva com sucesso!');
+               document.getElementById('categoryForm').style.display = 'none';
+               loadCategories();
+           } catch (error) {
+               console.error('Error:', error);
+               showAlert('error', 'Erro ao salvar categoria.');
+           }
+       }
 
-            // Schedule Management
-            function updateSchedule(day, field, value) {
-                const scheduleRef = db.ref(`schedule/${day}`);
-                const update = {};
-                update[field] = value;
-                scheduleRef.update(update)
-                    .then(() => showAlert('success', 'Horário atualizado com sucesso!'))
-                    .catch(error => showAlert('error', 'Erro ao atualizar horário.'));
-            }
+       // Toppings Management
+       function showAddToppingForm() {
+           document.getElementById('toppingForm').style.display = 'block';
+           document.getElementById('addToppingForm').reset();
+           document.getElementById('editToppingId').value = '';
+       }
 
-            document.querySelectorAll('.time-input').forEach(input => {
-                input.addEventListener('change', (e) => {
-                    const day = e.target.closest('[data-day]').getAttribute('data-day');
-                    const field = e.target.getAttribute('data-field');
-                    updateSchedule(day, field, e.target.value);
-                });
-            });
+       async function handleToppingSubmit(event) {
+           event.preventDefault();
+           const formData = new FormData(event.target);
+           const toppingData = {
+               id: formData.get('toppingId') || Date.now().toString(),
+               name: formData.get('name'),
+               price: parseFloat(formData.get('price')) || 0,
+               available: formData.get('available') === 'on',
+               updatedAt: firebase.database.ServerValue.TIMESTAMP
+           };
 
-            document.querySelectorAll('.schedule-switch').forEach(switchEl => {
-                switchEl.addEventListener('change', (e) => {
-                    const day = e.target.closest('[data-day]').getAttribute('data-day');
-                    updateSchedule(day, 'isOpen', e.target.checked);
-                });
-            });
+           try {
+               await db.ref(`toppings/${toppingData.id}`).set(toppingData);
+               await db.ref(`menu/toppings/${toppingData.id}`).set(toppingData);
+               showAlert('success', 'Acompanhamento salvo com sucesso!');
+               document.getElementById('toppingForm').style.display = 'none';
+               loadToppings();
+           } catch (error) {
+               console.error('Error:', error);
+               showAlert('error', 'Erro ao salvar acompanhamento.');
+           }
+       }
 
-            // Utility Functions
-            function showAlert(type, message) {
-                const alertDiv = document.createElement('div');
-                alertDiv.className = `alert alert-${type}`;
-                alertDiv.innerHTML = `
-                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-                    ${message}
-                `;
-                document.querySelector('.main-content').insertAdjacentElement('afterbegin', alertDiv);
-                setTimeout(() => alertDiv.remove(), 3000);
-            }
+       // Schedule Management
+       function updateSchedule(day, field, value) {
+           const scheduleRef = db.ref(`schedule/${day}`);
+           const update = {};
+           update[field] = value;
+           scheduleRef.update(update)
+               .then(() => showAlert('success', 'Horário atualizado com sucesso!'))
+               .catch(error => showAlert('error', 'Erro ao atualizar horário.'));
+       }
 
-            // Load Initial Data
-            function loadProducts() {
-                const tbody = document.getElementById('productsTableBody');
-                db.ref('products').on('value', snapshot => {
-                    tbody.innerHTML = '';
-                    const products = snapshot.val();
-                    if (products) {
-                        Object.entries(products).forEach(([id, product]) => {
-                            tbody.innerHTML += `
-                                <tr>
-                                    <td>${product.name}</td>
-                                    <td>${product.category}</td>
-                                    <td>R$ ${product.price.toFixed(2)}</td>
-                                    <td>
-                                        <label class="switch">
-                                            <input type="checkbox" ${product.status ? 'checked' : ''}
-                                                onchange="updateProductStatus('${id}', this.checked)">
-                                            <span class="slider"></span>
-                                        </label>
-                                    </td>
-                                    <td>
-                                        <button class="action-btn edit-btn" onclick="editProduct('${id}')">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="action-btn delete-btn" onclick="deleteProduct('${id}')">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            `;
-                        });
-                        document.getElementById('productCount').textContent = Object.keys(products).length;
-                    }
-                });
-            }
+       // Loading Functions
+       function loadProducts() {
+           db.ref('products').on('value', snapshot => {
+               const tbody = document.getElementById('productsTableBody');
+               tbody.innerHTML = '';
+               const products = snapshot.val() || {};
+               
+               Object.entries(products).forEach(([id, product]) => {
+                   tbody.innerHTML += `
+                       <tr>
+                           <td>${product.name}</td>
+                           <td>${product.category}</td>
+                           <td>R$ ${product.price.toFixed(2)}</td>
+                           <td>
+                               <label class="switch">
+                                   <input type="checkbox" ${product.status ? 'checked' : ''} 
+                                          onchange="updateProductStatus('${id}', this.checked)">
+                                   <span class="slider"></span>
+                               </label>
+                           </td>
+                           <td>
+                               <button class="action-btn edit-btn" onclick="editProduct('${id}')">
+                                   <i class="fas fa-edit"></i>
+                               </button>
+                               <button class="action-btn delete-btn" onclick="deleteProduct('${id}')">
+                                   <i class="fas fa-trash"></i>
+                               </button>
+                           </td>
+                       </tr>
+                   `;
+               });
+               
+               document.getElementById('productCount').textContent = Object.keys(products).length;
+           });
+       }
 
-            function loadCategories() {
-                const select = document.getElementById('categorySelect');
-                db.ref('categories').on('value', snapshot => {
-                    const categories = snapshot.val();
-                    if (categories) {
-                        select.innerHTML = '<option value="">Selecione uma categoria</option>';
-                        Object.values(categories).forEach(category => {
-                            select.innerHTML += `<option value="${category.id}">${category.name}</option>`;
-                        });
-                        document.getElementById('categoryCount').textContent = Object.keys(categories).length;
-                    }
-                });
-            }
+       function loadCategories() {
+           db.ref('categories').on('value', snapshot => {
+               const tbody = document.getElementById('categoriesTableBody');
+               const select = document.getElementById('categorySelect');
+               tbody.innerHTML = '';
+               select.innerHTML = '<option value="">Selecione uma categoria</option>';
+               
+               const categories = snapshot.val() || {};
+               
+               Object.entries(categories).forEach(([id, category]) => {
+                   tbody.innerHTML += `
+                       <tr>
+                           <td>${category.name}</td>
+                           <td>${category.description || ''}</td>
+                           <td id="category-${id}-count">0</td>
+                           <td>
+                               <button class="action-btn edit-btn" onclick="editCategory('${id}')">
+                                   <i class="fas fa-edit"></i>
+                               </button>
+                               <button class="action-btn delete-btn" onclick="deleteCategory('${id}')">
+                                   <i class="fas fa-trash"></i>
+                               </button>
+                           </td>
+                       </tr>
+                   `;
+                   
+                   select.innerHTML += `<option value="${id}">${category.name}</option>`;
+                   
+                   // Count products in category
+                   db.ref('products').orderByChild('category').equalTo(id).once('value', snapshot => {
+                       document.getElementById(`category-${id}-count`).textContent = snapshot.numChildren();
+                   });
+               });
+               
+               document.getElementById('categoryCount').textContent = Object.keys(categories).length;
+           });
+       }
 
-            function loadSchedule() {
-                db.ref('schedule').on('value', snapshot => {
-                    const schedule = snapshot.val();
-                    if (schedule) {
-                        Object.entries(schedule).forEach(([day, data]) => {
-                            const dayElement = document.querySelector(`[data-day="${day}"]`);
-                            if (dayElement) {
-                                dayElement.querySelector('[data-field="open"]').value = data.open;
-                                dayElement.querySelector('[data-field="close"]').value = data.close;
-                                dayElement.querySelector('.schedule-switch').checked = data.isOpen;
-                            }
-                        });
-                    }
-                });
-            }
+       function loadToppings() {
+           db.ref('toppings').on('value', snapshot => {
+               const tbody = document.getElementById('toppingsTableBody');
+               tbody.innerHTML = '';
+               const toppings = snapshot.val() || {};
+               
+               Object.entries(toppings).forEach(([id, topping]) => {
+                   tbody.innerHTML += `
+                       <tr>
+                           <td>${topping.name}</td>
+                           <td>R$ ${topping.price.toFixed(2)}</td>
+                           <td>
+                               <label class="switch">
+                                   <input type="checkbox" ${topping.available ? 'checked' : ''}
+                                          onchange="updateToppingStatus('${id}', this.checked)">
+                                   <span class="slider"></span>
+                               </label>
+                           </td>
+                           <td>
+                               <button class="action-btn edit-btn" onclick="editTopping('${id}')">
+                                   <i class="fas fa-edit"></i>
+                               </button>
+                               <button class="action-btn delete-btn" onclick="deleteTopping('${id}')">
+                                   <i class="fas fa-trash"></i>
+                               </button>
+                           </td>
+                       </tr>
+                   `;
+               });
+               
+               document.getElementById('toppingsCount').textContent = Object.keys(toppings).length;
+           });
+       }
 
-            // Initialize
-            document.addEventListener('DOMContentLoaded', () => {
-                loadProducts();
-                loadCategories();
-                loadSchedule();
-            });
+       function loadSchedule() {
+           db.ref('schedule').on('value', snapshot => {
+               const schedule = snapshot.val() || {};
+               Object.entries(schedule).forEach(([day, data]) => {
+                   const dayElement = document.querySelector(`[data-day="${day}"]`);
+                   if (dayElement) {
+                       dayElement.querySelector('[data-field="open"]').value = data.open;
+                       dayElement.querySelector('[data-field="close"]').value = data.close;
+                       dayElement.querySelector('.schedule-switch').checked = data.isOpen;
+                   }
+               });
+           });
+       }
 
-            // Error Handling
-            function handleError(error) {
-                console.error('Error:', error);
-                showAlert('error', 'Ocorreu um erro. Por favor, tente novamente.');
-            }
+       // Edit/Delete Functions
+       function editProduct(id) {
+           db.ref(`products/${id}`).once('value', snapshot => {
+               const product = snapshot.val();
+               if (product) {
+                   document.getElementById('editProductId').value = id;
+                   const form = document.getElementById('addProductForm');
+                   form.elements['name'].value = product.name;
+                   form.elements['category'].value = product.category;
+                   form.elements['description'].value = product.description;
+                   form.elements['price'].value = product.price;
+                   form.elements['minToppings'].value = product.toppings.min;
+                   form.elements['maxToppings'].value = product.toppings.max;
 
-            window.onerror = function(msg, url, line) {
-                console.error('JavaScript error:', msg, 'at', url, ':', line);
-                showAlert('error', 'Ocorreu um erro na aplicação.');
-                return false;
-            };
-        </script>
-    </body>
+                   if (product.imageUrl) {
+                       document.getElementById('imagePreview').innerHTML = 
+                           `<img src="${product.imageUrl}" style="max-width: 200px; border-radius: 8px;">`;
+                   }
+
+                   document.getElementById('productForm').style.display = 'block';
+                   form.scrollIntoView({ behavior: 'smooth' });
+               }
+           });
+       }
+
+       function deleteProduct(id) {
+           if (confirm('Tem certeza que deseja excluir este produto?')) {
+               Promise.all([
+                   db.ref(`products/${id}`).remove(),
+                   db.ref(`menu/products/${id}`).remove()
+               ])
+               .then(() => showAlert('success', 'Produto excluído com sucesso!'))
+               .catch(error => showAlert('error', 'Erro ao excluir produto.'));
+           }
+       }
+
+       function editTopping(id) {
+           db.ref(`toppings/${id}`).once('value', snapshot => {
+               const topping = snapshot.val();
+               if (topping) {
+                   document.getElementById('editToppingId').value = id;
+                   const form = document.getElementById('addToppingForm');
+                   form.elements['name'].value = topping.name;
+                   form.elements['price'].value = topping.price;
+                   form.elements['available'].checked = topping.available;
+
+                   document.getElementById('toppingForm').style.display = 'block';
+                   form.scrollIntoView({ behavior: 'smooth' });
+               }
+           });
+       }
+
+       function deleteTopping(id) {
+           if (confirm('Tem certeza que deseja excluir este acompanhamento?')) {
+               Promise.all([
+                   db.ref(`toppings/${id}`).remove(),
+                   db.ref(`menu/toppings/${id}`).remove()
+               ])
+               .then(() => showAlert('success', 'Acompanhamento excluído com sucesso!'))
+               .catch(error => showAlert('error', 'Erro ao excluir acompanhamento.'));
+           }
+       }
+
+       function editCategory(id) {
+           db.ref(`categories/${id}`).once('value', snapshot => {
+               const category = snapshot.val();
+               if (category) {
+                   document.getElementById('editCategoryId').value = id;
+                   const form = document.getElementById('addCategoryForm');
+                   form.elements['name'].value = category.name;
+                   form.elements['description'].value = category.description || '';
+
+                   document.getElementById('categoryForm').style.display = 'block';
+                   form.scrollIntoView({ behavior: 'smooth' });
+               }
+           });
+       }
+
+       function deleteCategory(id) {
+           if (confirm('Tem certeza que deseja excluir esta categoria?')) {
+               Promise.all([
+                   db.ref(`categories/${id}`).remove(),
+                   db.ref(`menu/categories/${id}`).remove()
+               ])
+               .then(() => showAlert('success', 'Categoria excluída com sucesso!'))
+               .catch(error => showAlert('error', 'Erro ao excluir categoria.'));
+           }
+       }
+
+       // Status Update Functions
+       function updateProductStatus(id, status) {
+           Promise.all([
+               db.ref(`products/${id}`).update({ status }),
+               db.ref(`menu/products/${id}`).update({ status })
+           ])
+           .then(() => showAlert('success', 'Status atualizado com sucesso!'))
+           .catch(error => showAlert('error', 'Erro ao atualizar status.'));
+       }
+
+       function updateToppingStatus(id, available) {
+           Promise.all([
+               db.ref(`toppings/${id}`).update({ available }),
+               db.ref(`menu/toppings/${id}`).update({ available })
+           ])
+           .then(() => showAlert('success', 'Status atualizado com sucesso!'))
+           .catch(error => showAlert('error', 'Erro ao atualizar status.'));
+       }
+
+       // Utility Functions
+       function showAlert(type, message) {
+           const alertDiv = document.createElement('div');
+           alertDiv.className = `alert alert-${type}`;
+           alertDiv.innerHTML = `
+               <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+               ${message}
+           `;
+           document.querySelector('.main-content').insertAdjacentElement('afterbegin', alertDiv);
+           setTimeout(() => alertDiv.remove(), 3000);
+       }
+
+       // Schedule Event Listeners
+       document.querySelectorAll('.time-input').forEach(input => {
+           input.addEventListener('change', (e) => {
+               const day = e.target.closest('[data-day]').getAttribute('data-day');
+               const field = e.target.getAttribute('data-field');
+               updateSchedule(day, field, e.target.value);
+           });
+       });
+
+       document.querySelectorAll('.schedule-switch').forEach(switchEl => {
+           switchEl.addEventListener('change', (e) => {
+               const day = e.target.closest('[data-day]').getAttribute('data-day');
+               updateSchedule(day, 'isOpen', e.target.checked);
+           });
+       });
+
+       // Initialize
+       document.addEventListener('DOMContentLoaded', () => {
+           loadProducts();
+           loadCategories();
+           loadToppings();
+           loadSchedule();
+       });
+
+       // Error Handling
+       window.onerror = function(msg, url, line) {
+           console.error('JavaScript error:', msg, 'at', url, ':', line);
+           showAlert('error', 'Ocorreu um erro na aplicação.');
+           return false;
+       };
+   </script>
+</body>
 </html>
