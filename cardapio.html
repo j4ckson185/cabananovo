@@ -1393,54 +1393,49 @@ function openProductModal(product) {
             `).join('');
 
         // Populate extras grid
-const extrasGrid = modal.querySelector('.extras-grid');
-extrasGrid.innerHTML = Object.values(extras)
-    .filter(extra => extra.available)
-    .map(extra => `
-        <div class="extra-item" data-extra="${extra.name}">
-            ${extra.name}
-            ${extra.price > 0 ? `<span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>` : ''}
-        </div>
-    `).join('');
+        const extrasGrid = modal.querySelector('.extras-grid');
+        extrasGrid.innerHTML = Object.values(extras)
+            .filter(extra => extra.available)
+            .map(extra => `
+                <div class="extra-item" data-extra="${extra.name}">
+                    ${extra.name}
+                    ${extra.price > 0 ? `<span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>` : ''}
+                </div>
+            `).join('');
 
-// Setup topping selection
-const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
-toppingItems.forEach(item => {
-    item.addEventListener('click', () => {
-        // Explicitly toggle selected class
-        const isCurrentlySelected = item.classList.contains('selected');
-        
-        // If already selected, remove the class
-        if (isCurrentlySelected) {
-            item.classList.remove('selected');
-        } 
-        // If not selected, check max limit
-        else {
-            const selectedToppings = document.querySelectorAll('.topping-item.selected');
-            if (selectedToppings.length < product.toppings.max) {
-                item.classList.add('selected');
-            } else {
-                showNotification(`Você pode selecionar no máximo ${product.toppings.max} acompanhamento${product.toppings.max > 1 ? 's' : ''}`);
-            }
-        }
-        
-        validateToppingsSelection(product.toppings.min, product.toppings.max);
-        updateTotalPrice(product);
-    });
-});
+        // Setup topping selection
+        const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
+        toppingItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const isCurrentlySelected = item.classList.contains('selected');
+                
+                if (isCurrentlySelected) {
+                    item.classList.remove('selected');
+                } else {
+                    const selectedToppings = document.querySelectorAll('.topping-item.selected');
+                    if (selectedToppings.length < product.toppings.max) {
+                        item.classList.add('selected');
+                    } else {
+                        showNotification(`Você pode selecionar no máximo ${product.toppings.max} acompanhamento${product.toppings.max > 1 ? 's' : ''}`);
+                    }
+                }
+                
+                validateToppingsSelection(product.toppings.min, product.toppings.max);
+                updateTotalPrice(product);
+            });
+        });
 
-// Setup extras selection
-const extraItems = extrasGrid.querySelectorAll('.extra-item');
-extraItems.forEach(item => {
-    item.addEventListener('click', () => {
-        // Explicitly toggle selected class
-        item.classList.toggle('selected');
-        updateTotalPrice(product);
+        // Setup extras selection
+        const extraItems = extrasGrid.querySelectorAll('.extra-item');
+        extraItems.forEach(item => {
+            item.addEventListener('click', () => {
+                item.classList.toggle('selected');
+                updateTotalPrice(product);
+            });
         });
     });
-});
 
-modal.style.display = 'block';
+    modal.style.display = 'block';
 }
     
 function validateToppingsSelection(min, max) {
