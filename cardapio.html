@@ -915,7 +915,115 @@ header {
         to { opacity: 1; }
     }
 }
-        
+
+/* Combo Builder Styles */
+.combo-step {
+    padding: 1.5rem 0;
+}
+
+.step-title {
+    font-size: 1.3rem;
+    color: white;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.size-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.size-option {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.size-option:hover {
+    background: var(--gradient);
+    transform: translateY(-3px);
+}
+
+.size-option.selected {
+    background: var(--gradient);
+    box-shadow: 0 0 15px rgba(247, 37, 133, 0.3);
+}
+
+.size-option h4 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.size-option .price {
+    color: var(--accent);
+    font-weight: bold;
+}
+
+.flavor-section {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.flavor-option h4 {
+    margin-bottom: 0.5rem;
+    color: white;
+}
+
+.combo-progress {
+    display: flex;
+    justify-content: space-between;
+    margin: 2rem 0;
+    padding: 0 1rem;
+}
+
+.progress-step {
+    width: 22%;
+    height: 4px;
+    background: var(--glass);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.progress-step.active {
+    background: var(--gradient);
+}
+
+.combo-summary {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.combo-summary h4 {
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.summary-content {
+    color: var(--text);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .size-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .flavor-section {
+        grid-template-columns: 1fr;
+    }
+}
+    
 </style>
 </head>
 <body>
@@ -940,6 +1048,10 @@ header {
         <button class="category-btn active">
             <i class="fas fa-star"></i>
             Todos
+        </button>
+        <button class="category-btn">
+        <i class="fas fa-magic"></i>
+         Monte seu Combo
         </button>
         <button class="category-btn">
             <i class="fas fa-ice-cream"></i>
@@ -1033,6 +1145,113 @@ header {
             </div>
         </div>
     </div>
+
+    <!-- Combo Builder Modal -->
+<div class="modal" id="comboModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-product-title">Monte seu Combo</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        
+        <!-- Step 1: Choose Size -->
+        <div class="combo-step" id="sizeStep">
+            <h3 class="step-title">Escolha o tamanho do seu combo</h3>
+            <div class="size-options">
+                <div class="size-option" data-size="300ml" data-price="20.99">
+                    <h4>300ml</h4>
+                    <p class="price">R$ 20,99</p>
+                </div>
+                <div class="size-option" data-size="500ml" data-price="26.99">
+                    <h4>500ml</h4>
+                    <p class="price">R$ 26,99</p>
+                </div>
+                <div class="size-option" data-size="1L" data-price="49.99">
+                    <h4>1 Litro</h4>
+                    <p class="price">R$ 49,99</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Choose Flavors -->
+        <div class="combo-step" id="flavorStep" style="display: none;">
+            <h3 class="step-title">Escolha seus sabores</h3>
+            <div class="flavor-section">
+                <div class="flavor-option">
+                    <h4>Açaí 1</h4>
+                    <select class="form-select" id="flavor1">
+                        <option value="">Selecione um sabor</option>
+                        <option value="Açaí Tradicional">Açaí Tradicional</option>
+                        <option value="Creme de Ninho">Creme de Ninho</option>
+                        <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
+                        <option value="Creme de Amendoim">Creme de Amendoim</option>
+                        <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
+                        <option value="Creme de Morango">Creme de Morango</option>
+                    </select>
+                </div>
+                <div class="flavor-option">
+                    <h4>Açaí 2 (Opcional)</h4>
+                    <select class="form-select" id="flavor2">
+                        <option value="">Nenhum</option>
+                        <option value="Açaí Tradicional">Açaí Tradicional</option>
+                        <option value="Creme de Ninho">Creme de Ninho</option>
+                        <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
+                        <option value="Creme de Amendoim">Creme de Amendoim</option>
+                        <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
+                        <option value="Creme de Morango">Creme de Morango</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Choose Toppings -->
+        <div class="combo-step" id="toppingsStep" style="display: none;">
+            <h3 class="step-title">Escolha seus acompanhamentos</h3>
+            <div class="toppings-sections">
+                <div class="acai-toppings">
+                    <h4>Acompanhamentos do Açaí 1</h4>
+                    <div class="toppings-grid" id="toppings1">
+                        <!-- Toppings will be loaded dynamically -->
+                    </div>
+                </div>
+                <div class="acai-toppings" id="acai2Toppings" style="display: none;">
+                    <h4>Acompanhamentos do Açaí 2</h4>
+                    <div class="toppings-grid" id="toppings2">
+                        <!-- Toppings will be loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Choose Extras -->
+        <div class="combo-step" id="extrasStep" style="display: none;">
+            <h3 class="step-title">Deseja adicionar extras?</h3>
+            <div class="extras-grid">
+                <!-- Extras will be loaded dynamically -->
+            </div>
+            
+            <div class="combo-summary">
+                <h4>Resumo do seu combo:</h4>
+                <div class="summary-content"></div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="combo-progress">
+            <div class="progress-step active"></div>
+            <div class="progress-step"></div>
+            <div class="progress-step"></div>
+            <div class="progress-step"></div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="modal-buttons">
+            <button class="modal-btn btn-back" style="display: none;">Voltar</button>
+            <button class="modal-btn btn-next">Continuar</button>
+            <button class="modal-btn btn-add-cart" style="display: none;">Adicionar ao Carrinho</button>
+        </div>
+    </div>
+</div>
 
     <!-- Cart Modal -->
 <div class="modal" id="cartModal">
@@ -1291,6 +1510,169 @@ function loadCategories() {
         updateCategoryButtons(categories);
     });
 }
+
+// Combo Builder Logic
+let currentStep = 1;
+let comboData = {
+    size: null,
+    flavor1: '',
+    flavor2: '',
+    toppings1: [],
+    toppings2: [],
+    extras: []
+};
+
+function initComboBuilder() {
+    const comboModal = document.getElementById('comboModal');
+    const closeBtn = comboModal.querySelector('.close-modal');
+    const nextBtn = comboModal.querySelector('.btn-next');
+    const backBtn = comboModal.querySelector('.btn-back');
+    const addCartBtn = comboModal.querySelector('.btn-add-cart');
+
+    // Size selection
+    const sizeOptions = document.querySelectorAll('.size-option');
+    sizeOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            sizeOptions.forEach(opt => opt.classList.remove('selected'));
+            option.classList.add('selected');
+            comboData.size = {
+                size: option.dataset.size,
+                price: parseFloat(option.dataset.price)
+            };
+            nextBtn.disabled = false;
+        });
+    });
+
+    // Navigation buttons
+    nextBtn.addEventListener('click', () => {
+        if (validateStep()) {
+            currentStep++;
+            updateComboView();
+        }
+    });
+
+    backBtn.addEventListener('click', () => {
+        currentStep--;
+        updateComboView();
+    });
+
+    closeBtn.addEventListener('click', () => {
+        comboModal.style.display = 'none';
+        resetComboBuilder();
+    });
+
+    addCartBtn.addEventListener('click', () => {
+        addComboToCart();
+        comboModal.style.display = 'none';
+        resetComboBuilder();
+    });
+
+    // Load toppings and extras
+    loadToppingsAndExtras();
+}
+
+function validateStep() {
+    switch (currentStep) {
+        case 1:
+            return comboData.size !== null;
+        case 2:
+            return comboData.flavor1 !== '';
+        case 3:
+            return comboData.toppings1.length > 0;
+        case 4:
+            return true;
+        default:
+            return false;
+    }
+}
+
+function updateComboView() {
+    const steps = ['sizeStep', 'flavorStep', 'toppingsStep', 'extrasStep'];
+    steps.forEach((step, index) => {
+        document.getElementById(step).style.display = 
+            index + 1 === currentStep ? 'block' : 'none';
+    });
+
+    // Update progress bar
+    document.querySelectorAll('.progress-step').forEach((step, index) => {
+        step.classList.toggle('active', index + 1 <= currentStep);
+    });
+
+    // Show/hide navigation buttons
+    const backBtn = document.querySelector('.btn-back');
+    const nextBtn = document.querySelector('.btn-next');
+    const addCartBtn = document.querySelector('.btn-add-cart');
+
+    backBtn.style.display = currentStep > 1 ? 'block' : 'none';
+    nextBtn.style.display = currentStep < 4 ? 'block' : 'none';
+    addCartBtn.style.display = currentStep === 4 ? 'block' : 'none';
+
+    // Update Summary if on last step
+    if (currentStep === 4) {
+        updateComboSummary();
+    }
+}
+
+function loadToppingsAndExtras() {
+    // Load toppings from Firebase
+    db.ref('toppings').once('value', snapshot => {
+        const toppings = snapshot.val();
+        if (toppings) {
+            const toppingsHtml = Object.values(toppings)
+                .filter(topping => topping.available)
+                .map(topping => `
+                    <div class="topping-item" data-name="${topping.name}">
+                        ${topping.name}
+                        ${topping.price > 0 ? `<span class="topping-price">+R$ ${topping.price.toFixed(2)}</span>` : ''}
+                    </div>
+                `).join('');
+            
+            document.getElementById('toppings1').innerHTML = toppingsHtml;
+            document.getElementById('toppings2').innerHTML = toppingsHtml;
+
+            // Add click handlers
+            document.querySelectorAll('.topping-item').forEach(item => {
+                item.addEventListener('click', () => toggleTopping(item));
+            });
+        }
+    });
+
+    // Load extras from Firebase
+    db.ref('extras').once('value', snapshot => {
+        const extras = snapshot.val();
+        if (extras) {
+            const extrasHtml = Object.values(extras)
+                .filter(extra => extra.available)
+                .map(extra => `
+                    <div class="extra-item" data-name="${extra.name}" data-price="${extra.price}">
+                        ${extra.name}
+                        <span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>
+                    </div>
+                `).join('');
+            
+            document.querySelector('.extras-grid').innerHTML = extrasHtml;
+
+            // Add click handlers
+            document.querySelectorAll('.extra-item').forEach(item => {
+                item.addEventListener('click', () => toggleExtra(item));
+            });
+        }
+    });
+}
+
+function toggleTopping(item) {
+    const toppingName = item.dataset.name;
+    const isForFirstAcai = item.closest('#toppings1') !== null;
+    const toppingsArray = isForFirstAcai ? comboData.toppings1 : comboData.toppings2;
+    
+    if (item.classList.contains('selected')) {
+        item.classList.remove('selected');
+        const index = toppingsArray.indexOf(toppingName);
+        if (index > -1) {
+            if (isForFirstAcai) {
+                comboData.toppings1.splice(index, 1);
+            } else {
+                comboData.toppings2.splice(index, 1);
 
 function updateCategoryButtons(categories) {
     const categoriesNav = document.querySelector('.categories');
