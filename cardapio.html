@@ -1508,6 +1508,10 @@ function addToCart(product, selectedToppings) {
         originalPrice: product.price
     });
     updateCartCount();
+    
+    // Close product modal and show cart modal
+    document.getElementById('productModal').style.display = 'none';
+    showCartModal();
 }
 
 function showCartModal() {
