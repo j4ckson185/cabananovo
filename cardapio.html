@@ -1336,8 +1336,6 @@ function setupEventListeners() {
     });
 }
 
-    
-
     function createProductCard(product) {
    const card = document.createElement('div');
    card.className = 'product-card';
@@ -1459,6 +1457,37 @@ function openProductModal(product) {
 
     modal.style.display = 'block';
 }
+
+// Função para gerar um fingerprint do dispositivo
+async function generateDeviceFingerprint() {
+    const components = [
+        navigator.userAgent,
+        navigator.language,
+        new Date().getTimezoneOffset(),
+        navigator.hardwareConcurrency,
+        screen.width,
+        screen.height,
+        navigator.deviceMemory,
+        navigator.platform
+    ];
+    
+    const fingerprint = components.join('|');
+    const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(fingerprint));
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Função para obter o IP do usuário
+async function getUserIP() {
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        return data.ip;
+    } catch (error) {
+        console.error('Erro ao obter IP:', error);
+        return null;
+    }
+}
     
 function validateToppingsSelection(min, max) {
     const selectedToppings = document.querySelectorAll('.topping-item.selected').length;
@@ -1546,6 +1575,7 @@ async function applyCoupon() {
     }
 
     try {
+        // Busca o cupom
         const couponsSnapshot = await db.ref('coupons').orderByChild('code').equalTo(couponCode).once('value');
         const coupons = couponsSnapshot.val();
         
@@ -1557,6 +1587,33 @@ async function applyCoupon() {
         }
 
         const coupon = Object.values(coupons)[0];
+
+        // Se for cupom de primeira compra, faz verificação adicional
+        if (coupon.isFirstPurchase) {
+            const deviceFingerprint = await generateDeviceFingerprint();
+            const userIP = await getUserIP();
+            
+            // Verifica se já existe compra com este dispositivo ou IP
+            const purchasesSnapshot = await db.ref('purchases').once('value');
+            const purchases = purchasesSnapshot.val() || {};
+            
+            const hasUsedFirstPurchase = Object.values(purchases).some(purchase => 
+                purchase.deviceFingerprint === deviceFingerprint || 
+                purchase.userIP === userIP
+            );
+
+            if (hasUsedFirstPurchase) {
+                messageDiv.innerHTML = '<span style="color: var(--error);">Este cupom é válido apenas para primeira compra</span>';
+                appliedCoupon = null;
+                updateCartTotal();
+                return;
+            }
+
+            // Armazena os identificadores para uso futuro
+            window.deviceFingerprint = deviceFingerprint;
+            window.userIP = userIP;
+        }
+
         messageDiv.innerHTML = '<span style="color: #4CAF50;">Cupom aplicado com sucesso!</span>';
         appliedCoupon = coupon;
         updateCartTotal();
@@ -1690,35 +1747,31 @@ function handleCustomerInfo(e) {
 }
 
 // Modify handleDeliveryInfo to include coupon
-function handleDeliveryInfo(e) {
+async function handleDeliveryInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
     const deliveryInfo = Object.fromEntries(formData);
     
-    let couponDiscount = 0;
-    let couponDetails = null;
-
-    if (deliveryInfo.couponCode) {
-        validateCoupon(deliveryInfo.couponCode)
-            .then(coupon => {
-                couponDetails = coupon;
-                couponDiscount = coupon.type === 'percentage' 
-                    ? calculatePercentageDiscount(subtotal, coupon.discount)
-                    : coupon.discount;
-                
-                // Continue with WhatsApp order
-                const message = formatOrderForWhatsApp(customerInfo, deliveryInfo, couponDetails, couponDiscount);
-                const encodedMessage = encodeURIComponent(message);
-                window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
-            })
-            .catch(error => {
-                showNotification(error);
-            });
-    } else {
-        const message = formatOrderForWhatsApp(customerInfo, deliveryInfo, null, 0);
-        const encodedMessage = encodeURIComponent(message);
-        window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
+    // Se tiver cupom de primeira compra aplicado, salva os identificadores
+    if (appliedCoupon?.isFirstPurchase) {
+        const purchaseData = {
+            deviceFingerprint: window.deviceFingerprint,
+            userIP: window.userIP,
+            couponUsed: appliedCoupon.code,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            customerInfo: {
+                phone: customerInfo.whatsapp,
+                // outros dados relevantes...
+            }
+        };
+        
+        await db.ref('purchases').push(purchaseData);
     }
+
+    // Continua com o fluxo normal de finalização do pedido...
+    const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
+    const encodedMessage = encodeURIComponent(message);
+    window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
 }
 
 function calculatePercentageDiscount(total, percentage) {
