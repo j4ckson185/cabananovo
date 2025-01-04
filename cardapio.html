@@ -1006,13 +1006,25 @@ header {
             <button class="close-modal">&times;</button>
         </div>
         <div class="cart-items"></div>
-        <div class="cart-total">
-            <div class="subtotal">Subtotal: R$ <span>0.00</span></div>
-            <div class="delivery-fee">
-                <i class="fas fa-motorcycle"></i> Taxa de Entrega: R$ 3,00
-            </div>
-            <div class="total">Total: R$ <span>0.00</span></div>
+<div class="cart-total">
+    <div class="subtotal">Subtotal: R$ <span>0.00</span></div>
+    <div class="delivery-fee">
+        <i class="fas fa-motorcycle"></i> Taxa de Entrega: R$ 3,00
+    </div>
+    <div class="coupon-section" style="margin: 1rem 0;">
+        <div class="form-group" style="display: flex; gap: 0.5rem;">
+            <input type="text" id="couponCode" placeholder="Código do cupom" class="form-input" style="flex: 1;">
+            <button onclick="applyCoupon()" class="btn-primary" style="padding: 0.5rem 1rem; border-radius: 8px; background: var(--accent); color: white; border: none; cursor: pointer;">
+                Aplicar
+            </button>
         </div>
+        <div id="couponMessage" style="margin-top: 0.5rem; font-size: 0.9rem;"></div>
+    </div>
+    <div class="discount" style="display: none;">
+        Desconto: -R$ <span>0.00</span>
+    </div>
+    <div class="total">Total: R$ <span>0.00</span></div>
+</div>
         <div class="modal-buttons">
             <button class="modal-btn continue-shopping">Continuar Comprando</button>
             <button class="modal-btn checkout">Finalizar Pedido</button>
@@ -1225,6 +1237,7 @@ const db = firebase.database();
 
 let cart = [];
 let currentProducts = [];
+let appliedCoupon = null;
 
 // Load products from Firebase
 function loadMenuProducts() {
@@ -1322,6 +1335,8 @@ function setupEventListeners() {
         document.getElementById('productModal').style.display = 'none';
     });
 }
+
+    
 
     function createProductCard(product) {
    const card = document.createElement('div');
@@ -1521,6 +1536,48 @@ function addToCart(product, selectedToppings) {
     showCartModal();
 }
 
+async function applyCoupon() {
+    const couponCode = document.getElementById('couponCode').value.toUpperCase();
+    const messageDiv = document.getElementById('couponMessage');
+    
+    if (!couponCode) {
+        messageDiv.innerHTML = '<span style="color: var(--error);">Digite um código de cupom</span>';
+        return;
+    }
+
+    try {
+        const couponsSnapshot = await db.ref('coupons').orderByChild('code').equalTo(couponCode).once('value');
+        const coupons = couponsSnapshot.val();
+        
+        if (!coupons) {
+            messageDiv.innerHTML = '<span style="color: var(--error);">Cupom inválido</span>';
+            appliedCoupon = null;
+            updateCartTotal();
+            return;
+        }
+
+        const coupon = Object.values(coupons)[0];
+        messageDiv.innerHTML = '<span style="color: #4CAF50;">Cupom aplicado com sucesso!</span>';
+        appliedCoupon = coupon;
+        updateCartTotal();
+        
+    } catch (error) {
+        console.error('Erro ao aplicar cupom:', error);
+        messageDiv.innerHTML = '<span style="color: var(--error);">Erro ao aplicar cupom</span>';
+    }
+}
+
+function calculateDiscount(subtotal) {
+    if (!appliedCoupon) return 0;
+    
+    if (appliedCoupon.type === 'percentage') {
+        return (subtotal * appliedCoupon.discount) / 100;
+    } else {
+        return appliedCoupon.discount;
+    }
+}
+
+
 function showCartModal() {
     const modal = document.getElementById('cartModal');
     const cartItems = modal.querySelector('.cart-items');
@@ -1546,10 +1603,31 @@ function showCartModal() {
         `;
     });
 
-    const total = subtotal + 3.00; // Taxa de entrega
-    modal.querySelector('.subtotal span').textContent = subtotal.toFixed(2);
-    modal.querySelector('.total span').textContent = total.toFixed(2);
+    updateCartTotal(subtotal);
     modal.style.display = 'block';
+}
+
+function updateCartTotal(subtotal = null) {
+    const modal = document.getElementById('cartModal');
+    if (subtotal === null) {
+        subtotal = cart.reduce((total, item) => total + item.price, 0);
+    }
+    
+    const discount = calculateDiscount(subtotal);
+    const deliveryFee = 3.00;
+    const total = subtotal - discount + deliveryFee;
+    
+    modal.querySelector('.subtotal span').textContent = subtotal.toFixed(2);
+    
+    const discountDiv = modal.querySelector('.discount');
+    if (discount > 0) {
+        discountDiv.style.display = 'block';
+        discountDiv.querySelector('span').textContent = discount.toFixed(2);
+    } else {
+        discountDiv.style.display = 'none';
+    }
+    
+    modal.querySelector('.total span').textContent = total.toFixed(2);
 }
 
 function removeFromCart(index) {
@@ -1691,13 +1769,16 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo, coupon = null, coupo
        // Adjust total calculation
     const total = subtotal + 3.00 - couponDiscount;
     
-    // Totais
-    message += `\n*Subtotal:* R$ ${subtotal.toFixed(2)}`;
-    message += `\n*Taxa de Entrega:* R$ 3,00`;
-    if (coupon) {
-        message += `\n*Desconto:* R$ ${couponDiscount.toFixed(2)}`;
-    }
-    message += `\n*Total:* R$ ${total.toFixed(2)}\n\n`;
+// Totais
+message += `\n*Subtotal:* R$ ${subtotal.toFixed(2)}`;
+if (appliedCoupon) {
+    const discount = calculateDiscount(subtotal);
+    message += `\n*Cupom Aplicado:* ${appliedCoupon.code}`;
+    message += `\n*Desconto:* -R$ ${discount.toFixed(2)}`;
+}
+message += `\n*Taxa de Entrega:* R$ 3,00`;
+const finalTotal = subtotal - (appliedCoupon ? calculateDiscount(subtotal) : 0) + 3;
+message += `\n*Total:* R$ ${finalTotal.toFixed(2)}\n\n`;
     
     // Pagamento
     message += `*💳 Forma de Pagamento:* ${deliveryInfo.payment.toUpperCase()}`;
