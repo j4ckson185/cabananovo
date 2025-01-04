@@ -1638,17 +1638,34 @@ function initComboBuilder() {
 // Adiciona função para adicionar o combo ao carrinho
 function addComboToCart() {
     const comboPrice = calculateComboPrice();
-    const comboName = `Combo ${comboData.size.size}${comboData.flavor2 ? ' - Mix de Sabores' : ''}`;
+    const comboName = `Combo ${comboData.size.size}${comboData.acai2.primaryFlavor ? ' - Mix de Sabores' : ''}`;
     
+    // Formata os sabores e acompanhamentos do açaí 1
+    let sabores = `${comboData.acai1.primaryFlavor}`;
+    if (comboData.acai1.secondaryFlavor) {
+        sabores += ` + ${comboData.acai1.secondaryFlavor}`;
+    }
+    
+    // Adiciona sabores do açaí 2 se existirem
+    if (comboData.acai2.primaryFlavor) {
+        sabores += ` | ${comboData.acai2.primaryFlavor}`;
+        if (comboData.acai2.secondaryFlavor) {
+            sabores += ` + ${comboData.acai2.secondaryFlavor}`;
+        }
+    }
+
+    // Junta todos os acompanhamentos
+    const allToppings = [
+        ...comboData.acai1.toppings,
+        ...(comboData.acai2.primaryFlavor ? comboData.acai2.toppings : [])
+    ];
+
     const comboItem = {
         name: comboName,
         price: comboPrice,
-        selectedToppings: [
-            ...comboData.toppings1,
-            ...(comboData.flavor2 ? comboData.toppings2 : [])
-        ],
+        selectedToppings: allToppings,
         selectedExtras: comboData.extras,
-        description: formatComboDescription()
+        description: sabores
     };
 
     cart.push(comboItem);
@@ -1656,7 +1673,6 @@ function addComboToCart() {
     showCartModal();
 }
 
-// Função para calcular preço total do combo
 function calculateComboPrice() {
     let total = comboData.size.price;
     
