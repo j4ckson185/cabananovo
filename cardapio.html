@@ -1688,10 +1688,19 @@ function validateStep() {
         case 1:
             return comboData.size !== null;
         case 2:
-            // Verificar se pelo menos o sabor principal do Açaí 1 foi selecionado
             return comboData.acai1.primaryFlavor !== '';
         case 3:
-            return comboData.acai1.toppings.length > 0;
+            // Verifica se tem pelo menos 1 acompanhamento no açaí 1
+            if (comboData.acai1.toppings.length < 1) {
+                showNotification('Selecione pelo menos 1 acompanhamento para o Açaí 1');
+                return false;
+            }
+            // Se tiver sabor principal no açaí 2, precisa ter pelo menos 1 acompanhamento também
+            if (comboData.acai2.primaryFlavor && comboData.acai2.toppings.length < 1) {
+                showNotification('Selecione pelo menos 1 acompanhamento para o Açaí 2');
+                return false;
+            }
+            return true;
         case 4:
             return true;
         default:
@@ -1799,7 +1808,16 @@ function toggleTopping(item) {
     const toppingName = item.dataset.name;
     const isForFirstAcai = item.closest('#toppings1') !== null;
     
-    // Usamos a nova estrutura do comboData
+    // Define o limite de acompanhamentos baseado no tamanho
+    let maxToppings;
+    if (comboData.size.size === '300ml') {
+        maxToppings = 3;
+    } else if (comboData.size.size === '500ml') {
+        maxToppings = 4;
+    } else if (comboData.size.size === '1L') {
+        maxToppings = 8;
+    }
+    
     const toppingsArray = isForFirstAcai ? comboData.acai1.toppings : comboData.acai2.toppings;
     
     if (item.classList.contains('selected')) {
@@ -1813,8 +1831,7 @@ function toggleTopping(item) {
             }
         }
     } else {
-        // Limite de 3 acompanhamentos por açaí
-        if (toppingsArray.length < 3) {
+        if (toppingsArray.length < maxToppings) {
             item.classList.add('selected');
             if (isForFirstAcai) {
                 comboData.acai1.toppings.push(toppingName);
@@ -1822,7 +1839,7 @@ function toggleTopping(item) {
                 comboData.acai2.toppings.push(toppingName);
             }
         } else {
-            showNotification('Máximo de 3 acompanhamentos por açaí');
+            showNotification(`Máximo de ${maxToppings} acompanhamentos permitidos para este tamanho`);
         }
     }
 
@@ -1830,8 +1847,13 @@ function toggleTopping(item) {
     if (currentStep === 4) {
         updateComboSummary();
     }
-}
 
+    // Valida se tem pelo menos 1 acompanhamento selecionado
+    const nextBtn = document.querySelector('.btn-next');
+    if (nextBtn) {
+        nextBtn.disabled = !validateStep();
+    }
+}
     function toggleExtra(item) {
     const extraName = item.dataset.name;
     
