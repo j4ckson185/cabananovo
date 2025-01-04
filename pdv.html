@@ -804,7 +804,7 @@
     </div>
 </div>
 
-    <!-- Coupon Management Section in PDV -->
+<!-- Corrija a seção de cupons no PDV -->
 <div id="couponsView" class="view" style="display: none;">
     <div class="page-header">
         <h1 class="page-title">Gerenciar Cupons</h1>
@@ -818,29 +818,30 @@
         <h2 class="section-title">Adicionar Novo Cupom</h2>
         <form id="addCouponForm" onsubmit="handleCouponSubmit(event)">
             <div class="form-group">
-                <label>Código do Cupom</label>
+                <label class="form-label">Código do Cupom</label>
                 <input type="text" id="couponCode" class="form-input" required>
             </div>
             <div class="form-group">
-                <label>Desconto</label>
+                <label class="form-label">Desconto</label>
                 <input type="number" id="couponDiscount" class="form-input" required>
             </div>
             <div class="form-group">
-                <label>Tipo de Desconto</label>
+                <label class="form-label">Tipo de Desconto</label>
                 <select id="couponType" class="form-select">
                     <option value="percentage">Porcentagem</option>
                     <option value="fixed">Valor Fixo</option>
                 </select>
             </div>
             <div class="form-group">
-    <label class="form-label">Tipo de Cupom</label>
-    <div style="margin-top: 0.5rem;">
-        <label class="switch">
-            <input type="checkbox" id="isFirstPurchase">
-            <span class="slider"></span>
-        </label>
-        <span style="margin-left: 0.5rem;">Cupom de Primeira Compra</span>
-    </div>
+                <label class="form-label">Tipo de Cupom</label>
+                <div style="margin-top: 0.5rem;">
+                    <label class="switch">
+                        <input type="checkbox" id="isFirstPurchase">
+                        <span class="slider"></span>
+                    </label>
+                    <span style="margin-left: 0.5rem;">Cupom de Primeira Compra</span>
+                </div>
+            </div>
             <button type="submit" class="btn btn-primary">Salvar Cupom</button>
         </form>
     </div>
@@ -852,6 +853,7 @@
                     <th>Código</th>
                     <th>Desconto</th>
                     <th>Tipo</th>
+                    <th>Primeira Compra</th>
                     <th>Ações</th>
                 </tr>
             </thead>
@@ -1176,13 +1178,17 @@ function showAddCouponForm() {
     document.getElementById('addCouponForm').reset();
 }
 
-// Primeiro, vamos atualizar a estrutura do cupom no PDV para incluir o tipo "first_purchase"
 function handleCouponSubmit(event) {
     event.preventDefault();
     const code = document.getElementById('couponCode').value.toUpperCase();
     const discount = parseFloat(document.getElementById('couponDiscount').value);
     const type = document.getElementById('couponType').value;
     const isFirstPurchase = document.getElementById('isFirstPurchase').checked;
+
+    if (!code || !discount) {
+        showAlert('error', 'Por favor, preencha todos os campos.');
+        return;
+    }
 
     const couponData = {
         code: code,
@@ -1196,6 +1202,7 @@ function handleCouponSubmit(event) {
         .then(() => {
             showAlert('success', 'Cupom criado com sucesso!');
             document.getElementById('couponForm').style.display = 'none';
+            document.getElementById('addCouponForm').reset();
         })
         .catch(error => {
             console.error('Error:', error);
@@ -1223,6 +1230,7 @@ function loadCoupons() {
                     <td>${coupon.code}</td>
                     <td>${coupon.discount}${coupon.type === 'percentage' ? '%' : ' R$'}</td>
                     <td>${coupon.type === 'percentage' ? 'Porcentagem' : 'Valor Fixo'}</td>
+                    <td>${coupon.isFirstPurchase ? 'Sim' : 'Não'}</td>
                     <td>
                         <button class="action-btn delete-btn" onclick="deleteCoupon('${id}')">
                             <i class="fas fa-trash"></i>
