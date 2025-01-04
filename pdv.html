@@ -938,6 +938,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const storage = firebase.storage();
+        const couponsRef = db.ref('coupons');
 
         // Navigation Functions
        document.querySelectorAll('.nav-item').forEach(item => {
