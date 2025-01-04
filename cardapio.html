@@ -1749,6 +1749,10 @@ function updateCategoryButtons(categories) {
             <i class="fas fa-star"></i>
             Todos
         </button>
+        <button class="category-btn" data-category="combo">
+            <i class="fas fa-magic"></i>
+            Monte seu Combo
+        </button>
     `;
     
     Object.entries(categories).forEach(([id, category]) => {
@@ -1760,16 +1764,23 @@ function updateCategoryButtons(categories) {
         `;
     });
     
+    // Adiciona event listeners para todos os botões de categoria
     categoriesNav.querySelectorAll('.category-btn').forEach(button => {
         button.addEventListener('click', () => {
             document.querySelector('.category-btn.active')?.classList.remove('active');
             button.classList.add('active');
             
             const categoryId = button.dataset.category;
-            const filteredProducts = categoryId === 'all' 
-                ? currentProducts 
-                : currentProducts.filter(p => p.category === categoryId);
-            displayProducts(filteredProducts);
+            if (categoryId === 'combo') {
+                document.getElementById('comboModal').style.display = 'block';
+                resetComboBuilder();
+                initComboBuilder();
+            } else {
+                const filteredProducts = categoryId === 'all' 
+                    ? currentProducts 
+                    : currentProducts.filter(p => p.category === categoryId);
+                displayProducts(filteredProducts);
+            }
         });
     });
 }
@@ -2443,12 +2454,6 @@ document.querySelector('.cart-icon').addEventListener('click', showCartModal);
        });
    });
 
-    // Monte seu Combo button
-document.querySelector('.category-btn[data-category="combo"]').addEventListener('click', () => {
-    document.getElementById('comboModal').style.display = 'block';
-    resetComboBuilder();
-    initComboBuilder();
-});
 
    // Search
    document.getElementById('searchInput').addEventListener('input', (e) => {
