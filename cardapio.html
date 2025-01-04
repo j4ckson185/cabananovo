@@ -1172,35 +1172,56 @@ header {
 </div>
 
         <!-- Step 2: Choose Flavors -->
-        <div class="combo-step" id="flavorStep" style="display: none;">
-            <h3 class="step-title">Escolha seus sabores</h3>
-            <div class="flavor-section">
-                <div class="flavor-option">
-                    <h4>Açaí 1</h4>
-                    <select class="form-select" id="flavor1">
-                        <option value="">Selecione um sabor</option>
-                        <option value="Açaí Tradicional">Açaí Tradicional</option>
-                        <option value="Creme de Ninho">Creme de Ninho</option>
-                        <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
-                        <option value="Creme de Amendoim">Creme de Amendoim</option>
-                        <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
-                        <option value="Creme de Morango">Creme de Morango</option>
-                    </select>
-                </div>
-                <div class="flavor-option">
-                    <h4>Açaí 2 (Opcional)</h4>
-                    <select class="form-select" id="flavor2">
-                        <option value="">Nenhum</option>
-                        <option value="Açaí Tradicional">Açaí Tradicional</option>
-                        <option value="Creme de Ninho">Creme de Ninho</option>
-                        <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
-                        <option value="Creme de Amendoim">Creme de Amendoim</option>
-                        <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
-                        <option value="Creme de Morango">Creme de Morango</option>
-                    </select>
-                </div>
-            </div>
+<!-- Step 2: Choose Flavors -->
+<div class="combo-step" id="flavorStep" style="display: none;">
+    <h3 class="step-title">Escolha seus sabores</h3>
+    <div class="flavor-section">
+        <div class="flavor-option">
+            <h4>Açaí 1 - Sabor Principal</h4>
+            <select class="form-select" id="flavor1Primary">
+                <option value="">Selecione um sabor</option>
+                <option value="Açaí Tradicional">Açaí Tradicional</option>
+                <option value="Creme de Ninho">Creme de Ninho</option>
+                <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
+                <option value="Creme de Amendoim">Creme de Amendoim</option>
+                <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
+                <option value="Creme de Morango">Creme de Morango</option>
+            </select>
+            <h4 style="margin-top: 1rem;">Açaí 1 - Segundo Sabor (Opcional)</h4>
+            <select class="form-select" id="flavor1Secondary">
+                <option value="">Nenhum</option>
+                <option value="Açaí Tradicional">Açaí Tradicional</option>
+                <option value="Creme de Ninho">Creme de Ninho</option>
+                <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
+                <option value="Creme de Amendoim">Creme de Amendoim</option>
+                <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
+                <option value="Creme de Morango">Creme de Morango</option>
+            </select>
         </div>
+        <div class="flavor-option" style="margin-top: 2rem;">
+            <h4>Açaí 2 - Escolha Principal </h4>
+            <select class="form-select" id="flavor2Primary">
+                <option value="">Nenhum</option>
+                <option value="Açaí Tradicional">Açaí Tradicional</option>
+                <option value="Creme de Ninho">Creme de Ninho</option>
+                <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
+                <option value="Creme de Amendoim">Creme de Amendoim</option>
+                <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
+                <option value="Creme de Morango">Creme de Morango</option>
+            </select>
+            <h4 style="margin-top: 1rem;">Açaí 2 - Segundo Sabor (Opcional, caso queira mais de 1 sabor) </h4>
+            <select class="form-select" id="flavor2Secondary">
+                <option value="">Nenhum</option>
+                <option value="Açaí Tradicional">Açaí Tradicional</option>
+                <option value="Creme de Ninho">Creme de Ninho</option>
+                <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
+                <option value="Creme de Amendoim">Creme de Amendoim</option>
+                <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
+                <option value="Creme de Morango">Creme de Morango</option>
+            </select>
+        </div>
+    </div>
+</div>
 
         <!-- Step 3: Choose Toppings -->
         <div class="combo-step" id="toppingsStep" style="display: none;">
@@ -1526,6 +1547,7 @@ function initComboBuilder() {
     const nextBtn = comboModal.querySelector('.btn-next');
     const backBtn = comboModal.querySelector('.btn-back');
     const addCartBtn = comboModal.querySelector('.btn-add-cart');
+    
 
     // Size selection
     document.querySelectorAll('.size-option').forEach(option => {
@@ -1548,6 +1570,8 @@ function initComboBuilder() {
             nextBtn.disabled = false;
         });
     });
+
+        setupFlavorSelectors();
 
     // Configuração dos botões de navegação
     nextBtn.addEventListener('click', () => {
@@ -1578,6 +1602,37 @@ function initComboBuilder() {
     
     // Reset inicial
     resetComboBuilder();
+}
+
+    function setupFlavorSelectors() {
+    const flavor1Primary = document.getElementById('flavor1Primary');
+    const flavor1Secondary = document.getElementById('flavor1Secondary');
+    const flavor2Primary = document.getElementById('flavor2Primary');
+    const flavor2Secondary = document.getElementById('flavor2Secondary');
+    const nextBtn = document.querySelector('.btn-next');
+
+    flavor1Primary.addEventListener('change', (e) => {
+        comboData.acai1.primaryFlavor = e.target.value;
+        nextBtn.disabled = !validateStep();
+    });
+
+    flavor1Secondary.addEventListener('change', (e) => {
+        comboData.acai1.secondaryFlavor = e.target.value;
+    });
+
+    flavor2Primary.addEventListener('change', (e) => {
+        comboData.acai2.primaryFlavor = e.target.value;
+        if (e.target.value) {
+            document.getElementById('acai2Toppings').style.display = 'block';
+        } else {
+            document.getElementById('acai2Toppings').style.display = 'none';
+            comboData.acai2.toppings = [];
+        }
+    });
+
+    flavor2Secondary.addEventListener('change', (e) => {
+        comboData.acai2.secondaryFlavor = e.target.value;
+    });
 }
 
 // Adiciona função para adicionar o combo ao carrinho
@@ -1631,23 +1686,33 @@ function formatComboDescription() {
 function validateStep() {
     switch (currentStep) {
         case 1:
-            if (!comboData.size || !comboData.size.size) {
-                showNotification('Por favor, selecione um tamanho para o combo');
-                return false;
-            }
+            return comboData.size !== null;
+        case 2:
+            // Verificar se pelo menos o sabor principal do Açaí 1 foi selecionado
+            return comboData.acai1.primaryFlavor !== '';
+        case 3:
+            return comboData.acai1.toppings.length > 0;
+        case 4:
             return true;
-        // ... resto das validações ...
+        default:
+            return false;
     }
 }
 
-    function resetComboBuilder() {
+function resetComboBuilder() {
     currentStep = 1;
     comboData = {
         size: null,
-        flavor1: '',
-        flavor2: '',
-        toppings1: [],
-        toppings2: [],
+        acai1: {
+            primaryFlavor: '',
+            secondaryFlavor: '',
+            toppings: []
+        },
+        acai2: {
+            primaryFlavor: '',
+            secondaryFlavor: '',
+            toppings: []
+        },
         extras: []
     };
     updateComboView();
@@ -1783,13 +1848,22 @@ function toggleTopping(item) {
 
 function updateComboSummary() {
     const summaryContent = document.querySelector('.summary-content');
-    let summary = `<strong>Tamanho:</strong> ${comboData.size.size} (R$ ${comboData.size.price})<br>`;
-    summary += `<strong>Sabor 1:</strong> ${comboData.flavor1}<br>`;
-    summary += `<strong>Acompanhamentos 1:</strong> ${comboData.toppings1.join(', ') || 'Nenhum'}<br>`;
+    let summary = `<strong>Tamanho:</strong> ${comboData.size.size} (R$ ${comboData.size.price})<br><br>`;
     
-    if (comboData.flavor2) {
-        summary += `<strong>Sabor 2:</strong> ${comboData.flavor2}<br>`;
-        summary += `<strong>Acompanhamentos 2:</strong> ${comboData.toppings2.join(', ') || 'Nenhum'}<br>`;
+    summary += `<strong>Açaí 1:</strong><br>`;
+    summary += `Sabor Principal: ${comboData.acai1.primaryFlavor}<br>`;
+    if (comboData.acai1.secondaryFlavor) {
+        summary += `Segundo Sabor: ${comboData.acai1.secondaryFlavor}<br>`;
+    }
+    summary += `Acompanhamentos: ${comboData.acai1.toppings.join(', ') || 'Nenhum'}<br><br>`;
+    
+    if (comboData.acai2.primaryFlavor) {
+        summary += `<strong>Açaí 2:</strong><br>`;
+        summary += `Sabor Principal: ${comboData.acai2.primaryFlavor}<br>`;
+        if (comboData.acai2.secondaryFlavor) {
+            summary += `Segundo Sabor: ${comboData.acai2.secondaryFlavor}<br>`;
+        }
+        summary += `Acompanhamentos: ${comboData.acai2.toppings.join(', ') || 'Nenhum'}<br><br>`;
     }
     
     if (comboData.extras.length > 0) {
