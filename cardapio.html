@@ -1689,7 +1689,6 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo, coupon = null, coupo
     }
 
        // Adjust total calculation
-    const subtotal = cart.reduce((total, item) => total + item.price, 0);
     const total = subtotal + 3.00 - couponDiscount;
     
     // Totais
