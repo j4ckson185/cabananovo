@@ -1152,6 +1152,10 @@ header {
                 <input type="text" required name="zipcode">
             </div>
             <div class="form-group">
+            <label>Cupom de Desconto (opcional)</label>
+            <input type="text" name="couponCode" placeholder="Digite seu cupom">
+            </div>
+            <div class="form-group">
                 <label>Forma de Pagamento</label>
                 <div class="payment-options">
                     <label>
@@ -1607,25 +1611,49 @@ function handleCustomerInfo(e) {
     document.getElementById('deliveryInfoModal').style.display = 'block';
 }
 
+// Modify handleDeliveryInfo to include coupon
 function handleDeliveryInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
     const deliveryInfo = Object.fromEntries(formData);
     
-    // Prepara mensagem para WhatsApp
-    const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
-    const encodedMessage = encodeURIComponent(message);
-    
-    window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
+    let couponDiscount = 0;
+    let couponDetails = null;
+
+    if (deliveryInfo.couponCode) {
+        validateCoupon(deliveryInfo.couponCode)
+            .then(coupon => {
+                couponDetails = coupon;
+                couponDiscount = coupon.type === 'percentage' 
+                    ? calculatePercentageDiscount(subtotal, coupon.discount)
+                    : coupon.discount;
+                
+                // Continue with WhatsApp order
+                const message = formatOrderForWhatsApp(customerInfo, deliveryInfo, couponDetails, couponDiscount);
+                const encodedMessage = encodeURIComponent(message);
+                window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
+            })
+            .catch(error => {
+                showNotification(error);
+            });
+    } else {
+        const message = formatOrderForWhatsApp(customerInfo, deliveryInfo, null, 0);
+        const encodedMessage = encodeURIComponent(message);
+        window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
+    }
 }
 
+function calculatePercentageDiscount(total, percentage) {
+    return total * (percentage / 100);
+}
+    
 function updateCartCount() {
     const cartCount = document.querySelector('.cart-count');
     cartCount.textContent = cart.length;
     cartCount.style.display = cart.length ? 'flex' : 'none';
 }
 
-function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
+function formatOrderForWhatsApp(customerInfo, deliveryInfo, coupon = null, couponDiscount = 0) {
     let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
     
     // Informações do cliente
@@ -1653,11 +1681,24 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
         message += `  R$ ${item.price.toFixed(2)}\n`;
         subtotal += item.price;
     });
+
+        // Add coupon details if applied
+    if (coupon) {
+        message += `\n*Cupom Aplicado:* ${coupon.code}\n`;
+        message += `Desconto: R$ ${couponDiscount.toFixed(2)}\n`;
+    }
+
+       // Adjust total calculation
+    const subtotal = cart.reduce((total, item) => total + item.price, 0);
+    const total = subtotal + 3.00 - couponDiscount;
     
     // Totais
     message += `\n*Subtotal:* R$ ${subtotal.toFixed(2)}`;
     message += `\n*Taxa de Entrega:* R$ 3,00`;
-    message += `\n*Total:* R$ ${(subtotal + 3).toFixed(2)}\n\n`;
+    if (coupon) {
+        message += `\n*Desconto:* R$ ${couponDiscount.toFixed(2)}`;
+    }
+    message += `\n*Total:* R$ ${total.toFixed(2)}\n\n`;
     
     // Pagamento
     message += `*💳 Forma de Pagamento:* ${deliveryInfo.payment.toUpperCase()}`;
