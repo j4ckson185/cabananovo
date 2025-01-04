@@ -1527,38 +1527,29 @@ function initComboBuilder() {
     const backBtn = comboModal.querySelector('.btn-back');
     const addCartBtn = comboModal.querySelector('.btn-add-cart');
 
-    // Size selection - Adicionando event listeners para cada opção de tamanho
+    // Size selection
     document.querySelectorAll('.size-option').forEach(option => {
-        // Removendo event listeners antigos para evitar duplicação
-        option.replaceWith(option.cloneNode(true));
-        const newOption = comboModal.querySelector(`[data-size="${option.dataset.size}"]`);
-        
-        newOption.addEventListener('click', function() {
-            // Remove a seleção de todas as opções
+        option.addEventListener('click', function() {
+            // Remove seleção anterior
             document.querySelectorAll('.size-option').forEach(opt => {
                 opt.classList.remove('selected');
             });
             
-            // Adiciona a seleção à opção clicada
+            // Adiciona nova seleção
             this.classList.add('selected');
             
-            // Atualiza os dados do combo
+            // Atualiza dados do combo
             comboData.size = {
                 size: this.dataset.size,
                 price: parseFloat(this.dataset.price)
             };
             
-            // Habilita o botão de continuar
+            // Habilita botão de continuar
             nextBtn.disabled = false;
-            
-            // Opcional: adiciona feedback visual
-            showNotification(`Tamanho ${this.dataset.size} selecionado`);
         });
     });
 
-    // Configuração inicial dos botões
-    nextBtn.disabled = true; // Começa desabilitado até que um tamanho seja selecionado
-    
+    // Configuração dos botões de navegação
     nextBtn.addEventListener('click', () => {
         if (validateStep()) {
             currentStep++;
@@ -1576,7 +1567,17 @@ function initComboBuilder() {
         resetComboBuilder();
     });
 
-    // Resto da configuração do modal...
+    addCartBtn.addEventListener('click', () => {
+        addComboToCart();
+        comboModal.style.display = 'none';
+        resetComboBuilder();
+    });
+
+    // Load toppings and extras
+    loadToppingsAndExtras();
+    
+    // Reset inicial
+    resetComboBuilder();
 }
 
 // Adiciona função para adicionar o combo ao carrinho
