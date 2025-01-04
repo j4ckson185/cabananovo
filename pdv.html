@@ -1167,21 +1167,19 @@ function showAddCouponForm() {
     document.getElementById('addCouponForm').reset();
 }
 
+// Primeiro, vamos atualizar a estrutura do cupom no PDV para incluir o tipo "first_purchase"
 function handleCouponSubmit(event) {
     event.preventDefault();
     const code = document.getElementById('couponCode').value.toUpperCase();
     const discount = parseFloat(document.getElementById('couponDiscount').value);
     const type = document.getElementById('couponType').value;
-
-    if (!code || !discount) {
-        showAlert('error', 'Por favor, preencha todos os campos.');
-        return;
-    }
+    const isFirstPurchase = document.getElementById('isFirstPurchase').checked;
 
     const couponData = {
         code: code,
         discount: discount,
         type: type,
+        isFirstPurchase: isFirstPurchase,
         createdAt: firebase.database.ServerValue.TIMESTAMP
     };
 
@@ -1189,7 +1187,6 @@ function handleCouponSubmit(event) {
         .then(() => {
             showAlert('success', 'Cupom criado com sucesso!');
             document.getElementById('couponForm').style.display = 'none';
-            document.getElementById('addCouponForm').reset();
         })
         .catch(error => {
             console.error('Error:', error);
