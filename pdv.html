@@ -816,7 +816,7 @@
 
     <div class="form-container" id="couponForm" style="display: none;">
         <h2 class="section-title">Adicionar Novo Cupom</h2>
-        <form id="addCouponForm" onsubmit="addCoupon(); return false;">
+        <form id="addCouponForm" onsubmit="handleCouponSubmit(event)">
             <div class="form-group">
                 <label>Código do Cupom</label>
                 <input type="text" id="couponCode" class="form-input" required>
@@ -1579,6 +1579,7 @@ function deleteExtra(id) {
            loadToppings();
            loadSchedule();
            loadExtras();
+           loadCoupons();
        });
 
        // Error Handling
