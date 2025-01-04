@@ -880,12 +880,35 @@ header {
    }
 
     /* Adicione antes do último } da tag <style> */
+.store-status {
+    max-width: 1400px;
+    margin: 100px auto 0;
+    animation: fadeIn 0.3s ease;
+    background: var(--surface);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.categories {
+    margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
     .store-status {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        animation: fadeIn 0.3s ease;
+        margin: 80px 1rem 0;
+        font-size: 1rem;
+        padding: 0.6rem;
     }
+}
+
+@media (max-width: 480px) {
+    .store-status {
+        margin: 70px 0.5rem 0;
+        font-size: 0.9rem;
+        padding: 0.5rem;
+    }
+}
 
     @keyframes fadeIn {
         from { opacity: 0; }
@@ -1302,14 +1325,29 @@ function updateCategoryButtons(categories) {
 }
 
 function checkStoreStatus() {
-    const header = document.querySelector('.header-content');
+    // Remove o status anterior se existir
+    const existingStatus = document.querySelector('.store-status');
+    if (existingStatus) {
+        existingStatus.remove();
+    }
+
     const statusDiv = document.createElement('div');
     statusDiv.className = 'store-status';
     statusDiv.style.cssText = `
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
+        width: 100%;
+        max-width: 1400px;
+        margin: 100px auto 0;
+        text-align: center;
+        padding: 0.8rem;
         font-weight: 600;
-        margin-left: 1rem;
+        font-size: 1.1rem;
+        border-radius: 8px;
+        background: var(--surface);
+        border: 1px solid var(--glass-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
     `;
     
     db.ref('schedule').once('value')
@@ -1319,10 +1357,14 @@ function checkStoreStatus() {
             
             statusDiv.style.backgroundColor = isOpen ? '#4CAF50' : '#FF5252';
             statusDiv.style.color = 'white';
-            statusDiv.textContent = isOpen ? '● Loja Aberta' : '● Loja Fechada';
+            statusDiv.innerHTML = `
+                <span style="font-size: 1.2rem;">●</span>
+                <span>Loja ${isOpen ? 'Aberta' : 'Fechada'}</span>
+            `;
             
-            // Adiciona status na header
-            header.insertBefore(statusDiv, header.querySelector('.cart-icon'));
+            // Inserir entre o header e as categorias
+            const categories = document.querySelector('.categories');
+            categories.parentNode.insertBefore(statusDiv, categories);
             
             // Se estiver fechada, desabilita botões de compra
             if (!isOpen) {
