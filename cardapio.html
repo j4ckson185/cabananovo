@@ -1798,32 +1798,35 @@ function loadToppingsAndExtras() {
 function toggleTopping(item) {
     const toppingName = item.dataset.name;
     const isForFirstAcai = item.closest('#toppings1') !== null;
-    const toppingsArray = isForFirstAcai ? comboData.toppings1 : comboData.toppings2;
+    
+    // Usamos a nova estrutura do comboData
+    const toppingsArray = isForFirstAcai ? comboData.acai1.toppings : comboData.acai2.toppings;
     
     if (item.classList.contains('selected')) {
         item.classList.remove('selected');
         const index = toppingsArray.indexOf(toppingName);
         if (index > -1) {
             if (isForFirstAcai) {
-                comboData.toppings1.splice(index, 1);
+                comboData.acai1.toppings.splice(index, 1);
             } else {
-                comboData.toppings2.splice(index, 1);
+                comboData.acai2.toppings.splice(index, 1);
             }
         }
     } else {
+        // Limite de 3 acompanhamentos por açaí
         if (toppingsArray.length < 3) {
             item.classList.add('selected');
             if (isForFirstAcai) {
-                comboData.toppings1.push(toppingName);
+                comboData.acai1.toppings.push(toppingName);
             } else {
-                comboData.toppings2.push(toppingName);
+                comboData.acai2.toppings.push(toppingName);
             }
         } else {
-            showNotification('Você pode selecionar até 3 acompanhamentos');
+            showNotification('Máximo de 3 acompanhamentos por açaí');
         }
     }
 
-    // Atualizar a exibição se necessário
+    // Atualiza o resumo se estiver na última etapa
     if (currentStep === 4) {
         updateComboSummary();
     }
