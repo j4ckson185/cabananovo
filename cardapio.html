@@ -1586,6 +1586,19 @@ function validateStep() {
     }
 }
 
+    function resetComboBuilder() {
+    currentStep = 1;
+    comboData = {
+        size: null,
+        flavor1: '',
+        flavor2: '',
+        toppings1: [],
+        toppings2: [],
+        extras: []
+    };
+    updateComboView();
+}
+
 function updateComboView() {
     const steps = ['sizeStep', 'flavorStep', 'toppingsStep', 'extrasStep'];
     steps.forEach((step, index) => {
@@ -1692,6 +1705,41 @@ function toggleTopping(item) {
     if (currentStep === 4) {
         updateComboSummary();
     }
+}
+
+    function toggleExtra(item) {
+    const extraName = item.dataset.name;
+    
+    if (item.classList.contains('selected')) {
+        item.classList.remove('selected');
+        comboData.extras = comboData.extras.filter(e => e !== extraName);
+    } else {
+        item.classList.add('selected');
+        comboData.extras.push(extraName);
+    }
+
+    // Atualizar a exibição se necessário
+    if (currentStep === 4) {
+        updateComboSummary();
+    }
+}
+
+function updateComboSummary() {
+    const summaryContent = document.querySelector('.summary-content');
+    let summary = `<strong>Tamanho:</strong> ${comboData.size.size} (R$ ${comboData.size.price})<br>`;
+    summary += `<strong>Sabor 1:</strong> ${comboData.flavor1}<br>`;
+    summary += `<strong>Acompanhamentos 1:</strong> ${comboData.toppings1.join(', ') || 'Nenhum'}<br>`;
+    
+    if (comboData.flavor2) {
+        summary += `<strong>Sabor 2:</strong> ${comboData.flavor2}<br>`;
+        summary += `<strong>Acompanhamentos 2:</strong> ${comboData.toppings2.join(', ') || 'Nenhum'}<br>`;
+    }
+    
+    if (comboData.extras.length > 0) {
+        summary += `<strong>Extras:</strong> ${comboData.extras.join(', ')}`;
+    }
+    
+    summaryContent.innerHTML = summary;
 }
 
 function updateCategoryButtons(categories) {
@@ -2394,6 +2442,13 @@ document.querySelector('.cart-icon').addEventListener('click', showCartModal);
            displayProducts(filteredProducts);
        });
    });
+
+    // Monte seu Combo button
+document.querySelector('.category-btn[data-category="combo"]').addEventListener('click', () => {
+    document.getElementById('comboModal').style.display = 'block';
+    resetComboBuilder();
+    initComboBuilder();
+});
 
    // Search
    document.getElementById('searchInput').addEventListener('input', (e) => {
