@@ -1284,14 +1284,13 @@ function showAddExtraForm() {
 
 
        // Schedule Management
-       function updateSchedule(day, field, value) {
-           const scheduleRef = db.ref(`schedule/${day}`);
-           const update = {};
-           update[field] = value;
-           scheduleRef.update(update)
-               .then(() => showAlert('success', 'Horário atualizado com sucesso!'))
-               .catch(error => showAlert('error', 'Erro ao atualizar horário.'));
-       }
+function updateSchedule(day, field, value) {
+    const update = {};
+    update[field] = value;
+    db.ref(`schedule/${day}`).update(update)
+        .then(() => showAlert('success', 'Horário atualizado com sucesso!'))
+        .catch(error => showAlert('error', 'Erro ao atualizar horário.'));
+}
 
        // Loading Functions
        function loadProducts() {
@@ -1401,19 +1400,49 @@ function showAddExtraForm() {
            });
        }
 
-       function loadSchedule() {
-           db.ref('schedule').on('value', snapshot => {
-               const schedule = snapshot.val() || {};
-               Object.entries(schedule).forEach(([day, data]) => {
-                   const dayElement = document.querySelector(`[data-day="${day}"]`);
-                   if (dayElement) {
-                       dayElement.querySelector('[data-field="open"]').value = data.open;
-                       dayElement.querySelector('[data-field="close"]').value = data.close;
-                       dayElement.querySelector('.schedule-switch').checked = data.isOpen;
-                   }
-               });
-           });
-       }
+function loadSchedule() {
+    db.ref('schedule').on('value', snapshot => {
+        const schedule = snapshot.val() || {};
+        
+        // Configuração padrão para cada dia se não existir
+        const defaultSchedule = {
+            monday: { open: "12:30", close: "22:30", isOpen: true },
+            tuesday: { open: "12:30", close: "22:30", isOpen: true },
+            wednesday: { open: "12:30", close: "22:30", isOpen: true },
+            thursday: { open: "12:30", close: "22:30", isOpen: true },
+            friday: { open: "12:00", close: "22:30", isOpen: true },
+            saturday: { open: "12:30", close: "22:30", isOpen: true },
+            sunday: { open: "12:30", close: "22:30", isOpen: true }
+        };
+
+        // Para cada dia da semana
+        Object.keys(defaultSchedule).forEach(day => {
+            const dayData = schedule[day] || defaultSchedule[day];
+            const dayElement = document.querySelector(`[data-day="${day}"]`);
+            
+            if (dayElement) {
+                const openInput = dayElement.querySelector('[data-field="open"]');
+                const closeInput = dayElement.querySelector('[data-field="close"]');
+                const switchInput = dayElement.querySelector('.schedule-switch');
+                
+                if (openInput) openInput.value = dayData.open;
+                if (closeInput) closeInput.value = dayData.close;
+                if (switchInput) switchInput.checked = dayData.isOpen;
+                
+                // Adiciona eventos para salvar alterações
+                if (openInput) {
+                    openInput.onchange = () => updateSchedule(day, 'open', openInput.value);
+                }
+                if (closeInput) {
+                    closeInput.onchange = () => updateSchedule(day, 'close', closeInput.value);
+                }
+                if (switchInput) {
+                    switchInput.onchange = () => updateSchedule(day, 'isOpen', switchInput.checked);
+                }
+            }
+        });
+    });
+}
 
        // Edit/Delete Functions
        function editProduct(id) {
