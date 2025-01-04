@@ -1161,6 +1161,73 @@ async function uploadImage(file) {
            }
        }
 
+// Coupon Management Functions
+function showAddCouponForm() {
+    document.getElementById('couponForm').style.display = 'block';
+    document.getElementById('addCouponForm').reset();
+}
+
+function handleCouponSubmit(event) {
+    event.preventDefault();
+    const code = document.getElementById('couponCode').value.toUpperCase();
+    const discount = parseFloat(document.getElementById('couponDiscount').value);
+    const type = document.getElementById('couponType').value;
+
+    if (!code || !discount) {
+        showAlert('error', 'Por favor, preencha todos os campos.');
+        return;
+    }
+
+    const couponData = {
+        code: code,
+        discount: discount,
+        type: type,
+        createdAt: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    db.ref('coupons').push(couponData)
+        .then(() => {
+            showAlert('success', 'Cupom criado com sucesso!');
+            document.getElementById('couponForm').style.display = 'none';
+            document.getElementById('addCouponForm').reset();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('error', 'Erro ao criar cupom.');
+        });
+}
+
+function deleteCoupon(id) {
+    if (confirm('Tem certeza que deseja excluir este cupom?')) {
+        db.ref(`coupons/${id}`).remove()
+            .then(() => showAlert('success', 'Cupom excluído com sucesso!'))
+            .catch(error => showAlert('error', 'Erro ao excluir cupom.'));
+    }
+}
+
+function loadCoupons() {
+    db.ref('coupons').on('value', snapshot => {
+        const tbody = document.getElementById('couponsTableBody');
+        tbody.innerHTML = '';
+        const coupons = snapshot.val() || {};
+        
+        Object.entries(coupons).forEach(([id, coupon]) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${coupon.code}</td>
+                    <td>${coupon.discount}${coupon.type === 'percentage' ? '%' : ' R$'}</td>
+                    <td>${coupon.type === 'percentage' ? 'Porcentagem' : 'Valor Fixo'}</td>
+                    <td>
+                        <button class="action-btn delete-btn" onclick="deleteCoupon('${id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    });
+}
+
 function loadExtras() {
     db.ref('extras').on('value', snapshot => {
         const tbody = document.getElementById('extrasTableBody');
