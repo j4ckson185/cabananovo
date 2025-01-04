@@ -1673,6 +1673,26 @@ function toggleTopping(item) {
                 comboData.toppings1.splice(index, 1);
             } else {
                 comboData.toppings2.splice(index, 1);
+            }
+        }
+    } else {
+        if (toppingsArray.length < 3) {
+            item.classList.add('selected');
+            if (isForFirstAcai) {
+                comboData.toppings1.push(toppingName);
+            } else {
+                comboData.toppings2.push(toppingName);
+            }
+        } else {
+            showNotification('Você pode selecionar até 3 acompanhamentos');
+        }
+    }
+
+    // Atualizar a exibição se necessário
+    if (currentStep === 4) {
+        updateComboSummary();
+    }
+}
 
 function updateCategoryButtons(categories) {
     const categoriesNav = document.querySelector('.categories');
