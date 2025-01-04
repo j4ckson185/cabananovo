@@ -1436,11 +1436,11 @@ extraItems.forEach(item => {
         // Explicitly toggle selected class
         item.classList.toggle('selected');
         updateTotalPrice(product);
+        });
     });
 });
 
-    modal.style.display = 'block';
-}
+modal.style.display = 'block';
         
 function validateToppingsSelection(min, max) {
     const selectedToppings = document.querySelectorAll('.topping-item.selected').length;
