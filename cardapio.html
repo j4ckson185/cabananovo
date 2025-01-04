@@ -878,6 +878,19 @@ header {
        padding: 0.8rem;
        font-size: 0.9rem;
    }
+
+    /* Adicione antes do último } da tag <style> */
+    .store-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
 }
         
 </style>
@@ -1285,6 +1298,69 @@ function updateCategoryButtons(categories) {
                 : currentProducts.filter(p => p.category === categoryId);
             displayProducts(filteredProducts);
         });
+    });
+}
+
+function checkStoreStatus() {
+    const header = document.querySelector('.header-content');
+    const statusDiv = document.createElement('div');
+    statusDiv.className = 'store-status';
+    statusDiv.style.cssText = `
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        margin-left: 1rem;
+    `;
+    
+    db.ref('schedule').once('value')
+        .then(snapshot => {
+            const schedule = snapshot.val() || {};
+            const isOpen = isStoreOpenNow(schedule);
+            
+            statusDiv.style.backgroundColor = isOpen ? '#4CAF50' : '#FF5252';
+            statusDiv.style.color = 'white';
+            statusDiv.textContent = isOpen ? '● Loja Aberta' : '● Loja Fechada';
+            
+            // Adiciona status na header
+            header.insertBefore(statusDiv, header.querySelector('.cart-icon'));
+            
+            // Se estiver fechada, desabilita botões de compra
+            if (!isOpen) {
+                disableOrdering();
+            }
+        });
+}
+
+function isStoreOpenNow(schedule) {
+    const now = new Date();
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const today = days[now.getDay()];
+    const currentTime = now.getHours() * 100 + now.getMinutes();
+    
+    const todaySchedule = schedule[today];
+    if (!todaySchedule || !todaySchedule.isOpen) return false;
+    
+    const openTime = parseInt(todaySchedule.open.replace(':', ''));
+    const closeTime = parseInt(todaySchedule.close.replace(':', ''));
+    
+    return currentTime >= openTime && currentTime < closeTime;
+}
+
+function disableOrdering() {
+    const addButtons = document.querySelectorAll('.add-to-cart-btn');
+    addButtons.forEach(button => {
+        button.disabled = true;
+        button.style.opacity = '0.5';
+        button.style.cursor = 'not-allowed';
+    });
+    
+    document.querySelectorAll('.product-card').forEach(card => {
+        card.style.opacity = '0.7';
+        card.style.cursor = 'not-allowed';
+        card.onclick = (e) => {
+            e.preventDefault();
+            showAlert('error', 'A loja está fechada no momento. Confira nosso horário de funcionamento.');
+        };
     });
 }
 
@@ -1858,6 +1934,9 @@ document.querySelector('.cart-icon').addEventListener('click', showCartModal);
    // Firebase listeners
    loadMenuProducts();
    loadCategories();
+   checkStoreStatus();
+   setInterval(checkStoreStatus, 60000);
+    });
    
    // Categories
    document.querySelectorAll('.category-btn').forEach(button => {
