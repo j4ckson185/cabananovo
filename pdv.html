@@ -1092,10 +1092,13 @@
 
         // Função para carregar os clientes
 function loadCustomers() {
-    db.ref('customers').on('value', snapshot => {
+    const customersRef = db.ref('customers');
+    
+    customersRef.on('value', snapshot => {
         const customersTableBody = document.getElementById('customersTableBody');
-        customersTableBody.innerHTML = '';
+        if (!customersTableBody) return; // Verifica se o elemento existe
         
+        customersTableBody.innerHTML = '';
         const customers = snapshot.val() || {};
         
         Object.entries(customers).forEach(([id, customer]) => {
@@ -1103,30 +1106,51 @@ function loadCustomers() {
             row.innerHTML = `
                 <td>
                     <div class="customer-info">
-                        <div class="customer-name">${customer.fullName}</div>
+                        <div class="customer-name">${customer.fullName || ''}</div>
                     </div>
                 </td>
-                <td>${formatPhoneNumber(customer.whatsapp)}</td>
-                <td>${formatDate(customer.firstOrder)}</td>
-                <td>${formatDate(customer.lastOrder)}</td>
+                <td>${formatPhoneNumber(customer.whatsapp) || ''}</td>
+                <td>${formatDate(customer.firstOrder) || '-'}</td>
+                <td>${formatDate(customer.lastOrder) || '-'}</td>
                 <td>${customer.totalOrders || 0}</td>
             `;
             customersTableBody.appendChild(row);
         });
+
+        // Atualiza o contador no dashboard
+        const customerCount = document.getElementById('customerCount');
+        if (customerCount) {
+            customerCount.textContent = Object.keys(customers).length;
+        }
     });
 }
 
 // Função para formatar número de telefone
+// Função para formatar número de telefone
 function formatPhoneNumber(phone) {
     if (!phone) return '';
-    return phone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    const cleaned = phone.toString().replace(/\D/g, '');
+    const match = cleaned.match(/^(\d{2})(\d{5})(\d{4})$/);
+    if (match) {
+        return `(${match[1]}) ${match[2]}-${match[3]}`;
+    }
+    return phone;
 }
 
 // Função para formatar data
 function formatDate(timestamp) {
     if (!timestamp) return '-';
-    const date = new Date(timestamp);
-    return date.toLocaleDateString('pt-BR');
+    try {
+        const date = new Date(timestamp);
+        return date.toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    } catch (error) {
+        console.error('Erro ao formatar data:', error);
+        return '-';
+    }
 }
 
 // Adicione a função de busca de clientes
