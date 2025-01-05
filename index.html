@@ -1636,6 +1636,18 @@ document.querySelectorAll('.size-option').forEach(option => {
     });
 }
 
+    // Função showAlert que estava faltando
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type}`;
+    alertDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+        ${message}
+    `;
+    document.querySelector('.main-content').insertAdjacentElement('afterbegin', alertDiv);
+    setTimeout(() => alertDiv.remove(), 3000);
+}
+
 // Adiciona função para adicionar o combo ao carrinho
 function addComboToCart() {
     const comboPrice = calculateComboPrice();
