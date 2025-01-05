@@ -1708,137 +1708,104 @@ function deleteExtra(id) {
            });
        });
 
-        // Função para mostrar alertas
-function showAlert(type, message) {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type}`;
-    alertDiv.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-        ${message}
-    `;
-    document.querySelector('.main-content').insertAdjacentElement('afterbegin', alertDiv);
-    setTimeout(() => alertDiv.remove(), 3000);
-}
-
-// Função para formatar número de telefone
-function formatPhoneNumber(phone) {
-    if (!phone) return '';
-    const cleaned = phone.toString().replace(/\D/g, '');
-    const match = cleaned.match(/^(\d{2})(\d{5})(\d{4})$/);
-    if (match) {
-        return `(${match[1]}) ${match[2]}-${match[3]}`;
-    }
-    return phone;
-}
-
-// Função para formatar data
-function formatDate(timestamp) {
-    if (!timestamp) return '-';
-    try {
-        const date = new Date(timestamp);
-        return date.toLocaleDateString('pt-BR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-    } catch (error) {
-        console.error('Erro ao formatar data:', error);
-        return '-';
-    }
-}
-
-// Função para carregar clientes
-function loadCustomers() {
-    const customersRef = db.ref('customers');
-    
-    customersRef.on('value', snapshot => {
-        const customersTableBody = document.getElementById('customersTableBody');
-        if (!customersTableBody) return;
-        
-        customersTableBody.innerHTML = '';
-        const customers = snapshot.val() || {};
-        
-        Object.entries(customers).forEach(([id, customer]) => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>
-                    <div class="customer-info">
-                        <div class="customer-name">${customer.fullName || ''}</div>
-                    </div>
-                </td>
-                <td>${formatPhoneNumber(customer.whatsapp) || ''}</td>
-                <td>${formatDate(customer.firstOrder) || '-'}</td>
-                <td>${formatDate(customer.lastOrder) || '-'}</td>
-                <td>${customer.totalOrders || 0}</td>
-            `;
-            customersTableBody.appendChild(row);
-        });
-
-        // Atualiza o contador no dashboard
-        const customerCount = document.getElementById('customerCount');
-        if (customerCount) {
-            customerCount.textContent = Object.keys(customers).length;
-        }
-    });
-}
-
-// Função para inicializar o banco de dados
-function initializeDatabase() {
-    const requiredRefs = ['customers', 'products', 'categories', 'toppings', 'extras', 'coupons'];
-    
-    requiredRefs.forEach(ref => {
-        db.ref(ref).once('value', snapshot => {
-            if (!snapshot.exists()) {
-                db.ref(ref).set({});
-            }
-        });
-    });
-}
-
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    // Inicializa as funções principais
     try {
-        loadProducts();
-        loadCategories();
-        loadToppings();
-        loadSchedule();
-        loadExtras();
-        loadCoupons();
-        loadCustomers(); // Adiciona o carregamento de clientes
-        initializeDatabase(); // Inicializa o banco de dados
+        // Garantir que o Firebase está inicializado
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        // Inicializa as funções principais com verificação de erros
+        const functionsToLoad = [
+            { name: 'Products', fn: loadProducts },
+            { name: 'Categories', fn: loadCategories },
+            { name: 'Toppings', fn: loadToppings },
+            { name: 'Schedule', fn: loadSchedule },
+            { name: 'Extras', fn: loadExtras },
+            { name: 'Coupons', fn: loadCoupons },
+            { name: 'Customers', fn: loadCustomers }
+        ];
+
+        functionsToLoad.forEach(({ name, fn }) => {
+            try {
+                fn();
+            } catch (error) {
+                console.error(`Erro ao carregar ${name}:`, error);
+            }
+        });
+
+        // Inicializa o banco de dados
+        initializeDatabase();
+
+        // Setup da busca de clientes
+        const customerSearch = document.getElementById('customerSearch');
+        if (customerSearch) {
+            customerSearch.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const rows = document.querySelectorAll('#customersTableBody tr');
+                
+                rows.forEach(row => {
+                    const name = row.querySelector('.customer-name')?.textContent.toLowerCase() || '';
+                    const phone = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+                    
+                    if (name.includes(searchTerm) || phone.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // Setup de outros event listeners
+        setupEventListeners();
+
     } catch (error) {
         console.error('Erro na inicialização:', error);
-        showAlert('error', 'Erro ao carregar dados do sistema');
+    }
+});
+
+// Função para configurar event listeners
+function setupEventListeners() {
+    // Cart icon click
+    const cartIcon = document.querySelector('.cart-icon');
+    if (cartIcon) {
+        cartIcon.addEventListener('click', showCartModal);
     }
 
-    // Setup da busca de clientes
-    const customerSearch = document.getElementById('customerSearch');
-    if (customerSearch) {
-        customerSearch.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            const rows = document.querySelectorAll('#customersTableBody tr');
+    // Category buttons
+    document.querySelectorAll('.category-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelector('.category-btn.active')?.classList.remove('active');
+            button.classList.add('active');
             
-            rows.forEach(row => {
-                const name = row.querySelector('.customer-name')?.textContent.toLowerCase() || '';
-                const phone = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
-                
-                if (name.includes(searchTerm) || phone.includes(searchTerm)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+            const category = button.textContent.trim();
+            const filteredProducts = category === 'Todos' 
+                ? currentProducts 
+                : currentProducts.filter(p => p.category === category);
+            displayProducts(filteredProducts);
+        });
+    });
+
+    // Close modal buttons
+    document.querySelectorAll('.close-modal').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.style.display = 'none';
             });
         });
-    }
+    });
 
-    // Adiciona tratamento de erros global
-    window.onerror = function(msg, url, line) {
-        console.error('JavaScript error:', msg, 'at', url, ':', line);
-        showAlert('error', 'Ocorreu um erro na aplicação');
-        return false;
-    };
-});
+    // Continue shopping buttons
+    document.querySelectorAll('.continue-shopping').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.style.display = 'none';
+            });
+        });
+    });
+}
 
    </script>
 </body>
