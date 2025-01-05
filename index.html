@@ -2512,26 +2512,54 @@ async function handleDeliveryInfo(e) {
     const formData = new FormData(e.target);
     const deliveryInfo = Object.fromEntries(formData);
     
-    // Se tiver cupom de primeira compra aplicado, salva os identificadores
-    if (appliedCoupon?.isFirstPurchase) {
-        const purchaseData = {
-            deviceFingerprint: window.deviceFingerprint,
-            userIP: window.userIP,
-            couponUsed: appliedCoupon.code,
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            customerInfo: {
-                phone: customerInfo.whatsapp,
-                // outros dados relevantes...
-            }
-        };
-        
-        await db.ref('purchases').push(purchaseData);
-    }
+    // Calcular totais
+    const subtotal = cart.reduce((total, item) => total + item.price, 0);
+    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    const deliveryFee = 3.00;
+    const total = subtotal - discount + deliveryFee;
 
-    // Continua com o fluxo normal de finalização do pedido...
-    const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
-    const encodedMessage = encodeURIComponent(message);
-    window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
+    try {
+        // Se tiver cupom de primeira compra aplicado, salva os identificadores
+        if (appliedCoupon?.isFirstPurchase) {
+            const purchaseData = {
+                deviceFingerprint: window.deviceFingerprint,
+                userIP: window.userIP,
+                couponUsed: appliedCoupon.code,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                customerInfo: {
+                    phone: customerInfo.whatsapp,
+                    // outros dados relevantes...
+                }
+            };
+            
+            await db.ref('purchases').push(purchaseData);
+        }
+
+        // Criar e salvar o pedido
+        const orderData = {
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            customerInfo,
+            deliveryInfo,
+            items: cart,
+            subtotal,
+            discount,
+            deliveryFee,
+            total,
+            cupom: appliedCoupon ? appliedCoupon.code : null
+        };
+
+        // Salvar pedido no Firebase
+        await db.ref('orders').push(orderData);
+        
+        // Continua com o fluxo normal de finalização do pedido...
+        const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
+        const encodedMessage = encodeURIComponent(message);
+        window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
+
+    } catch (error) {
+        console.error('Error processing order:', error);
+        showNotification('Erro ao processar pedido. Tente novamente.');
+    }
 }
 
 function calculatePercentageDiscount(total, percentage) {
