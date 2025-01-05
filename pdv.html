@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -51,65 +52,7 @@
             position: fixed;
             height: 100vh;
             z-index: 1000;
-            overflow-y: auto;
-            max-height: 100vh;
-            scrollbar-width: thin;
-            scrollbar-color: var(--accent) var(--surface);
         }
-
-        .sidebar::-webkit-scrollbar {
-    width: 6px;
-}
-
-.sidebar::-webkit-scrollbar-track {
-    background: var(--surface);
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-    background-color: var(--accent);
-    border-radius: 3px;
-}
-
-/* Estilização da tabela de clientes */
-.customers-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
-}
-
-.customers-table th,
-.customers-table td {
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--glass-border);
-}
-
-.customers-table th {
-    background: rgba(0, 0, 0, 0.2);
-    font-weight: 600;
-    color: white;
-}
-
-.customers-table tbody tr:hover {
-    background: var(--glass);
-}
-
-.customer-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.customer-details {
-    font-size: 0.9rem;
-    color: var(--text);
-}
-
-.customer-orders {
-    margin-top: 0.5rem;
-    font-size: 0.85rem;
-    color: var(--accent);
-}
 
         .sidebar-header {
             padding: 0 1.5rem;
@@ -1029,31 +972,11 @@
             </div>
         </div>
 
-<div id="customersView" class="view" style="display: none;">
-    <div class="page-header">
-        <h1 class="page-title">Clientes</h1>
-        <div class="search-container">
-            <input type="text" class="form-input" id="customerSearch" placeholder="Buscar cliente...">
+        <div id="customersView" class="view" style="display: none;">
+            <div class="page-header">
+                <h1 class="page-title">Clientes</h1>
+            </div>
         </div>
-    </div>
-
-    <div class="table-container">
-        <table class="customers-table">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>WhatsApp</th>
-                    <th>Primeira Compra</th>
-                    <th>Última Compra</th>
-                    <th>Total de Pedidos</th>
-                </tr>
-            </thead>
-            <tbody id="customersTableBody">
-                <!-- Os clientes serão carregados aqui dinamicamente -->
-            </tbody>
-        </table>
-    </div>
-</div>
 
         <div id="settingsView" class="view" style="display: none;">
             <div class="page-header">
@@ -1089,31 +1012,6 @@
                item.classList.add('active');
            });
        });
-
-        // Atualiza o contador no dashboard
-        const customerCount = document.getElementById('customerCount');
-        if (customerCount) {
-            customerCount.textContent = Object.keys(customers).length;
-        }
-    });
-}
-
-// Adicione a função de busca de clientes
-document.getElementById('customerSearch').addEventListener('input', (e) => {
-    const searchTerm = e.target.value.toLowerCase();
-    const rows = document.querySelectorAll('#customersTableBody tr');
-    
-    rows.forEach(row => {
-        const name = row.querySelector('.customer-name').textContent.toLowerCase();
-        const phone = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-        
-        if (name.includes(searchTerm) || phone.includes(searchTerm)) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-});
 
        function showView(viewName) {
            document.querySelectorAll('.view').forEach(view => view.style.display = 'none');
@@ -1691,6 +1589,16 @@ function deleteExtra(id) {
 }
 
        // Utility Functions
+       function showAlert(type, message) {
+           const alertDiv = document.createElement('div');
+           alertDiv.className = `alert alert-${type}`;
+           alertDiv.innerHTML = `
+               <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+               ${message}
+           `;
+           document.querySelector('.main-content').insertAdjacentElement('afterbegin', alertDiv);
+           setTimeout(() => alertDiv.remove(), 3000);
+       }
 
        // Schedule Event Listeners
        document.querySelectorAll('.time-input').forEach(input => {
@@ -1708,104 +1616,22 @@ function deleteExtra(id) {
            });
        });
 
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    try {
-        // Garantir que o Firebase está inicializado
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        
-        // Inicializa as funções principais com verificação de erros
-        const functionsToLoad = [
-            { name: 'Products', fn: loadProducts },
-            { name: 'Categories', fn: loadCategories },
-            { name: 'Toppings', fn: loadToppings },
-            { name: 'Schedule', fn: loadSchedule },
-            { name: 'Extras', fn: loadExtras },
-            { name: 'Coupons', fn: loadCoupons },
-            { name: 'Customers', fn: loadCustomers }
-        ];
+       // Initialize
+       document.addEventListener('DOMContentLoaded', () => {
+           loadProducts();
+           loadCategories();
+           loadToppings();
+           loadSchedule();
+           loadExtras();
+           loadCoupons();
+       });
 
-        functionsToLoad.forEach(({ name, fn }) => {
-            try {
-                fn();
-            } catch (error) {
-                console.error(`Erro ao carregar ${name}:`, error);
-            }
-        });
-
-        // Inicializa o banco de dados
-        initializeDatabase();
-
-        // Setup da busca de clientes
-        const customerSearch = document.getElementById('customerSearch');
-        if (customerSearch) {
-            customerSearch.addEventListener('input', (e) => {
-                const searchTerm = e.target.value.toLowerCase();
-                const rows = document.querySelectorAll('#customersTableBody tr');
-                
-                rows.forEach(row => {
-                    const name = row.querySelector('.customer-name')?.textContent.toLowerCase() || '';
-                    const phone = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
-                    
-                    if (name.includes(searchTerm) || phone.includes(searchTerm)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-            });
-        }
-
-        // Setup de outros event listeners
-        setupEventListeners();
-
-    } catch (error) {
-        console.error('Erro na inicialização:', error);
-    }
-});
-
-// Função para configurar event listeners
-function setupEventListeners() {
-    // Cart icon click
-    const cartIcon = document.querySelector('.cart-icon');
-    if (cartIcon) {
-        cartIcon.addEventListener('click', showCartModal);
-    }
-
-    // Category buttons
-    document.querySelectorAll('.category-btn').forEach(button => {
-        button.addEventListener('click', () => {
-            document.querySelector('.category-btn.active')?.classList.remove('active');
-            button.classList.add('active');
-            
-            const category = button.textContent.trim();
-            const filteredProducts = category === 'Todos' 
-                ? currentProducts 
-                : currentProducts.filter(p => p.category === category);
-            displayProducts(filteredProducts);
-        });
-    });
-
-    // Close modal buttons
-    document.querySelectorAll('.close-modal').forEach(button => {
-        button.addEventListener('click', () => {
-            document.querySelectorAll('.modal').forEach(modal => {
-                modal.style.display = 'none';
-            });
-        });
-    });
-
-    // Continue shopping buttons
-    document.querySelectorAll('.continue-shopping').forEach(button => {
-        button.addEventListener('click', () => {
-            document.querySelectorAll('.modal').forEach(modal => {
-                modal.style.display = 'none';
-            });
-        });
-    });
-}
+       // Error Handling
+       window.onerror = function(msg, url, line) {
+           console.error('JavaScript error:', msg, 'at', url, ':', line);
+           showAlert('error', 'Ocorreu um erro na aplicação.');
+           return false;
+       };
 
    </script>
 </body>
