@@ -52,6 +52,24 @@
             position: fixed;
             height: 100vh;
             z-index: 1000;
+            overflow-y: auto;
+            max-height: 100vh;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent) var(--surface);
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: var(--surface);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background-color: var(--accent);
+    border-radius: 3px;
+}
         }
 
         .sidebar-header {
