@@ -2244,10 +2244,7 @@ function openProductModal(product) {
     });
 
     modal.style.display = 'block';
-} catch (error) {
-        console.error('Erro ao abrir modal:', error);
-    }
-}
+} 
 
 // Função para gerar um fingerprint do dispositivo
 async function generateDeviceFingerprint() {
@@ -2716,28 +2713,6 @@ document.getElementById('deliveryInfoForm').addEventListener('submit', function(
        displayProducts(filteredProducts);
    });
 
-   // Modal closes
-   document.querySelectorAll('.close-modal').forEach(button => {
-       button.addEventListener('click', () => {
-           document.querySelectorAll('.modal').forEach(modal => {
-               modal.style.display = 'none';
-           });
-       });
-   });
-
-// Continue shopping buttons
-document.querySelectorAll('.continue-shopping').forEach(button => {
-    button.addEventListener('click', () => {
-        // Close all modals
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.style.display = 'none';
-        });
-        
-        // Scroll to top of the page
-        window.scrollTo(0, 0);
-    });
-});
-    
    // Cart
    document.querySelector('.cart-icon').addEventListener('click', showCartModal);
    document.querySelector('.checkout').addEventListener('click', handleCheckout);
