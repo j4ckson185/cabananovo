@@ -1638,14 +1638,26 @@ document.querySelectorAll('.size-option').forEach(option => {
 
     // Função showAlert que estava faltando
 function showAlert(type, message) {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type}`;
-    alertDiv.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-        ${message}
-    `;
-    document.querySelector('.main-content').insertAdjacentElement('afterbegin', alertDiv);
-    setTimeout(() => alertDiv.remove(), 3000);
+    try {
+        // Criar div para alerta
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert';
+        alertDiv.innerHTML = `
+            <div class="notification" style="z-index: 9999;">
+                ${message}
+            </div>
+        `;
+
+        // Adicionar ao body em vez de .main-content
+        document.body.appendChild(alertDiv);
+
+        // Remover após 3 segundos
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 3000);
+    } catch (error) {
+        console.error('Erro ao mostrar alerta:', error);
+    }
 }
 
 // Adiciona função para adicionar o combo ao carrinho
@@ -2154,8 +2166,15 @@ function displayProducts(productsToShow) {
 let currentProduct = null;
 
 function openProductModal(product) {
-    currentProduct = product;
-    const modal = document.getElementById('productModal');
+function openProductModal(product) {
+    try {
+        currentProduct = product;
+        const modal = document.getElementById('productModal');
+        
+        if (!modal) {
+            console.error('Modal não encontrado');
+            return;
+        }
     
     modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
     modal.querySelector('.modal-product-title').textContent = product.name;
@@ -2225,6 +2244,9 @@ function openProductModal(product) {
     });
 
     modal.style.display = 'block';
+} catch (error) {
+        console.error('Erro ao abrir modal:', error);
+    }
 }
 
 // Função para gerar um fingerprint do dispositivo
@@ -2654,30 +2676,35 @@ document.getElementById('deliveryInfoForm').addEventListener('submit', function(
 });
     
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
-document.querySelector('.cart-icon').addEventListener('click', showCartModal);
-   // Firebase listeners
-   loadMenuProducts();
-   loadCategories();
-   checkStoreStatus();
-   setInterval(checkStoreStatus, 60000);
-   loadCustomers();
 
-   
-   // Categories
-   document.querySelectorAll('.category-btn').forEach(button => {
-       button.addEventListener('click', () => {
-           document.querySelector('.category-btn.active')?.classList.remove('active');
-           button.classList.add('active');
-           
-           const category = button.textContent.trim();
-           const filteredProducts = category === 'Todos' 
-               ? currentProducts 
-               : currentProducts.filter(p => p.category === category);
-           displayProducts(filteredProducts);
-       });
-   });
-
+    document.addEventListener('DOMContentLoaded', () => {
+    // Firebase listeners
+    loadMenuProducts();
+    loadCategories();
+    checkStoreStatus();
+    setInterval(checkStoreStatus, 60000);
+    
+    // Remove loadCustomers() daqui pois é do PDV
+    
+    // Categories
+    document.querySelectorAll('.category-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelector('.category-btn.active')?.classList.remove('active');
+            button.classList.add('active');
+            
+            const categoryId = button.dataset.category;
+            if (categoryId === 'combo') {
+                document.getElementById('comboModal').style.display = 'block';
+                resetComboBuilder();
+                initComboBuilder();
+            } else {
+                const filteredProducts = categoryId === 'all' 
+                    ? currentProducts 
+                    : currentProducts.filter(p => p.category === categoryId);
+                displayProducts(filteredProducts);
+            }
+        });
+    });
 
    // Search
    document.getElementById('searchInput').addEventListener('input', (e) => {
