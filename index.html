@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1636,30 +1637,6 @@ document.querySelectorAll('.size-option').forEach(option => {
     });
 }
 
-    // Função showAlert que estava faltando
-function showAlert(type, message) {
-    try {
-        // Criar div para alerta
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'alert';
-        alertDiv.innerHTML = `
-            <div class="notification" style="z-index: 9999;">
-                ${message}
-            </div>
-        `;
-
-        // Adicionar ao body em vez de .main-content
-        document.body.appendChild(alertDiv);
-
-        // Remover após 3 segundos
-        setTimeout(() => {
-            alertDiv.remove();
-        }, 3000);
-    } catch (error) {
-        console.error('Erro ao mostrar alerta:', error);
-    }
-}
-
 // Adiciona função para adicionar o combo ao carrinho
 function addComboToCart() {
     const comboPrice = calculateComboPrice();
@@ -2166,15 +2143,8 @@ function displayProducts(productsToShow) {
 let currentProduct = null;
 
 function openProductModal(product) {
-function openProductModal(product) {
-    try {
-        currentProduct = product;
-        const modal = document.getElementById('productModal');
-        
-        if (!modal) {
-            console.error('Modal não encontrado');
-            return;
-        }
+    currentProduct = product;
+    const modal = document.getElementById('productModal');
     
     modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
     modal.querySelector('.modal-product-title').textContent = product.name;
@@ -2244,7 +2214,7 @@ function openProductModal(product) {
     });
 
     modal.style.display = 'block';
-} 
+}
 
 // Função para gerar um fingerprint do dispositivo
 async function generateDeviceFingerprint() {
@@ -2527,36 +2497,15 @@ function calculateToppingsPrice(selectedToppings) {
     return total;
 }
 
-async function handleCustomerInfo(e) {
+function handleCustomerInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
     customerInfo = Object.fromEntries(formData);
     
-    // Salvar/atualizar informações do cliente no Firebase
-    const customerRef = db.ref(`customers/${customerInfo.whatsapp}`);
-    const snapshot = await customerRef.once('value');
-    const now = Date.now();
-    
-    if (snapshot.exists()) {
-        // Cliente existente - atualizar informações
-        await customerRef.update({
-            lastOrder: now,
-            totalOrders: (snapshot.val().totalOrders || 0) + 1
-        });
-    } else {
-        // Novo cliente
-        await customerRef.set({
-            fullName: customerInfo.fullName,
-            whatsapp: customerInfo.whatsapp,
-            firstOrder: now,
-            lastOrder: now,
-            totalOrders: 1
-        });
-    }
-    
     document.getElementById('customerInfoModal').style.display = 'none';
     document.getElementById('deliveryInfoModal').style.display = 'block';
 }
+
 // Modify handleDeliveryInfo to include coupon
 async function handleDeliveryInfo(e) {
     e.preventDefault();
@@ -2673,35 +2622,28 @@ document.getElementById('deliveryInfoForm').addEventListener('submit', function(
 });
     
 // Initialize
+document.addEventListener('DOMContentLoaded', () => {
+document.querySelector('.cart-icon').addEventListener('click', showCartModal);
+   // Firebase listeners
+   loadMenuProducts();
+   loadCategories();
+   checkStoreStatus();
+   setInterval(checkStoreStatus, 60000);
+   
+   // Categories
+   document.querySelectorAll('.category-btn').forEach(button => {
+       button.addEventListener('click', () => {
+           document.querySelector('.category-btn.active')?.classList.remove('active');
+           button.classList.add('active');
+           
+           const category = button.textContent.trim();
+           const filteredProducts = category === 'Todos' 
+               ? currentProducts 
+               : currentProducts.filter(p => p.category === category);
+           displayProducts(filteredProducts);
+       });
+   });
 
-    document.addEventListener('DOMContentLoaded', () => {
-    // Firebase listeners
-    loadMenuProducts();
-    loadCategories();
-    checkStoreStatus();
-    setInterval(checkStoreStatus, 60000);
-    
-    // Remove loadCustomers() daqui pois é do PDV
-    
-    // Categories
-    document.querySelectorAll('.category-btn').forEach(button => {
-        button.addEventListener('click', () => {
-            document.querySelector('.category-btn.active')?.classList.remove('active');
-            button.classList.add('active');
-            
-            const categoryId = button.dataset.category;
-            if (categoryId === 'combo') {
-                document.getElementById('comboModal').style.display = 'block';
-                resetComboBuilder();
-                initComboBuilder();
-            } else {
-                const filteredProducts = categoryId === 'all' 
-                    ? currentProducts 
-                    : currentProducts.filter(p => p.category === categoryId);
-                displayProducts(filteredProducts);
-            }
-        });
-    });
 
    // Search
    document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -2713,6 +2655,28 @@ document.getElementById('deliveryInfoForm').addEventListener('submit', function(
        displayProducts(filteredProducts);
    });
 
+   // Modal closes
+   document.querySelectorAll('.close-modal').forEach(button => {
+       button.addEventListener('click', () => {
+           document.querySelectorAll('.modal').forEach(modal => {
+               modal.style.display = 'none';
+           });
+       });
+   });
+
+// Continue shopping buttons
+document.querySelectorAll('.continue-shopping').forEach(button => {
+    button.addEventListener('click', () => {
+        // Close all modals
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.style.display = 'none';
+        });
+        
+        // Scroll to top of the page
+        window.scrollTo(0, 0);
+    });
+});
+    
    // Cart
    document.querySelector('.cart-icon').addEventListener('click', showCartModal);
    document.querySelector('.checkout').addEventListener('click', handleCheckout);
