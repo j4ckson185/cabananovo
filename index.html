@@ -1513,6 +1513,71 @@ let cart = [];
 let currentProducts = [];
 let appliedCoupon = null;
 
+    async function handleDeliveryInfo(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const deliveryInfo = Object.fromEntries(formData);
+    
+    // Calcular totais
+    const subtotal = cart.reduce((total, item) => total + item.price, 0);
+    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    const deliveryFee = 3.00;
+    const total = subtotal - discount + deliveryFee;
+
+    try {
+        // Adiciona log antes de salvar
+        console.log('Tentando salvar pedido:', {
+            customerInfo,
+            deliveryInfo,
+            items: cart,
+            subtotal,
+            discount,
+            deliveryFee,
+            total
+        });
+
+        // Criar o pedido
+        const orderData = {
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            customerInfo,
+            deliveryInfo,
+            items: cart.map(item => ({
+                ...item,
+                price: parseFloat(item.price),
+                originalPrice: parseFloat(item.originalPrice || item.price),
+                selectedToppings: item.selectedToppings || [],
+                selectedExtras: item.selectedExtras || []
+            })),
+            subtotal: parseFloat(subtotal),
+            discount: parseFloat(discount),
+            deliveryFee: parseFloat(deliveryFee),
+            total: parseFloat(total),
+            cupom: appliedCoupon ? appliedCoupon.code : null,
+            status: 'pending'
+        };
+
+        // Salvar pedido no Firebase e esperar a conclusão
+        const newOrderRef = await db.ref('orders').push(orderData);
+        
+        // Log após salvar
+        console.log('Pedido salvo com sucesso, ID:', newOrderRef.key);
+
+        // Somente após confirmar que o pedido foi salvo, redirecionar para o WhatsApp
+        if (newOrderRef.key) {
+            const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
+            const encodedMessage = encodeURIComponent(message);
+            window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
+        } else {
+            throw new Error('Falha ao salvar o pedido');
+        }
+
+    } catch (error) {
+        // Log de erro
+        console.error('Erro ao processar pedido:', error);
+        alert('Erro ao processar pedido. Por favor, tente novamente.');
+    }
+}
+
 // Load products from Firebase
 function loadMenuProducts() {
     db.ref('menu/products').on('value', snapshot => {
@@ -2505,32 +2570,69 @@ function handleCustomerInfo(e) {
     document.getElementById('deliveryInfoModal').style.display = 'block';
 }
 
-// Modify handleDeliveryInfo to include coupon
 async function handleDeliveryInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
     const deliveryInfo = Object.fromEntries(formData);
     
-    // Se tiver cupom de primeira compra aplicado, salva os identificadores
-    if (appliedCoupon?.isFirstPurchase) {
-        const purchaseData = {
-            deviceFingerprint: window.deviceFingerprint,
-            userIP: window.userIP,
-            couponUsed: appliedCoupon.code,
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            customerInfo: {
-                phone: customerInfo.whatsapp,
-                // outros dados relevantes...
-            }
-        };
-        
-        await db.ref('purchases').push(purchaseData);
-    }
+    // Calcular totais
+    const subtotal = cart.reduce((total, item) => total + item.price, 0);
+    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    const deliveryFee = 3.00;
+    const total = subtotal - discount + deliveryFee;
 
-    // Continua com o fluxo normal de finalização do pedido...
-    const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
-    const encodedMessage = encodeURIComponent(message);
-    window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
+    try {
+        // Adiciona log antes de salvar
+        console.log('Tentando salvar pedido:', {
+            customerInfo,
+            deliveryInfo,
+            items: cart,
+            subtotal,
+            discount,
+            deliveryFee,
+            total
+        });
+
+        // Criar o pedido
+        const orderData = {
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            customerInfo,
+            deliveryInfo,
+            items: cart.map(item => ({
+                ...item,
+                price: parseFloat(item.price),
+                originalPrice: parseFloat(item.originalPrice || item.price),
+                selectedToppings: item.selectedToppings || [],
+                selectedExtras: item.selectedExtras || []
+            })),
+            subtotal: parseFloat(subtotal),
+            discount: parseFloat(discount),
+            deliveryFee: parseFloat(deliveryFee),
+            total: parseFloat(total),
+            cupom: appliedCoupon ? appliedCoupon.code : null,
+            status: 'pending'
+        };
+
+        // Salvar pedido no Firebase e esperar a conclusão
+        const newOrderRef = await db.ref('orders').push(orderData);
+        
+        // Log após salvar
+        console.log('Pedido salvo com sucesso, ID:', newOrderRef.key);
+
+        // Somente após confirmar que o pedido foi salvo, redirecionar para o WhatsApp
+        if (newOrderRef.key) {
+            const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
+            const encodedMessage = encodeURIComponent(message);
+            window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
+        } else {
+            throw new Error('Falha ao salvar o pedido');
+        }
+
+    } catch (error) {
+        // Log de erro
+        console.error('Erro ao processar pedido:', error);
+        alert('Erro ao processar pedido. Por favor, tente novamente.');
+    }
 }
 
 function calculatePercentageDiscount(total, percentage) {
