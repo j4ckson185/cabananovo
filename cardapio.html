@@ -2560,35 +2560,44 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo, coupon = null, coupo
     message += `*🍨 Itens do Pedido:*\n`;
     let subtotal = 0;
     cart.forEach(item => {
-        message += `\n- ${item.name}\n`;
-        message += `  Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
-        // Add extras to the message if any are selected
-        if (item.selectedExtras && item.selectedExtras.length > 0) {
-            message += `  Extras: ${item.selectedExtras.join(', ')}\n`;
+        if (item.name.includes('Combo')) {
+            // Formatação especial para combos
+            message += `\n- ${item.name}\n`;
+            
+            // Divide a description em linhas e formata
+            const description = item.description.split('\n').filter(line => line.trim() !== '');
+            description.forEach(line => {
+                if (line.startsWith('•')) {
+                    message += `\n${line}`; // Seção principal (Açaí 1, Açaí 2, Extras)
+                } else {
+                    message += `  ${line}`; // Detalhes indentados
+                }
+            });
+            
+            message += `\n  *Valor: R$ ${item.price.toFixed(2)}*\n`;
+        } else {
+            // Formatação normal para itens não-combo
+            message += `\n- ${item.name}\n`;
+            message += `  Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
+            if (item.selectedExtras && item.selectedExtras.length > 0) {
+                message += `  Extras: ${item.selectedExtras.join(', ')}\n`;
+            }
+            message += `  *Valor: R$ ${item.price.toFixed(2)}*\n`;
         }
-        message += `  R$ ${item.price.toFixed(2)}\n`;
         subtotal += item.price;
     });
 
-        // Add coupon details if applied
-    if (coupon) {
-        message += `\n*Cupom Aplicado:* ${coupon.code}\n`;
-        message += `Desconto: R$ ${couponDiscount.toFixed(2)}\n`;
+    // Totais e desconto
+    message += `\n*💰 Resumo do Pedido:*`;
+    message += `\n*Subtotal:* R$ ${subtotal.toFixed(2)}`;
+    if (appliedCoupon) {
+        const discount = calculateDiscount(subtotal);
+        message += `\n*Cupom Aplicado:* ${appliedCoupon.code}`;
+        message += `\n*Desconto:* -R$ ${discount.toFixed(2)}`;
     }
-
-       // Adjust total calculation
-    const total = subtotal + 3.00 - couponDiscount;
-    
-// Totais
-message += `\n*Subtotal:* R$ ${subtotal.toFixed(2)}`;
-if (appliedCoupon) {
-    const discount = calculateDiscount(subtotal);
-    message += `\n*Cupom Aplicado:* ${appliedCoupon.code}`;
-    message += `\n*Desconto:* -R$ ${discount.toFixed(2)}`;
-}
-message += `\n*Taxa de Entrega:* R$ 3,00`;
-const finalTotal = subtotal - (appliedCoupon ? calculateDiscount(subtotal) : 0) + 3;
-message += `\n*Total:* R$ ${finalTotal.toFixed(2)}\n\n`;
+    message += `\n*Taxa de Entrega:* R$ 3,00`;
+    const finalTotal = subtotal - (appliedCoupon ? calculateDiscount(subtotal) : 0) + 3;
+    message += `\n*Total:* R$ ${finalTotal.toFixed(2)}\n\n`;
     
     // Pagamento
     message += `*💳 Forma de Pagamento:* ${deliveryInfo.payment.toUpperCase()}`;
