@@ -1773,22 +1773,55 @@ function deleteExtra(id) {
            });
        });
 
-       // Initialize
-       document.addEventListener('DOMContentLoaded', () => {
-           loadProducts();
-           loadCategories();
-           loadToppings();
-           loadSchedule();
-           loadExtras();
-           loadCoupons();
-       });
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    // Inicializa o Firebase (mantém o código existente)
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
 
-       // Error Handling
-       window.onerror = function(msg, url, line) {
-           console.error('JavaScript error:', msg, 'at', url, ':', line);
-           showAlert('error', 'Ocorreu um erro na aplicação.');
-           return false;
-       };
+    // Inicializa as funções principais
+    try {
+        loadProducts();
+        loadCategories();
+        loadToppings();
+        loadSchedule();
+        loadExtras();
+        loadCoupons();
+        loadCustomers(); // Adiciona o carregamento de clientes
+    } catch (error) {
+        console.error('Erro na inicialização:', error);
+        showAlert('error', 'Erro ao carregar dados do sistema');
+    }
+
+    // Setup da busca de clientes
+    const customerSearch = document.getElementById('customerSearch');
+    if (customerSearch) {
+        customerSearch.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('#customersTableBody tr');
+            
+            rows.forEach(row => {
+                const name = row.querySelector('.customer-name')?.textContent.toLowerCase() || '';
+                const phone = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+                
+                if (name.includes(searchTerm) || phone.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    // Adiciona tratamento de erros global
+    window.onerror = function(msg, url, line) {
+        console.error('JavaScript error:', msg, 'at', url, ':', line);
+        showAlert('error', 'Ocorreu um erro na aplicação');
+        return false;
+    };
+});
 
    </script>
 </body>
