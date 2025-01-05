@@ -8,6 +8,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-app-compat.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-database-compat.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
         :root {
             --primary: #7209B7;
             --secondary: #3A0CA3;
@@ -18,6 +20,7 @@
             --gradient: linear-gradient(135deg, #F72585 0%, #7209B7 50%, #3A0CA3 100%);
             --glass: rgba(255, 255, 255, 0.1);
             --glass-border: rgba(255, 255, 255, 0.2);
+            --error: #FF5252;
         }
 
         * {
@@ -28,7 +31,7 @@
         }
 
         body {
-            background: var(--background);
+            background-color: var(--background);
             color: var(--text);
             min-height: 100vh;
             padding: 2rem;
@@ -53,24 +56,59 @@
             100% { transform: scale(1.1) rotate(5deg); }
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(16, 0, 43, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            z-index: 1000;
+            border-bottom: 1px solid var(--glass-border);
         }
 
-        h1 {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 2rem;
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--accent);
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .store-name {
+            font-size: 2rem;
+            font-weight: 700;
             background: var(--gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 80px auto 0;
+            padding: 1rem;
         }
 
         .orders-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 2rem;
+            padding: 1rem;
         }
 
         .order-card {
@@ -100,6 +138,7 @@
         .order-id {
             font-size: 1.2rem;
             font-weight: bold;
+            color: white;
         }
 
         .order-time {
@@ -113,17 +152,20 @@
         }
 
         .btn {
-            padding: 0.5rem;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             border: none;
             color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 40px;
-            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: scale(1.1);
         }
 
         .btn-print {
@@ -134,11 +176,6 @@
             background: #4CAF50;
         }
 
-        .btn:hover {
-            transform: scale(1.1);
-            filter: brightness(1.2);
-        }
-
         .section {
             margin-bottom: 1.5rem;
             padding-bottom: 1rem;
@@ -147,6 +184,8 @@
 
         .section:last-child {
             border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
         }
 
         .section-title {
@@ -177,15 +216,10 @@
             margin-top: 0.25rem;
         }
 
-        .totals {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
         .total-row {
             display: flex;
             justify-content: space-between;
+            margin-bottom: 0.5rem;
         }
 
         .final-total {
@@ -194,12 +228,19 @@
             color: var(--accent);
         }
 
+        .payment-info {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
         .empty-state {
             text-align: center;
             padding: 3rem;
             background: rgba(36, 0, 70, 0.7);
             border-radius: 1rem;
             border: 1px solid var(--glass-border);
+            grid-column: 1 / -1;
         }
 
         .empty-state i {
@@ -208,19 +249,9 @@
             color: var(--accent);
         }
 
-        @media (max-width: 768px) {
-            .orders-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .order-card {
-                margin: 0 1rem;
-            }
-        }
-
         .notification {
             position: fixed;
-            top: 20px;
+            bottom: 20px;
             right: 20px;
             background: var(--gradient);
             color: white;
@@ -231,38 +262,42 @@
         }
 
         @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
-        }
+        @media (max-width: 768px) {
+            .orders-grid {
+                grid-template-columns: 1fr;
+            }
 
-        .shake {
-            animation: shake 0.5s ease;
+            .store-name {
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
 <body>
     <div class="background-animation"></div>
     
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Cabana Açaí Logo">
+            </div>
+            <h1 class="store-name">Gestor de Pedidos - Cabana Açaí</h1>
+        </div>
+    </header>
+
     <div class="container">
-        <h1>Gestor de Pedidos - Cabana Açaí</h1>
         <div id="ordersGrid" class="orders-grid">
             <!-- Orders will be inserted here dynamically -->
         </div>
     </div>
 
-    <audio id="orderSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+    <audio id="orderSound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+    </audio>
 
     <script>
         // Firebase initialization
@@ -284,6 +319,13 @@
         // Store orders in memory
         let orders = new Map();
 
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(value);
+        }
+
         function showNotification(message) {
             const notification = document.createElement('div');
             notification.className = 'notification';
@@ -292,17 +334,17 @@
             setTimeout(() => notification.remove(), 3000);
         }
 
-        function formatCurrency(value) {
-            return new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-            }).format(value);
-        }
-
         function createOrderCard(order) {
             const card = document.createElement('div');
             card.className = 'order-card';
             card.id = `order-${order.id}`;
+            
+            // Garante que os arrays existam
+            const items = order.items.map(item => ({
+                ...item,
+                selectedToppings: item.selectedToppings || [],
+                selectedExtras: item.selectedExtras || []
+            }));
             
             card.innerHTML = `
                 <div class="order-header">
@@ -337,7 +379,7 @@
                 <div class="section">
                     <div class="section-title">Itens</div>
                     <ul class="items-list">
-                        ${order.items.map(item => `
+                        ${items.map(item => `
                             <li class="item">
                                 <div class="item-name">${item.name}</div>
                                 ${item.selectedToppings.length ? `
@@ -372,197 +414,204 @@
                         <span>${formatCurrency(order.deliveryFee)}</span>
                     </div>
                     <div class="total-row final-total">
-                        <span>Total:</span>
-                        <span>${formatCurrency(order.total)}</span>
-                    </div>
-                    <div class="payment-info">
-                        <div>Pagamento: ${order.deliveryInfo.payment.toUpperCase()}</div>
-                        ${order.deliveryInfo.change ? `
-                            <div>Troco para: ${formatCurrency(order.deliveryInfo.change)}</div>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-            
-            return card;
-        }
+                       <span>Total:</span>
+                       <span>${formatCurrency(order.total)}</span>
+                   </div>
+                   <div class="payment-info">
+                       <div>Pagamento: ${order.deliveryInfo.payment.toUpperCase()}</div>
+                       ${order.deliveryInfo.change ? `
+                           <div>Troco para: ${formatCurrency(order.deliveryInfo.change)}</div>
+                       ` : ''}
+                   </div>
+               </div>
+           `;
+           
+           return card;
+       }
 
-        function updateOrdersDisplay() {
-            const grid = document.getElementById('ordersGrid');
-            grid.innerHTML = '';
+       function handlePrint(orderId) {
+           const order = orders.get(orderId);
+           if (!order) return;
 
-            if (orders.size === 0) {
-                grid.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-coffee"></i>
-                        <h2>Nenhum pedido pendente</h2>
-                        <p>Os novos pedidos aparecerão aqui automaticamente.</p>
-                    </div>
-                `;
-                return;
-            }
+           // Garante que os arrays existam
+           const items = order.items.map(item => ({
+               ...item,
+               selectedToppings: item.selectedToppings || [],
+               selectedExtras: item.selectedExtras || []
+           }));
 
-            orders.forEach(order => {
-                grid.appendChild(createOrderCard(order));
-            });
-        }
+           const printWindow = window.open('', '_blank');
+           printWindow.document.write(`
+               <html>
+                   <head>
+                       <title>Pedido #${orderId.slice(0, 8)}</title>
+                       <style>
+                           body { 
+                               font-family: Arial, sans-serif; 
+                               padding: 20px; 
+                               line-height: 1.6;
+                           }
+                           .header { 
+                               text-align: center; 
+                               margin-bottom: 20px;
+                               border-bottom: 2px solid #333;
+                               padding-bottom: 10px;
+                           }
+                           .section { 
+                               margin-bottom: 20px;
+                               border-bottom: 1px solid #ccc;
+                               padding-bottom: 10px;
+                           }
+                           .section-title {
+                               font-weight: bold;
+                               margin-bottom: 10px;
+                           }
+                           .items { margin-bottom: 15px; }
+                           .item { 
+                               margin-bottom: 10px;
+                               padding: 5px 0;
+                           }
+                           .item-details {
+                               margin-left: 15px;
+                               font-size: 0.9em;
+                               color: #666;
+                           }
+                           .totals {
+                               margin-top: 20px;
+                               border-top: 2px solid #333;
+                               padding-top: 10px;
+                           }
+                           .total-row {
+                               display: flex;
+                               justify-content: space-between;
+                               margin: 5px 0;
+                           }
+                           .final-total {
+                               font-weight: bold;
+                               font-size: 1.2em;
+                           }
+                       </style>
+                   </head>
+                   <body>
+                       <div class="header">
+                           <h1>Cabana Açaí - Pedido #${orderId.slice(0, 8)}</h1>
+                           <div>${new Date(order.timestamp).toLocaleString()}</div>
+                       </div>
 
-        function handlePrint(orderId) {
-            const order = orders.get(orderId);
-            if (!order) return;
+                       <div class="section">
+                           <div class="section-title">Cliente</div>
+                           <div>${order.customerInfo.fullName}</div>
+                           <div>${order.customerInfo.whatsapp}</div>
+                       </div>
 
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <html>
-                    <head>
-                        <title>Pedido #${orderId.slice(0, 8)}</title>
-                        <style>
-                            body { 
-                                font-family: Arial, sans-serif; 
-                                padding: 20px; 
-                                line-height: 1.6;
-                            }
-                            .header { 
-                                text-align: center; 
-                                margin-bottom: 20px;
-                                border-bottom: 2px solid #333;
-                                padding-bottom: 10px;
-                            }
-                            .section { 
-                                margin-bottom: 20px;
-                                border-bottom: 1px solid #ccc;
-                                padding-bottom: 10px;
-                            }
-                            .section-title {
-                                font-weight: bold;
-                                margin-bottom: 10px;
-                            }
-                            .items { margin-bottom: 15px; }
-                            .item { 
-                                margin-bottom: 10px;
-                                padding: 5px 0;
-                            }
-                            .item-details {
-                                margin-left: 15px;
-                                font-size: 0.9em;
-                                color: #666;
-                            }
-                            .totals {
-                                margin-top: 20px;
-                                border-top: 2px solid #333;
-                                padding-top: 10px;
-                            }
-                            .total-row {
-                                display: flex;
-                                justify-content: space-between;
-                                margin: 5px 0;
-                            }
-                            .final-total {
-                                font-weight: bold;
-                                font-size: 1.2em;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="header">
-                            <h1>Cabana Açaí - Pedido #${orderId.slice(0, 8)}</h1>
-                            <div>${new Date(order.timestamp).toLocaleString()}</div>
-                        </div>
+                       <div class="section">
+                           <div class="section-title">Endereço de Entrega</div>
+                           <div>${order.deliveryInfo.address}</div>
+                           <div>${order.deliveryInfo.neighborhood}</div>
+                           ${order.deliveryInfo.complement ? `<div>Complemento: ${order.deliveryInfo.complement}</div>` : ''}
+                           ${order.deliveryInfo.apt ? `<div>Apto/Bloco: ${order.deliveryInfo.apt}</div>` : ''}
+                       </div>
 
-                        <div class="section">
-                            <div class="section-title">Cliente</div>
-                            <div>${order.customerInfo.fullName}</div>
-                            <div>${order.customerInfo.whatsapp}</div>
-                        </div>
+                       <div class="section">
+                           <div class="section-title">Itens do Pedido</div>
+                           ${items.map(item => `
+                               <div class="item">
+                                   <div><strong>${item.name}</strong> - ${formatCurrency(item.price)}</div>
+                                   ${item.selectedToppings.length ? 
+                                       `<div class="item-details">Acompanhamentos: ${item.selectedToppings.join(', ')}</div>` : ''}
+                                   ${item.selectedExtras.length ? 
+                                       `<div class="item-details">Extras: ${item.selectedExtras.join(', ')}</div>` : ''}
+                               </div>
+                           `).join('')}
+                       </div>
 
-                        <div class="section">
-                            <div class="section-title">Endereço de Entrega</div>
-                            <div>${order.deliveryInfo.address}</div>
-                            <div>${order.deliveryInfo.neighborhood}</div>
-                            ${order.deliveryInfo.complement ? `<div>Complemento: ${order.deliveryInfo.complement}</div>` : ''}
-                            ${order.deliveryInfo.apt ? `<div>Apto/Bloco: ${order.deliveryInfo.apt}</div>` : ''}
-                        </div>
+                       <div class="totals">
+                           <div class="total-row">
+                               <span>Subtotal:</span>
+                               <span>${formatCurrency(order.subtotal)}</span>
+                           </div>
+                           ${order.discount ? `
+                               <div class="total-row">
+                                   <span>Desconto:</span>
+                                   <span>-${formatCurrency(order.discount)}</span>
+                               </div>
+                           ` : ''}
+                           <div class="total-row">
+                               <span>Taxa de Entrega:</span>
+                               <span>${formatCurrency(order.deliveryFee)}</span>
+                           </div>
+                           <div class="total-row final-total">
+                               <span>Total:</span>
+                               <span>${formatCurrency(order.total)}</span>
+                           </div>
 
-                        <div class="section">
-                            <div class="section-title">Itens do Pedido</div>
-                            ${order.items.map(item => `
-                                <div class="item">
-                                    <div><strong>${item.name}</strong> - ${formatCurrency(item.price)}</div>
-                                    ${item.selectedToppings.length ? 
-                                        `<div class="item-details">Acompanhamentos: ${item.selectedToppings.join(', ')}</div>` : ''}
-                                    ${item.selectedExtras.length ? 
-                                        `<div class="item-details">Extras: ${item.selectedExtras.join(', ')}</div>` : ''}
-                                </div>
-                            `).join('')}
-                        </div>
+                           <div style="margin-top: 20px;">
+                               <div>Forma de Pagamento: ${order.deliveryInfo.payment.toUpperCase()}</div>
+                               ${order.deliveryInfo.change ? 
+                                   `<div>Troco para: ${formatCurrency(order.deliveryInfo.change)}</div>` : ''}
+                           </div>
+                       </div>
+                   </body>
+               </html>
+           `);
+           
+           printWindow.document.close();
+           printWindow.print();
+       }
 
-                        <div class="totals">
-                            <div class="total-row">
-                                <span>Subtotal:</span>
-                                <span>${formatCurrency(order.subtotal)}</span>
-                            </div>
-                            ${order.discount ? `
-                                <div class="total-row">
-                                    <span>Desconto:</span>
-                                    <span>-${formatCurrency(order.discount)}</span>
-                                </div>
-                            ` : ''}
-                            <div class="total-row">
-                                <span>Taxa de Entrega:</span>
-                                <span>${formatCurrency(order.deliveryFee)}</span>
-                            </div>
-                            <div class="total-row final-total">
-                                <span>Total:</span>
-                                <span>${formatCurrency(order.total)}</span>
-                            </div>
+       async function handleFinish(orderId) {
+           try {
+               const orderRef = db.ref(`orders/${orderId}`);
+               await orderRef.remove();
+               orders.delete(orderId);
+               showNotification('Pedido finalizado com sucesso!');
+           } catch (error) {
+               console.error('Error finishing order:', error);
+               showNotification('Erro ao finalizar pedido. Tente novamente.');
+           }
+       }
 
-                            <div style="margin-top: 20px;">
-                                <div>Forma de Pagamento: ${order.deliveryInfo.payment.toUpperCase()}</div>
-                                ${order.deliveryInfo.change ? 
-                                    `<div>Troco para: ${formatCurrency(order.deliveryInfo.change)}</div>` : ''}
-                            </div>
-                        </div>
-                    </body>
-                </html>
-            `);
-            
-            printWindow.document.close();
-            printWindow.print();
-        }
+       function updateOrdersDisplay() {
+           const grid = document.getElementById('ordersGrid');
+           grid.innerHTML = '';
 
-        async function handleFinish(orderId) {
-            try {
-                const orderRef = db.ref(`orders/${orderId}`);
-                await orderRef.remove();
-                orders.delete(orderId);
-                showNotification('Pedido finalizado com sucesso!');
-                updateOrdersDisplay();
-            } catch (error) {
-                console.error('Error finishing order:', error);
-                showNotification('Erro ao finalizar pedido. Tente novamente.');
-            }
-        }
+           if (orders.size === 0) {
+               grid.innerHTML = `
+                   <div class="empty-state">
+                       <i class="fas fa-coffee"></i>
+                       <h2>Nenhum pedido pendente</h2>
+                       <p>Os novos pedidos aparecerão aqui automaticamente.</p>
+                   </div>
+               `;
+               return;
+           }
 
-        // Listen for new orders
-        db.ref('orders').on('child_added', (snapshot) => {
-            const order = {
-                id: snapshot.key,
-                ...snapshot.val()
-            };
-            orders.set(order.id, order);
-            updateOrdersDisplay();
-            orderSound.play().catch(err => console.log('Error playing sound:', err));
-            showNotification('Novo pedido recebido!');
-        });
+           orders.forEach(order => {
+               const card = createOrderCard(order);
+               grid.appendChild(card);
+           });
+       }
 
-        // Listen for removed orders
-        db.ref('orders').on('child_removed', (snapshot) => {
-            orders.delete(snapshot.key);
-            updateOrdersDisplay();
-        });
+       // Listen for new orders
+       db.ref('orders').on('child_added', (snapshot) => {
+           const order = {
+               id: snapshot.key,
+               ...snapshot.val()
+           };
+           orders.set(order.id, order);
+           updateOrdersDisplay();
+           orderSound.play().catch(err => console.log('Error playing sound:', err));
+           showNotification('Novo pedido recebido!');
+       });
 
-        // Initial load
-        updateOrdersDisplay();
-    </script>
+       // Listen for removed orders
+       db.ref('orders').on('child_removed', (snapshot) => {
+           orders.delete(snapshot.key);
+           updateOrdersDisplay();
+       });
+
+       // Initial load
+       updateOrdersDisplay();
+   </script>
 </body>
 </html>
