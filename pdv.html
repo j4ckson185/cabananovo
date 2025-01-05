@@ -51,7 +51,65 @@
             position: fixed;
             height: 100vh;
             z-index: 1000;
+            overflow-y: auto;
+            max-height: 100vh;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent) var(--surface);
         }
+
+        .sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: var(--surface);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background-color: var(--accent);
+    border-radius: 3px;
+}
+
+/* Estilização da tabela de clientes */
+.customers-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.customers-table th,
+.customers-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.customers-table th {
+    background: rgba(0, 0, 0, 0.2);
+    font-weight: 600;
+    color: white;
+}
+
+.customers-table tbody tr:hover {
+    background: var(--glass);
+}
+
+.customer-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.customer-details {
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.customer-orders {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--accent);
+}
 
         .sidebar-header {
             padding: 0 1.5rem;
@@ -971,11 +1029,31 @@
             </div>
         </div>
 
-        <div id="customersView" class="view" style="display: none;">
-            <div class="page-header">
-                <h1 class="page-title">Clientes</h1>
-            </div>
+<div id="customersView" class="view" style="display: none;">
+    <div class="page-header">
+        <h1 class="page-title">Clientes</h1>
+        <div class="search-container">
+            <input type="text" class="form-input" id="customerSearch" placeholder="Buscar cliente...">
         </div>
+    </div>
+
+    <div class="table-container">
+        <table class="customers-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>WhatsApp</th>
+                    <th>Primeira Compra</th>
+                    <th>Última Compra</th>
+                    <th>Total de Pedidos</th>
+                </tr>
+            </thead>
+            <tbody id="customersTableBody">
+                <!-- Os clientes serão carregados aqui dinamicamente -->
+            </tbody>
+        </table>
+    </div>
+</div>
 
         <div id="settingsView" class="view" style="display: none;">
             <div class="page-header">
@@ -1011,6 +1089,62 @@
                item.classList.add('active');
            });
        });
+
+        // Função para carregar os clientes
+function loadCustomers() {
+    db.ref('customers').on('value', snapshot => {
+        const customersTableBody = document.getElementById('customersTableBody');
+        customersTableBody.innerHTML = '';
+        
+        const customers = snapshot.val() || {};
+        
+        Object.entries(customers).forEach(([id, customer]) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>
+                    <div class="customer-info">
+                        <div class="customer-name">${customer.fullName}</div>
+                    </div>
+                </td>
+                <td>${formatPhoneNumber(customer.whatsapp)}</td>
+                <td>${formatDate(customer.firstOrder)}</td>
+                <td>${formatDate(customer.lastOrder)}</td>
+                <td>${customer.totalOrders || 0}</td>
+            `;
+            customersTableBody.appendChild(row);
+        });
+    });
+}
+
+// Função para formatar número de telefone
+function formatPhoneNumber(phone) {
+    if (!phone) return '';
+    return phone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+}
+
+// Função para formatar data
+function formatDate(timestamp) {
+    if (!timestamp) return '-';
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('pt-BR');
+}
+
+// Adicione a função de busca de clientes
+document.getElementById('customerSearch').addEventListener('input', (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#customersTableBody tr');
+    
+    rows.forEach(row => {
+        const name = row.querySelector('.customer-name').textContent.toLowerCase();
+        const phone = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+        
+        if (name.includes(searchTerm) || phone.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
 
        function showView(viewName) {
            document.querySelectorAll('.view').forEach(view => view.style.display = 'none');
