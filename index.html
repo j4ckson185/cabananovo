@@ -2496,15 +2496,36 @@ function calculateToppingsPrice(selectedToppings) {
     return total;
 }
 
-function handleCustomerInfo(e) {
+async function handleCustomerInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
     customerInfo = Object.fromEntries(formData);
     
+    // Salvar/atualizar informações do cliente no Firebase
+    const customerRef = db.ref(`customers/${customerInfo.whatsapp}`);
+    const snapshot = await customerRef.once('value');
+    const now = Date.now();
+    
+    if (snapshot.exists()) {
+        // Cliente existente - atualizar informações
+        await customerRef.update({
+            lastOrder: now,
+            totalOrders: (snapshot.val().totalOrders || 0) + 1
+        });
+    } else {
+        // Novo cliente
+        await customerRef.set({
+            fullName: customerInfo.fullName,
+            whatsapp: customerInfo.whatsapp,
+            firstOrder: now,
+            lastOrder: now,
+            totalOrders: 1
+        });
+    }
+    
     document.getElementById('customerInfoModal').style.display = 'none';
     document.getElementById('deliveryInfoModal').style.display = 'block';
 }
-
 // Modify handleDeliveryInfo to include coupon
 async function handleDeliveryInfo(e) {
     e.preventDefault();
@@ -2628,6 +2649,8 @@ document.querySelector('.cart-icon').addEventListener('click', showCartModal);
    loadCategories();
    checkStoreStatus();
    setInterval(checkStoreStatus, 60000);
+   loadCustomers();
+
    
    // Categories
    document.querySelectorAll('.category-btn').forEach(button => {
