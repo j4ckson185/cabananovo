@@ -1548,28 +1548,27 @@ function initComboBuilder() {
     const backBtn = comboModal.querySelector('.btn-back');
     const addCartBtn = comboModal.querySelector('.btn-add-cart');
     
-
-    // Size selection
-    document.querySelectorAll('.size-option').forEach(option => {
-        option.addEventListener('click', function() {
-            // Remove seleção anterior
-            document.querySelectorAll('.size-option').forEach(opt => {
-                opt.classList.remove('selected');
-            });
-            
-            // Adiciona nova seleção
-            this.classList.add('selected');
-            
-            // Atualiza dados do combo
-            comboData.size = {
-                size: this.dataset.size,
-                price: parseFloat(this.dataset.price)
-            };
-            
-            // Habilita botão de continuar
-            nextBtn.disabled = false;
+// Size selection
+document.querySelectorAll('.size-option').forEach(option => {
+    option.addEventListener('click', function() {
+        // Remove seleção anterior
+        document.querySelectorAll('.size-option').forEach(opt => {
+            opt.classList.remove('selected');
+            opt.style.background = ''; // Remove background anterior
         });
+        
+        // Adiciona nova seleção com gradiente
+        this.classList.add('selected');
+        this.style.background = 'var(--gradient)';
+        
+        comboData.size = {
+            size: this.dataset.size,
+            price: parseFloat(this.dataset.price)
+        };
+        
+        nextBtn.disabled = false;
     });
+});
 
         setupFlavorSelectors();
 
@@ -1638,34 +1637,39 @@ function initComboBuilder() {
 // Adiciona função para adicionar o combo ao carrinho
 function addComboToCart() {
     const comboPrice = calculateComboPrice();
-    const comboName = `Combo ${comboData.size.size}${comboData.acai2.primaryFlavor ? ' - Mix de Sabores' : ''}`;
-    
-    // Formata os sabores e acompanhamentos do açaí 1
-    let sabores = `${comboData.acai1.primaryFlavor}`;
+    const comboName = `Combo ${comboData.size.size}`;
+
+    // Monta os detalhes do Açaí 1
+    let acai1Details = `\n• Açaí 1:\n`;
+    acai1Details += `  Sabor principal: ${comboData.acai1.primaryFlavor}\n`;
     if (comboData.acai1.secondaryFlavor) {
-        sabores += ` + ${comboData.acai1.secondaryFlavor}`;
+        acai1Details += `  Segundo sabor: ${comboData.acai1.secondaryFlavor}\n`;
     }
-    
-    // Adiciona sabores do açaí 2 se existirem
+    acai1Details += `  Acompanhamentos: ${comboData.acai1.toppings.join(', ')}\n`;
+
+    // Monta os detalhes do Açaí 2 se houver
+    let acai2Details = '';
     if (comboData.acai2.primaryFlavor) {
-        sabores += ` | ${comboData.acai2.primaryFlavor}`;
+        acai2Details = `\n• Açaí 2:\n`;
+        acai2Details += `  Sabor principal: ${comboData.acai2.primaryFlavor}\n`;
         if (comboData.acai2.secondaryFlavor) {
-            sabores += ` + ${comboData.acai2.secondaryFlavor}`;
+            acai2Details += `  Segundo sabor: ${comboData.acai2.secondaryFlavor}\n`;
         }
+        acai2Details += `  Acompanhamentos: ${comboData.acai2.toppings.join(', ')}`;
     }
 
-    // Junta todos os acompanhamentos
-    const allToppings = [
-        ...comboData.acai1.toppings,
-        ...(comboData.acai2.primaryFlavor ? comboData.acai2.toppings : [])
-    ];
+    // Extras se houver
+    let extrasDetails = '';
+    if (comboData.extras.length > 0) {
+        extrasDetails = `\n\n• Extras: ${comboData.extras.join(', ')}`;
+    }
 
     const comboItem = {
         name: comboName,
         price: comboPrice,
-        selectedToppings: allToppings,
+        selectedToppings: [...comboData.acai1.toppings, ...comboData.acai2.toppings],
         selectedExtras: comboData.extras,
-        description: sabores
+        description: `${acai1Details}${acai2Details}${extrasDetails}`
     };
 
     cart.push(comboItem);
@@ -2394,12 +2398,14 @@ function showCartModal() {
     let subtotal = 0;
     cart.forEach((item, index) => {
         subtotal += item.price;
+        const isCombo = item.name.includes('Combo');
+        
         cartItems.innerHTML += `
             <div class="cart-item">
                 <div class="cart-item-details">
                     <h3 class="cart-item-title">${item.name}</h3>
-                    <p class="cart-item-toppings">${item.selectedToppings.join(', ')}</p>
-                    ${item.selectedExtras.length > 0 ? 
+                    <p class="cart-item-description" style="white-space: pre-line;">${item.description}</p>
+                    ${item.selectedExtras.length > 0 && !isCombo ? 
                         `<p class="cart-item-extras">Extras: ${item.selectedExtras.join(', ')}</p>` : 
                         ''}
                 </div>
