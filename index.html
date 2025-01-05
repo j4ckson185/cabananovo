@@ -2528,37 +2528,45 @@ async function handleDeliveryInfo(e) {
                 timestamp: firebase.database.ServerValue.TIMESTAMP,
                 customerInfo: {
                     phone: customerInfo.whatsapp,
-                    // outros dados relevantes...
                 }
             };
             
             await db.ref('purchases').push(purchaseData);
         }
 
-        // Criar e salvar o pedido
+        // Criar o pedido
         const orderData = {
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             customerInfo,
             deliveryInfo,
-            items: cart,
-            subtotal,
-            discount,
-            deliveryFee,
-            total,
-            cupom: appliedCoupon ? appliedCoupon.code : null
+            items: cart.map(item => ({
+                ...item,
+                price: parseFloat(item.price),
+                originalPrice: parseFloat(item.originalPrice || item.price)
+            })),
+            subtotal: parseFloat(subtotal),
+            discount: parseFloat(discount),
+            deliveryFee: parseFloat(deliveryFee),
+            total: parseFloat(total),
+            cupom: appliedCoupon ? appliedCoupon.code : null,
+            status: 'pending'
         };
 
-        // Salvar pedido no Firebase
-        await db.ref('orders').push(orderData);
+        // Salvar pedido no Firebase e esperar a conclusão
+        const newOrderRef = await db.ref('orders').push(orderData);
         
-        // Continua com o fluxo normal de finalização do pedido...
-        const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
-        const encodedMessage = encodeURIComponent(message);
-        window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
+        // Somente após confirmar que o pedido foi salvo, redirecionar para o WhatsApp
+        if (newOrderRef.key) {
+            const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
+            const encodedMessage = encodeURIComponent(message);
+            window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
+        } else {
+            throw new Error('Falha ao salvar o pedido');
+        }
 
     } catch (error) {
         console.error('Error processing order:', error);
-        showNotification('Erro ao processar pedido. Tente novamente.');
+        alert('Erro ao processar pedido. Por favor, tente novamente.');
     }
 }
 
