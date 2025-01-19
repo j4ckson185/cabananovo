@@ -1517,11 +1517,11 @@ let appliedCoupon = null;
 // Adicione esta função logo após a configuração do Firebase no cardápio digital
 async function saveOrderToManagement(orderData) {
     try {
-        // Formata o pedido no padrão esperado pelo PDV
+        const orderId = `WEB-${Date.now()}`;
+        // Formata o pedido no padrão compatível com o PDV
         const foodyFormattedOrder = {
-            id: `WEB-${Date.now()}`,
+            id: orderId,
             status: 'open',
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             creationDate: new Date().toISOString(),
             customer: {
                 customerName: orderData.customerInfo.fullName,
@@ -1530,7 +1530,6 @@ async function saveOrderToManagement(orderData) {
             deliveryPoint: {
                 address: `${orderData.deliveryInfo.address}, ${orderData.deliveryInfo.neighborhood}`,
                 street: orderData.deliveryInfo.address,
-                houseNumber: '',
                 complement: orderData.deliveryInfo.complement || '',
                 neighborhood: orderData.deliveryInfo.neighborhood,
                 postalCode: orderData.deliveryInfo.zipcode,
@@ -1541,31 +1540,26 @@ async function saveOrderToManagement(orderData) {
             paymentMethod: orderData.deliveryInfo.payment,
             orderTotal: orderData.total,
             deliveryFee: 3.00,
-            notes: `Troco para: ${orderData.deliveryInfo.change || 'Não necessário'}`,
+            notes: orderData.deliveryInfo.change ? `Troco para: R$ ${orderData.deliveryInfo.change}` : '',
             orderItems: orderData.items.map(item => ({
                 name: item.name,
                 quantity: 1,
                 unitPrice: item.price,
                 totalPrice: item.price,
                 notes: formatItemNotes(item)
-            })),
-            origin: 'website',
-            preparationTimeInMinutes: 30,
-            deliveryTimeInMinutes: 45
+            }))
         };
 
-        // Salva no Firestore
-        await firebase.firestore().collection('orders').add(foodyFormattedOrder);
+        // Salva no Firebase
+        await db.ref('orders').child(orderId).set(foodyFormattedOrder);
+        console.log('Pedido salvo com sucesso no sistema de gerenciamento:', orderId);
+        return orderId;
 
-        console.log('Pedido salvo com sucesso:', foodyFormattedOrder.id);
-        return foodyFormattedOrder.id;
-        
     } catch (error) {
-        console.error('Erro ao salvar pedido:', error);
+        console.error('Erro ao salvar pedido no sistema de gerenciamento:', error);
         throw error;
     }
 }
-
 // Função auxiliar para formatar as notas dos itens
 function formatItemNotes(item) {
     let notes = [];
