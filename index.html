@@ -1513,7 +1513,66 @@ let cart = [];
 let currentProducts = [];
 let appliedCoupon = null;
 
-    async function handleDeliveryInfo(e) {
+// Adicione esta função logo após a configuração do Firebase no cardápio digital
+async function saveOrderToManagement(orderData) {
+    try {
+        // Converte o pedido do formato do cardápio para o formato do Foody
+        const foodyFormattedOrder = {
+            id: `WEB-${Date.now()}`, // Identificador único para pedidos do site
+            status: 'open',
+            creationDate: new Date().toISOString(),
+            customer: {
+                customerName: orderData.customerInfo.fullName,
+                customerPhone: orderData.customerInfo.whatsapp
+            },
+            deliveryPoint: {
+                address: `${orderData.deliveryInfo.address}, ${orderData.deliveryInfo.neighborhood}`,
+                street: orderData.deliveryInfo.address,
+                complement: orderData.deliveryInfo.complement || '',
+                neighborhood: orderData.deliveryInfo.neighborhood,
+                postalCode: orderData.deliveryInfo.zipcode,
+                city: "Natal",
+                region: "RN",
+                country: "BR"
+            },
+            paymentMethod: orderData.deliveryInfo.payment,
+            orderTotal: orderData.total,
+            deliveryFee: 3.00,
+            notes: `Troco para: ${orderData.deliveryInfo.change || 'Não necessário'}`,
+            items: orderData.items.map(item => ({
+                name: item.name,
+                quantity: 1,
+                unitPrice: item.price,
+                totalPrice: item.price,
+                notes: formatItemNotes(item)
+            }))
+        };
+
+        // Salva no Firebase
+        await db.ref('orders').push(foodyFormattedOrder);
+        console.log('Pedido salvo com sucesso no sistema de gerenciamento');
+        
+    } catch (error) {
+        console.error('Erro ao salvar pedido no sistema de gerenciamento:', error);
+    }
+}
+
+// Função auxiliar para formatar as notas dos itens
+function formatItemNotes(item) {
+    let notes = '';
+    if (item.selectedToppings && item.selectedToppings.length) {
+        notes += `\nAcompanhamentos: ${item.selectedToppings.join(', ')}`;
+    }
+    if (item.selectedExtras && item.selectedExtras.length) {
+        notes += `\nExtras: ${item.selectedExtras.join(', ')}`;
+    }
+    if (item.description) {
+        notes += `\n${item.description}`;
+    }
+    return notes.trim();
+}
+
+async function handleDeliveryInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
     const deliveryInfo = Object.fromEntries(formData);
@@ -1525,59 +1584,32 @@ let appliedCoupon = null;
     const total = subtotal - discount + deliveryFee;
 
     try {
-        // Adiciona log antes de salvar
-        console.log('Tentando salvar pedido:', {
+        // Criar objeto com todos os dados do pedido
+        const orderData = {
             customerInfo,
             deliveryInfo,
             items: cart,
-            subtotal,
-            discount,
-            deliveryFee,
-            total
-        });
-
-        // Criar o pedido
-        const orderData = {
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            customerInfo,
-            deliveryInfo,
-            items: cart.map(item => ({
-                ...item,
-                price: parseFloat(item.price),
-                originalPrice: parseFloat(item.originalPrice || item.price),
-                selectedToppings: item.selectedToppings || [],
-                selectedExtras: item.selectedExtras || []
-            })),
             subtotal: parseFloat(subtotal),
             discount: parseFloat(discount),
             deliveryFee: parseFloat(deliveryFee),
             total: parseFloat(total),
-            cupom: appliedCoupon ? appliedCoupon.code : null,
-            status: 'pending'
+            cupom: appliedCoupon ? appliedCoupon.code : null
         };
 
-        // Salvar pedido no Firebase e esperar a conclusão
-        const newOrderRef = await db.ref('orders').push(orderData);
-        
-        // Log após salvar
-        console.log('Pedido salvo com sucesso, ID:', newOrderRef.key);
+        // Salva no sistema de gerenciamento
+        await saveOrderToManagement(orderData);
 
-        // Somente após confirmar que o pedido foi salvo, redirecionar para o WhatsApp
-        if (newOrderRef.key) {
-            const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
-            const encodedMessage = encodeURIComponent(message);
-            window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
-        } else {
-            throw new Error('Falha ao salvar o pedido');
-        }
+        // Formata mensagem para WhatsApp e redireciona
+        const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
+        const encodedMessage = encodeURIComponent(message);
+        window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
 
     } catch (error) {
-        // Log de erro
         console.error('Erro ao processar pedido:', error);
         alert('Erro ao processar pedido. Por favor, tente novamente.');
     }
 }
-
+    
 // Load products from Firebase
 function loadMenuProducts() {
     db.ref('menu/products').on('value', snapshot => {
