@@ -1516,10 +1516,11 @@ let appliedCoupon = null;
 // Adicione esta função logo após a configuração do Firebase no cardápio digital
 async function saveOrderToManagement(orderData) {
     try {
-        // Converte o pedido do formato do cardápio para o formato do Foody
+        // Formata o pedido no padrão esperado pelo PDV
         const foodyFormattedOrder = {
-            id: `WEB-${Date.now()}`, // Identificador único para pedidos do site
+            id: `WEB-${Date.now()}`,
             status: 'open',
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
             creationDate: new Date().toISOString(),
             customer: {
                 customerName: orderData.customerInfo.fullName,
@@ -1539,37 +1540,56 @@ async function saveOrderToManagement(orderData) {
             orderTotal: orderData.total,
             deliveryFee: 3.00,
             notes: `Troco para: ${orderData.deliveryInfo.change || 'Não necessário'}`,
-            items: orderData.items.map(item => ({
+            orderItems: orderData.items.map(item => ({
                 name: item.name,
                 quantity: 1,
                 unitPrice: item.price,
                 totalPrice: item.price,
                 notes: formatItemNotes(item)
-            }))
+            })),
+            // Campos adicionais necessários para compatibilidade com o PDV
+            preparationTimeInMinutes: 30,
+            deliveryTimeInMinutes: 45,
+            origin: 'website',
+            isScheduled: false
         };
 
-        // Salva no Firebase
-        await db.ref('orders').push(foodyFormattedOrder);
-        console.log('Pedido salvo com sucesso no sistema de gerenciamento');
+        // Agora vamos salvar em um formato que o PDV possa ler
+        const dbRef = db.ref('menu/orders').child(foodyFormattedOrder.id);
+        await dbRef.set(foodyFormattedOrder);
+        
+        // Adicionalmente, vamos manter um registro separado para histórico
+        await db.ref('website_orders').child(foodyFormattedOrder.id).set({
+            ...foodyFormattedOrder,
+            originalOrder: orderData // mantém os dados originais também
+        });
+
+        console.log('Pedido salvo com sucesso no sistema de gerenciamento:', foodyFormattedOrder.id);
+        return foodyFormattedOrder.id;
         
     } catch (error) {
         console.error('Erro ao salvar pedido no sistema de gerenciamento:', error);
+        throw error;
     }
 }
 
 // Função auxiliar para formatar as notas dos itens
 function formatItemNotes(item) {
-    let notes = '';
+    let notes = [];
+    
     if (item.selectedToppings && item.selectedToppings.length) {
-        notes += `\nAcompanhamentos: ${item.selectedToppings.join(', ')}`;
+        notes.push(`Acompanhamentos: ${item.selectedToppings.join(', ')}`);
     }
+    
     if (item.selectedExtras && item.selectedExtras.length) {
-        notes += `\nExtras: ${item.selectedExtras.join(', ')}`;
+        notes.push(`Extras: ${item.selectedExtras.join(', ')}`);
     }
+    
     if (item.description) {
-        notes += `\n${item.description}`;
+        notes.push(item.description);
     }
-    return notes.trim();
+    
+    return notes.join('\n');
 }
 
 async function handleDeliveryInfo(e) {
