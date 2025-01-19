@@ -1597,20 +1597,31 @@ async function handleDeliveryInfo(e) {
     const total = subtotal - discount + deliveryFee;
 
     try {
-        // Criar objeto com todos os dados do pedido
+        // Cria objeto com todos os dados do pedido no formato Foody
         const orderData = {
             customerInfo,
             deliveryInfo,
-            items: cart,
+            items: cart.map(item => ({
+                ...item,
+                price: parseFloat(item.price),
+                originalPrice: parseFloat(item.originalPrice || item.price),
+                selectedToppings: item.selectedToppings || [],
+                selectedExtras: item.selectedExtras || []
+            })),
             subtotal: parseFloat(subtotal),
             discount: parseFloat(discount),
             deliveryFee: parseFloat(deliveryFee),
             total: parseFloat(total),
-            cupom: appliedCoupon ? appliedCoupon.code : null
+            cupom: appliedCoupon ? appliedCoupon.code : null,
+            status: 'open',
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            creationDate: new Date().toISOString(),
+            origin: 'site'
         };
 
         // Salva no sistema de gerenciamento
-        await saveOrderToManagement(orderData);
+        const orderId = await saveOrderToManagement(orderData);
+        console.log('Pedido salvo com ID:', orderId);
 
         // Formata mensagem para WhatsApp e redireciona
         const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
