@@ -1520,7 +1520,7 @@ async function saveOrderToManagement(orderData) {
         const foodyFormattedOrder = {
             id: `WEB-${Date.now()}`,
             status: 'open',
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             creationDate: new Date().toISOString(),
             customer: {
                 customerName: orderData.customerInfo.fullName,
@@ -1553,9 +1553,8 @@ async function saveOrderToManagement(orderData) {
             deliveryTimeInMinutes: 45
         };
 
-        // Salva no mesmo local que o PDV lê
-        const dbRef = db.ref('menu/orders').child(foodyFormattedOrder.id);
-        await dbRef.set(foodyFormattedOrder);
+        // Salva no Firestore
+        await firebase.firestore().collection('orders').add(foodyFormattedOrder);
 
         console.log('Pedido salvo com sucesso:', foodyFormattedOrder.id);
         return foodyFormattedOrder.id;
