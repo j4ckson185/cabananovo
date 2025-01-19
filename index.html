@@ -1529,6 +1529,7 @@ async function saveOrderToManagement(orderData) {
             deliveryPoint: {
                 address: `${orderData.deliveryInfo.address}, ${orderData.deliveryInfo.neighborhood}`,
                 street: orderData.deliveryInfo.address,
+                houseNumber: '',
                 complement: orderData.deliveryInfo.complement || '',
                 neighborhood: orderData.deliveryInfo.neighborhood,
                 postalCode: orderData.deliveryInfo.zipcode,
@@ -1547,28 +1548,20 @@ async function saveOrderToManagement(orderData) {
                 totalPrice: item.price,
                 notes: formatItemNotes(item)
             })),
-            // Campos adicionais necessários para compatibilidade com o PDV
-            preparationTimeInMinutes: 30,
-            deliveryTimeInMinutes: 45,
             origin: 'website',
-            isScheduled: false
+            preparationTimeInMinutes: 30,
+            deliveryTimeInMinutes: 45
         };
 
-        // Agora vamos salvar em um formato que o PDV possa ler
+        // Salva no mesmo local que o PDV lê
         const dbRef = db.ref('menu/orders').child(foodyFormattedOrder.id);
         await dbRef.set(foodyFormattedOrder);
-        
-        // Adicionalmente, vamos manter um registro separado para histórico
-        await db.ref('website_orders').child(foodyFormattedOrder.id).set({
-            ...foodyFormattedOrder,
-            originalOrder: orderData // mantém os dados originais também
-        });
 
-        console.log('Pedido salvo com sucesso no sistema de gerenciamento:', foodyFormattedOrder.id);
+        console.log('Pedido salvo com sucesso:', foodyFormattedOrder.id);
         return foodyFormattedOrder.id;
         
     } catch (error) {
-        console.error('Erro ao salvar pedido no sistema de gerenciamento:', error);
+        console.error('Erro ao salvar pedido:', error);
         throw error;
     }
 }
