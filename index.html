@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-app-compat.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-database-compat.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
@@ -1514,76 +1513,7 @@ let cart = [];
 let currentProducts = [];
 let appliedCoupon = null;
 
-// Adicione esta função logo após a configuração do Firebase no cardápio digital
-async function saveOrderToManagement(orderData) {
-    try {
-        // Formata o pedido no padrão esperado pelo PDV
-        const foodyFormattedOrder = {
-            id: `WEB-${Date.now()}`,
-            status: 'open',
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            creationDate: new Date().toISOString(),
-            customer: {
-                customerName: orderData.customerInfo.fullName,
-                customerPhone: orderData.customerInfo.whatsapp
-            },
-            deliveryPoint: {
-                address: `${orderData.deliveryInfo.address}, ${orderData.deliveryInfo.neighborhood}`,
-                street: orderData.deliveryInfo.address,
-                houseNumber: '',
-                complement: orderData.deliveryInfo.complement || '',
-                neighborhood: orderData.deliveryInfo.neighborhood,
-                postalCode: orderData.deliveryInfo.zipcode,
-                city: "Natal",
-                region: "RN",
-                country: "BR"
-            },
-            paymentMethod: orderData.deliveryInfo.payment,
-            orderTotal: orderData.total,
-            deliveryFee: 3.00,
-            notes: `Troco para: ${orderData.deliveryInfo.change || 'Não necessário'}`,
-            orderItems: orderData.items.map(item => ({
-                name: item.name,
-                quantity: 1,
-                unitPrice: item.price,
-                totalPrice: item.price,
-                notes: formatItemNotes(item)
-            })),
-            origin: 'website'
-        };
-
-        // Salva no Realtime Database
-        await db.ref('orders').child(foodyFormattedOrder.id).set(foodyFormattedOrder);
-        console.log('Pedido salvo com sucesso:', foodyFormattedOrder.id);
-        
-        return foodyFormattedOrder.id;
-        
-    } catch (error) {
-        console.error('Erro ao salvar pedido:', error);
-        throw error;
-    }
-}
-    
-// Função auxiliar para formatar as notas dos itens
-function formatItemNotes(item) {
-    let notes = [];
-    
-    if (item.selectedToppings && item.selectedToppings.length) {
-        notes.push(`Acompanhamentos: ${item.selectedToppings.join(', ')}`);
-    }
-    
-    if (item.selectedExtras && item.selectedExtras.length) {
-        notes.push(`Extras: ${item.selectedExtras.join(', ')}`);
-    }
-    
-    if (item.description) {
-        notes.push(item.description);
-    }
-    
-    return notes.join('\n');
-}
-
-async function handleDeliveryInfo(e) {
+    async function handleDeliveryInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
     const deliveryInfo = Object.fromEntries(formData);
@@ -1595,43 +1525,66 @@ async function handleDeliveryInfo(e) {
     const total = subtotal - discount + deliveryFee;
 
     try {
-        // Criar objeto com todos os dados do pedido
-        const orderData = {
+        // Adiciona log antes de salvar
+        console.log('Tentando salvar pedido:', {
             customerInfo,
             deliveryInfo,
             items: cart,
+            subtotal,
+            discount,
+            deliveryFee,
+            total
+        });
+
+        // Criar o pedido
+        const orderData = {
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            customerInfo,
+            deliveryInfo,
+            items: cart.map(item => ({
+                ...item,
+                price: parseFloat(item.price),
+                originalPrice: parseFloat(item.originalPrice || item.price),
+                selectedToppings: item.selectedToppings || [],
+                selectedExtras: item.selectedExtras || []
+            })),
             subtotal: parseFloat(subtotal),
             discount: parseFloat(discount),
             deliveryFee: parseFloat(deliveryFee),
             total: parseFloat(total),
             cupom: appliedCoupon ? appliedCoupon.code : null,
-            status: 'open',
-            creationDate: new Date().toISOString()
+            status: 'pending'
         };
 
-        console.log('Dados do pedido sendo enviados:', orderData); // Log 1
+        // Salvar pedido no Firebase e esperar a conclusão
+        const newOrderRef = await db.ref('orders').push(orderData);
+        
+        // Log após salvar
+        console.log('Pedido salvo com sucesso, ID:', newOrderRef.key);
 
-        // Salva no sistema de gerenciamento
-        const orderId = await saveOrderToManagement(orderData);
-        console.log('Pedido salvo com sucesso, ID:', orderId); // Log 2
-
-        // Agora vamos verificar se o pedido foi realmente salvo
-        const savedOrder = await db.ref('orders').child(orderId).once('value');
-        console.log('Pedido salvo no Firebase:', savedOrder.val()); // Log 3
-
-        // Formata mensagem para WhatsApp e redireciona
-        const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
-        const encodedMessage = encodeURIComponent(message);
-        window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
+        // Somente após confirmar que o pedido foi salvo, redirecionar para o WhatsApp
+        if (newOrderRef.key) {
+            const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
+            const encodedMessage = encodeURIComponent(message);
+            window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
+        } else {
+            throw new Error('Falha ao salvar o pedido');
+        }
 
     } catch (error) {
-        console.error('Erro detalhado ao processar pedido:', {
-            message: error.message,
-            stack: error.stack,
-            error
-        }); // Log 4
+        // Log de erro
+        console.error('Erro ao processar pedido:', error);
         alert('Erro ao processar pedido. Por favor, tente novamente.');
     }
+}
+
+// Load products from Firebase
+function loadMenuProducts() {
+    db.ref('menu/products').on('value', snapshot => {
+        const products = snapshot.val() || {};
+        currentProducts = Object.values(products).filter(product => product.status);
+        displayProducts(currentProducts);
+    });
 }
 
 // Load categories from Firebase
