@@ -1595,31 +1595,29 @@ async function handleDeliveryInfo(e) {
     const total = subtotal - discount + deliveryFee;
 
     try {
-        // Cria objeto com todos os dados do pedido no formato Foody
+        // Criar objeto com todos os dados do pedido
         const orderData = {
             customerInfo,
             deliveryInfo,
-            items: cart.map(item => ({
-                ...item,
-                price: parseFloat(item.price),
-                originalPrice: parseFloat(item.originalPrice || item.price),
-                selectedToppings: item.selectedToppings || [],
-                selectedExtras: item.selectedExtras || []
-            })),
+            items: cart,
             subtotal: parseFloat(subtotal),
             discount: parseFloat(discount),
             deliveryFee: parseFloat(deliveryFee),
             total: parseFloat(total),
             cupom: appliedCoupon ? appliedCoupon.code : null,
             status: 'open',
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            creationDate: new Date().toISOString(),
-            origin: 'site'
+            creationDate: new Date().toISOString()
         };
+
+        console.log('Dados do pedido sendo enviados:', orderData); // Log 1
 
         // Salva no sistema de gerenciamento
         const orderId = await saveOrderToManagement(orderData);
-        console.log('Pedido salvo com ID:', orderId);
+        console.log('Pedido salvo com sucesso, ID:', orderId); // Log 2
+
+        // Agora vamos verificar se o pedido foi realmente salvo
+        const savedOrder = await db.ref('orders').child(orderId).once('value');
+        console.log('Pedido salvo no Firebase:', savedOrder.val()); // Log 3
 
         // Formata mensagem para WhatsApp e redireciona
         const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
@@ -1627,18 +1625,13 @@ async function handleDeliveryInfo(e) {
         window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
 
     } catch (error) {
-        console.error('Erro ao processar pedido:', error);
+        console.error('Erro detalhado ao processar pedido:', {
+            message: error.message,
+            stack: error.stack,
+            error
+        }); // Log 4
         alert('Erro ao processar pedido. Por favor, tente novamente.');
     }
-}
-    
-// Load products from Firebase
-function loadMenuProducts() {
-    db.ref('menu/products').on('value', snapshot => {
-        const products = snapshot.val() || {};
-        currentProducts = Object.values(products).filter(product => product.status);
-        displayProducts(currentProducts);
-    });
 }
 
 // Load categories from Firebase
