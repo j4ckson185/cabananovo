@@ -2757,21 +2757,21 @@ document.getElementById('deliveryInfoForm').addEventListener('submit', function(
     window.location.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 });
 
- function showCreateOrderModal() {
-    // Verifica se as informações do cliente existem
-    if (!customerInfo.fullName || !deliveryInfo.address) {
-        alert('Por favor, preencha suas informações de contato e entrega primeiro.');
-        return;
-    }
+function showCreateOrderModal() {
+    console.log('showCreateOrderModal iniciado'); // Log para diagnóstico
+    console.log('customerInfo:', customerInfo);
+    console.log('deliveryInfo:', deliveryInfo);
 
     // Preenche automaticamente os campos com informações do último pedido
-    document.getElementById('customerName').value = '';
-    document.getElementById('customerPhone').value = '';
-    document.getElementById('street').value = '';
+    document.getElementById('customerName').value = customerInfo.fullName || '';
+    document.getElementById('customerPhone').value = customerInfo.whatsapp || '';
+    
+    // Endereço
+    document.getElementById('street').value = deliveryInfo.address || '';
     document.getElementById('streetNumber').value = '';
-    document.getElementById('neighborhood').value = '';
-    document.getElementById('complement').value = '';
-    document.getElementById('zipCode').value = '';
+    document.getElementById('neighborhood').value = deliveryInfo.neighborhood || '';
+    document.getElementById('complement').value = deliveryInfo.complement || '';
+    document.getElementById('zipCode').value = deliveryInfo.zipcode || '';
     
     // Define o valor total do pedido
     const subtotal = cart.reduce((total, item) => total + item.price, 0);
@@ -2809,7 +2809,13 @@ document.getElementById('deliveryInfoForm').addEventListener('submit', function(
     document.getElementById('paymentOnline').checked = false;
 
     // Mostra o modal
-    document.getElementById('createOrderModal').style.display = 'block';
+    const createOrderModal = document.getElementById('createOrderModal');
+    if (createOrderModal) {
+        createOrderModal.style.display = 'block';
+        console.log('Modal exibido'); // Log para diagnóstico
+    } else {
+        console.error('Modal não encontrado');
+    }
 
     // Configurar eventos de pagamento para troco
     setupPaymentEvents();
@@ -2978,14 +2984,34 @@ async function submitOrderFromDigitalMenu() {
     
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-document.querySelector('.cart-icon').addEventListener('click', showCartModal);
-document.querySelector('.checkout').addEventListener('click', showCreateOrderModal);
-   // Firebase listeners
-   loadMenuProducts();
-   loadCategories();
-   checkStoreStatus();
-   setInterval(checkStoreStatus, 60000);
-   setupPaymentEvents();
+    console.log('DOM Carregado'); // Log para diagnóstico
+
+    // Evento para o ícone do carrinho
+    const cartIcon = document.querySelector('.cart-icon');
+    if (cartIcon) {
+        cartIcon.addEventListener('click', showCartModal);
+    } else {
+        console.error('Ícone do carrinho não encontrado');
+    }
+
+    // Evento para botão de checkout
+    const checkoutButton = document.querySelector('.checkout');
+    if (checkoutButton) {
+        checkoutButton.addEventListener('click', () => {
+            console.log('Botão de checkout clicado');
+            showCreateOrderModal();
+        });
+    } else {
+        console.error('Botão de checkout não encontrado');
+    }
+
+    // Firebase listeners
+    loadMenuProducts();
+    loadCategories();
+    checkStoreStatus();
+    setInterval(checkStoreStatus, 60000);
+    setupPaymentEvents();
+});
    
    // Categories
    document.querySelectorAll('.category-btn').forEach(button => {
