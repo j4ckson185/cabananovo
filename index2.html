@@ -2598,8 +2598,8 @@ async function applyCoupon() {
     }
 
     try {
-        // Busca o cupom
-        const couponsSnapshot = await realtimeDB.ref()('coupons').orderByChild('code').equalTo(couponCode).once('value');
+        // Correct way to query coupons in Firebase Realtime Database
+        const couponsSnapshot = await realtimeDB.ref('coupons').orderByChild('code').equalTo(couponCode).once('value');
         const coupons = couponsSnapshot.val();
         
         if (!coupons) {
@@ -2611,13 +2611,13 @@ async function applyCoupon() {
 
         const coupon = Object.values(coupons)[0];
 
-        // Se for cupom de primeira compra, faz verificação adicional
+        // If it's a first purchase coupon, do additional verification
         if (coupon.isFirstPurchase) {
             const deviceFingerprint = await generateDeviceFingerprint();
             const userIP = await getUserIP();
             
-            // Verifica se já existe compra com este dispositivo ou IP
-            const purchasesSnapshot = await realtimeDB.ref()('purchases').once('value');
+            // Check if there's already a purchase with this device or IP
+            const purchasesSnapshot = await realtimeDB.ref('purchases').once('value');
             const purchases = purchasesSnapshot.val() || {};
             
             const hasUsedFirstPurchase = Object.values(purchases).some(purchase => 
@@ -2632,7 +2632,7 @@ async function applyCoupon() {
                 return;
             }
 
-            // Armazena os identificadores para uso futuro
+            // Store identifiers for future use
             window.deviceFingerprint = deviceFingerprint;
             window.userIP = userIP;
         }
