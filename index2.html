@@ -1721,8 +1721,16 @@ document.addEventListener('DOMContentLoaded', () => {
 async function handleDeliveryInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const deliveryInfo = Object.fromEntries(formData);
-
+    const deliveryInfo = {
+        address: formData.get('address'),
+        complement: formData.get('complement'),
+        apt: formData.get('apt'),
+        neighborhood: formData.get('neighborhood'),
+        zipcode: formData.get('zipcode'),
+        payment: formData.get('payment'),
+        change: formData.get('change')
+    };
+    
     // Calcular totais
     const subtotal = cart.reduce((total, item) => total + item.price, 0);
     const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
@@ -1730,81 +1738,42 @@ async function handleDeliveryInfo(e) {
     const total = subtotal - discount + deliveryFee;
 
     try {
-        // Formatar os dados no padrão da API do Foody
+        // Criar o pedido
         const orderData = {
-            id: "5555",
-            orderDateTime: new Date().toISOString(),
-            status: "open",
-            orderTotal: parseFloat(total),
-            customer: {
-                customerName: customerInfo.fullName,
-                customerPhone: customerInfo.whatsapp
-            },
-            deliveryPoint: {
-                address: `${deliveryInfo.address}, ${deliveryInfo.neighborhood}`,
-                street: deliveryInfo.address,
-                neighborhood: deliveryInfo.neighborhood,
-                complement: deliveryInfo.complement || "",
-                postalCode: deliveryInfo.zipcode,
-                city: "Natal",
-                region: "RN",
-                country: "BR"
-            },
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            customerInfo,
+            deliveryInfo,
             items: cart.map(item => ({
-                name: item.name,
-                quantity: 1,
-                unitPrice: item.price,
-                totalPrice: item.price,
-                observation: (item.selectedToppings?.length || item.selectedExtras?.length) ? 
-                    `Acompanhamentos: ${item.selectedToppings?.join(", ")}\n` +
-                    `Extras: ${item.selectedExtras?.join(", ")}` : ""
-            })),
-            paymentMethod: deliveryInfo.payment === 'pix' ? 'online' : deliveryInfo.payment,
-            subTotal: subtotal,
-            deliveryFee: deliveryFee,
-            discount: discount,
-            appliedCoupon: appliedCoupon ? {
-                code: appliedCoupon.code,
-                type: appliedCoupon.type,
-                value: appliedCoupon.discount
-            } : null,
-            creationDate: new Date().toISOString(),
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        };
-
-        // Salvar no Firestore
-        await db.collection('orders').add(orderData);
-
-        // Criar objeto com todas as informações necessárias para a mensagem do WhatsApp
-        const whatsappInfo = {
-            ...customerInfo,
-            ...deliveryInfo,
-            orderDetails: cart.map(item => ({
-                name: item.name,
-                price: item.price,
+                ...item,
+                price: parseFloat(item.price),
+                originalPrice: parseFloat(item.originalPrice || item.price),
                 selectedToppings: item.selectedToppings || [],
-                selectedExtras: item.selectedExtras || [],
-                description: item.description || ''
+                selectedExtras: item.selectedExtras || []
             })),
-            subtotal,
-            deliveryFee,
-            discount,
-            total,
-            appliedCoupon
+            subtotal: parseFloat(subtotal),
+            discount: parseFloat(discount),
+            deliveryFee: parseFloat(deliveryFee),
+            total: parseFloat(total),
+            cupom: appliedCoupon ? appliedCoupon.code : null,
+            status: 'pending'
         };
 
-        // Gerar mensagem do WhatsApp com todas as informações
-        const message = formatOrderForWhatsApp(customerInfo, whatsappInfo);
+        // Salvar pedido no Firebase
+        const newOrderRef = await db.ref('orders').push(orderData);
         
-        // Redirecionar para WhatsApp
-        window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
+        if (newOrderRef.key) {
+            const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
+            const encodedMessage = encodeURIComponent(message);
+            window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
+        } else {
+            throw new Error('Falha ao salvar o pedido');
+        }
 
     } catch (error) {
         console.error('Erro ao processar pedido:', error);
         alert('Erro ao processar pedido. Por favor, tente novamente.');
     }
 }
-
 // Load products from Firebase
 function loadMenuProducts() {
     realtimeDB.ref('menu/products').on('value', snapshot => {
@@ -2927,13 +2896,11 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
         message += `\n- ${item.name}\n`;
         
         if (item.name.includes('Combo')) {
-            // Formatação especial para combos
             const description = item.description.split('\\n').filter(line => line.trim() !== '');
             description.forEach(line => {
                 message += `  ${line}\n`;
             });
         } else {
-            // Formatação para itens normais
             if (item.selectedToppings && item.selectedToppings.length > 0) {
                 message += `  Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
             }
