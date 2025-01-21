@@ -1527,46 +1527,16 @@ async function handleDeliveryInfo(e) {
     const total = subtotal - discount + deliveryFee;
 
     try {
-        // Adiciona log antes de salvar
-        console.log('Tentando salvar pedido:', {
-            customerInfo,
-            deliveryInfo,
-            items: cart,
-            subtotal,
-            discount,
-            deliveryFee,
-            total
-        });
-
-        // Criar o pedido
+        // Formatar os dados no padrão da API do Foody
         const orderData = {
-            timestamp: firebase.firestore.Timestamp.now(),
-            customerInfo,
-            deliveryInfo: {
-                ...deliveryInfo,
-                payment: deliveryInfo.payment === 'pix' ? 'online' : deliveryInfo.payment,
-            },
-            items: cart.map(item => ({
-                ...item,
-                price: parseFloat(item.price),
-                originalPrice: parseFloat(item.originalPrice || item.price),
-                selectedToppings: item.selectedToppings || [],
-                selectedExtras: item.selectedExtras || [],
-                observation: [
-                    ...(item.selectedToppings?.length ? [`Acompanhamentos: ${item.selectedToppings.join(", ")}`] : []),
-                    ...(item.selectedExtras?.length ? [`Extras: ${item.selectedExtras.join(", ")}`] : [])
-                ].join("\n")
-            })),
-            subtotal: parseFloat(subtotal),
-            discount: parseFloat(discount),
-            deliveryFee: parseFloat(deliveryFee),
-            total: parseFloat(total),
-            cupom: appliedCoupon ? appliedCoupon.code : null,
-            status: 'open',
-            orderTotal: parseFloat(total),
-            paymentMethod: deliveryInfo.payment === 'pix' ? 'online' : deliveryInfo.payment,
             id: "5555",
-            creationDate: new Date().toISOString(),
+            orderDateTime: new Date().toISOString(),
+            status: "open",
+            orderTotal: parseFloat(total),
+            customer: {
+                customerName: customerInfo.fullName,
+                customerPhone: customerInfo.whatsapp
+            },
             deliveryPoint: {
                 address: `${deliveryInfo.address}, ${deliveryInfo.neighborhood}`,
                 street: deliveryInfo.address,
@@ -1577,35 +1547,31 @@ async function handleDeliveryInfo(e) {
                 region: "RN",
                 country: "BR"
             },
-            customer: {
-                customerName: customerInfo.fullName,
-                customerPhone: customerInfo.whatsapp
-            }
+            items: cart.map(item => ({
+                name: item.name,
+                quantity: 1,
+                unitPrice: item.price,
+                totalPrice: item.price,
+                observation: (item.selectedToppings?.length || item.selectedExtras?.length) ? 
+                    `Acompanhamentos: ${item.selectedToppings.join(", ")}\n` +
+                    `Extras: ${item.selectedExtras.join(", ")}` : ""
+            })),
+            paymentMethod: deliveryInfo.payment === 'pix' ? 'online' : deliveryInfo.payment,
+            subTotal: subtotal,
+            deliveryFee: deliveryFee,
+            discount: discount,
+            creationDate: new Date().toISOString(),
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        // Salvar pedido no Firestore
-        const docRef = await db.collection('orders').add(orderData);
-        
-        // Log após salvar
-        console.log('Pedido salvo com sucesso, ID:', docRef.id);
+        // Salvar no Firestore
+        await db.collection('orders').add(orderData);
 
-        // Verificar se há deviceFingerprint e userIP (para cupons de primeira compra)
-        if (window.deviceFingerprint && window.userIP) {
-            await db.collection('purchases').add({
-                orderId: docRef.id,
-                deviceFingerprint: window.deviceFingerprint,
-                userIP: window.userIP,
-                timestamp: firebase.firestore.Timestamp.now()
-            });
-        }
-
-        // Somente após confirmar que o pedido foi salvo, redirecionar para o WhatsApp
+        // Redirecionar para WhatsApp
         const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
-        const encodedMessage = encodeURIComponent(message);
-        window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
+        window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
 
     } catch (error) {
-        // Log de erro
         console.error('Erro ao processar pedido:', error);
         alert('Erro ao processar pedido. Por favor, tente novamente.');
     }
