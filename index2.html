@@ -1522,6 +1522,84 @@ function updateCustomerAndDeliveryInfo(customer, delivery) {
     deliveryInfo = delivery;
 }
 
+function showCreateOrderModal() {
+    console.log('showCreateOrderModal iniciado');
+
+    // Defina o ID do pedido como 5555
+    document.getElementById('orderId').value = '5555';
+
+    // Limpar campos do formulário
+    document.getElementById('customerName').value = '';
+    document.getElementById('customerPhone').value = '';
+    
+    // Endereço
+    document.getElementById('street').value = '';
+    document.getElementById('streetNumber').value = '';
+    document.getElementById('neighborhood').value = '';
+    document.getElementById('complement').value = '';
+    document.getElementById('zipCode').value = '';
+    
+    // Define o valor total do pedido
+    const subtotal = cart.reduce((total, item) => total + item.price, 0);
+    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    const deliveryFee = 3.00;
+    const total = subtotal - discount + deliveryFee;
+    document.getElementById('orderTotal').value = total.toFixed(2);
+    
+    // Monta os detalhes do pedido
+    let orderDetails = '';
+    cart.forEach(item => {
+        if (item.name.includes('Combo')) {
+            orderDetails += `Combo ${item.name}\n`;
+            const description = item.description.split('\n').filter(line => line.trim() !== '');
+            description.forEach(line => {
+                orderDetails += `${line}\n`;
+            });
+        } else {
+            orderDetails += `${item.name}\n`;
+            orderDetails += `Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
+            if (item.selectedExtras && item.selectedExtras.length > 0) {
+                orderDetails += `Extras: ${item.selectedExtras.join(', ')}\n`;
+            }
+        }
+        orderDetails += `Valor: R$ ${item.price.toFixed(2)}\n\n`;
+    });
+    document.getElementById('orderDetails').value = orderDetails;
+
+    // Configuração inicial do formulário
+    document.getElementById('notes').value = '';
+    
+    // Resetar seleção de pagamento
+    document.getElementById('paymentMoney').checked = false;
+    document.getElementById('paymentCard').checked = false;
+    document.getElementById('paymentOnline').checked = false;
+
+    // Mostra o modal
+    const createOrderModal = document.getElementById('createOrderModal');
+    if (createOrderModal) {
+        createOrderModal.style.display = 'block';
+        console.log('Modal exibido');
+    } else {
+        console.error('Modal não encontrado');
+    }
+
+    // Configurar eventos de pagamento para troco
+    setupPaymentEvents();
+}
+
+// Adicionar event listener para o botão de checkout
+document.addEventListener('DOMContentLoaded', () => {
+    const checkoutButton = document.querySelector('.checkout');
+    if (checkoutButton) {
+        checkoutButton.addEventListener('click', () => {
+            console.log('Botão de checkout clicado');
+            showCreateOrderModal();
+        });
+    } else {
+        console.error('Botão de checkout não encontrado');
+    }
+});
+
 async function handleDeliveryInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
