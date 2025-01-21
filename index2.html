@@ -1721,16 +1721,18 @@ document.addEventListener('DOMContentLoaded', () => {
 async function handleDeliveryInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
+    
+    // Capturar todos os dados do formulário
     const deliveryInfo = {
         address: formData.get('address'),
         complement: formData.get('complement'),
         apt: formData.get('apt'),
         neighborhood: formData.get('neighborhood'),
         zipcode: formData.get('zipcode'),
-        payment: formData.get('payment'),
+        payment: formData.get('payment'), // Captura a forma de pagamento
         change: formData.get('change')
     };
-    
+
     // Calcular totais
     const subtotal = cart.reduce((total, item) => total + item.price, 0);
     const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
@@ -1738,7 +1740,7 @@ async function handleDeliveryInfo(e) {
     const total = subtotal - discount + deliveryFee;
 
     try {
-        // Criar o pedido
+        // Criar o pedido para o Firebase
         const orderData = {
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             customerInfo,
@@ -1759,8 +1761,9 @@ async function handleDeliveryInfo(e) {
         };
 
         // Salvar pedido no Firebase
-        const newOrderRef = await db.ref('orders').push(orderData);
+        const newOrderRef = await realtimeDB.ref('orders').push(orderData);
         
+        // Após salvar com sucesso, formatar e enviar mensagem do WhatsApp
         if (newOrderRef.key) {
             const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
             const encodedMessage = encodeURIComponent(message);
@@ -1774,6 +1777,7 @@ async function handleDeliveryInfo(e) {
         alert('Erro ao processar pedido. Por favor, tente novamente.');
     }
 }
+    
 // Load products from Firebase
 function loadMenuProducts() {
     realtimeDB.ref('menu/products').on('value', snapshot => {
@@ -2871,7 +2875,7 @@ function updateCartCount() {
 function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     const paymentMethodMap = {
         'money': 'Dinheiro',
-        'card': 'Cartão',
+        'card': 'Cartão na Entrega',
         'pix': 'PIX'
     };
 
@@ -2883,7 +2887,7 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     
     // Endereço
     message += `*📍 Endereço de Entrega:*\n`;
-    message += `${deliveryInfo.address}\n`;
+    message += deliveryInfo.address + '\n';
     if (deliveryInfo.complement) {
         message += `Complemento: ${deliveryInfo.complement}\n`;
     }
@@ -2937,7 +2941,8 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     message += `*Total Final: R$ ${finalTotal.toFixed(2)}*\n\n`;
     
     // Pagamento
-    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[deliveryInfo.payment]}`;
+    const paymentMethod = paymentMethodMap[deliveryInfo.payment] || deliveryInfo.payment;
+    message += `*💳 Forma de Pagamento:* ${paymentMethod}`;
     if (deliveryInfo.payment === 'money' && deliveryInfo.change) {
         message += `\nTroco para: R$ ${deliveryInfo.change}`;
     }
