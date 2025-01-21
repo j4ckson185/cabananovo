@@ -2062,7 +2062,6 @@ function updateCategoryButtons(categories) {
 }
 
 function checkStoreStatus() {
-    // Remove o status anterior se existir
     const existingStatus = document.querySelector('.store-status');
     if (existingStatus) {
         existingStatus.remove();
@@ -2087,7 +2086,7 @@ function checkStoreStatus() {
         gap: 0.5rem;
     `;
     
-    realtimeDB.ref()('schedule').once('value')
+    realtimeDB.ref('schedule').once('value')
         .then(snapshot => {
             const schedule = snapshot.val() || {};
             const isOpen = isStoreOpenNow(schedule);
@@ -2099,11 +2098,9 @@ function checkStoreStatus() {
                 <span>Loja ${isOpen ? 'Aberta' : 'Fechada'}</span>
             `;
             
-            // Inserir entre o header e as categorias
             const categories = document.querySelector('.categories');
             categories.parentNode.insertBefore(statusDiv, categories);
             
-            // Se estiver fechada, desabilita botões de compra
             if (!isOpen) {
                 disableOrdering();
             }
