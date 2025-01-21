@@ -1721,18 +1721,16 @@ document.addEventListener('DOMContentLoaded', () => {
 async function handleDeliveryInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
-    
-    // Capturar todos os dados do formulário
     const deliveryInfo = {
         address: formData.get('address'),
         complement: formData.get('complement'),
         apt: formData.get('apt'),
         neighborhood: formData.get('neighborhood'),
         zipcode: formData.get('zipcode'),
-        payment: formData.get('payment'), // Captura a forma de pagamento
+        payment: formData.get('payment'),
         change: formData.get('change')
     };
-
+    
     // Calcular totais
     const subtotal = cart.reduce((total, item) => total + item.price, 0);
     const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
@@ -1740,7 +1738,7 @@ async function handleDeliveryInfo(e) {
     const total = subtotal - discount + deliveryFee;
 
     try {
-        // Criar o pedido para o Firebase
+        // Criar o pedido
         const orderData = {
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             customerInfo,
@@ -1761,9 +1759,8 @@ async function handleDeliveryInfo(e) {
         };
 
         // Salvar pedido no Firebase
-        const newOrderRef = await realtimeDB.ref('orders').push(orderData);
+        const newOrderRef = await db.ref('orders').push(orderData);
         
-        // Após salvar com sucesso, formatar e enviar mensagem do WhatsApp
         if (newOrderRef.key) {
             const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
             const encodedMessage = encodeURIComponent(message);
@@ -2887,7 +2884,7 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     
     // Endereço
     message += `*📍 Endereço de Entrega:*\n`;
-    message += deliveryInfo.address + '\n';
+    message += `${deliveryInfo.address}\n`;
     if (deliveryInfo.complement) {
         message += `Complemento: ${deliveryInfo.complement}\n`;
     }
@@ -2901,30 +2898,36 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     message += `*🍨 Itens do Pedido:*\n`;
     let subtotal = 0;
     cart.forEach(item => {
-        message += `\n- ${item.name}\n`;
-        
         if (item.name.includes('Combo')) {
-            const description = item.description.split('\\n').filter(line => line.trim() !== '');
+            message += `\n- ${item.name}\n`;
+            const description = item.description.split('\n').filter(line => line.trim() !== '');
             description.forEach(line => {
-                message += `  ${line}\n`;
+                if (line.startsWith('•')) {
+                    message += `\n${line}`;
+                } else {
+                    message += `  ${line}\n`;
+                }
             });
+            message += `  *Valor: R$ ${item.price.toFixed(2)}*\n`;
         } else {
+            message += `\n- ${item.name}\n`;
             if (item.selectedToppings && item.selectedToppings.length > 0) {
                 message += `  Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
             }
             if (item.selectedExtras && item.selectedExtras.length > 0) {
                 message += `  Extras: ${item.selectedExtras.join(', ')}\n`;
             }
+            message += `  *Valor: R$ ${item.price.toFixed(2)}*\n`;
         }
-        message += `  *Valor: R$ ${item.price.toFixed(2)}*\n`;
         subtotal += item.price;
     });
 
+    // Resumo financeiro
     message += `\n*💰 Resumo do Pedido:*\n`;
     message += `*Subtotal:* R$ ${subtotal.toFixed(2)}\n`;
     message += `*Taxa de Entrega:* R$ 3,00\n`;
 
-    // Informações do cupom e desconto
+    // Cupom e desconto
     if (appliedCoupon) {
         const discount = calculateDiscount(subtotal);
         message += `*🎫 Cupom Aplicado:* ${appliedCoupon.code}\n`;
@@ -2933,16 +2936,15 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
         } else {
             message += `*Desconto:* -R$ ${discount.toFixed(2)}\n`;
         }
+        const total = subtotal - discount + 3.00;
+        message += `*Total Final: R$ ${total.toFixed(2)}*\n\n`;
+    } else {
+        const total = subtotal + 3.00;
+        message += `*Total Final: R$ ${total.toFixed(2)}*\n\n`;
     }
-
-    // Total final
-    const totalDiscount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-    const finalTotal = subtotal - totalDiscount + 3.00;
-    message += `*Total Final: R$ ${finalTotal.toFixed(2)}*\n\n`;
     
-    // Pagamento
-    const paymentMethod = paymentMethodMap[deliveryInfo.payment] || deliveryInfo.payment;
-    message += `*💳 Forma de Pagamento:* ${paymentMethod}`;
+    // Forma de pagamento
+    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[deliveryInfo.payment]}`;
     if (deliveryInfo.payment === 'money' && deliveryInfo.change) {
         message += `\nTroco para: R$ ${deliveryInfo.change}`;
     }
