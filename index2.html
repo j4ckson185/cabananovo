@@ -2247,8 +2247,8 @@ function openProductModal(product) {
 
     // Load available toppings and extras from Firebase
     Promise.all([
-        realtimeDB.ref()('menu/toppings').once('value'),
-        realtimeDB.ref()('extras').once('value')
+        realtimeDB.ref('menu/toppings').once('value'),
+        realtimeDB.ref('extras').once('value')
     ]).then(([toppingsSnapshot, extrasSnapshot]) => {
         const toppings = toppingsSnapshot.val() || {};
         const extras = extrasSnapshot.val() || {};
