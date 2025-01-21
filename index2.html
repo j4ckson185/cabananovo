@@ -3102,52 +3102,6 @@ async function submitOrder() {
     }
 }
 
-function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
-    const paymentMethodMap = {
-        'money': 'Dinheiro',
-        'card': 'Cartão',
-        'online': 'PIX'
-    };
-
-    let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
-    
-    // Informações do cliente
-    message += `*Cliente:* ${deliveryInfo.customerName}\n`;
-    message += `*WhatsApp:* ${customerInfo.whatsapp}\n\n`;
-    
-    // Endereço
-    message += `*📍 Endereço de Entrega:*\n`;
-    message += `${deliveryInfo.street}, ${deliveryInfo.streetNumber}\n`;
-    if (deliveryInfo.complement) message += `Complemento: ${deliveryInfo.complement}\n`;
-    message += `Bairro: ${deliveryInfo.neighborhood}\n`;
-    message += `CEP: ${deliveryInfo.zipCode}\n\n`;
-    
-    // Detalhes do pedido do textarea
-    message += `*🍨 Itens do Pedido:*\n`;
-    const orderDetails = document.getElementById('orderDetails').value;
-    message += `${orderDetails}\n`;
-
-    // Total do pedido
-    const orderTotal = document.getElementById('orderTotal').value;
-    
-    // Resumo do pedido
-    message += `*💰 Resumo do Pedido:*\n`;
-    message += `*Total:* R$ ${parseFloat(orderTotal).toFixed(2)}\n`;
-    
-    // Pagamento
-    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[deliveryInfo.payment]}\n`;
-    if (deliveryInfo.payment === 'money' && deliveryInfo.change) {
-        message += `Troco para: R$ ${deliveryInfo.change}\n`;
-    }
-    
-    // Observações
-    const notes = document.getElementById('notes').value;
-    if (notes) {
-        message += `*Observações:* ${notes}\n`;
-    }
-    
-    return message;
-}
 
 function closeCreateOrderModal() {
     document.getElementById('createOrderModal').style.display = 'none';
