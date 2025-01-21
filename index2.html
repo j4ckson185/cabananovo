@@ -2756,15 +2756,21 @@ function updateCustomerAndDeliveryInfo(customer, delivery) {
     deliveryInfo = delivery;
 }
 
-    function showCreateOrderModal() {
+ function showCreateOrderModal() {
+    // Verifica se as informações do cliente existem
+    if (!customerInfo.fullName || !deliveryInfo.address) {
+        alert('Por favor, preencha suas informações de contato e entrega primeiro.');
+        return;
+    }
+
     // Preenche automaticamente os campos com informações do último pedido
-    document.getElementById('customerName').value = customerInfo.fullName;
-    document.getElementById('customerPhone').value = customerInfo.whatsapp;
-    document.getElementById('street').value = deliveryInfo.address;
-    document.getElementById('streetNumber').value = ''; // Deixe em branco para o usuário preencher
-    document.getElementById('neighborhood').value = deliveryInfo.neighborhood;
-    document.getElementById('complement').value = deliveryInfo.complement || '';
-    document.getElementById('zipCode').value = deliveryInfo.zipcode;
+    document.getElementById('customerName').value = '';
+    document.getElementById('customerPhone').value = '';
+    document.getElementById('street').value = '';
+    document.getElementById('streetNumber').value = '';
+    document.getElementById('neighborhood').value = '';
+    document.getElementById('complement').value = '';
+    document.getElementById('zipCode').value = '';
     
     // Define o valor total do pedido
     const subtotal = cart.reduce((total, item) => total + item.price, 0);
@@ -2792,9 +2798,126 @@ function updateCustomerAndDeliveryInfo(customer, delivery) {
         orderDetails += `Valor: R$ ${item.price.toFixed(2)}\n\n`;
     });
     document.getElementById('orderDetails').value = orderDetails;
+
+    // Configuração inicial do formulário
+    document.getElementById('notes').value = '';
     
+    // Resetar seleção de pagamento
+    document.getElementById('paymentMoney').checked = false;
+    document.getElementById('paymentCard').checked = false;
+    document.getElementById('paymentOnline').checked = false;
+
     // Mostra o modal
     document.getElementById('createOrderModal').style.display = 'block';
+
+    // Configurar eventos de pagamento para troco
+    setupPaymentEvents();
+}
+
+function setupPaymentEvents() {
+    const moneyRadio = document.getElementById('paymentMoney');
+    const changeInput = document.createElement('div');
+    changeInput.innerHTML = `
+        <div id="changeContainer" style="display: none; margin-top: 10px;">
+            <label>Troco para quanto?</label>
+            <input type="number" id="changeAmount" step="0.01">
+        </div>
+    `;
+    
+    moneyRadio.closest('div').appendChild(changeInput);
+    
+    document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const changeContainer = document.getElementById('changeContainer');
+            const changeAmount = document.getElementById('changeAmount');
+            const notes = document.getElementById('notes');
+            
+            if (e.target.value === 'money') {
+                changeContainer.style.display = 'block';
+                
+                changeAmount.addEventListener('change', () => {
+                    if (changeAmount.value) {
+                        notes.value = `Troco para R$ ${changeAmount.value}`;
+                    } else {
+                        notes.value = '';
+                    }
+                });
+            } else {
+                changeContainer.style.display = 'none';
+                notes.value = '';
+            }
+        });
+    });
+}
+
+function submitOrderFromDigitalMenu() {
+    const order = {
+        id: document.getElementById('orderId').value,
+        status: 'open', // Removido da exibição, mantido como padrão
+        paymentMethod: document.querySelector('input[name="paymentMethod"]:checked').value === 'online' ? 'online' : document.querySelector('input[name="paymentMethod"]:checked').value,
+        orderTotal: Number(document.getElementById('orderTotal').value),
+        notes: document.getElementById('notes').value,
+        orderDetails: document.getElementById('orderDetails').value,
+        deliveryPoint: {
+            address: `${document.getElementById('street').value}, ${document.getElementById('streetNumber').value}, ${document.getElementById('neighborhood').value}`,
+            street: document.getElementById('street').value,
+            houseNumber: document.getElementById('streetNumber').value,
+            complement: document.getElementById('complement').value,
+            postalCode: document.getElementById('zipCode').value,
+            city: "Natal",
+            region: "RN",
+            country: "BR"
+        },
+        customer: {
+            customerPhone: document.getElementById('customerPhone').value,
+            customerName: document.getElementById('customerName').value
+        }
+    };
+    
+    try {
+        // Usar a mesma URL do PDV
+        const response = fetch('https://us-central1-cabana-8d55e.cloudfunctions.net/foodyDeliveryApi/createOrder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'seu_token_aqui' // Substitua pelo token real
+            },
+            body: JSON.stringify(order)
+        });
+        
+        // Redirecionar para WhatsApp
+        const message = formatOrderForWhatsApp(customerInfo, order);
+        window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
+        
+    } catch (error) {
+        console.error('Erro ao criar pedido:', error);
+        alert('Erro ao criar pedido: ' + error.message);
+    }
+}
+
+function formatOrderForWhatsApp(customerInfo, order) {
+    // Modificação para mostrar PIX em vez de Online
+    const paymentMethodMap = {
+        'money': 'Dinheiro',
+        'card': 'Cartão',
+        'online': 'PIX'
+    };
+
+    let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
+    
+    // Informações do pedido mantidas como estavam
+    message += `*💰 Resumo do Pedido:*\n`;
+    message += `${order.orderDetails}\n`;
+    
+    // Adiciona total, pagamento e observações
+    message += `*Total:* R$ ${order.orderTotal.toFixed(2)}\n`;
+    message += `*Forma de Pagamento:* ${paymentMethodMap[order.paymentMethod]}\n`;
+    
+    if (order.notes) {
+        message += `*Observações:* ${order.notes}\n`;
+    }
+    
+    return message;
 }
 
 function closeCreateOrderModal() {
@@ -2862,6 +2985,7 @@ document.querySelector('.checkout').addEventListener('click', showCreateOrderMod
    loadCategories();
    checkStoreStatus();
    setInterval(checkStoreStatus, 60000);
+   setupPaymentEvents();
    
    // Categories
    document.querySelectorAll('.category-btn').forEach(button => {
@@ -2957,7 +3081,7 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
             <label for="customerPhone">Telefone do Cliente:</label>
             <input type="text" id="customerPhone" value="" required>
             
-            <label for="street">Logradouro:</label>
+            <label for="street">Endereço (Nome da Rua):</label>
             <input type="text" id="street" value="" required>
             
             <label for="streetNumber">Número:</label>
@@ -2971,12 +3095,6 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
             
             <label for="zipCode">CEP:</label>
             <input type="text" id="zipCode" value="" required>
-            
-            <label for="status">Status:</label>
-            <select id="status" required>
-                <option value="open">Aberto</option>
-                <option value="ready">Pronto</option>
-            </select>
             
             <label for="orderDetails">Detalhes do Pedido:</label>
             <textarea id="orderDetails" required></textarea>
