@@ -3142,58 +3142,51 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
    });
 </script>
 <<!-- Modal para Criar Novo Pedido -->
-<div id="createOrderModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeCreateOrderModal()">&times;</span>
-        <h2>Criar Novo Pedido</h2>
-        <form id="createOrderForm">
-            <label for="orderId">ID do Pedido:</label>
-            <input type="text" id="orderId" value="5555" readonly>
-            
-            <label for="customerName">Nome do Cliente:</label>
-            <input type="text" id="customerName" value="" required>
-            
-            <label for="customerPhone">Telefone do Cliente:</label>
-            <input type="text" id="customerPhone" value="" required>
-            
-            <label for="street">Endereço:</label>
-            <input type="text" id="street" value="" required>
-            
-            <label for="streetNumber">Número:</label>
-            <input type="text" id="streetNumber" value="" required>
-            
-            <label for="neighborhood">Bairro:</label>
-            <input type="text" id="neighborhood" value="" required>
-            
-            <label for="complement">Complemento:</label>
-            <input type="text" id="complement">
-            
-            <label for="zipCode">CEP:</label>
-            <input type="text" id="zipCode" value="" required>
-            
-            <label for="orderDetails">Detalhes do Pedido:</label>
-            <textarea id="orderDetails" required></textarea>
-            
-            <label>Método de Pagamento:</label>
-            <div>
-                <input type="radio" id="paymentMoney" name="paymentMethod" value="money" required>
-                <label for="paymentMoney">Dinheiro</label>
-                
-                <input type="radio" id="paymentCard" name="paymentMethod" value="card">
-                <label for="paymentCard">Cartão</label>
-                
-                <input type="radio" id="paymentOnline" name="paymentMethod" value="pix">
-                <label for="paymentOnline">PIX</label>
-            </div>
-            
-            <label for="orderTotal">Valor Total:</label>
-            <input type="number" id="orderTotal" step="0.01" required>
-            
-            <label for="notes">Observações:</label>
-            <textarea id="notes"></textarea>
-            
-            <button type="button" onclick="submitOrderFromDigitalMenu()">Criar Pedido</button>
-        </form>
+    <!-- Modal para Criar Novo Pedido -->
+    <div id="createOrderModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCreateOrderModal()">&times;</span>
+            <h2>Criar Novo Pedido</h2>
+            <form id="createOrderForm">
+                <label for="orderId">ID do Pedido:</label>
+                <input type="text" id="orderId" required>
+                <label for="customerName">Nome do Cliente:</label>
+                <input type="text" id="customerName" required>
+                <label for="customerPhone">Telefone do Cliente:</label>
+                <input type="text" id="customerPhone" required>
+                <label for="street">Logradouro:</label>
+                <input type="text" id="street" required>
+                <label for="streetNumber">Número:</label>
+                <input type="text" id="streetNumber" required>
+                <label for="neighborhood">Bairro:</label>
+                <input type="text" id="neighborhood" required>
+                <label for="complement">Complemento:</label>
+                <input type="text" id="complement">
+                <label for="zipCode">CEP:</label>
+                <input type="text" id="zipCode" required>
+                <label for="status">Status:</label>
+                <select id="status" required>
+                    <option value="open">Aberto</option>
+                    <option value="ready">Pronto</option>
+                </select>
+                <label for="orderDetails">Detalhes do Pedido:</label>
+                <textarea id="orderDetails" required></textarea>
+                <label>Método de Pagamento:</label>
+                <div>
+                    <input type="radio" id="paymentMoney" name="paymentMethod" value="money" required>
+                    <label for="paymentMoney">Dinheiro</label>
+                    <input type="radio" id="paymentCard" name="paymentMethod" value="card">
+                    <label for="paymentCard">Cartão</label>
+                    <input type="radio" id="paymentOnline" name="paymentMethod" value="online">
+                    <label for="paymentOnline">Online</label>
+                </div>
+                <label for="orderTotal">Valor Total:</label>
+                <input type="number" id="orderTotal" step="0.01" required>
+                <label for="notes">Observações:</label>
+                <textarea id="notes"></textarea>
+                <button type="button" onclick="submitOrder()">Criar Pedido</button>
+            </form>
+        </div>
     </div>
 </div>
 </body>
