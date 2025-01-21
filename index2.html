@@ -2742,10 +2742,108 @@ document.getElementById('deliveryInfoForm').addEventListener('submit', function(
     const whatsappNumber = "5584987673202";
     window.location.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 });
+
+    function showCreateOrderModal() {
+    // Preenche automaticamente os campos com informações do último pedido
+    document.getElementById('customerName').value = customerInfo.fullName;
+    document.getElementById('customerPhone').value = customerInfo.whatsapp;
+    document.getElementById('street').value = deliveryInfo.address;
+    document.getElementById('streetNumber').value = ''; // Deixe em branco para o usuário preencher
+    document.getElementById('neighborhood').value = deliveryInfo.neighborhood;
+    document.getElementById('complement').value = deliveryInfo.complement || '';
+    document.getElementById('zipCode').value = deliveryInfo.zipcode;
+    
+    // Define o valor total do pedido
+    const subtotal = cart.reduce((total, item) => total + item.price, 0);
+    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    const deliveryFee = 3.00;
+    const total = subtotal - discount + deliveryFee;
+    document.getElementById('orderTotal').value = total.toFixed(2);
+    
+    // Monta os detalhes do pedido
+    let orderDetails = '';
+    cart.forEach(item => {
+        if (item.name.includes('Combo')) {
+            orderDetails += `Combo ${item.name}\n`;
+            const description = item.description.split('\n').filter(line => line.trim() !== '');
+            description.forEach(line => {
+                orderDetails += `${line}\n`;
+            });
+        } else {
+            orderDetails += `${item.name}\n`;
+            orderDetails += `Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
+            if (item.selectedExtras && item.selectedExtras.length > 0) {
+                orderDetails += `Extras: ${item.selectedExtras.join(', ')}\n`;
+            }
+        }
+        orderDetails += `Valor: R$ ${item.price.toFixed(2)}\n\n`;
+    });
+    document.getElementById('orderDetails').value = orderDetails;
+    
+    // Mostra o modal
+    document.getElementById('createOrderModal').style.display = 'block';
+}
+
+function closeCreateOrderModal() {
+    document.getElementById('createOrderModal').style.display = 'none';
+}
+
+async function submitOrderFromDigitalMenu() {
+    const order = {
+        id: document.getElementById('orderId').value,
+        status: document.getElementById('status').value,
+        paymentMethod: document.querySelector('input[name="paymentMethod"]:checked').value,
+        orderTotal: Number(document.getElementById('orderTotal').value),
+        notes: document.getElementById('notes').value,
+        orderDetails: document.getElementById('orderDetails').value,
+        deliveryPoint: {
+            address: `${document.getElementById('street').value}, ${document.getElementById('streetNumber').value}, ${document.getElementById('neighborhood').value}`,
+            street: document.getElementById('street').value,
+            houseNumber: document.getElementById('streetNumber').value,
+            complement: document.getElementById('complement').value,
+            postalCode: document.getElementById('zipCode').value,
+            city: "Natal",
+            region: "RN",
+            country: "BR"
+        },
+        customer: {
+            customerPhone: document.getElementById('customerPhone').value,
+            customerName: document.getElementById('customerName').value
+        }
+    };
+    
+    try {
+        // Usar a mesma URL do PDV
+        const response = await fetch('https://us-central1-cabana-8d55e.cloudfunctions.net/foodyDeliveryApi/createOrder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': '8d7c77946d534444a168bb7da794febf' // Substitua pelo token real
+            },
+            body: JSON.stringify(order)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Pedido criado:', result);
+        
+        // Redirecionar para WhatsApp
+        const message = formatOrderForWhatsApp(customerInfo, order);
+        window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
+        
+    } catch (error) {
+        console.error('Erro ao criar pedido:', error);
+        alert('Erro ao criar pedido: ' + error.message);
+    }
+}
     
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
 document.querySelector('.cart-icon').addEventListener('click', showCartModal);
+document.querySelector('.checkout').addEventListener('click', showCreateOrderModal);
    // Firebase listeners
    loadMenuProducts();
    loadCategories();
@@ -2831,5 +2929,66 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
    });
 });
 </script>
+<!-- Modal para Criar Novo Pedido -->
+<div id="createOrderModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeCreateOrderModal()">&times;</span>
+        <h2>Criar Novo Pedido</h2>
+        <form id="createOrderForm">
+            <label for="orderId">ID do Pedido:</label>
+            <input type="text" id="orderId" value="5555" readonly>
+            
+            <label for="customerName">Nome do Cliente:</label>
+            <input type="text" id="customerName" value="" required>
+            
+            <label for="customerPhone">Telefone do Cliente:</label>
+            <input type="text" id="customerPhone" value="" required>
+            
+            <label for="street">Logradouro:</label>
+            <input type="text" id="street" value="" required>
+            
+            <label for="streetNumber">Número:</label>
+            <input type="text" id="streetNumber" value="" required>
+            
+            <label for="neighborhood">Bairro:</label>
+            <input type="text" id="neighborhood" value="" required>
+            
+            <label for="complement">Complemento:</label>
+            <input type="text" id="complement">
+            
+            <label for="zipCode">CEP:</label>
+            <input type="text" id="zipCode" value="" required>
+            
+            <label for="status">Status:</label>
+            <select id="status" required>
+                <option value="open">Aberto</option>
+                <option value="ready">Pronto</option>
+            </select>
+            
+            <label for="orderDetails">Detalhes do Pedido:</label>
+            <textarea id="orderDetails" required></textarea>
+            
+            <label>Método de Pagamento:</label>
+            <div>
+                <input type="radio" id="paymentMoney" name="paymentMethod" value="money" required>
+                <label for="paymentMoney">Dinheiro</label>
+                
+                <input type="radio" id="paymentCard" name="paymentMethod" value="card">
+                <label for="paymentCard">Cartão</label>
+                
+                <input type="radio" id="paymentOnline" name="paymentMethod" value="online">
+                <label for="paymentOnline">Online</label>
+            </div>
+            
+            <label for="orderTotal">Valor Total:</label>
+            <input type="number" id="orderTotal" step="0.01" required>
+            
+            <label for="notes">Observações:</label>
+            <textarea id="notes"></textarea>
+            
+            <button type="button" onclick="submitOrderFromDigitalMenu()">Criar Pedido</button>
+        </form>
+    </div>
+</div>
 </body>
 </html>
