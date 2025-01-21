@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -5,8 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cabana Açaí - Menu Premium</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-app-compat.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-database-compat.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
@@ -1023,6 +1025,124 @@ header {
         grid-template-columns: 1fr;
     }
 }
+
+    /* Estilos para o modal de criação de pedido */
+#createOrderModal .modal-content {
+    max-width: 500px;
+    width: 90%;
+    padding: 2rem;
+    background: var(--surface);
+    border-radius: 15px;
+}
+
+#createOrderModal h2 {
+    color: white;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-size: 1.5rem;
+}
+
+#createOrderForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#createOrderForm label {
+    color: var(--text);
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+#createOrderForm input[type="text"],
+#createOrderForm input[type="number"],
+#createOrderForm select,
+#createOrderForm textarea {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+}
+
+#createOrderForm textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Grupo de método de pagamento */
+#createOrderForm .payment-group {
+    background: var(--glass);
+    padding: 1rem;
+    border-radius: 8px;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+#createOrderForm .payment-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#createOrderForm .payment-option input[type="radio"] {
+    accent-color: var(--accent);
+}
+
+#createOrderForm .payment-option label {
+    margin: 0;
+    color: white;
+}
+
+/* Botão de submit */
+#createOrderForm button {
+    background: var(--gradient);
+    color: white;
+    padding: 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    margin-top: 1rem;
+}
+
+#createOrderForm button:hover {
+    transform: translateY(-2px);
+}
+
+/* Responsividade */
+@media (max-width: 480px) {
+    #createOrderModal .modal-content {
+        padding: 1.5rem;
+    }
+
+    #createOrderForm .payment-group {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+/* Botão de fechar */
+#createOrderModal .close {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    color: var(--text);
+    font-size: 1.5rem;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0.5rem;
+}
+
+#createOrderModal .close:hover {
+    color: var(--accent);
+}
     
 </style>
 </head>
@@ -1507,16 +1627,104 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const realtimeDB = firebase.database(); // para funções que usam .ref()
+const db = firebase.firestore(); // para novas funções que integram com o PDV
 
 let cart = [];
 let currentProducts = [];
 let appliedCoupon = null;
+let customerInfo = {};
+let deliveryInfo = {};
 
-    async function handleDeliveryInfo(e) {
+function updateCustomerAndDeliveryInfo(customer, delivery) {
+    customerInfo = customer;
+    deliveryInfo = delivery;
+}
+
+function showCreateOrderModal() {
+    console.log('showCreateOrderModal iniciado');
+
+    // Defina o ID do pedido como 5555
+    document.getElementById('orderId').value = '5555';
+
+    // Limpar campos do formulário
+    document.getElementById('customerName').value = '';
+    document.getElementById('customerPhone').value = '';
+    
+    // Endereço
+    document.getElementById('street').value = '';
+    document.getElementById('streetNumber').value = '';
+    document.getElementById('neighborhood').value = '';
+    document.getElementById('complement').value = '';
+    document.getElementById('zipCode').value = '';
+    
+    // Define o valor total do pedido
+    const subtotal = cart.reduce((total, item) => total + item.price, 0);
+    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    const deliveryFee = 3.00;
+    const total = subtotal - discount + deliveryFee;
+    document.getElementById('orderTotal').value = total.toFixed(2);
+    
+    // Monta os detalhes do pedido
+    let orderDetails = '';
+    cart.forEach(item => {
+        if (item.name.includes('Combo')) {
+            orderDetails += `Combo ${item.name}\n`;
+            const description = item.description.split('\n').filter(line => line.trim() !== '');
+            description.forEach(line => {
+                orderDetails += `${line}\n`;
+            });
+        } else {
+            orderDetails += `${item.name}\n`;
+            orderDetails += `Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
+            if (item.selectedExtras && item.selectedExtras.length > 0) {
+                orderDetails += `Extras: ${item.selectedExtras.join(', ')}\n`;
+            }
+        }
+        orderDetails += `Valor: R$ ${item.price.toFixed(2)}\n\n`;
+    });
+    document.getElementById('orderDetails').value = orderDetails;
+
+    // Configuração inicial do formulário
+    document.getElementById('notes').value = '';
+    
+    // Resetar seleção de pagamento
+    document.getElementById('paymentMoney').checked = false;
+    document.getElementById('paymentCard').checked = false;
+    document.getElementById('paymentOnline').checked = false;
+
+    // Mostra o modal
+    const createOrderModal = document.getElementById('createOrderModal');
+    if (createOrderModal) {
+        createOrderModal.style.display = 'block';
+        console.log('Modal exibido');
+    } else {
+        console.error('Modal não encontrado');
+    }
+
+    // Configurar eventos de pagamento para troco
+    setupPaymentEvents();
+}
+
+// Adicionar event listener para o botão de checkout
+document.addEventListener('DOMContentLoaded', () => {
+    const checkoutButton = document.querySelector('.checkout');
+    if (checkoutButton) {
+        checkoutButton.addEventListener('click', () => {
+            console.log('Botão de checkout clicado');
+            showCreateOrderModal();
+        });
+    } else {
+        console.error('Botão de checkout não encontrado');
+    }
+});
+
+async function handleDeliveryInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
     const deliveryInfo = Object.fromEntries(formData);
+
+     updateCustomerAndDeliveryInfo(customerInfo, delivery);
     
     // Calcular totais
     const subtotal = cart.reduce((total, item) => total + item.price, 0);
@@ -1525,54 +1733,51 @@ let appliedCoupon = null;
     const total = subtotal - discount + deliveryFee;
 
     try {
-        // Adiciona log antes de salvar
-        console.log('Tentando salvar pedido:', {
-            customerInfo,
-            deliveryInfo,
-            items: cart,
-            subtotal,
-            discount,
-            deliveryFee,
-            total
-        });
-
-        // Criar o pedido
+        // Formatar os dados no padrão da API do Foody
         const orderData = {
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            customerInfo,
-            deliveryInfo,
+            id: "5555",
+            orderDateTime: new Date().toISOString(),
+            status: "open",
+            orderTotal: parseFloat(total),
+            customer: {
+                customerName: customerInfo.fullName,
+                customerPhone: customerInfo.whatsapp
+            },
+            deliveryPoint: {
+                address: `${deliveryInfo.address}, ${deliveryInfo.neighborhood}`,
+                street: deliveryInfo.address,
+                neighborhood: deliveryInfo.neighborhood,
+                complement: deliveryInfo.complement || "",
+                postalCode: deliveryInfo.zipcode,
+                city: "Natal",
+                region: "RN",
+                country: "BR"
+            },
             items: cart.map(item => ({
-                ...item,
-                price: parseFloat(item.price),
-                originalPrice: parseFloat(item.originalPrice || item.price),
-                selectedToppings: item.selectedToppings || [],
-                selectedExtras: item.selectedExtras || []
+                name: item.name,
+                quantity: 1,
+                unitPrice: item.price,
+                totalPrice: item.price,
+                observation: (item.selectedToppings?.length || item.selectedExtras?.length) ? 
+                    `Acompanhamentos: ${item.selectedToppings.join(", ")}\n` +
+                    `Extras: ${item.selectedExtras.join(", ")}` : ""
             })),
-            subtotal: parseFloat(subtotal),
-            discount: parseFloat(discount),
-            deliveryFee: parseFloat(deliveryFee),
-            total: parseFloat(total),
-            cupom: appliedCoupon ? appliedCoupon.code : null,
-            status: 'pending'
+            paymentMethod: deliveryInfo.payment === 'pix' ? 'online' : deliveryInfo.payment,
+            subTotal: subtotal,
+            deliveryFee: deliveryFee,
+            discount: discount,
+            creationDate: new Date().toISOString(),
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        // Salvar pedido no Firebase e esperar a conclusão
-        const newOrderRef = await db.ref('orders').push(orderData);
-        
-        // Log após salvar
-        console.log('Pedido salvo com sucesso, ID:', newOrderRef.key);
+        // Salvar no Firestore
+        await db.collection('orders').add(orderData);
 
-        // Somente após confirmar que o pedido foi salvo, redirecionar para o WhatsApp
-        if (newOrderRef.key) {
-            const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
-            const encodedMessage = encodeURIComponent(message);
-            window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
-        } else {
-            throw new Error('Falha ao salvar o pedido');
-        }
+        // Redirecionar para WhatsApp
+        const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
+        window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
 
     } catch (error) {
-        // Log de erro
         console.error('Erro ao processar pedido:', error);
         alert('Erro ao processar pedido. Por favor, tente novamente.');
     }
@@ -1580,7 +1785,7 @@ let appliedCoupon = null;
 
 // Load products from Firebase
 function loadMenuProducts() {
-    db.ref('menu/products').on('value', snapshot => {
+    realtimeDB.ref('menu/products').on('value', snapshot => {
         const products = snapshot.val() || {};
         currentProducts = Object.values(products).filter(product => product.status);
         displayProducts(currentProducts);
@@ -1589,7 +1794,7 @@ function loadMenuProducts() {
 
 // Load categories from Firebase
 function loadCategories() {
-    db.ref('menu/categories').on('value', snapshot => {
+    realtimeDB.ref('menu/categories').on('value', snapshot => {
         const categories = snapshot.val() || {};
         updateCategoryButtons(categories);
     });
@@ -1846,7 +2051,7 @@ function updateComboView() {
 
 function loadToppingsAndExtras() {
     // Load toppings from Firebase
-    db.ref('toppings').once('value', snapshot => {
+    realtimeDB.ref('toppings').once('value', snapshot => {
         const toppings = snapshot.val();
         if (toppings) {
             const toppingsHtml = Object.values(toppings)
@@ -1869,7 +2074,7 @@ function loadToppingsAndExtras() {
     });
 
     // Load extras from Firebase
-    db.ref('extras').once('value', snapshot => {
+    realtimeDB.ref('extras').once('value', snapshot => {
         const extras = snapshot.val();
         if (extras) {
             const extrasHtml = Object.values(extras)
@@ -2029,7 +2234,6 @@ function updateCategoryButtons(categories) {
 }
 
 function checkStoreStatus() {
-    // Remove o status anterior se existir
     const existingStatus = document.querySelector('.store-status');
     if (existingStatus) {
         existingStatus.remove();
@@ -2054,7 +2258,7 @@ function checkStoreStatus() {
         gap: 0.5rem;
     `;
     
-    db.ref('schedule').once('value')
+    realtimeDB.ref('schedule').once('value')
         .then(snapshot => {
             const schedule = snapshot.val() || {};
             const isOpen = isStoreOpenNow(schedule);
@@ -2066,11 +2270,9 @@ function checkStoreStatus() {
                 <span>Loja ${isOpen ? 'Aberta' : 'Fechada'}</span>
             `;
             
-            // Inserir entre o header e as categorias
             const categories = document.querySelector('.categories');
             categories.parentNode.insertBefore(statusDiv, categories);
             
-            // Se estiver fechada, desabilita botões de compra
             if (!isOpen) {
                 disableOrdering();
             }
@@ -2162,7 +2364,7 @@ function setupEventListeners() {
    const card = document.createElement('div');
    card.className = 'product-card';
    
-   db.ref(`categories/${product.category}`).once('value')
+   realtimeDB.ref(`categories/${product.category}`).once('value')
        .then(snapshot => {
            const category = snapshot.val();
            const categoryName = category ? category.name : 'Categoria';
@@ -2189,7 +2391,7 @@ function setupEventListeners() {
 }
 
 async function getCategoryName(categoryId) {
-   const snapshot = await db.ref(`categories/${categoryId}`).once('value');
+   const snapshot = await realtimeDB.ref()(`categories/${categoryId}`).once('value');
    const category = snapshot.val();
    return category ? category.name : 'Categoria';
 }
@@ -2217,8 +2419,8 @@ function openProductModal(product) {
 
     // Load available toppings and extras from Firebase
     Promise.all([
-        db.ref('menu/toppings').once('value'),
-        db.ref('extras').once('value')
+        realtimeDB.ref('menu/toppings').once('value'),
+        realtimeDB.ref('extras').once('value')
     ]).then(([toppingsSnapshot, extrasSnapshot]) => {
         const toppings = toppingsSnapshot.val() || {};
         const extras = extrasSnapshot.val() || {};
@@ -2397,8 +2599,8 @@ async function applyCoupon() {
     }
 
     try {
-        // Busca o cupom
-        const couponsSnapshot = await db.ref('coupons').orderByChild('code').equalTo(couponCode).once('value');
+        // Correct way to query coupons in Firebase Realtime Database
+        const couponsSnapshot = await realtimeDB.ref('coupons').orderByChild('code').equalTo(couponCode).once('value');
         const coupons = couponsSnapshot.val();
         
         if (!coupons) {
@@ -2410,13 +2612,13 @@ async function applyCoupon() {
 
         const coupon = Object.values(coupons)[0];
 
-        // Se for cupom de primeira compra, faz verificação adicional
+        // If it's a first purchase coupon, do additional verification
         if (coupon.isFirstPurchase) {
             const deviceFingerprint = await generateDeviceFingerprint();
             const userIP = await getUserIP();
             
-            // Verifica se já existe compra com este dispositivo ou IP
-            const purchasesSnapshot = await db.ref('purchases').once('value');
+            // Check if there's already a purchase with this device or IP
+            const purchasesSnapshot = await realtimeDB.ref('purchases').once('value');
             const purchases = purchasesSnapshot.val() || {};
             
             const hasUsedFirstPurchase = Object.values(purchases).some(purchase => 
@@ -2431,7 +2633,7 @@ async function applyCoupon() {
                 return;
             }
 
-            // Armazena os identificadores para uso futuro
+            // Store identifiers for future use
             window.deviceFingerprint = deviceFingerprint;
             window.userIP = userIP;
         }
@@ -2564,7 +2766,10 @@ function calculateToppingsPrice(selectedToppings) {
 function handleCustomerInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
-    customerInfo = Object.fromEntries(formData);
+    const customer = Object.fromEntries(formData);
+    
+    // Atualiza as informações do cliente
+    updateCustomerAndDeliveryInfo(customer, {});
     
     document.getElementById('customerInfoModal').style.display = 'none';
     document.getElementById('deliveryInfoModal').style.display = 'block';
@@ -2574,6 +2779,8 @@ async function handleDeliveryInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
     const deliveryInfo = Object.fromEntries(formData);
+
+    updateCustomerAndDeliveryInfo(customerInfo, delivery);
     
     // Calcular totais
     const subtotal = cart.reduce((total, item) => total + item.price, 0);
@@ -2593,28 +2800,53 @@ async function handleDeliveryInfo(e) {
             total
         });
 
-        // Criar o pedido
+        // Criar o pedido para o Firebase
         const orderData = {
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             customerInfo,
-            deliveryInfo,
+            deliveryInfo: {
+                ...deliveryInfo,
+                payment: deliveryInfo.payment === 'pix' ? 'online' : deliveryInfo.payment,
+            },
             items: cart.map(item => ({
                 ...item,
                 price: parseFloat(item.price),
                 originalPrice: parseFloat(item.originalPrice || item.price),
                 selectedToppings: item.selectedToppings || [],
-                selectedExtras: item.selectedExtras || []
+                selectedExtras: item.selectedExtras || [],
+                observation: [
+                    ...(item.selectedToppings?.length ? [`Acompanhamentos: ${item.selectedToppings.join(", ")}`] : []),
+                    ...(item.selectedExtras?.length ? [`Extras: ${item.selectedExtras.join(", ")}`] : [])
+                ].join("\n")
             })),
             subtotal: parseFloat(subtotal),
             discount: parseFloat(discount),
             deliveryFee: parseFloat(deliveryFee),
             total: parseFloat(total),
             cupom: appliedCoupon ? appliedCoupon.code : null,
-            status: 'pending'
+            status: 'open',
+            orderTotal: parseFloat(total),
+            paymentMethod: deliveryInfo.payment === 'pix' ? 'online' : deliveryInfo.payment,
+            id: "5555",
+            creationDate: new Date().toISOString(),
+            deliveryPoint: {
+                address: `${deliveryInfo.address}, ${deliveryInfo.neighborhood}`,
+                street: deliveryInfo.address,
+                neighborhood: deliveryInfo.neighborhood,
+                complement: deliveryInfo.complement || "",
+                postalCode: deliveryInfo.zipcode,
+                city: "Natal",
+                region: "RN",
+                country: "BR"
+            },
+            customer: {
+                customerName: customerInfo.fullName,
+                customerPhone: customerInfo.whatsapp
+            }
         };
 
-        // Salvar pedido no Firebase e esperar a conclusão
-        const newOrderRef = await db.ref('orders').push(orderData);
+        // Salvar pedido no Firebase
+        const newOrderRef = await realtimeDB.ref()('orders').push(orderData);
         
         // Log após salvar
         console.log('Pedido salvo com sucesso, ID:', newOrderRef.key);
@@ -2645,91 +2877,330 @@ function updateCartCount() {
     cartCount.style.display = cart.length ? 'flex' : 'none';
 }
 
-function formatOrderForWhatsApp(customerInfo, deliveryInfo, coupon = null, couponDiscount = 0) {
+function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
+    const paymentMethodMap = {
+        'money': 'Dinheiro',
+        'card': 'Cartão',
+        'online': 'PIX'
+    };
+
     let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
     
     // Informações do cliente
-    message += `*Cliente:* ${customerInfo.fullName}\n`;
+    message += `*Cliente:* ${deliveryInfo.customerName || customerInfo.fullName}\n`;
     message += `*WhatsApp:* ${customerInfo.whatsapp}\n\n`;
     
     // Endereço
     message += `*📍 Endereço de Entrega:*\n`;
-    message += `${deliveryInfo.address}\n`;
+    message += `${deliveryInfo.street}, ${deliveryInfo.streetNumber}\n`;
     if (deliveryInfo.complement) message += `Complemento: ${deliveryInfo.complement}\n`;
-    if (deliveryInfo.apt) message += `Apto/Bloco: ${deliveryInfo.apt}\n`;
     message += `Bairro: ${deliveryInfo.neighborhood}\n`;
-    message += `CEP: ${deliveryInfo.zipcode}\n\n`;
+    message += `CEP: ${deliveryInfo.zipCode}\n\n`;
     
     // Itens do pedido
     message += `*🍨 Itens do Pedido:*\n`;
-    let subtotal = 0;
-    cart.forEach(item => {
-        if (item.name.includes('Combo')) {
-            // Formatação especial para combos
-            message += `\n- ${item.name}\n`;
-            
-            // Divide a description em linhas e formata
-            const description = item.description.split('\n').filter(line => line.trim() !== '');
-            description.forEach(line => {
-                if (line.startsWith('•')) {
-                    message += `\n${line}`; // Seção principal (Açaí 1, Açaí 2, Extras)
-                } else {
-                    message += `  ${line}`; // Detalhes indentados
-                }
-            });
-            
-            message += `\n  *Valor: R$ ${item.price.toFixed(2)}*\n`;
-        } else {
-            // Formatação normal para itens não-combo
-            message += `\n- ${item.name}\n`;
-            message += `  Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
-            if (item.selectedExtras && item.selectedExtras.length > 0) {
-                message += `  Extras: ${item.selectedExtras.join(', ')}\n`;
-            }
-            message += `  *Valor: R$ ${item.price.toFixed(2)}*\n`;
-        }
-        subtotal += item.price;
-    });
+    const orderDetails = document.getElementById('orderDetails').value;
+    message += `${orderDetails}\n\n`;
 
-    // Totais e desconto
-    message += `\n*💰 Resumo do Pedido:*`;
-    message += `\n*Subtotal:* R$ ${subtotal.toFixed(2)}`;
+    // Calcular subtotal e totais
+    const subtotal = cart.reduce((total, item) => total + item.price, 0);
+    const deliveryFee = 3.00;
+    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    const total = subtotal - discount + deliveryFee;
+
+    // Resumo do pedido
+    message += `*💰 Resumo do Pedido:*\n`;
+    message += `*Subtotal:* R$ ${subtotal.toFixed(2)}\n`;
+    message += `*Taxa de Entrega:* R$ ${deliveryFee.toFixed(2)}\n`;
+    
     if (appliedCoupon) {
         const discount = calculateDiscount(subtotal);
-        message += `\n*Cupom Aplicado:* ${appliedCoupon.code}`;
-        message += `\n*Desconto:* -R$ ${discount.toFixed(2)}`;
+        message += `*Cupom Aplicado:* ${appliedCoupon.code}\n`;
+        message += `*Desconto:* -R$ ${discount.toFixed(2)}\n`;
     }
-    message += `\n*Taxa de Entrega:* R$ 3,00`;
-    const finalTotal = subtotal - (appliedCoupon ? calculateDiscount(subtotal) : 0) + 3;
-    message += `\n*Total:* R$ ${finalTotal.toFixed(2)}\n\n`;
+    
+    message += `*Total:* R$ ${total.toFixed(2)}\n\n`;
     
     // Pagamento
-    message += `*💳 Forma de Pagamento:* ${deliveryInfo.payment.toUpperCase()}`;
+    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[deliveryInfo.payment]}\n`;
     if (deliveryInfo.payment === 'money' && deliveryInfo.change) {
-        message += `\nTroco para: R$ ${deliveryInfo.change}`;
+        message += `Troco para: R$ ${deliveryInfo.change}\n`;
+    }
+    
+    // Observações, se houver
+    if (document.getElementById('notes').value) {
+        message += `*Observações:* ${document.getElementById('notes').value}\n`;
+    }
+    
+    return message;
+}
+    
+function setupPaymentEvents() {
+    const moneyRadio = document.getElementById('paymentMoney');
+    const changeInput = document.createElement('div');
+    changeInput.innerHTML = `
+        <div id="changeContainer" style="display: none; margin-top: 10px;">
+            <label>Troco para quanto?</label>
+            <input type="number" id="changeAmount" step="0.01">
+        </div>
+    `;
+    
+    moneyRadio.closest('div').appendChild(changeInput);
+    
+    document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const changeContainer = document.getElementById('changeContainer');
+            const changeAmount = document.getElementById('changeAmount');
+            const notes = document.getElementById('notes');
+            
+            if (e.target.value === 'money') {
+                changeContainer.style.display = 'block';
+                
+                changeAmount.addEventListener('change', () => {
+                    if (changeAmount.value) {
+                        notes.value = `Troco para R$ ${changeAmount.value}`;
+                    } else {
+                        notes.value = '';
+                    }
+                });
+            } else {
+                changeContainer.style.display = 'none';
+                notes.value = '';
+            }
+        });
+    });
+}
+    
+async function submitOrder() {
+    try {
+        // Coletar valores dos campos
+        const orderId = document.getElementById('orderId').value;
+        const status = document.getElementById('status').value;
+        const paymentMethodElement = document.querySelector('input[name="paymentMethod"]:checked');
+        const orderTotal = document.getElementById('orderTotal').value;
+        const orderDetails = document.getElementById('orderDetails').value;
+        const customerName = document.getElementById('customerName').value;
+        const customerPhone = document.getElementById('customerPhone').value;
+        const street = document.getElementById('street').value;
+        const streetNumber = document.getElementById('streetNumber').value;
+        const neighborhood = document.getElementById('neighborhood').value;
+        const complement = document.getElementById('complement').value || '';
+        const zipCode = document.getElementById('zipCode').value;
+        const notes = document.getElementById('notes').value || '';
+
+        // Verificar se método de pagamento foi selecionado
+        if (!paymentMethodElement) {
+            alert('Por favor, selecione um método de pagamento.');
+            return;
+        }
+
+        // Criar objeto de entrega para passar ao formatOrderForWhatsApp
+        const deliveryInfo = {
+            customerName,
+            street,
+            streetNumber,
+            neighborhood,
+            complement,
+            zipCode,
+            payment: paymentMethodElement.value,
+            change: document.getElementById('changeAmount')?.value || ''
+        };
+
+        // Calcular total diretamente do campo
+        const total = parseFloat(orderTotal);
+
+        // Preparar objeto do pedido
+        const order = {
+            id: orderId,
+            status: status,
+            paymentMethod: paymentMethodElement.value === 'pix' ? 'online' : paymentMethodElement.value,
+            orderTotal: total,
+            orderDetails: orderDetails,
+            notes: notes,
+            deliveryPoint: {
+                address: `${street}, ${streetNumber}, ${neighborhood}`,
+                street: street,
+                houseNumber: streetNumber,
+                complement: complement,
+                postalCode: zipCode,
+                city: "Natal",
+                region: "RN",
+                country: "BR"
+            },
+            customer: {
+                customerName: customerName,
+                customerPhone: customerPhone
+            }
+        };
+
+        // Enviar pedido para a API
+        const response = await fetch('https://us-central1-cabana-8d55e.cloudfunctions.net/foodyDeliveryApi/createOrder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': '8d7c77946d534444a168bb7da794febf'
+            },
+            body: JSON.stringify(order)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Erro HTTP! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Pedido criado:', result);
+        
+        // Criar um objeto de cliente fictício para manter a compatibilidade
+        const fakeCustomerInfo = {
+            fullName: customerName,
+            whatsapp: customerPhone
+        };
+        
+        // Formatar mensagem para WhatsApp
+        const message = formatOrderForWhatsApp(fakeCustomerInfo, deliveryInfo);
+        
+        // Redirecionar para WhatsApp
+        window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
+        
+    } catch (error) {
+        console.error('Erro ao criar pedido:', error);
+        alert('Erro ao criar pedido: ' + error.message);
+    }
+}
+
+function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
+    const paymentMethodMap = {
+        'money': 'Dinheiro',
+        'card': 'Cartão',
+        'online': 'PIX'
+    };
+
+    let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
+    
+    // Informações do cliente
+    message += `*Cliente:* ${deliveryInfo.customerName}\n`;
+    message += `*WhatsApp:* ${customerInfo.whatsapp}\n\n`;
+    
+    // Endereço
+    message += `*📍 Endereço de Entrega:*\n`;
+    message += `${deliveryInfo.street}, ${deliveryInfo.streetNumber}\n`;
+    if (deliveryInfo.complement) message += `Complemento: ${deliveryInfo.complement}\n`;
+    message += `Bairro: ${deliveryInfo.neighborhood}\n`;
+    message += `CEP: ${deliveryInfo.zipCode}\n\n`;
+    
+    // Detalhes do pedido do textarea
+    message += `*🍨 Itens do Pedido:*\n`;
+    const orderDetails = document.getElementById('orderDetails').value;
+    message += `${orderDetails}\n`;
+
+    // Total do pedido
+    const orderTotal = document.getElementById('orderTotal').value;
+    
+    // Resumo do pedido
+    message += `*💰 Resumo do Pedido:*\n`;
+    message += `*Total:* R$ ${parseFloat(orderTotal).toFixed(2)}\n`;
+    
+    // Pagamento
+    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[deliveryInfo.payment]}\n`;
+    if (deliveryInfo.payment === 'money' && deliveryInfo.change) {
+        message += `Troco para: R$ ${deliveryInfo.change}\n`;
+    }
+    
+    // Observações
+    const notes = document.getElementById('notes').value;
+    if (notes) {
+        message += `*Observações:* ${notes}\n`;
     }
     
     return message;
 }
 
-document.getElementById('deliveryInfoForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const deliveryInfo = Object.fromEntries(formData);
+function closeCreateOrderModal() {
+    document.getElementById('createOrderModal').style.display = 'none';
+}
+
+async function submitOrderFromDigitalMenu() {
+    const order = {
+        id: document.getElementById('orderId').value,
+        status: document.getElementById('status').value,
+        paymentMethod: document.querySelector('input[name="paymentMethod"]:checked').value,
+        orderTotal: Number(document.getElementById('orderTotal').value),
+        notes: document.getElementById('notes').value,
+        orderDetails: document.getElementById('orderDetails').value,
+        deliveryPoint: {
+            address: `${document.getElementById('street').value}, ${document.getElementById('streetNumber').value}, ${document.getElementById('neighborhood').value}`,
+            street: document.getElementById('street').value,
+            houseNumber: document.getElementById('streetNumber').value,
+            complement: document.getElementById('complement').value,
+            postalCode: document.getElementById('zipCode').value,
+            city: "Natal",
+            region: "RN",
+            country: "BR"
+        },
+        customer: {
+            customerPhone: document.getElementById('customerPhone').value,
+            customerName: document.getElementById('customerName').value
+        }
+    };
     
-    const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
-    const whatsappNumber = "5584987673202";
-    window.location.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-});
+    try {
+        // Usar a mesma URL do PDV
+        const response = await fetch('https://us-central1-cabana-8d55e.cloudfunctions.net/foodyDeliveryApi/createOrder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': '8d7c77946d534444a168bb7da794febf' // Substitua pelo token real
+            },
+            body: JSON.stringify(order)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Pedido criado:', result);
+        
+        // Redirecionar para WhatsApp
+        const message = formatOrderForWhatsApp(customerInfo, order);
+        window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
+        
+    } catch (error) {
+        console.error('Erro ao criar pedido:', error);
+        alert('Erro ao criar pedido: ' + error.message);
+    }
+}
     
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-document.querySelector('.cart-icon').addEventListener('click', showCartModal);
-   // Firebase listeners
-   loadMenuProducts();
-   loadCategories();
-   checkStoreStatus();
-   setInterval(checkStoreStatus, 60000);
+    console.log('DOM Carregado'); // Log para diagnóstico
+
+    // Evento para o ícone do carrinho
+    const cartIcon = document.querySelector('.cart-icon');
+    if (cartIcon) {
+        cartIcon.addEventListener('click', showCartModal);
+    } else {
+        console.error('Ícone do carrinho não encontrado');
+    }
+
+    // Evento para botão de checkout
+    const checkoutButton = document.querySelector('.checkout');
+    if (checkoutButton) {
+        checkoutButton.addEventListener('click', () => {
+            console.log('Botão de checkout clicado');
+            showCreateOrderModal();
+        });
+    } else {
+        console.error('Botão de checkout não encontrado');
+    }
+
+    // Firebase listeners
+    loadMenuProducts();
+    loadCategories();
+    checkStoreStatus();
+    setInterval(checkStoreStatus, 60000);
+    setupPaymentEvents();
+});
    
    // Categories
    document.querySelectorAll('.category-btn').forEach(button => {
@@ -2808,7 +3279,70 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
            document.getElementById('productModal').style.display = 'none';
        }
    });
-});
 </script>
+<<!-- Modal para Criar Novo Pedido -->
+<!-- Modal para Criar Novo Pedido -->
+<div id="createOrderModal" class="modal">
+    <div class="modal-content">
+        <button class="close" onclick="closeCreateOrderModal()">&times;</button>
+        <h2>Finalizar Pedido</h2>
+        <form id="createOrderForm">
+            <!-- Campos ocultos -->
+            <input type="hidden" id="orderId">
+            <input type="hidden" id="status" value="open">
+            <input type="hidden" id="orderTotal">
+            
+            <!-- Dados do Cliente -->
+            <label for="customerName">Nome Completo*</label>
+            <input type="text" id="customerName" required placeholder="Digite seu nome completo">
+            
+            <label for="customerPhone">WhatsApp*</label>
+            <input type="text" id="customerPhone" required placeholder="(84) 98888-8888">
+            
+            <!-- Endereço -->
+            <label for="street">Logradouro*</label>
+            <input type="text" id="street" required placeholder="Nome da rua">
+            
+            <label for="streetNumber">Número*</label>
+            <input type="text" id="streetNumber" required placeholder="Número da casa/apto">
+            
+            <label for="neighborhood">Bairro*</label>
+            <input type="text" id="neighborhood" required placeholder="Seu bairro">
+            
+            <label for="complement">Complemento</label>
+            <input type="text" id="complement" placeholder="Apto, bloco, referência...">
+            
+            <label for="zipCode">CEP*</label>
+            <input type="text" id="zipCode" required placeholder="59000-000">
+            
+            <!-- Detalhes do Pedido -->
+            <label for="orderDetails">Itens do Pedido</label>
+            <textarea id="orderDetails" readonly></textarea>
+            
+            <!-- Método de Pagamento -->
+            <label>Forma de Pagamento*</label>
+            <div class="payment-group">
+                <div class="payment-option">
+                    <input type="radio" id="paymentMoney" name="paymentMethod" value="money" required>
+                    <label for="paymentMoney">Dinheiro</label>
+                </div>
+                <div class="payment-option">
+                    <input type="radio" id="paymentCard" name="paymentMethod" value="card">
+                    <label for="paymentCard">Cartão</label>
+                </div>
+                <div class="payment-option">
+                    <input type="radio" id="paymentOnline" name="paymentMethod" value="online">
+                    <label for="paymentOnline">PIX</label>
+                </div>
+            </div>
+            
+            <label for="notes">Observações</label>
+            <textarea id="notes" placeholder="Alguma observação sobre seu pedido?"></textarea>
+            
+            <button type="button" onclick="submitOrder()">Finalizar Pedido</button>
+        </form>
+    </div>
+</div>
+</div>
 </body>
 </html>
