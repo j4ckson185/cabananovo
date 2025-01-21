@@ -2723,6 +2723,8 @@ function showCreateOrderModal() {
     console.log('customerInfo:', customerInfo);
     console.log('deliveryInfo:', deliveryInfo);
 
+    document.getElementById('orderId').value = '5555';
+
     // Preenche automaticamente os campos com informações do último pedido
     document.getElementById('customerName').value = '';
     document.getElementById('customerPhone').value = '';
