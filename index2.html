@@ -2051,7 +2051,7 @@ function updateComboView() {
 
 function loadToppingsAndExtras() {
     // Load toppings from Firebase
-    realtimeDB.ref()('toppings').once('value', snapshot => {
+    realtimeDB.ref('toppings').once('value', snapshot => {
         const toppings = snapshot.val();
         if (toppings) {
             const toppingsHtml = Object.values(toppings)
@@ -2074,7 +2074,7 @@ function loadToppingsAndExtras() {
     });
 
     // Load extras from Firebase
-    realtimeDB.ref()('extras').once('value', snapshot => {
+    realtimeDB.ref('extras').once('value', snapshot => {
         const extras = snapshot.val();
         if (extras) {
             const extrasHtml = Object.values(extras)
