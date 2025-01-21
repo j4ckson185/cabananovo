@@ -2858,26 +2858,59 @@ function setupPaymentEvents() {
 }
 
 function submitOrderFromDigitalMenu() {
+    // Adicione logs de diagnóstico
+    console.log('Elementos do formulário:');
+    console.log('orderId:', document.getElementById('orderId'));
+    console.log('paymentMethod:', document.querySelector('input[name="paymentMethod"]:checked)'));
+    console.log('orderTotal:', document.getElementById('orderTotal'));
+    console.log('notes:', document.getElementById('notes'));
+    console.log('orderDetails:', document.getElementById('orderDetails'));
+    console.log('street:', document.getElementById('street'));
+    console.log('streetNumber:', document.getElementById('streetNumber'));
+    console.log('neighborhood:', document.getElementById('neighborhood'));
+    console.log('customerPhone:', document.getElementById('customerPhone'));
+    console.log('customerName:', document.getElementById('customerName'));
+
+    // Adicione verificações para garantir que os elementos existam
+    const orderId = document.getElementById('orderId');
+    const paymentMethodElement = document.querySelector('input[name="paymentMethod"]:checked');
+    const orderTotal = document.getElementById('orderTotal');
+    const notes = document.getElementById('notes');
+    const orderDetails = document.getElementById('orderDetails');
+    const street = document.getElementById('street');
+    const streetNumber = document.getElementById('streetNumber');
+    const neighborhood = document.getElementById('neighborhood');
+    const customerPhone = document.getElementById('customerPhone');
+    const customerName = document.getElementById('customerName');
+
+    // Verifique se todos os elementos críticos existem
+    if (!orderId || !paymentMethodElement || !orderTotal || !orderDetails || 
+        !street || !streetNumber || !neighborhood || !customerPhone || !customerName) {
+        console.error('Um ou mais elementos do formulário não foram encontrados');
+        alert('Erro: Não foi possível processar o pedido. Verifique os campos do formulário.');
+        return;
+    }
+
     const order = {
-        id: document.getElementById('orderId').value,
+        id: orderId.value,
         status: 'open',
-        paymentMethod: document.querySelector('input[name="paymentMethod"]:checked').value,
-        orderTotal: Number(document.getElementById('orderTotal').value),
-        notes: document.getElementById('notes').value,
-        orderDetails: document.getElementById('orderDetails').value,
+        paymentMethod: paymentMethodElement.value,
+        orderTotal: Number(orderTotal.value),
+        notes: notes ? notes.value : '',
+        orderDetails: orderDetails.value,
         deliveryPoint: {
-            address: `${document.getElementById('street').value}, ${document.getElementById('streetNumber').value}, ${document.getElementById('neighborhood').value}`,
-            street: document.getElementById('street').value,
-            houseNumber: document.getElementById('streetNumber').value,
-            complement: document.getElementById('complement').value,
-            postalCode: document.getElementById('zipCode').value,
+            address: `${street.value}, ${streetNumber.value}, ${neighborhood.value}`,
+            street: street.value,
+            houseNumber: streetNumber.value,
+            complement: document.getElementById('complement') ? document.getElementById('complement').value : '',
+            postalCode: document.getElementById('zipCode') ? document.getElementById('zipCode').value : '',
             city: "Natal",
             region: "RN",
             country: "BR"
         },
         customer: {
-            customerPhone: document.getElementById('customerPhone').value,
-            customerName: document.getElementById('customerName').value
+            customerPhone: customerPhone.value,
+            customerName: customerName.value
         }
     };
     
