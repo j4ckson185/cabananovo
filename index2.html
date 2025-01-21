@@ -2662,27 +2662,52 @@ async function handleDeliveryInfo(e) {
             total
         });
 
-        // Criar o pedido
+        // Criar o pedido para o Firebase
         const orderData = {
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             customerInfo,
-            deliveryInfo,
+            deliveryInfo: {
+                ...deliveryInfo,
+                payment: deliveryInfo.payment === 'pix' ? 'online' : deliveryInfo.payment,
+            },
             items: cart.map(item => ({
                 ...item,
                 price: parseFloat(item.price),
                 originalPrice: parseFloat(item.originalPrice || item.price),
                 selectedToppings: item.selectedToppings || [],
-                selectedExtras: item.selectedExtras || []
+                selectedExtras: item.selectedExtras || [],
+                observation: [
+                    ...(item.selectedToppings?.length ? [`Acompanhamentos: ${item.selectedToppings.join(", ")}`] : []),
+                    ...(item.selectedExtras?.length ? [`Extras: ${item.selectedExtras.join(", ")}`] : [])
+                ].join("\n")
             })),
             subtotal: parseFloat(subtotal),
             discount: parseFloat(discount),
             deliveryFee: parseFloat(deliveryFee),
             total: parseFloat(total),
             cupom: appliedCoupon ? appliedCoupon.code : null,
-            status: 'pending'
+            status: 'open',
+            orderTotal: parseFloat(total),
+            paymentMethod: deliveryInfo.payment === 'pix' ? 'online' : deliveryInfo.payment,
+            id: "5555",
+            creationDate: new Date().toISOString(),
+            deliveryPoint: {
+                address: `${deliveryInfo.address}, ${deliveryInfo.neighborhood}`,
+                street: deliveryInfo.address,
+                neighborhood: deliveryInfo.neighborhood,
+                complement: deliveryInfo.complement || "",
+                postalCode: deliveryInfo.zipcode,
+                city: "Natal",
+                region: "RN",
+                country: "BR"
+            },
+            customer: {
+                customerName: customerInfo.fullName,
+                customerPhone: customerInfo.whatsapp
+            }
         };
 
-        // Salvar pedido no Firebase e esperar a conclusão
+        // Salvar pedido no Firebase
         const newOrderRef = await db.ref('orders').push(orderData);
         
         // Log após salvar
