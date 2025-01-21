@@ -1519,6 +1519,8 @@ async function handleDeliveryInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
     const deliveryInfo = Object.fromEntries(formData);
+
+     updateCustomerAndDeliveryInfo(customerInfo, delivery);
     
     // Calcular totais
     const subtotal = cart.reduce((total, item) => total + item.price, 0);
@@ -2564,6 +2566,8 @@ function handleCustomerInfo(e) {
     
     document.getElementById('customerInfoModal').style.display = 'none';
     document.getElementById('deliveryInfoModal').style.display = 'block';
+
+    updateCustomerAndDeliveryInfo(customer, {});
 }
 
 async function handleDeliveryInfo(e) {
@@ -2742,6 +2746,15 @@ document.getElementById('deliveryInfoForm').addEventListener('submit', function(
     const whatsappNumber = "5584987673202";
     window.location.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 });
+
+    // Defina variáveis globais para armazenar informações do cliente
+let customerInfo = {};
+let deliveryInfo = {};
+
+function updateCustomerAndDeliveryInfo(customer, delivery) {
+    customerInfo = customer;
+    deliveryInfo = delivery;
+}
 
     function showCreateOrderModal() {
     // Preenche automaticamente os campos com informações do último pedido
