@@ -2762,6 +2762,14 @@ function showCreateOrderModal() {
     console.log('customerInfo:', customerInfo);
     console.log('deliveryInfo:', deliveryInfo);
 
+        // Verificar se as informações do cliente foram preenchidas
+    if (!customerInfo || Object.keys(customerInfo).length === 0) {
+        alert('Por favor, preencha primeiro suas informações de contato e endereço.');
+        // Redirecionar para o primeiro modal de informações do cliente
+        document.getElementById('customerInfoModal').style.display = 'block';
+        return;
+    }
+
     // Preenche automaticamente os campos com informações do último pedido
     document.getElementById('customerName').value = customerInfo.fullName || '';
     document.getElementById('customerPhone').value = customerInfo.whatsapp || '';
@@ -2858,20 +2866,13 @@ function setupPaymentEvents() {
 }
 
 function submitOrderFromDigitalMenu() {
-    // Adicione logs de diagnóstico
-    console.log('Elementos do formulário:');
-    console.log('orderId:', document.getElementById('orderId'));
-    console.log('paymentMethod:', document.querySelector('input[name="paymentMethod"]:checked)'));
-    console.log('orderTotal:', document.getElementById('orderTotal'));
-    console.log('notes:', document.getElementById('notes'));
-    console.log('orderDetails:', document.getElementById('orderDetails'));
-    console.log('street:', document.getElementById('street'));
-    console.log('streetNumber:', document.getElementById('streetNumber'));
-    console.log('neighborhood:', document.getElementById('neighborhood'));
-    console.log('customerPhone:', document.getElementById('customerPhone'));
-    console.log('customerName:', document.getElementById('customerName'));
+    // Verificações adicionais
+    if (!customerInfo || Object.keys(customerInfo).length === 0) {
+        alert('Por favor, preencha suas informações de contato primeiro.');
+        return;
+    }
 
-    // Adicione verificações para garantir que os elementos existam
+    // Obter valores dos campos do formulário
     const orderId = document.getElementById('orderId');
     const paymentMethodElement = document.querySelector('input[name="paymentMethod"]:checked');
     const orderTotal = document.getElementById('orderTotal');
@@ -2883,11 +2884,17 @@ function submitOrderFromDigitalMenu() {
     const customerPhone = document.getElementById('customerPhone');
     const customerName = document.getElementById('customerName');
 
-    // Verifique se todos os elementos críticos existem
+    // Verificações de elementos
     if (!orderId || !paymentMethodElement || !orderTotal || !orderDetails || 
         !street || !streetNumber || !neighborhood || !customerPhone || !customerName) {
-        console.error('Um ou mais elementos do formulário não foram encontrados');
-        alert('Erro: Não foi possível processar o pedido. Verifique os campos do formulário.');
+        console.error('Elementos do formulário não encontrados');
+        alert('Erro: Não foi possível processar o pedido.');
+        return;
+    }
+
+    // Verificações de valores
+    if (!paymentMethodElement.value) {
+        alert('Por favor, selecione uma forma de pagamento.');
         return;
     }
 
