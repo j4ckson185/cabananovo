@@ -1622,7 +1622,7 @@ function loadMenuProducts() {
 
 // Load categories from Firebase
 function loadCategories() {
-    db.ref('menu/categories').on('value', snapshot => {
+    realtimeDB('menu/categories').on('value', snapshot => {
         const categories = snapshot.val() || {};
         updateCategoryButtons(categories);
     });
@@ -1879,7 +1879,7 @@ function updateComboView() {
 
 function loadToppingsAndExtras() {
     // Load toppings from Firebase
-    db.ref('toppings').once('value', snapshot => {
+    realtimeDB('toppings').once('value', snapshot => {
         const toppings = snapshot.val();
         if (toppings) {
             const toppingsHtml = Object.values(toppings)
@@ -1902,7 +1902,7 @@ function loadToppingsAndExtras() {
     });
 
     // Load extras from Firebase
-    db.ref('extras').once('value', snapshot => {
+    realtimeDB('extras').once('value', snapshot => {
         const extras = snapshot.val();
         if (extras) {
             const extrasHtml = Object.values(extras)
@@ -2087,7 +2087,7 @@ function checkStoreStatus() {
         gap: 0.5rem;
     `;
     
-    db.ref('schedule').once('value')
+    realtimeDB('schedule').once('value')
         .then(snapshot => {
             const schedule = snapshot.val() || {};
             const isOpen = isStoreOpenNow(schedule);
@@ -2195,7 +2195,7 @@ function setupEventListeners() {
    const card = document.createElement('div');
    card.className = 'product-card';
    
-   db.ref(`categories/${product.category}`).once('value')
+   realtimeDB(`categories/${product.category}`).once('value')
        .then(snapshot => {
            const category = snapshot.val();
            const categoryName = category ? category.name : 'Categoria';
@@ -2222,7 +2222,7 @@ function setupEventListeners() {
 }
 
 async function getCategoryName(categoryId) {
-   const snapshot = await db.ref(`categories/${categoryId}`).once('value');
+   const snapshot = await realtimeDB(`categories/${categoryId}`).once('value');
    const category = snapshot.val();
    return category ? category.name : 'Categoria';
 }
@@ -2250,8 +2250,8 @@ function openProductModal(product) {
 
     // Load available toppings and extras from Firebase
     Promise.all([
-        db.ref('menu/toppings').once('value'),
-        db.ref('extras').once('value')
+        realtimeDB('menu/toppings').once('value'),
+        realtimeDB('extras').once('value')
     ]).then(([toppingsSnapshot, extrasSnapshot]) => {
         const toppings = toppingsSnapshot.val() || {};
         const extras = extrasSnapshot.val() || {};
@@ -2431,7 +2431,7 @@ async function applyCoupon() {
 
     try {
         // Busca o cupom
-        const couponsSnapshot = await db.ref('coupons').orderByChild('code').equalTo(couponCode).once('value');
+        const couponsSnapshot = await realtimeDB('coupons').orderByChild('code').equalTo(couponCode).once('value');
         const coupons = couponsSnapshot.val();
         
         if (!coupons) {
@@ -2449,7 +2449,7 @@ async function applyCoupon() {
             const userIP = await getUserIP();
             
             // Verifica se já existe compra com este dispositivo ou IP
-            const purchasesSnapshot = await db.ref('purchases').once('value');
+            const purchasesSnapshot = await realtimeDB('purchases').once('value');
             const purchases = purchasesSnapshot.val() || {};
             
             const hasUsedFirstPurchase = Object.values(purchases).some(purchase => 
@@ -2672,7 +2672,7 @@ async function handleDeliveryInfo(e) {
         };
 
         // Salvar pedido no Firebase
-        const newOrderRef = await db.ref('orders').push(orderData);
+        const newOrderRef = await realtimeDB('orders').push(orderData);
         
         // Log após salvar
         console.log('Pedido salvo com sucesso, ID:', newOrderRef.key);
