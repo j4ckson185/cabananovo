@@ -2854,8 +2854,8 @@ function setupPaymentEvents() {
 function submitOrderFromDigitalMenu() {
     const order = {
         id: document.getElementById('orderId').value,
-        status: 'open', // Removido da exibição, mantido como padrão
-        paymentMethod: document.querySelector('input[name="paymentMethod"]:checked').value === 'online' ? 'online' : document.querySelector('input[name="paymentMethod"]:checked').value,
+        status: 'open',
+        paymentMethod: document.querySelector('input[name="paymentMethod"]:checked').value,
         orderTotal: Number(document.getElementById('orderTotal').value),
         notes: document.getElementById('notes').value,
         orderDetails: document.getElementById('orderDetails').value,
@@ -2876,12 +2876,11 @@ function submitOrderFromDigitalMenu() {
     };
     
     try {
-        // Usar a mesma URL do PDV
         const response = fetch('https://us-central1-cabana-8d55e.cloudfunctions.net/foodyDeliveryApi/createOrder', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'seu_token_aqui' // Substitua pelo token real
+                'Authorization': '8d7c77946d534444a168bb7da794febf'
             },
             body: JSON.stringify(order)
         });
@@ -3067,7 +3066,7 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
    });
 });
 </script>
-<!-- Modal para Criar Novo Pedido -->
+<<!-- Modal para Criar Novo Pedido -->
 <div id="createOrderModal" class="modal">
     <div class="modal-content">
         <span class="close" onclick="closeCreateOrderModal()">&times;</span>
@@ -3082,7 +3081,7 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
             <label for="customerPhone">Telefone do Cliente:</label>
             <input type="text" id="customerPhone" value="" required>
             
-            <label for="street">Endereço (Nome da Rua):</label>
+            <label for="street">Endereço:</label>
             <input type="text" id="street" value="" required>
             
             <label for="streetNumber">Número:</label>
@@ -3108,8 +3107,8 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
                 <input type="radio" id="paymentCard" name="paymentMethod" value="card">
                 <label for="paymentCard">Cartão</label>
                 
-                <input type="radio" id="paymentOnline" name="paymentMethod" value="online">
-                <label for="paymentOnline">Online</label>
+                <input type="radio" id="paymentOnline" name="paymentMethod" value="pix">
+                <label for="paymentOnline">PIX</label>
             </div>
             
             <label for="orderTotal">Valor Total:</label>
