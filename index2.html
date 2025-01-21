@@ -2887,10 +2887,6 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
         'online': 'PIX'
     };
 
-    // Log para debug
-    console.log('Customer Info:', customerInfo);
-    console.log('Delivery Info:', deliveryInfo);
-
     let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
     
     // Informações do cliente
@@ -2899,16 +2895,15 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     
     // Endereço
     message += `*📍 Endereço de Entrega:*\n`;
-    // Usar o campo address que vem do formulário
-    message += `${deliveryInfo.address || ''}\n`;
+    message += `${deliveryInfo.address}\n`;
     if (deliveryInfo.complement) {
         message += `Complemento: ${deliveryInfo.complement}\n`;
     }
     if (deliveryInfo.apt) {
         message += `Apto/Bloco: ${deliveryInfo.apt}\n`;
     }
-    message += `Bairro: ${deliveryInfo.neighborhood || ''}\n`;
-    message += `CEP: ${deliveryInfo.zipcode || ''}\n\n`;
+    message += `Bairro: ${deliveryInfo.neighborhood}\n`;
+    message += `CEP: ${deliveryInfo.zipcode}\n\n`;
     
     // Itens do pedido
     message += `*🍨 Itens do Pedido:*\n`;
