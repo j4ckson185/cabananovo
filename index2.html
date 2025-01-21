@@ -2869,6 +2869,12 @@ async function submitOrder() {
         const zipCode = document.getElementById('zipCode').value;
         const notes = document.getElementById('notes').value || '';
 
+        // Verificar se método de pagamento foi selecionado
+        if (!paymentMethodElement) {
+            alert('Por favor, selecione um método de pagamento.');
+            return;
+        }
+
         // Criar objeto de entrega para passar ao formatOrderForWhatsApp
         const deliveryInfo = {
             customerName,
@@ -2881,18 +2887,15 @@ async function submitOrder() {
             change: document.getElementById('changeAmount')?.value || ''
         };
 
-        // Verificar se método de pagamento foi selecionado
-        if (!paymentMethodElement) {
-            alert('Por favor, selecione um método de pagamento.');
-            return;
-        }
+        // Calcular total diretamente do campo
+        const total = parseFloat(orderTotal);
 
         // Preparar objeto do pedido
         const order = {
             id: orderId,
             status: status,
             paymentMethod: paymentMethodElement.value === 'pix' ? 'online' : paymentMethodElement.value,
-            orderTotal: Number(orderTotal),
+            orderTotal: total,
             orderDetails: orderDetails,
             notes: notes,
             deliveryPoint: {
@@ -2928,8 +2931,14 @@ async function submitOrder() {
         const result = await response.json();
         console.log('Pedido criado:', result);
         
+        // Criar um objeto de cliente fictício para manter a compatibilidade
+        const fakeCustomerInfo = {
+            fullName: customerName,
+            whatsapp: customerPhone
+        };
+        
         // Formatar mensagem para WhatsApp
-        const message = formatOrderForWhatsApp(order.customer, deliveryInfo);
+        const message = formatOrderForWhatsApp(fakeCustomerInfo, deliveryInfo);
         
         // Redirecionar para WhatsApp
         window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
@@ -2940,7 +2949,7 @@ async function submitOrder() {
     }
 }
 
-function formatOrderForWhatsApp(customerInfo, order) {
+function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     const paymentMethodMap = {
         'money': 'Dinheiro',
         'card': 'Cartão',
@@ -2949,14 +2958,39 @@ function formatOrderForWhatsApp(customerInfo, order) {
 
     let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
     
+    // Informações do cliente
+    message += `*Cliente:* ${deliveryInfo.customerName}\n`;
+    message += `*WhatsApp:* ${customerInfo.whatsapp}\n\n`;
+    
+    // Endereço
+    message += `*📍 Endereço de Entrega:*\n`;
+    message += `${deliveryInfo.street}, ${deliveryInfo.streetNumber}\n`;
+    if (deliveryInfo.complement) message += `Complemento: ${deliveryInfo.complement}\n`;
+    message += `Bairro: ${deliveryInfo.neighborhood}\n`;
+    message += `CEP: ${deliveryInfo.zipCode}\n\n`;
+    
+    // Detalhes do pedido do textarea
+    message += `*🍨 Itens do Pedido:*\n`;
+    const orderDetails = document.getElementById('orderDetails').value;
+    message += `${orderDetails}\n`;
+
+    // Total do pedido
+    const orderTotal = document.getElementById('orderTotal').value;
+    
+    // Resumo do pedido
     message += `*💰 Resumo do Pedido:*\n`;
-    message += `${order.orderDetails}\n`;
+    message += `*Total:* R$ ${parseFloat(orderTotal).toFixed(2)}\n`;
     
-    message += `*Total:* R$ ${order.orderTotal.toFixed(2)}\n`;
-    message += `*Forma de Pagamento:* ${paymentMethodMap[order.paymentMethod]}\n`;
+    // Pagamento
+    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[deliveryInfo.payment]}\n`;
+    if (deliveryInfo.payment === 'money' && deliveryInfo.change) {
+        message += `Troco para: R$ ${deliveryInfo.change}\n`;
+    }
     
-    if (order.notes) {
-        message += `*Observações:* ${order.notes}\n`;
+    // Observações
+    const notes = document.getElementById('notes').value;
+    if (notes) {
+        message += `*Observações:* ${notes}\n`;
     }
     
     return message;
