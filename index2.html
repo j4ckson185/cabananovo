@@ -2782,7 +2782,7 @@ async function handleDeliveryInfo(e) {
     const formData = new FormData(e.target);
     const deliveryInfo = Object.fromEntries(formData);
 
-    updateCustomerAndDeliveryInfo(customerInfo, delivery);
+updateCustomerAndDeliveryInfo(customerInfo, deliveryInfo);
     
     // Calcular totais
     const subtotal = cart.reduce((total, item) => total + item.price, 0);
