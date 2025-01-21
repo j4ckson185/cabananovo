@@ -2857,60 +2857,77 @@ function setupPaymentEvents() {
     });
 }
 
-function submitOrderFromDigitalMenu() {
-    // Obter valores dos campos do formulário
-    const orderId = document.getElementById('orderId');
+async function submitOrderFromDigitalMenu() {
+    // Adicionar verificações para elementos críticos
+    const orderIdElement = document.getElementById('orderId');
+    const statusElement = document.getElementById('status');
     const paymentMethodElement = document.querySelector('input[name="paymentMethod"]:checked');
-    const orderTotal = document.getElementById('orderTotal');
-    const notes = document.getElementById('notes');
-    const orderDetails = document.getElementById('orderDetails');
-    const street = document.getElementById('street');
-    const streetNumber = document.getElementById('streetNumber');
-    const neighborhood = document.getElementById('neighborhood');
-    const complement = document.getElementById('complement');
-    const zipCode = document.getElementById('zipCode');
-    const customerPhone = document.getElementById('customerPhone');
-    const customerName = document.getElementById('customerName');
+    const orderTotalElement = document.getElementById('orderTotal');
+    const orderDetailsElement = document.getElementById('orderDetails');
+    const streetElement = document.getElementById('street');
+    const streetNumberElement = document.getElementById('streetNumber');
+    const neighborhoodElement = document.getElementById('neighborhood');
+    const complementElement = document.getElementById('complement');
+    const zipCodeElement = document.getElementById('zipCode');
+    const customerPhoneElement = document.getElementById('customerPhone');
+    const customerNameElement = document.getElementById('customerName');
 
-    // Verificações de elementos e valores
-    if (!orderId || !paymentMethodElement || !orderTotal || !orderDetails || 
-        !street || !streetNumber || !neighborhood || !customerPhone || !customerName) {
-        console.error('Elementos do formulário não encontrados');
-        alert('Erro: Não foi possível processar o pedido.');
+    // Verificação de elementos críticos
+    const missingElements = [
+        { element: orderIdElement, name: 'ID do Pedido' },
+        { element: paymentMethodElement, name: 'Método de Pagamento' },
+        { element: orderTotalElement, name: 'Valor Total' },
+        { element: orderDetailsElement, name: 'Detalhes do Pedido' },
+        { element: streetElement, name: 'Endereço' },
+        { element: streetNumberElement, name: 'Número' },
+        { element: neighborhoodElement, name: 'Bairro' },
+        { element: customerPhoneElement, name: 'Telefone do Cliente' },
+        { element: customerNameElement, name: 'Nome do Cliente' }
+    ];
+
+    // Verificar elementos ausentes
+    const missingElementNames = missingElements
+        .filter(item => !item.element)
+        .map(item => item.name);
+
+    if (missingElementNames.length > 0) {
+        alert(`Elementos não encontrados: ${missingElementNames.join(', ')}`);
+        console.error('Elementos ausentes:', missingElementNames);
         return;
     }
 
-    // Verificações de valores
-    if (!paymentMethodElement.value) {
+    // Verificação de método de pagamento
+    if (!paymentMethodElement) {
         alert('Por favor, selecione uma forma de pagamento.');
         return;
     }
 
+    // Construir objeto de pedido com verificações de valor
     const order = {
-        id: orderId.value,
-        status: 'open',
+        id: orderIdElement ? orderIdElement.value : 'ID-AUTOMATICO',
+        status: statusElement ? statusElement.value : 'open',
         paymentMethod: paymentMethodElement.value === 'pix' ? 'online' : paymentMethodElement.value,
-        orderTotal: Number(orderTotal.value),
-        notes: notes ? notes.value : '',
-        orderDetails: orderDetails.value,
+        orderTotal: orderTotalElement ? Number(orderTotalElement.value) : 0,
+        notes: document.getElementById('notes') ? document.getElementById('notes').value : '',
+        orderDetails: orderDetailsElement ? orderDetailsElement.value : 'Sem detalhes',
         deliveryPoint: {
-            address: `${street.value}, ${streetNumber.value}, ${neighborhood.value}`,
-            street: street.value,
-            houseNumber: streetNumber.value,
-            complement: complement ? complement.value : '',
-            postalCode: zipCode ? zipCode.value : '',
+            address: `${streetElement.value}, ${streetNumberElement.value}, ${neighborhoodElement.value}`,
+            street: streetElement.value,
+            houseNumber: streetNumberElement.value,
+            complement: complementElement ? complementElement.value : '',
+            postalCode: zipCodeElement ? zipCodeElement.value : '',
             city: "Natal",
             region: "RN",
             country: "BR"
         },
         customer: {
-            customerPhone: customerPhone.value,
-            customerName: customerName.value
+            customerPhone: customerPhoneElement.value,
+            customerName: customerNameElement.value
         }
     };
     
     try {
-        const response = fetch('https://us-central1-cabana-8d55e.cloudfunctions.net/foodyDeliveryApi/createOrder', {
+        const response = await fetch('https://us-central1-cabana-8d55e.cloudfunctions.net/foodyDeliveryApi/createOrder', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -2918,6 +2935,13 @@ function submitOrderFromDigitalMenu() {
             },
             body: JSON.stringify(order)
         });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Pedido criado:', result);
         
         // Redirecionar para WhatsApp
         const message = formatOrderForWhatsApp(order, order);
