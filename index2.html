@@ -2886,39 +2886,55 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
     
     // Informações do cliente
-    message += `*Cliente:* ${deliveryInfo.customerName || customerInfo.fullName}\n`;
+    message += `*Cliente:* ${customerInfo.fullName}\n`;
     message += `*WhatsApp:* ${customerInfo.whatsapp}\n\n`;
     
     // Endereço
     message += `*📍 Endereço de Entrega:*\n`;
-    message += `${deliveryInfo.street}, ${deliveryInfo.streetNumber}\n`;
+    message += `${deliveryInfo.address}\n`;
     if (deliveryInfo.complement) message += `Complemento: ${deliveryInfo.complement}\n`;
     message += `Bairro: ${deliveryInfo.neighborhood}\n`;
-    message += `CEP: ${deliveryInfo.zipCode}\n\n`;
+    message += `CEP: ${deliveryInfo.zipcode}\n\n`;
     
     // Itens do pedido
     message += `*🍨 Itens do Pedido:*\n`;
-    const orderDetails = document.getElementById('orderDetails').value;
-    message += `${orderDetails}\n\n`;
+    cart.forEach(item => {
+        if (item.name.includes('Combo')) {
+            message += `${item.name}\n${item.description}\n`;
+        } else {
+            message += `${item.name}\n`;
+            if (item.selectedToppings && item.selectedToppings.length > 0) {
+                message += `Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
+            }
+            if (item.selectedExtras && item.selectedExtras.length > 0) {
+                message += `Extras: ${item.selectedExtras.join(', ')}\n`;
+            }
+        }
+        message += `Valor: R$ ${item.price.toFixed(2)}\n\n`;
+    });
 
-    // Calcular subtotal e totais
+    // Cálculos dos valores
     const subtotal = cart.reduce((total, item) => total + item.price, 0);
     const deliveryFee = 3.00;
     const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-    const total = subtotal - discount + deliveryFee;
+    const total = subtotal + deliveryFee - discount;
 
-    // Resumo do pedido
+    // Resumo financeiro
     message += `*💰 Resumo do Pedido:*\n`;
-    message += `*Subtotal:* R$ ${subtotal.toFixed(2)}\n`;
-    message += `*Taxa de Entrega:* R$ ${deliveryFee.toFixed(2)}\n`;
+    message += `Subtotal: R$ ${subtotal.toFixed(2)}\n`;
+    message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
     
+    // Informações do cupom e desconto
     if (appliedCoupon) {
-        const discount = calculateDiscount(subtotal);
-        message += `*Cupom Aplicado:* ${appliedCoupon.code}\n`;
-        message += `*Desconto:* -R$ ${discount.toFixed(2)}\n`;
+        message += `Cupom Aplicado: ${appliedCoupon.code}\n`;
+        if (appliedCoupon.type === 'percentage') {
+            message += `Desconto: ${appliedCoupon.discount}% (-R$ ${discount.toFixed(2)})\n`;
+        } else {
+            message += `Desconto: R$ ${discount.toFixed(2)}\n`;
+        }
     }
     
-    message += `*Total:* R$ ${total.toFixed(2)}\n\n`;
+    message += `*Total Final: R$ ${total.toFixed(2)}*\n\n`;
     
     // Pagamento
     message += `*💳 Forma de Pagamento:* ${paymentMethodMap[deliveryInfo.payment]}\n`;
@@ -2926,9 +2942,9 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
         message += `Troco para: R$ ${deliveryInfo.change}\n`;
     }
     
-    // Observações, se houver
-    if (document.getElementById('notes').value) {
-        message += `*Observações:* ${document.getElementById('notes').value}\n`;
+    // Observações (se houver)
+    if (deliveryInfo.notes) {
+        message += `\n*📝 Observações:*\n${deliveryInfo.notes}\n`;
     }
     
     return message;
