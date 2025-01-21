@@ -2903,7 +2903,7 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     const paymentMethodMap = {
         'money': 'Dinheiro',
         'card': 'Cartão',
-        'online': 'PIX'
+        'pix': 'PIX'
     };
 
     let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
@@ -2916,54 +2916,59 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     message += `*📍 Endereço de Entrega:*\n`;
     message += `${deliveryInfo.address}\n`;
     if (deliveryInfo.complement) message += `Complemento: ${deliveryInfo.complement}\n`;
+    if (deliveryInfo.apt) message += `Apto/Bloco: ${deliveryInfo.apt}\n`;
     message += `Bairro: ${deliveryInfo.neighborhood}\n`;
     message += `CEP: ${deliveryInfo.zipcode}\n\n`;
     
-    // Detalhes do cupom (se aplicado)
-    if (appliedCoupon) {
-        message += `*🎫 Cupom Aplicado:*\n`;
-        if (appliedCoupon.type === 'percentage') {
-            message += `Código: ${appliedCoupon.code} (${appliedCoupon.discount}% de desconto)\n\n`;
-        } else {
-            message += `Código: ${appliedCoupon.code} (R$ ${appliedCoupon.discount.toFixed(2)} de desconto)\n\n`;
-        }
-    }
-    
     // Itens do pedido
     message += `*🍨 Itens do Pedido:*\n`;
+    let subtotal = 0;
     cart.forEach(item => {
+        message += `\n- ${item.name}\n`;
+        
         if (item.name.includes('Combo')) {
-            message += `${item.name}\n${item.description}\n`;
+            // Formatação especial para combos
+            const description = item.description.split('\\n').filter(line => line.trim() !== '');
+            description.forEach(line => {
+                message += `  ${line}\n`;
+            });
         } else {
-            message += `${item.name}\n`;
-            if (item.selectedToppings?.length > 0) {
-                message += `Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
+            // Formatação para itens normais
+            if (item.selectedToppings && item.selectedToppings.length > 0) {
+                message += `  Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
             }
-            if (item.selectedExtras?.length > 0) {
-                message += `Extras: ${item.selectedExtras.join(', ')}\n`;
+            if (item.selectedExtras && item.selectedExtras.length > 0) {
+                message += `  Extras: ${item.selectedExtras.join(', ')}\n`;
             }
         }
-        message += `Valor: R$ ${item.price.toFixed(2)}\n\n`;
+        message += `  *Valor: R$ ${item.price.toFixed(2)}*\n`;
+        subtotal += item.price;
     });
 
-    // Resumo financeiro com subtotal e desconto separado
-    const subtotal = cart.reduce((total, item) => total + item.price, 0);
-    const deliveryFee = 3.00;
-    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-    const total = subtotal + deliveryFee - discount;
+    message += `\n*💰 Resumo do Pedido:*\n`;
+    message += `*Subtotal:* R$ ${subtotal.toFixed(2)}\n`;
+    message += `*Taxa de Entrega:* R$ 3,00\n`;
 
-    message += `*💰 Resumo do Pedido:*\n`;
-    message += `Subtotal: R$ ${subtotal.toFixed(2)}\n`;
-    message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
-    if (discount > 0) {
-        message += `Desconto: -R$ ${discount.toFixed(2)}\n`;
+    // Informações do cupom e desconto
+    if (appliedCoupon) {
+        const discount = calculateDiscount(subtotal);
+        message += `*🎫 Cupom Aplicado:* ${appliedCoupon.code}\n`;
+        if (appliedCoupon.type === 'percentage') {
+            message += `*Desconto (${appliedCoupon.discount}%):* -R$ ${discount.toFixed(2)}\n`;
+        } else {
+            message += `*Desconto:* -R$ ${discount.toFixed(2)}\n`;
+        }
     }
-    message += `*Total Final: R$ ${total.toFixed(2)}*\n\n`;
+
+    // Total final
+    const totalDiscount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    const finalTotal = subtotal - totalDiscount + 3.00;
+    message += `*Total Final: R$ ${finalTotal.toFixed(2)}*\n\n`;
     
     // Pagamento
-    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[deliveryInfo.payment]}\n`;
+    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[deliveryInfo.payment]}`;
     if (deliveryInfo.payment === 'money' && deliveryInfo.change) {
-        message += `Troco para: R$ ${deliveryInfo.change}\n`;
+        message += `\nTroco para: R$ ${deliveryInfo.change}`;
     }
     
     return message;
