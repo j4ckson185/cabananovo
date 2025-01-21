@@ -1508,7 +1508,8 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const realtimeDB = firebase.database(); // para funções que usam .ref()
+const db = firebase.firestore(); // para novas funções que integram com o PDV
 
 let cart = [];
 let currentProducts = [];
@@ -1612,7 +1613,7 @@ async function handleDeliveryInfo(e) {
 
 // Load products from Firebase
 function loadMenuProducts() {
-    db.ref('menu/products').on('value', snapshot => {
+    realtimeDB.ref('menu/products').on('value', snapshot => {
         const products = snapshot.val() || {};
         currentProducts = Object.values(products).filter(product => product.status);
         displayProducts(currentProducts);
