@@ -8,6 +8,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-app-compat.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-database-compat.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
@@ -1508,7 +1510,7 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const db = firebase.firestore();
 
 let cart = [];
 let currentProducts = [];
@@ -1537,111 +1539,74 @@ async function handleDeliveryInfo(e) {
             total
         });
 
-        // Criar o pedido para o Firebase
+        // Criar o pedido
         const orderData = {
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            timestamp: firebase.firestore.Timestamp.now(),
             customerInfo,
-            deliveryInfo,
+            deliveryInfo: {
+                ...deliveryInfo,
+                payment: deliveryInfo.payment === 'pix' ? 'online' : deliveryInfo.payment,
+            },
             items: cart.map(item => ({
                 ...item,
                 price: parseFloat(item.price),
                 originalPrice: parseFloat(item.originalPrice || item.price),
                 selectedToppings: item.selectedToppings || [],
-                selectedExtras: item.selectedExtras || []
+                selectedExtras: item.selectedExtras || [],
+                observation: [
+                    ...(item.selectedToppings?.length ? [`Acompanhamentos: ${item.selectedToppings.join(", ")}`] : []),
+                    ...(item.selectedExtras?.length ? [`Extras: ${item.selectedExtras.join(", ")}`] : [])
+                ].join("\n")
             })),
             subtotal: parseFloat(subtotal),
             discount: parseFloat(discount),
             deliveryFee: parseFloat(deliveryFee),
             total: parseFloat(total),
             cupom: appliedCoupon ? appliedCoupon.code : null,
-            status: 'pending'
-        };
-
-        // Salvar pedido no Firebase
-        const newOrderRef = await db.ref('orders').push(orderData);
-        console.log('Pedido salvo no Firebase com sucesso, ID:', newOrderRef.key);
-
-        // Criar pedido no formato do Foody Delivery
-        const foodyOrder = {
+            status: 'open',
+            orderTotal: parseFloat(total),
+            paymentMethod: deliveryInfo.payment === 'pix' ? 'online' : deliveryInfo.payment,
             id: "5555",
-            status: "open",
-            orderDateTime: new Date().toISOString(),
-            customer: {
-                id: customerInfo.whatsapp,
-                customerName: customerInfo.fullName,
-                customerPhone: customerInfo.whatsapp,
-                documentNumber: "",
-                email: ""
-            },
+            creationDate: new Date().toISOString(),
             deliveryPoint: {
-                id: "1",
+                address: `${deliveryInfo.address}, ${deliveryInfo.neighborhood}`,
                 street: deliveryInfo.address,
-                houseNumber: "",
-                complement: deliveryInfo.complement || "",
                 neighborhood: deliveryInfo.neighborhood,
+                complement: deliveryInfo.complement || "",
+                postalCode: deliveryInfo.zipcode,
                 city: "Natal",
                 region: "RN",
-                country: "BR",
-                postalCode: deliveryInfo.zipcode,
-                reference: "",
-                latitude: null,
-                longitude: null,
-                address: `${deliveryInfo.address}, ${deliveryInfo.neighborhood}`
+                country: "BR"
             },
-            items: cart.map(item => ({
-                name: item.name,
-                quantity: 1,
-                unitPrice: item.price,
-                totalPrice: item.price,
-                observation: [
-                    ...(item.selectedToppings?.length ? [`Acompanhamentos: ${item.selectedToppings.join(", ")}`] : []),
-                    ...(item.selectedExtras?.length ? [`Extras: ${item.selectedExtras.join(", ")}`] : [])
-                ].join("\n")
-            })),
-            orderTotal: total,
-            subTotal: subtotal,
-            deliveryFee: deliveryFee,
-            discount: discount,
-            paymentMethod: deliveryInfo.payment === 'pix' ? 'online' : deliveryInfo.payment,
-            courier: null,
-            store: {
-                id: "1",
-                name: "Cabana Açaí"
-            },
-            notes: "",
-            creationDate: new Date().toISOString()
+            customer: {
+                customerName: customerInfo.fullName,
+                customerPhone: customerInfo.whatsapp
+            }
         };
 
-        // Enviar pedido para o proxy do Foody Delivery
-        const firebaseFunctionUrl = 'https://us-central1-cabana-8d55e.cloudfunctions.net/getFoodyOrders/proxy';
+        // Salvar pedido no Firestore
+        const docRef = await db.collection('orders').add(orderData);
         
-        try {
-            const response = await axios.post(firebaseFunctionUrl, foodyOrder, {
-                headers: {
-                    'Authorization': '8d7c77946d534444a168bb7da794febf',
-                    'Content-Type': 'application/json'
-                },
-                params: {
-                    url: 'https://app.foodydelivery.com/rest/1.2/orders/'
-                }
-            });
+        // Log após salvar
+        console.log('Pedido salvo com sucesso, ID:', docRef.id);
 
-            if (!response.data || response.data.error) {
-                console.error('Falha ao criar pedido no Foody:', response.data);
-            } else {
-                console.log('Pedido criado com sucesso no Foody:', response.data);
-            }
-        } catch (error) {
-            console.error('Erro ao criar pedido no Foody:', error);
-            // Continua o fluxo mesmo se falhar, pois o pedido já está no Firebase
+        // Verificar se há deviceFingerprint e userIP (para cupons de primeira compra)
+        if (window.deviceFingerprint && window.userIP) {
+            await db.collection('purchases').add({
+                orderId: docRef.id,
+                deviceFingerprint: window.deviceFingerprint,
+                userIP: window.userIP,
+                timestamp: firebase.firestore.Timestamp.now()
+            });
         }
 
-        // Redirecionar para o WhatsApp somente se tudo deu certo
+        // Somente após confirmar que o pedido foi salvo, redirecionar para o WhatsApp
         const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
         const encodedMessage = encodeURIComponent(message);
         window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
 
     } catch (error) {
+        // Log de erro
         console.error('Erro ao processar pedido:', error);
         alert('Erro ao processar pedido. Por favor, tente novamente.');
     }
