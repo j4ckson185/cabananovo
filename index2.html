@@ -2881,13 +2881,26 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     message += `*Cliente:* ${customerInfo.fullName}\n`;
     message += `*WhatsApp:* ${customerInfo.whatsapp}\n\n`;
     
-    // Endereço
+    // Endereço - Nova formatação
     message += `*📍 Endereço de Entrega:*\n`;
-    message += `${deliveryInfo.address}\n`;
-    if (deliveryInfo.complement) message += `Complemento: ${deliveryInfo.complement}\n`;
-    if (deliveryInfo.apt) message += `Apto/Bloco: ${deliveryInfo.apt}\n`;
-    message += `Bairro: ${deliveryInfo.neighborhood}\n`;
-    message += `CEP: ${deliveryInfo.zipcode}\n\n`;
+    // Verifica cada campo individualmente
+    const addressParts = [];
+    if (document.querySelector('input[name="address"]')) {
+        addressParts.push(document.querySelector('input[name="address"]').value);
+    }
+    if (document.querySelector('input[name="complement"]')?.value) {
+        addressParts.push(`Complemento: ${document.querySelector('input[name="complement"]').value}`);
+    }
+    if (document.querySelector('input[name="apt"]')?.value) {
+        addressParts.push(`Apto/Bloco: ${document.querySelector('input[name="apt"]').value}`);
+    }
+    if (document.querySelector('input[name="neighborhood"]')) {
+        addressParts.push(`Bairro: ${document.querySelector('input[name="neighborhood"]').value}`);
+    }
+    if (document.querySelector('input[name="zipcode"]')) {
+        addressParts.push(`CEP: ${document.querySelector('input[name="zipcode"]').value}`);
+    }
+    message += addressParts.join('\n') + '\n\n';
     
     // Itens do pedido
     message += `*🍨 Itens do Pedido:*\n`;
