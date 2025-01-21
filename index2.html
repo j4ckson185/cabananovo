@@ -2680,82 +2680,43 @@ function updateCartCount() {
     cartCount.style.display = cart.length ? 'flex' : 'none';
 }
 
-function formatOrderForWhatsApp(customerInfo, deliveryInfo, coupon = null, couponDiscount = 0) {
+function formatOrderForWhatsApp(customerInfo, order) {
     let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
     
     // Informações do cliente
-    message += `*Cliente:* ${customerInfo.fullName}\n`;
-    message += `*WhatsApp:* ${customerInfo.whatsapp}\n\n`;
+    message += `*Cliente:* ${order.customer.customerName}\n`;
+    message += `*WhatsApp:* ${order.customer.customerPhone}\n\n`;
     
     // Endereço
     message += `*📍 Endereço de Entrega:*\n`;
-    message += `${deliveryInfo.address}\n`;
-    if (deliveryInfo.complement) message += `Complemento: ${deliveryInfo.complement}\n`;
-    if (deliveryInfo.apt) message += `Apto/Bloco: ${deliveryInfo.apt}\n`;
-    message += `Bairro: ${deliveryInfo.neighborhood}\n`;
-    message += `CEP: ${deliveryInfo.zipcode}\n\n`;
+    message += `${order.deliveryPoint.address}\n`;
+    if (order.deliveryPoint.complement) message += `Complemento: ${order.deliveryPoint.complement}\n`;
+    message += `Bairro: ${order.deliveryPoint.neighborhood}\n`;
+    message += `CEP: ${order.deliveryPoint.postalCode}\n\n`;
     
     // Itens do pedido
     message += `*🍨 Itens do Pedido:*\n`;
-    let subtotal = 0;
-    cart.forEach(item => {
-        if (item.name.includes('Combo')) {
-            // Formatação especial para combos
-            message += `\n- ${item.name}\n`;
-            
-            // Divide a description em linhas e formata
-            const description = item.description.split('\n').filter(line => line.trim() !== '');
-            description.forEach(line => {
-                if (line.startsWith('•')) {
-                    message += `\n${line}`; // Seção principal (Açaí 1, Açaí 2, Extras)
-                } else {
-                    message += `  ${line}`; // Detalhes indentados
-                }
-            });
-            
-            message += `\n  *Valor: R$ ${item.price.toFixed(2)}*\n`;
-        } else {
-            // Formatação normal para itens não-combo
-            message += `\n- ${item.name}\n`;
-            message += `  Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
-            if (item.selectedExtras && item.selectedExtras.length > 0) {
-                message += `  Extras: ${item.selectedExtras.join(', ')}\n`;
-            }
-            message += `  *Valor: R$ ${item.price.toFixed(2)}*\n`;
-        }
-        subtotal += item.price;
-    });
+    message += `${order.orderDetails}\n\n`;
 
-    // Totais e desconto
-    message += `\n*💰 Resumo do Pedido:*`;
-    message += `\n*Subtotal:* R$ ${subtotal.toFixed(2)}`;
-    if (appliedCoupon) {
-        const discount = calculateDiscount(subtotal);
-        message += `\n*Cupom Aplicado:* ${appliedCoupon.code}`;
-        message += `\n*Desconto:* -R$ ${discount.toFixed(2)}`;
-    }
-    message += `\n*Taxa de Entrega:* R$ 3,00`;
-    const finalTotal = subtotal - (appliedCoupon ? calculateDiscount(subtotal) : 0) + 3;
-    message += `\n*Total:* R$ ${finalTotal.toFixed(2)}\n\n`;
+    // Totais 
+    message += `*💰 Resumo do Pedido:*`;
+    message += `\n*Total:* R$ ${order.orderTotal.toFixed(2)}`;
     
-    // Pagamento
-    message += `*💳 Forma de Pagamento:* ${deliveryInfo.payment.toUpperCase()}`;
-    if (deliveryInfo.payment === 'money' && deliveryInfo.change) {
-        message += `\nTroco para: R$ ${deliveryInfo.change}`;
+    // Forma de Pagamento
+    const paymentMethodMap = {
+        'money': 'Dinheiro',
+        'card': 'Cartão',
+        'online': 'PIX'
+    };
+    message += `\n*Forma de Pagamento:* ${paymentMethodMap[order.paymentMethod]}`;
+    
+    // Observações
+    if (order.notes) {
+        message += `\n*Observações:* ${order.notes}`;
     }
     
     return message;
 }
-
-document.getElementById('deliveryInfoForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const deliveryInfo = Object.fromEntries(formData);
-    
-    const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
-    const whatsappNumber = "5584987673202";
-    window.location.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-});
 
 function showCreateOrderModal() {
     console.log('showCreateOrderModal iniciado');
@@ -2856,10 +2817,12 @@ function setupPaymentEvents() {
         });
     });
 }
-
-
     
 async function submitOrder() {
+    
+        // Defina o valor padrão do ID como 5555
+    document.getElementById('orderId').value = '5555';
+    
     try {
         // Coletar valores dos campos
         const orderId = document.getElementById('orderId').value;
