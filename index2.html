@@ -2920,26 +2920,22 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     const total = subtotal + deliveryFee - discount;
 
     // Resumo financeiro
-    message += `*💰 Resumo do Pedido:*\n`;
-    message += `Subtotal: R$ ${subtotal.toFixed(2)}\n`;
-    message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
-    
-    // Informações do cupom e desconto
+    // Totais e desconto
+    message += `\n*💰 Resumo do Pedido:*`;
+    message += `\n*Subtotal:* R$ ${subtotal.toFixed(2)}`;
     if (appliedCoupon) {
-        message += `Cupom Aplicado: ${appliedCoupon.code}\n`;
-        if (appliedCoupon.type === 'percentage') {
-            message += `Desconto: ${appliedCoupon.discount}% (-R$ ${discount.toFixed(2)})\n`;
-        } else {
-            message += `Desconto: R$ ${discount.toFixed(2)}\n`;
-        }
+        const discount = calculateDiscount(subtotal);
+        message += `\n*Cupom Aplicado:* ${appliedCoupon.code}`;
+        message += `\n*Desconto:* -R$ ${discount.toFixed(2)}`;
     }
-    
-    message += `*Total Final: R$ ${total.toFixed(2)}*\n\n`;
+    message += `\n*Taxa de Entrega:* R$ 3,00`;
+    const finalTotal = subtotal - (appliedCoupon ? calculateDiscount(subtotal) : 0) + 3;
+    message += `\n*Total:* R$ ${finalTotal.toFixed(2)}\n\n`;
     
     // Pagamento
-    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[deliveryInfo.payment]}\n`;
+    message += `*💳 Forma de Pagamento:* ${deliveryInfo.payment.toUpperCase()}`;
     if (deliveryInfo.payment === 'money' && deliveryInfo.change) {
-        message += `Troco para: R$ ${deliveryInfo.change}\n`;
+        message += `\nTroco para: R$ ${deliveryInfo.change}`;
     }
     
     // Observações (se houver)
