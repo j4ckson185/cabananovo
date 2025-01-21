@@ -2758,28 +2758,20 @@ document.getElementById('deliveryInfoForm').addEventListener('submit', function(
 });
 
 function showCreateOrderModal() {
-    console.log('showCreateOrderModal iniciado'); // Log para diagnóstico
+    console.log('showCreateOrderModal iniciado');
     console.log('customerInfo:', customerInfo);
     console.log('deliveryInfo:', deliveryInfo);
 
-        // Verificar se as informações do cliente foram preenchidas
-    if (!customerInfo || Object.keys(customerInfo).length === 0) {
-        alert('Por favor, preencha primeiro suas informações de contato e endereço.');
-        // Redirecionar para o primeiro modal de informações do cliente
-        document.getElementById('customerInfoModal').style.display = 'block';
-        return;
-    }
-
     // Preenche automaticamente os campos com informações do último pedido
-    document.getElementById('customerName').value = customerInfo.fullName || '';
-    document.getElementById('customerPhone').value = customerInfo.whatsapp || '';
+    document.getElementById('customerName').value = '';
+    document.getElementById('customerPhone').value = '';
     
     // Endereço
-    document.getElementById('street').value = deliveryInfo.address || '';
+    document.getElementById('street').value = '';
     document.getElementById('streetNumber').value = '';
-    document.getElementById('neighborhood').value = deliveryInfo.neighborhood || '';
-    document.getElementById('complement').value = deliveryInfo.complement || '';
-    document.getElementById('zipCode').value = deliveryInfo.zipcode || '';
+    document.getElementById('neighborhood').value = '';
+    document.getElementById('complement').value = '';
+    document.getElementById('zipCode').value = '';
     
     // Define o valor total do pedido
     const subtotal = cart.reduce((total, item) => total + item.price, 0);
@@ -2820,7 +2812,7 @@ function showCreateOrderModal() {
     const createOrderModal = document.getElementById('createOrderModal');
     if (createOrderModal) {
         createOrderModal.style.display = 'block';
-        console.log('Modal exibido'); // Log para diagnóstico
+        console.log('Modal exibido');
     } else {
         console.error('Modal não encontrado');
     }
@@ -2866,12 +2858,6 @@ function setupPaymentEvents() {
 }
 
 function submitOrderFromDigitalMenu() {
-    // Verificações adicionais
-    if (!customerInfo || Object.keys(customerInfo).length === 0) {
-        alert('Por favor, preencha suas informações de contato primeiro.');
-        return;
-    }
-
     // Obter valores dos campos do formulário
     const orderId = document.getElementById('orderId');
     const paymentMethodElement = document.querySelector('input[name="paymentMethod"]:checked');
@@ -2881,10 +2867,12 @@ function submitOrderFromDigitalMenu() {
     const street = document.getElementById('street');
     const streetNumber = document.getElementById('streetNumber');
     const neighborhood = document.getElementById('neighborhood');
+    const complement = document.getElementById('complement');
+    const zipCode = document.getElementById('zipCode');
     const customerPhone = document.getElementById('customerPhone');
     const customerName = document.getElementById('customerName');
 
-    // Verificações de elementos
+    // Verificações de elementos e valores
     if (!orderId || !paymentMethodElement || !orderTotal || !orderDetails || 
         !street || !streetNumber || !neighborhood || !customerPhone || !customerName) {
         console.error('Elementos do formulário não encontrados');
@@ -2901,7 +2889,7 @@ function submitOrderFromDigitalMenu() {
     const order = {
         id: orderId.value,
         status: 'open',
-        paymentMethod: paymentMethodElement.value,
+        paymentMethod: paymentMethodElement.value === 'pix' ? 'online' : paymentMethodElement.value,
         orderTotal: Number(orderTotal.value),
         notes: notes ? notes.value : '',
         orderDetails: orderDetails.value,
@@ -2909,8 +2897,8 @@ function submitOrderFromDigitalMenu() {
             address: `${street.value}, ${streetNumber.value}, ${neighborhood.value}`,
             street: street.value,
             houseNumber: streetNumber.value,
-            complement: document.getElementById('complement') ? document.getElementById('complement').value : '',
-            postalCode: document.getElementById('zipCode') ? document.getElementById('zipCode').value : '',
+            complement: complement ? complement.value : '',
+            postalCode: zipCode ? zipCode.value : '',
             city: "Natal",
             region: "RN",
             country: "BR"
@@ -2932,7 +2920,7 @@ function submitOrderFromDigitalMenu() {
         });
         
         // Redirecionar para WhatsApp
-        const message = formatOrderForWhatsApp(customerInfo, order);
+        const message = formatOrderForWhatsApp(order, order);
         window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
         
     } catch (error) {
@@ -2941,8 +2929,8 @@ function submitOrderFromDigitalMenu() {
     }
 }
 
+
 function formatOrderForWhatsApp(customerInfo, order) {
-    // Modificação para mostrar PIX em vez de Online
     const paymentMethodMap = {
         'money': 'Dinheiro',
         'card': 'Cartão',
@@ -2951,11 +2939,9 @@ function formatOrderForWhatsApp(customerInfo, order) {
 
     let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
     
-    // Informações do pedido mantidas como estavam
     message += `*💰 Resumo do Pedido:*\n`;
     message += `${order.orderDetails}\n`;
     
-    // Adiciona total, pagamento e observações
     message += `*Total:* R$ ${order.orderTotal.toFixed(2)}\n`;
     message += `*Forma de Pagamento:* ${paymentMethodMap[order.paymentMethod]}\n`;
     
