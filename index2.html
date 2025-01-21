@@ -2892,11 +2892,20 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     
     // Endereço
     message += `*📍 Endereço de Entrega:*\n`;
-    message += `${deliveryInfo.address}\n`;
-    if (deliveryInfo.complement) message += `Complemento: ${deliveryInfo.complement}\n`;
-    if (deliveryInfo.apt) message += `Apto/Bloco: ${deliveryInfo.apt}\n`;
-    message += `Bairro: ${deliveryInfo.neighborhood}\n`;
-    message += `CEP: ${deliveryInfo.zipcode}\n\n`;
+    message += `${deliveryInfo.address}\n`; // Endereço principal
+    if (deliveryInfo.complement && deliveryInfo.complement !== "undefined") {
+        message += `Complemento: ${deliveryInfo.complement}\n`;
+    }
+    if (deliveryInfo.apt && deliveryInfo.apt !== "undefined") {
+        message += `Apto/Bloco: ${deliveryInfo.apt}\n`;
+    }
+    if (deliveryInfo.neighborhood && deliveryInfo.neighborhood !== "undefined") {
+        message += `Bairro: ${deliveryInfo.neighborhood}\n`;
+    }
+    if (deliveryInfo.zipcode && deliveryInfo.zipcode !== "undefined") {
+        message += `CEP: ${deliveryInfo.zipcode}\n`;
+    }
+    message += '\n';
     
     // Itens do pedido
     message += `*🍨 Itens do Pedido:*\n`;
