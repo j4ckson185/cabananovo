@@ -1,0 +1,2829 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cabana Açaí - Menu Premium</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-database-compat.min.js"></script>
+    <style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+:root {
+   --primary: #7209B7;
+   --secondary: #3A0CA3;
+   --accent: #F72585;
+   --background: #10002B;
+   --surface: #240046;
+   --text: #E0AAFF;
+   --gradient: linear-gradient(135deg, #F72585 0%, #7209B7 50%, #3A0CA3 100%);
+   --glass: rgba(255, 255, 255, 0.1);
+   --glass-border: rgba(255, 255, 255, 0.2);
+   --error: #FF5252;
+}
+
+* {
+   margin: 0;
+   padding: 0;
+   box-sizing: border-box;
+   font-family: 'Montserrat', sans-serif;
+}
+
+body {
+   background-color: var(--background);
+   color: var(--text);
+   min-height: 100vh;
+   overflow-x: hidden;
+}
+
+.background-animation {
+   position: fixed;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+   z-index: -1;
+   background: 
+       radial-gradient(circle at 0% 0%, rgba(247, 37, 133, 0.15) 0%, transparent 50%),
+       radial-gradient(circle at 100% 0%, rgba(114, 9, 183, 0.15) 0%, transparent 50%),
+       radial-gradient(circle at 50% 100%, rgba(58, 12, 163, 0.15) 0%, transparent 50%);
+   animation: backgroundFlow 15s ease infinite alternate;
+}
+
+@keyframes backgroundFlow {
+   0% { transform: scale(1) rotate(0deg); }
+   100% { transform: scale(1.1) rotate(5deg); }
+}
+
+header {
+   position: fixed;
+   top: 0;
+   width: 100%;
+   background: rgba(16, 0, 43, 0.8);
+   backdrop-filter: blur(10px);
+   padding: 1rem 2rem;
+   z-index: 1000;
+   border-bottom: 1px solid var(--glass-border);
+}
+
+.header-content {
+   max-width: 1400px;
+   margin: 0 auto;
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+}
+
+.logo-container {
+   display: flex;
+   align-items: center;
+   gap: 1.5rem;
+}
+
+.logo {
+   width: 60px;
+   height: 60px;
+   border-radius: 50%;
+   overflow: hidden;
+   border: 2px solid var(--accent);
+   animation: logoPulse 2s infinite ease-in-out;
+}
+
+@keyframes logoPulse {
+   0%, 100% { transform: scale(1); }
+   50% { transform: scale(1.05); }
+}
+
+.logo img {
+   width: 100%;
+   height: 100%;
+   object-fit: cover;
+}
+
+.store-name {
+   font-size: 2.5rem;
+   font-weight: 700;
+   background: var(--gradient);
+   -webkit-background-clip: text;
+   -webkit-text-fill-color: transparent;
+   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.cart-icon {
+   position: relative;
+   font-size: 2rem;
+   color: var(--text);
+   cursor: pointer;
+   transition: all 0.3s ease;
+}
+
+.cart-icon:hover {
+   transform: scale(1.1);
+   color: var(--accent);
+}
+
+.cart-count {
+   position: absolute;
+   top: -10px;
+   right: -10px;
+   background: var(--accent);
+   color: white;
+   width: 25px;
+   height: 25px;
+   border-radius: 50%;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   font-size: 0.9rem;
+   font-weight: 600;
+   border: 2px solid var(--glass-border);
+   animation: cartBounce 1s infinite;
+}
+
+@keyframes cartBounce {
+   0%, 100% { transform: scale(1); }
+   50% { transform: scale(1.1); }
+}
+
+.categories {
+   margin-top: 100px;
+   padding: 1.5rem;
+   display: flex;
+   gap: 1rem;
+   overflow-x: auto;
+   scrollbar-width: none;
+   background: rgba(36, 0, 70, 0.5);
+   backdrop-filter: blur(10px);
+}
+
+.categories::-webkit-scrollbar {
+   display: none;
+}
+
+.category-btn {
+   background: var(--glass);
+   border: 1px solid var(--glass-border);
+   color: var(--text);
+   padding: 1rem 2rem;
+   border-radius: 50px;
+   cursor: pointer;
+   transition: all 0.3s ease;
+   font-weight: 500;
+   display: flex;
+   align-items: center;
+   gap: 0.8rem;
+   min-width: max-content;
+}
+
+.category-btn i {
+   font-size: 1.2rem;
+}
+
+.category-btn:hover,
+.category-btn.active {
+   background: var(--gradient);
+   transform: translateY(-3px);
+   box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
+   color: white;
+}
+
+.search-container {
+   padding: 2rem;
+   max-width: 800px;
+   margin: 0 auto;
+}
+
+.search-bar {
+   position: relative;
+   width: 100%;
+}
+
+.search-input {
+   width: 100%;
+   padding: 1.2rem 3.5rem;
+   background: var(--glass);
+   border: 1px solid var(--glass-border);
+   border-radius: 50px;
+   color: var(--text);
+   font-size: 1.1rem;
+   transition: all 0.3s ease;
+}
+
+.search-input:focus {
+   outline: none;
+   border-color: var(--accent);
+   box-shadow: 0 0 20px rgba(247, 37, 133, 0.2);
+}
+
+.search-icon {
+   position: absolute;
+   left: 1.2rem;
+   top: 50%;
+   transform: translateY(-50%);
+   color: var(--text);
+   font-size: 1.3rem;
+}
+
+.products-grid {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+   gap: 2rem;
+   padding: 2rem;
+   max-width: 1400px;
+   margin: 0 auto;
+}
+
+.product-card {
+   display: flex;
+   height: auto;
+   min-height: 120px;
+   padding: 1rem;
+   gap: 1rem;
+   align-items: center;
+   background: rgba(36, 0, 70, 0.7);
+   border: 1px solid var(--glass-border);
+   border-radius: 20px;
+   transition: all 0.3s ease;
+   cursor: pointer;
+   position: relative;
+}
+
+.product-card::before {
+   content: '';
+   position: absolute;
+   inset: 0;
+   background: var(--gradient);
+   opacity: 0;
+   transition: opacity 0.3s ease;
+   border-radius: 20px;
+}
+
+.product-card:hover {
+   transform: translateY(-5px);
+   box-shadow: 0 10px 30px rgba(114, 9, 183, 0.3);
+}
+
+.product-card:hover::before {
+   opacity: 0.1;
+}
+
+.product-image {
+   width: 120px;
+   height: 120px;
+   object-fit: cover;
+   border-radius: 10px;
+   order: 2;
+   flex-shrink: 0;
+}
+
+.product-info {
+   flex: 1;
+   order: 1;
+   padding: 0.5rem;
+   display: flex;
+   flex-direction: column;
+   justify-content: space-between;
+}
+
+.product-category {
+   color: var(--accent);
+   font-size: 0.9rem;
+   text-transform: uppercase;
+   letter-spacing: 1px;
+   margin-bottom: 0.5rem;
+}
+
+.product-title {
+   font-size: 1.4rem;
+   font-weight: 600;
+   color: white;
+   margin-bottom: 1rem;
+}
+
+.product-description {
+   color: var(--text);
+   margin-bottom: 1rem;
+   line-height: 1.6;
+}
+
+.product-footer {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+}
+
+.product-price {
+   font-size: 1.3rem;
+   font-weight: 700;
+   color: var(--accent);
+}
+
+.add-to-cart-btn {
+   background: var(--gradient);
+   border: none;
+   width: 45px;
+   height: 45px;
+   border-radius: 50%;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   cursor: pointer;
+   transition: all 0.3s ease;
+}
+
+.add-to-cart-btn:hover {
+   transform: scale(1.1) rotate(90deg);
+   box-shadow: 0 0 20px rgba(247, 37, 133, 0.4);
+}
+
+.add-to-cart-btn i {
+   color: white;
+   font-size: 1.2rem;
+}
+
+.modal {
+   display: none;
+   position: fixed;
+   inset: 0;
+   background: rgba(16, 0, 43, 0.95);
+   backdrop-filter: blur(10px);
+   z-index: 1000;
+   overflow-y: auto;
+}
+
+.modal-content {
+   background: var(--surface);
+   border: 1px solid var(--glass-border);
+   border-radius: 20px;
+   width: 90%;
+   max-width: 600px;
+   max-height: 90vh;
+   margin: 20px auto;
+   padding: 1.5rem;
+   position: relative;
+   overflow-y: auto;
+   animation: modalSlide 0.3s ease;
+}
+
+@keyframes modalSlide {
+   from {
+       opacity: 0;
+       transform: translateY(-20px);
+   }
+   to {
+       opacity: 1;
+       transform: translateY(0);
+   }
+}
+
+.modal-header {
+   position: relative;
+   margin-bottom: 1rem;
+}
+
+.close-modal {
+   position: absolute;
+   right: 0;
+   top: 0;
+   background: none;
+   border: none;
+   color: var(--text);
+   font-size: 2rem;
+   cursor: pointer;
+   transition: all 0.3s ease;
+}
+
+.close-modal:hover {
+   color: var(--accent);
+   transform: rotate(90deg);
+}
+
+.modal-product-image {
+   width: 150px;
+   height: 150px;
+   object-fit: cover;
+   border-radius: 10px;
+   float: right;
+   margin: 0 0 1rem 1rem;
+}
+
+.modal-product-info {
+   overflow: hidden;
+   margin-bottom: 1.5rem;
+}
+
+.modal-product-title {
+   font-size: 1.5rem;
+   font-weight: 600;
+   color: white;
+   margin-bottom: 0.5rem;
+}
+
+.modal-product-description {
+   color: var(--text);
+   line-height: 1.8;
+   margin-bottom: 1rem;
+}
+
+.modal-product-price {
+   font-size: 1.8rem;
+   font-weight: 700;
+   color: var(--accent);
+}
+
+.toppings-section {
+   background: rgba(255, 255, 255, 0.05);
+   border-radius: 20px;
+   padding: 1.5rem;
+   margin: 1.5rem 0;
+   clear: both;
+}
+
+.toppings-title {
+   font-size: 1.2rem;
+   font-weight: 600;
+   color: white;
+   margin-bottom: 1rem;
+}
+
+.toppings-grid {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+   gap: 1rem;
+}
+
+.topping-item {
+   background: var(--glass);
+   border: 1px solid var(--glass-border);
+   border-radius: 15px;
+   padding: 1rem;
+   cursor: pointer;
+   transition: all 0.3s ease;
+   text-align: center;
+}
+
+.topping-item:hover {
+   background: var(--gradient);
+   transform: translateY(-3px);
+}
+
+.topping-item.selected {
+   background: var(--gradient);
+   box-shadow: 0 0 15px rgba(247, 37, 133, 0.3);
+}
+
+        .extra-item {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.extra-item:hover {
+    background: var(--gradient);
+    transform: translateY(-3px);
+}
+
+.extra-item.selected {
+    background: var(--gradient);
+    box-shadow: 0 0 15px rgba(247, 37, 133, 0.3);
+}
+
+.modal-buttons {
+   display: flex;
+   gap: 1rem;
+   margin-top: 1.5rem;
+}
+
+.modal-btn {
+   flex: 1;
+   padding: 1rem;
+   border: none;
+   border-radius: 50px;
+   font-size: 1.1rem;
+   font-weight: 600;
+   cursor: pointer;
+   transition: all 0.3s ease;
+}
+
+.add-to-cart {
+   background: var(--gradient);
+   color: white;
+}
+
+.add-to-cart:hover {
+   transform: translateY(-3px);
+   box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
+}
+
+.continue-shopping {
+   background: var(--glass);
+   color: var(--text);
+   border: 1px solid var(--glass-border);
+}
+
+.continue-shopping:hover {
+   background: rgba(255, 255, 255, 0.2);
+}
+
+.alert {
+   position: fixed;
+   top: 20px;
+   left: 50%;
+   transform: translateX(-50%);
+   background: var(--accent);
+   color: white;
+   padding: 1rem 2rem;
+   border-radius: 50px;
+   z-index: 2000;
+   animation: alertIn 0.3s ease;
+}
+
+@keyframes alertIn {
+   from { opacity: 0; transform: translate(-50%, -20px); }
+   to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.cart-items {
+   padding: 1rem;
+   max-height: 60vh;
+   overflow-y: auto;
+}
+
+.cart-item {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   padding: 1rem;
+   background: var(--glass);
+   border-radius: 10px;
+   margin-bottom: 1rem;
+}
+
+.cart-item-details {
+   flex: 1;
+   padding-right: 1rem;
+}
+
+.cart-item-title {
+   font-weight: 600;
+   margin-bottom: 0.5rem;
+}
+
+.cart-item-title {
+   font-weight: 600;
+   margin-bottom: 0.5rem;
+}
+
+.cart-item-toppings {
+   color: var(--text);
+   font-size: 0.9rem;
+}
+
+.cart-item-price {
+   font-weight: 600;
+   color: var(--accent);
+}
+
+.cart-total {
+   padding: 1rem;
+   border-top: 1px solid var(--glass-border);
+}
+
+.delivery-fee {
+   display: flex;
+   align-items: center;
+   gap: 0.5rem;
+   margin: 1rem 0;
+}
+
+.delivery-fee i {
+   color: var(--accent);
+}
+
+.subtotal, .total {
+   display: flex;
+   justify-content: space-between;
+   font-weight: 600;
+}
+
+.total {
+   color: var(--accent);
+   font-size: 1.2rem;
+   margin-top: 1rem;
+}
+
+.remove-item {
+   background: none;
+   border: none;
+   color: var(--error);
+   padding: 0.5rem;
+   cursor: pointer;
+   transition: transform 0.3s ease;
+}
+
+.remove-item:hover {
+   transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+   .store-name {
+       font-size: 1.8rem;
+   }
+
+   .logo {
+       width: 50px;
+       height: 50px;
+   }
+
+   .category-btn {
+       padding: 0.8rem 1.5rem;
+       font-size: 0.9rem;
+   }
+
+   .products-grid {
+       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+       padding: 1rem;
+   }
+
+   .product-image {
+       width: 100px;
+       height: 100px;
+   }
+
+   .modal-product-image {
+       width: 100px;
+       height: 100px;
+   }
+
+   .modal-buttons {
+       flex-direction: column;
+   }
+}
+
+@media (max-width: 480px) {
+   .store-name {
+       font-size: 1.4rem;
+   }
+
+   .search-input {
+       padding: 1rem 3rem;
+       font-size: 1rem;
+   }
+
+   .product-card {
+       margin: 0 1rem;
+   }
+
+   .modal-content {
+       padding: 1rem;
+   }
+
+   .modal-product-image {
+       float: none;
+       display: block;
+       margin: 0 auto 1rem;
+   }
+
+   .cart-item {
+       flex-direction: column;
+       text-align: center;
+       gap: 1rem;
+   }
+
+.cart-item-details {
+   padding-right: 0;
+}
+
+/* Form Styles */
+.form-container {
+   margin: 1rem 0;
+}
+
+.form-group {
+   margin-bottom: 1.5rem;
+}
+
+.form-group label {
+   display: block;
+   margin-bottom: 0.5rem;
+   color: var(--text);
+}
+
+.form-group input,
+.form-group select {
+   width: 100%;
+   padding: 1rem;
+   background: var(--glass);
+   border: 1px solid var(--glass-border);
+   border-radius: 10px;
+   color: white;
+   font-size: 1rem;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+   outline: none;
+   border-color: var(--accent);
+}
+
+.payment-options {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+   gap: 1rem;
+   margin: 1rem 0;
+}
+
+.payment-option {
+   display: flex;
+   align-items: center;
+   gap: 0.5rem;
+   padding: 1rem;
+   background: var(--glass);
+   border: 1px solid var(--glass-border);
+   border-radius: 10px;
+   cursor: pointer;
+   transition: all 0.3s ease;
+}
+
+.payment-option:hover,
+.payment-option.selected {
+   background: var(--gradient);
+}
+
+.payment-option i {
+   font-size: 1.5rem;
+}
+
+#changeContainer,
+#pixInfo {
+   background: var(--glass);
+   padding: 1rem;
+   border-radius: 10px;
+   margin-top: 1rem;
+}
+
+#pixInfo {
+   color: var(--text);
+   line-height: 1.6;
+}
+
+.order-summary {
+   background: var(--glass);
+   padding: 1rem;
+   border-radius: 10px;
+   margin: 1rem 0;
+}
+
+.order-summary h3 {
+   color: white;
+   margin-bottom: 1rem;
+}
+
+.summary-item {
+   display: flex;
+   justify-content: space-between;
+   margin-bottom: 0.5rem;
+}
+
+.summary-total {
+   border-top: 1px solid var(--glass-border);
+   padding-top: 1rem;
+   margin-top: 1rem;
+   font-weight: 600;
+   color: var(--accent);
+}
+
+.validation-error {
+   color: var(--error);
+   font-size: 0.9rem;
+   margin-top: 0.5rem;
+}
+
+.notification {
+   position: fixed;
+   bottom: 20px;
+   right: 20px;
+   background: var(--gradient);
+   color: white;
+   padding: 1rem 2rem;
+   border-radius: 10px;
+   animation: notificationSlide 0.3s ease;
+   z-index: 2000;
+}
+
+@keyframes notificationSlide {
+   from {
+       transform: translateX(100%);
+       opacity: 0;
+   }
+   to {
+       transform: translateX(0);
+       opacity: 1;
+   }
+}
+
+.spinner {
+   display: inline-block;
+   width: 20px;
+   height: 20px;
+   border: 2px solid rgba(255,255,255,0.3);
+   border-radius: 50%;
+   border-top-color: white;
+   animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+   to { transform: rotate(360deg); }
+}
+
+.disabled {
+   opacity: 0.5;
+   cursor: not-allowed;
+}
+
+.error-shake {
+   animation: shake 0.5s ease;
+}
+
+@keyframes shake {
+   0%, 100% { transform: translateX(0); }
+   10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+   20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Final Media Query Adjustments */
+@media (max-height: 700px) {
+   .modal-content {
+       max-height: 85vh;
+   }
+   
+   .cart-items {
+       max-height: 40vh;
+   }
+}
+
+@media (max-width: 360px) {
+   .cart-buttons {
+       flex-direction: column;
+       gap: 0.8rem;
+   }
+
+   .form-group input,
+   .form-group select {
+       padding: 0.8rem;
+       font-size: 0.9rem;
+   }
+
+    /* Adicione antes do último } da tag <style> */
+.store-status {
+    max-width: 1400px;
+    margin: 100px auto 0;
+    animation: fadeIn 0.3s ease;
+    background: var(--surface);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.categories {
+    margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+    .store-status {
+        margin: 80px 1rem 0;
+        font-size: 1rem;
+        padding: 0.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .store-status {
+        margin: 70px 0.5rem 0;
+        font-size: 0.9rem;
+        padding: 0.5rem;
+    }
+}
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+}
+
+/* Combo Builder Styles */
+.combo-step {
+    padding: 1.5rem 0;
+}
+
+.step-title {
+    font-size: 1.3rem;
+    color: white;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.size-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.size-option {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.size-option:hover {
+    background: var(--gradient);
+    transform: translateY(-3px);
+}
+
+.size-option.selected {
+    background: var(--gradient);
+    box-shadow: 0 0 15px rgba(247, 37, 133, 0.3);
+}
+
+.size-option h4 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.size-option .price {
+    color: var(--accent);
+    font-weight: bold;
+}
+
+.flavor-section {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.flavor-option h4 {
+    margin-bottom: 0.5rem;
+    color: white;
+}
+
+.combo-progress {
+    display: flex;
+    justify-content: space-between;
+    margin: 2rem 0;
+    padding: 0 1rem;
+}
+
+.progress-step {
+    width: 22%;
+    height: 4px;
+    background: var(--glass);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.progress-step.active {
+    background: var(--gradient);
+}
+
+.combo-summary {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.combo-summary h4 {
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.summary-content {
+    color: var(--text);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .size-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .flavor-section {
+        grid-template-columns: 1fr;
+    }
+}
+    
+</style>
+</head>
+<body>
+    <div class="background-animation"></div>
+    
+    <header>
+        <div class="header-content">
+            <div class="logo-container">
+                <div class="logo">
+                    <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Cabana Açaí Logo">
+                </div>
+                <h1 class="store-name">Cabana Açaí</h1>
+            </div>
+            <div class="cart-icon">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count">0</span>
+            </div>
+        </div>
+    </header>
+
+    <nav class="categories">
+        <button class="category-btn active">
+            <i class="fas fa-star"></i>
+            Todos
+        </button>
+        <button class="category-btn">
+        <i class="fas fa-magic"></i>
+         Monte seu Combo
+        </button>
+        <button class="category-btn">
+            <i class="fas fa-ice-cream"></i>
+            Apenas Cremes
+        </button>
+        <button class="category-btn">
+            <i class="fas fa-cloud"></i>
+            Açaí com Ninho
+        </button>
+        <button class="category-btn">
+            <i class="fas fa-cookie"></i>
+            Açaí com Ovomaltine
+        </button>
+        <button class="category-btn">
+            <i class="fas fa-seedling"></i>
+            Açaí com Amendoim
+        </button>
+        <button class="category-btn">
+            <i class="fas fa-leaf"></i>
+            Açaí Puro
+        </button>
+        <button class="category-btn">
+            <i class="fas fa-paint-brush"></i>
+            Monte seu Açaí
+        </button>
+    </nav>
+
+    <div class="search-container">
+        <div class="search-bar">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" placeholder="O que você quer comer hoje?" id="searchInput">
+        </div>
+    </div>
+
+    <div class="products-grid" id="productsGrid">
+        <!-- Sample Product Card -->
+        <div class="product-card">
+            <img src="/api/placeholder/300/200" alt="Açaí com Ninho" class="product-image">
+            <div class="product-info">
+                <div class="product-category">Açaí com Ninho</div>
+                <h3 class="product-title">Açaí com Leite Ninho</h3>
+                <p class="product-description">Açaí cremoso coberto com leite ninho em pó e frutas selecionadas.</p>
+                <div class="product-footer">
+                    <div class="product-price">R$ 18,90</div>
+                    <button class="add-to-cart-btn">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- More product cards will be added dynamically -->
+    </div>
+
+    <!-- Product Modal -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="close-modal">&times;</button>
+            </div>
+            <img src="/api/placeholder/800/400" alt="" class="modal-product-image">
+            <div class="modal-product-info">
+                <h2 class="modal-product-title">Açaí com Leite Ninho</h2>
+                <p class="modal-product-description">
+                    Açaí cremoso coberto com leite ninho em pó e frutas selecionadas da melhor qualidade.
+                </p>
+                <div class="modal-product-price">R$ 18,90</div>
+            </div>
+            
+            <div class="toppings-section">
+                <h3 class="toppings-title">Escolha seus Acompanhamentos</h3>
+                <div class="toppings-grid">
+                    <div class="topping-item">Granola</div>
+                    <div class="topping-item">Leite em Pó</div>
+                    <div class="topping-item">Morango</div>
+                    <div class="topping-item">Banana</div>
+                    <div class="topping-item">Kiwi</div>
+                    <div class="topping-item">Paçoca</div>
+                </div>
+            </div>
+
+            <div class="extras-section">
+    <h3 class="extras-title">Adicione Itens Extras (opcional)</h3>
+    <div class="extras-grid">
+        <!-- Items will be loaded dynamically -->
+    </div>
+</div>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn add-to-cart">Adicionar ao Carrinho</button>
+                <button class="modal-btn continue-shopping">Continuar Comprando</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Combo Builder Modal -->
+<div class="modal" id="comboModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-product-title">Monte seu Combo</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        
+        <!-- Step 1: Choose Size -->
+<!-- Step 1: Choose Size -->
+<div class="combo-step" id="sizeStep">
+    <h3 class="step-title">Escolha o tamanho do seu combo</h3>
+    <div class="toppings-grid size-options">
+        <div class="topping-item size-option" data-size="300ml" data-price="20.99">
+            300ml - R$ 20,99
+        </div>
+        <div class="topping-item size-option" data-size="500ml" data-price="26.99">
+            500ml - R$ 26,99
+        </div>
+        <div class="topping-item size-option" data-size="1L" data-price="49.99">
+            1 Litro - R$ 49,99
+        </div>
+    </div>
+</div>
+
+        <!-- Step 2: Choose Flavors -->
+<!-- Step 2: Choose Flavors -->
+<div class="combo-step" id="flavorStep" style="display: none;">
+    <h3 class="step-title">Escolha seus sabores</h3>
+    <div class="flavor-section">
+        <div class="flavor-option">
+            <h4>Açaí 1 - Sabor Principal</h4>
+            <select class="form-select" id="flavor1Primary">
+                <option value="">Selecione um sabor</option>
+                <option value="Açaí Tradicional">Açaí Tradicional</option>
+                <option value="Creme de Ninho">Creme de Ninho</option>
+                <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
+                <option value="Creme de Amendoim">Creme de Amendoim</option>
+                <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
+                <option value="Creme de Morango">Creme de Morango</option>
+            </select>
+            <h4 style="margin-top: 1rem;">Açaí 1 - Segundo Sabor (Opcional)</h4>
+            <select class="form-select" id="flavor1Secondary">
+                <option value="">Nenhum</option>
+                <option value="Açaí Tradicional">Açaí Tradicional</option>
+                <option value="Creme de Ninho">Creme de Ninho</option>
+                <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
+                <option value="Creme de Amendoim">Creme de Amendoim</option>
+                <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
+                <option value="Creme de Morango">Creme de Morango</option>
+            </select>
+        </div>
+        <div class="flavor-option" style="margin-top: 2rem;">
+            <h4>Açaí 2 - Escolha Principal </h4>
+            <select class="form-select" id="flavor2Primary">
+                <option value="">Nenhum</option>
+                <option value="Açaí Tradicional">Açaí Tradicional</option>
+                <option value="Creme de Ninho">Creme de Ninho</option>
+                <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
+                <option value="Creme de Amendoim">Creme de Amendoim</option>
+                <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
+                <option value="Creme de Morango">Creme de Morango</option>
+            </select>
+            <h4 style="margin-top: 1rem;">Açaí 2 - Segundo Sabor (Opcional, caso queira mais de 1 sabor) </h4>
+            <select class="form-select" id="flavor2Secondary">
+                <option value="">Nenhum</option>
+                <option value="Açaí Tradicional">Açaí Tradicional</option>
+                <option value="Creme de Ninho">Creme de Ninho</option>
+                <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
+                <option value="Creme de Amendoim">Creme de Amendoim</option>
+                <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
+                <option value="Creme de Morango">Creme de Morango</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+        <!-- Step 3: Choose Toppings -->
+        <div class="combo-step" id="toppingsStep" style="display: none;">
+            <h3 class="step-title">Escolha seus acompanhamentos</h3>
+            <div class="toppings-sections">
+                <div class="acai-toppings">
+                    <h4>Acompanhamentos do Açaí 1</h4>
+                    <div class="toppings-grid" id="toppings1">
+                        <!-- Toppings will be loaded dynamically -->
+                    </div>
+                </div>
+                <div class="acai-toppings" id="acai2Toppings" style="display: none;">
+                    <h4>Acompanhamentos do Açaí 2</h4>
+                    <div class="toppings-grid" id="toppings2">
+                        <!-- Toppings will be loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Choose Extras -->
+        <div class="combo-step" id="extrasStep" style="display: none;">
+            <h3 class="step-title">Confira seu pedido</h3>
+            <div class="extras-grid">
+                <!-- Extras will be loaded dynamically -->
+            </div>
+            
+            <div class="combo-summary">
+                <h4>Resumo do seu combo:</h4>
+                <div class="summary-content"></div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="combo-progress">
+            <div class="progress-step active"></div>
+            <div class="progress-step"></div>
+            <div class="progress-step"></div>
+            <div class="progress-step"></div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="modal-buttons">
+            <button class="modal-btn btn-back" style="display: none;">Voltar</button>
+            <button class="modal-btn btn-next">Continuar</button>
+            <button class="modal-btn btn-add-cart" style="display: none;">Adicionar ao Carrinho</button>
+        </div>
+    </div>
+</div>
+
+    <!-- Cart Modal -->
+<div class="modal" id="cartModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Seu Carrinho</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="cart-items"></div>
+<div class="cart-total">
+    <div class="subtotal">Subtotal: R$ <span>0.00</span></div>
+    <div class="delivery-fee">
+        <i class="fas fa-motorcycle"></i> Taxa de Entrega: R$ 3,00
+    </div>
+    <div class="coupon-section" style="margin: 1rem 0;">
+        <div class="form-group" style="display: flex; gap: 0.5rem;">
+            <input type="text" id="couponCode" placeholder="Código do cupom" class="form-input" style="flex: 1;">
+            <button onclick="applyCoupon()" class="btn-primary" style="padding: 0.5rem 1rem; border-radius: 8px; background: var(--accent); color: white; border: none; cursor: pointer;">
+                Aplicar
+            </button>
+        </div>
+        <div id="couponMessage" style="margin-top: 0.5rem; font-size: 0.9rem;"></div>
+    </div>
+    <div class="discount" style="display: none;">
+        Desconto: -R$ <span>0.00</span>
+    </div>
+    <div class="total">Total: R$ <span>0.00</span></div>
+</div>
+        <div class="modal-buttons">
+            <button class="modal-btn continue-shopping">Continuar Comprando</button>
+            <button class="modal-btn checkout">Finalizar Pedido</button>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Info Modal -->
+<div class="modal" id="customerInfoModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Seus Dados</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <form id="customerInfoForm">
+            <div class="form-group">
+                <label>Nome Completo</label>
+                <input type="text" required name="fullName">
+            </div>
+            <div class="form-group">
+                <label>WhatsApp (com DDD)</label>
+                <input type="tel" required name="whatsapp" pattern="[0-9]{11}">
+            </div>
+            <button type="submit" class="modal-btn">Avançar</button>
+        </form>
+    </div>
+</div>
+
+<!-- Delivery Info Modal -->
+<div class="modal" id="deliveryInfoModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Endereço de Entrega</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <form id="deliveryInfoForm">
+            <div class="form-group">
+                <label>Endereço</label>
+                <input type="text" required name="address">
+            </div>
+            <div class="form-group">
+                <label>Complemento</label>
+                <input type="text" name="complement">
+            </div>
+            <div class="form-group">
+                <label>Apto/Bloco</label>
+                <input type="text" name="apt">
+            </div>
+            <div class="form-group">
+                <label>Bairro</label>
+                <input type="text" required name="neighborhood">
+            </div>
+            <div class="form-group">
+                <label>CEP</label>
+                <input type="text" required name="zipcode">
+            </div>
+            <div class="form-group">
+                <label>Forma de Pagamento</label>
+                <div class="payment-options">
+                    <label>
+                        <input type="radio" name="payment" value="money">
+                        <i class="fas fa-money-bill"></i> Dinheiro
+                    </label>
+                    <label>
+                        <input type="radio" name="payment" value="card">
+                        <i class="fas fa-credit-card"></i> Cartão na Entrega
+                    </label>
+                    <label>
+                        <input type="radio" name="payment" value="pix">
+                        <i class="fas fa-qrcode"></i> PIX
+                    </label>
+                </div>
+            </div>
+            <div id="changeContainer" style="display: none;">
+                <label>Troco para quanto?</label>
+                <input type="number" name="change" step="0.01">
+            </div>
+            <div id="pixInfo" style="display: none;">
+                <p>Envie o PIX para 84 9 8873-1028 - Santander - Jackson</p>
+            </div>
+            <div class="order-summary"></div>
+            <p class="whatsapp-info" style="color: var(--text); font-size: 0.9rem; text-align: center; margin-bottom: 1rem;">
+    Após finalizar o pedido, você será redirecionado ao WhatsApp (84) 98767-3202 para acompanhar o status do seu pedido.
+</p>
+            <button type="submit" class="modal-btn">Finalizar Pedido</button>
+        </form>
+    </div>
+</div>
+
+    <!-- Customer Info Modal -->
+<div class="modal" id="customerInfoModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Seus Dados</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <form id="customerInfoForm">
+            <div class="form-group">
+                <label>Nome Completo</label>
+                <input type="text" required name="fullName">
+            </div>
+            <div class="form-group">
+                <label>WhatsApp (com DDD)</label>
+                <input type="tel" required name="whatsapp" pattern="[0-9]{11}">
+            </div>
+            <button type="submit" class="modal-btn">Avançar</button>
+        </form>
+    </div>
+</div>
+
+<!-- Delivery Info Modal -->
+<div class="modal" id="deliveryInfoModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Endereço de Entrega</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <form id="deliveryInfoForm">
+            <div class="form-group">
+                <label>Endereço</label>
+                <input type="text" required name="address">
+            </div>
+            <div class="form-group">
+                <label>Complemento</label>
+                <input type="text" name="complement">
+            </div>
+            <div class="form-group">
+                <label>Apto/Bloco</label>
+                <input type="text" name="apt">
+            </div>
+            <div class="form-group">
+                <label>Bairro</label>
+                <input type="text" required name="neighborhood">
+            </div>
+            <div class="form-group">
+                <label>CEP</label>
+                <input type="text" required name="zipcode">
+            </div>
+            <div class="form-group">
+            <label>Cupom de Desconto (opcional)</label>
+            <input type="text" name="couponCode" placeholder="Digite seu cupom">
+            </div>
+            <div class="form-group">
+                <label>Forma de Pagamento</label>
+                <div class="payment-options">
+                    <label>
+                        <input type="radio" name="payment" value="money">
+                        <i class="fas fa-money-bill"></i> Dinheiro
+                    </label>
+                    <label>
+                        <input type="radio" name="payment" value="card">
+                        <i class="fas fa-credit-card"></i> Cartão na Entrega
+                    </label>
+                    <label>
+                        <input type="radio" name="payment" value="pix">
+                        <i class="fas fa-qrcode"></i> PIX
+                    </label>
+                </div>
+            </div>
+            <div id="changeContainer" style="display: none;">
+                <label>Troco para quanto?</label>
+                <input type="number" name="change" step="0.01">
+            </div>
+            <div id="pixInfo" style="display: none;">
+                <p>Envie o PIX para 84 9 8873-1028 - Santander - Jackson</p>
+            </div>
+            <div class="order-summary"></div>
+            <button type="submit" class="modal-btn">Finalizar Pedido</button>
+        </form>
+    </div>
+</div>
+
+    <!-- Antes de fechar o </body> -->
+<div class="modal" id="cartModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Seu Carrinho</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="cart-items"></div>
+        <div class="cart-total">
+            <div class="subtotal">Subtotal: R$ <span>0.00</span></div>
+            <div class="delivery-fee">
+                <i class="fas fa-motorcycle"></i> Taxa de Entrega: R$ 3,00
+            </div>
+            <div class="total">Total: R$ <span>0.00</span></div>
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn continue-shopping">Continuar Comprando</button>
+            <button class="modal-btn checkout">Finalizar Pedido</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Firebase initialization
+const firebaseConfig = {
+    apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
+    authDomain: "cabana-8d55e.firebaseapp.com",
+    databaseURL: "https://cabana-8d55e-default-rtdb.firebaseio.com",
+    projectId: "cabana-8d55e",
+    storageBucket: "cabana-8d55e.appspot.com",
+    messagingSenderId: "706144237954",
+    appId: "1:706144237954:web:345c10370972486afc779b",
+    measurementId: "G-96Y337GYT8"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let cart = [];
+let currentProducts = [];
+let appliedCoupon = null;
+
+async function handleDeliveryInfo(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const deliveryInfo = Object.fromEntries(formData);
+    
+    // Calcular totais
+    const subtotal = cart.reduce((total, item) => total + item.price, 0);
+    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    const deliveryFee = 3.00;
+    const total = subtotal - discount + deliveryFee;
+
+    try {
+        // Criar o pedido no Firebase
+        const orderData = {
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            customerInfo,
+            deliveryInfo,
+            items: cart.map(item => ({
+                ...item,
+                price: parseFloat(item.price),
+                originalPrice: parseFloat(item.originalPrice || item.price),
+                selectedToppings: item.selectedToppings || [],
+                selectedExtras: item.selectedExtras || []
+            })),
+            subtotal: parseFloat(subtotal),
+            discount: parseFloat(discount),
+            deliveryFee: parseFloat(deliveryFee),
+            total: parseFloat(total),
+            cupom: appliedCoupon ? appliedCoupon.code : null,
+            status: 'pending'
+        };
+
+        // Salvar no Firebase
+        const newOrderRef = await db.ref('orders').push(orderData);
+
+        // Criar o pedido no Foody Delivery
+        const foodyOrder = {
+            id: "5555",
+            status: "Aberto",
+            details: cart.map(item => {
+                let description = item.name;
+                if (item.selectedToppings?.length > 0) {
+                    description += ` (${item.selectedToppings.join(", ")})`;
+                }
+                if (item.selectedExtras?.length > 0) {
+                    description += ` [Extras: ${item.selectedExtras.join(", ")}]`;
+                }
+                return description;
+            }).join("\n"),
+            paymentMethod: deliveryInfo.payment === 'pix' ? 'Online' : deliveryInfo.payment,
+            customerName: customerInfo.fullName,
+            customerPhone: customerInfo.whatsapp,
+            address: `${deliveryInfo.address}, ${deliveryInfo.neighborhood}`,
+            total: total
+        };
+
+        // Fazer a requisição para a API do Foody Delivery
+        const response = await fetch('https://app.foodydelivery.com/rest/1.2/orders/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(foodyOrder)
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao criar pedido no Foody Delivery');
+        }
+
+        // Redirecionar para o WhatsApp
+        const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
+        const encodedMessage = encodeURIComponent(message);
+        window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
+
+    } catch (error) {
+        console.error('Erro ao processar pedido:', error);
+        alert('Erro ao processar pedido. Por favor, tente novamente.');
+    }
+}
+
+// Load products from Firebase
+function loadMenuProducts() {
+    db.ref('menu/products').on('value', snapshot => {
+        const products = snapshot.val() || {};
+        currentProducts = Object.values(products).filter(product => product.status);
+        displayProducts(currentProducts);
+    });
+}
+
+// Load categories from Firebase
+function loadCategories() {
+    db.ref('menu/categories').on('value', snapshot => {
+        const categories = snapshot.val() || {};
+        updateCategoryButtons(categories);
+    });
+}
+
+// Combo Builder Logic
+let currentStep = 1;
+let comboData = {
+    size: null,
+    flavor1: '',
+    flavor2: '',
+    toppings1: [],
+    toppings2: [],
+    extras: []
+};
+
+    (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="PpgNSIgeYN1FCucFGP4w3";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+
+function initComboBuilder() {
+    const comboModal = document.getElementById('comboModal');
+    const closeBtn = comboModal.querySelector('.close-modal');
+    const nextBtn = comboModal.querySelector('.btn-next');
+    const backBtn = comboModal.querySelector('.btn-back');
+    const addCartBtn = comboModal.querySelector('.btn-add-cart');
+    
+// Size selection
+document.querySelectorAll('.size-option').forEach(option => {
+    option.addEventListener('click', function() {
+        // Remove seleção anterior
+        document.querySelectorAll('.size-option').forEach(opt => {
+            opt.classList.remove('selected');
+            opt.style.background = ''; // Remove background anterior
+        });
+        
+        // Adiciona nova seleção com gradiente
+        this.classList.add('selected');
+        this.style.background = 'var(--gradient)';
+        
+        comboData.size = {
+            size: this.dataset.size,
+            price: parseFloat(this.dataset.price)
+        };
+        
+        nextBtn.disabled = false;
+    });
+});
+
+        setupFlavorSelectors();
+
+    // Configuração dos botões de navegação
+    nextBtn.addEventListener('click', () => {
+        if (validateStep()) {
+            currentStep++;
+            updateComboView();
+        }
+    });
+
+    backBtn.addEventListener('click', () => {
+        currentStep--;
+        updateComboView();
+    });
+
+    closeBtn.addEventListener('click', () => {
+        comboModal.style.display = 'none';
+        resetComboBuilder();
+    });
+
+    addCartBtn.addEventListener('click', () => {
+        addComboToCart();
+        comboModal.style.display = 'none';
+        resetComboBuilder();
+    });
+
+    // Load toppings and extras
+    loadToppingsAndExtras();
+    
+    // Reset inicial
+    resetComboBuilder();
+}
+
+    function setupFlavorSelectors() {
+    const flavor1Primary = document.getElementById('flavor1Primary');
+    const flavor1Secondary = document.getElementById('flavor1Secondary');
+    const flavor2Primary = document.getElementById('flavor2Primary');
+    const flavor2Secondary = document.getElementById('flavor2Secondary');
+    const nextBtn = document.querySelector('.btn-next');
+
+    flavor1Primary.addEventListener('change', (e) => {
+        comboData.acai1.primaryFlavor = e.target.value;
+        nextBtn.disabled = !validateStep();
+    });
+
+    flavor1Secondary.addEventListener('change', (e) => {
+        comboData.acai1.secondaryFlavor = e.target.value;
+    });
+
+    flavor2Primary.addEventListener('change', (e) => {
+        comboData.acai2.primaryFlavor = e.target.value;
+        if (e.target.value) {
+            document.getElementById('acai2Toppings').style.display = 'block';
+        } else {
+            document.getElementById('acai2Toppings').style.display = 'none';
+            comboData.acai2.toppings = [];
+        }
+    });
+
+    flavor2Secondary.addEventListener('change', (e) => {
+        comboData.acai2.secondaryFlavor = e.target.value;
+    });
+}
+
+// Adiciona função para adicionar o combo ao carrinho
+function addComboToCart() {
+    const comboPrice = calculateComboPrice();
+    const comboName = `Combo ${comboData.size.size}`;
+
+    // Monta os detalhes do Açaí 1
+    let acai1Details = `\n• Açaí 1:\n`;
+    acai1Details += `  Sabor principal: ${comboData.acai1.primaryFlavor}\n`;
+    if (comboData.acai1.secondaryFlavor) {
+        acai1Details += `  Segundo sabor: ${comboData.acai1.secondaryFlavor}\n`;
+    }
+    acai1Details += `  Acompanhamentos: ${comboData.acai1.toppings.join(', ')}\n`;
+
+    // Monta os detalhes do Açaí 2 se houver
+    let acai2Details = '';
+    if (comboData.acai2.primaryFlavor) {
+        acai2Details = `\n• Açaí 2:\n`;
+        acai2Details += `  Sabor principal: ${comboData.acai2.primaryFlavor}\n`;
+        if (comboData.acai2.secondaryFlavor) {
+            acai2Details += `  Segundo sabor: ${comboData.acai2.secondaryFlavor}\n`;
+        }
+        acai2Details += `  Acompanhamentos: ${comboData.acai2.toppings.join(', ')}`;
+    }
+
+    // Extras se houver
+    let extrasDetails = '';
+    if (comboData.extras.length > 0) {
+        extrasDetails = `\n\n• Extras: ${comboData.extras.join(', ')}`;
+    }
+
+    const comboItem = {
+        name: comboName,
+        price: comboPrice,
+        selectedToppings: [...comboData.acai1.toppings, ...comboData.acai2.toppings],
+        selectedExtras: comboData.extras,
+        description: `${acai1Details}${acai2Details}${extrasDetails}`
+    };
+
+    cart.push(comboItem);
+    updateCartCount();
+    showCartModal();
+}
+
+function calculateComboPrice() {
+    let total = comboData.size.price;
+    
+    // Adiciona preço dos extras
+    if (comboData.extras.length > 0) {
+        const extrasGrid = document.querySelector('.extras-grid');
+        comboData.extras.forEach(extraName => {
+            const extraItem = extrasGrid.querySelector(`[data-name="${extraName}"]`);
+            if (extraItem && extraItem.dataset.price) {
+                total += parseFloat(extraItem.dataset.price);
+            }
+        });
+    }
+    
+    return total;
+}
+
+// Função para formatar descrição do combo
+function formatComboDescription() {
+    let desc = `${comboData.flavor1}`;
+    if (comboData.flavor2) {
+        desc += ` + ${comboData.flavor2}`;
+    }
+    return desc;
+}
+
+function validateStep() {
+    switch (currentStep) {
+        case 1:
+            return comboData.size !== null;
+        case 2:
+            return comboData.acai1.primaryFlavor !== '';
+        case 3:
+            // Verifica se tem pelo menos 1 acompanhamento no açaí 1
+            if (comboData.acai1.toppings.length < 1) {
+                showNotification('Selecione pelo menos 1 acompanhamento para o Açaí 1');
+                return false;
+            }
+            // Se tiver sabor principal no açaí 2, precisa ter pelo menos 1 acompanhamento também
+            if (comboData.acai2.primaryFlavor && comboData.acai2.toppings.length < 1) {
+                showNotification('Selecione pelo menos 1 acompanhamento para o Açaí 2');
+                return false;
+            }
+            return true;
+        case 4:
+            return true;
+        default:
+            return false;
+    }
+}
+
+function resetComboBuilder() {
+    currentStep = 1;
+    comboData = {
+        size: null,
+        acai1: {
+            primaryFlavor: '',
+            secondaryFlavor: '',
+            toppings: []
+        },
+        acai2: {
+            primaryFlavor: '',
+            secondaryFlavor: '',
+            toppings: []
+        },
+        extras: []
+    };
+    updateComboView();
+}
+
+function updateComboView() {
+    const steps = ['sizeStep', 'flavorStep', 'toppingsStep', 'extrasStep'];
+    steps.forEach((step, index) => {
+        document.getElementById(step).style.display = 
+            index + 1 === currentStep ? 'block' : 'none';
+    });
+
+    // Update progress bar
+    document.querySelectorAll('.progress-step').forEach((step, index) => {
+        step.classList.toggle('active', index + 1 <= currentStep);
+    });
+
+    // Show/hide navigation buttons
+    const backBtn = document.querySelector('.btn-back');
+    const nextBtn = document.querySelector('.btn-next');
+    const addCartBtn = document.querySelector('.btn-add-cart');
+
+    backBtn.style.display = currentStep > 1 ? 'block' : 'none';
+    nextBtn.style.display = currentStep < 4 ? 'block' : 'none';
+    addCartBtn.style.display = currentStep === 4 ? 'block' : 'none';
+    
+    // Atualizar estado dos botões
+    nextBtn.disabled = !validateStep();
+
+    // Se estiver na etapa final, atualiza o resumo
+    if (currentStep === 4) {
+        updateComboSummary();
+    }
+}
+
+function loadToppingsAndExtras() {
+    // Load toppings from Firebase
+    db.ref('toppings').once('value', snapshot => {
+        const toppings = snapshot.val();
+        if (toppings) {
+            const toppingsHtml = Object.values(toppings)
+                .filter(topping => topping.available)
+                .map(topping => `
+                    <div class="topping-item" data-name="${topping.name}">
+                        ${topping.name}
+                        ${topping.price > 0 ? `<span class="topping-price">+R$ ${topping.price.toFixed(2)}</span>` : ''}
+                    </div>
+                `).join('');
+            
+            document.getElementById('toppings1').innerHTML = toppingsHtml;
+            document.getElementById('toppings2').innerHTML = toppingsHtml;
+
+            // Add click handlers
+            document.querySelectorAll('.topping-item').forEach(item => {
+                item.addEventListener('click', () => toggleTopping(item));
+            });
+        }
+    });
+
+    // Load extras from Firebase
+    db.ref('extras').once('value', snapshot => {
+        const extras = snapshot.val();
+        if (extras) {
+            const extrasHtml = Object.values(extras)
+                .filter(extra => extra.available)
+                .map(extra => `
+                    <div class="extra-item" data-name="${extra.name}" data-price="${extra.price}">
+                        ${extra.name}
+                        <span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>
+                    </div>
+                `).join('');
+            
+            document.querySelector('.extras-grid').innerHTML = extrasHtml;
+
+            // Add click handlers
+            document.querySelectorAll('.extra-item').forEach(item => {
+                item.addEventListener('click', () => toggleExtra(item));
+            });
+        }
+    });
+}
+
+function toggleTopping(item) {
+    const toppingName = item.dataset.name;
+    const isForFirstAcai = item.closest('#toppings1') !== null;
+    
+    // Define o limite de acompanhamentos baseado no tamanho
+    let maxToppings;
+    if (comboData.size.size === '300ml') {
+        maxToppings = 3;
+    } else if (comboData.size.size === '500ml') {
+        maxToppings = 4;
+    } else if (comboData.size.size === '1L') {
+        maxToppings = 8;
+    }
+    
+    const toppingsArray = isForFirstAcai ? comboData.acai1.toppings : comboData.acai2.toppings;
+    
+    if (item.classList.contains('selected')) {
+        item.classList.remove('selected');
+        const index = toppingsArray.indexOf(toppingName);
+        if (index > -1) {
+            if (isForFirstAcai) {
+                comboData.acai1.toppings.splice(index, 1);
+            } else {
+                comboData.acai2.toppings.splice(index, 1);
+            }
+        }
+    } else {
+        if (toppingsArray.length < maxToppings) {
+            item.classList.add('selected');
+            if (isForFirstAcai) {
+                comboData.acai1.toppings.push(toppingName);
+            } else {
+                comboData.acai2.toppings.push(toppingName);
+            }
+        } else {
+            showNotification(`Máximo de ${maxToppings} acompanhamentos permitidos para este tamanho`);
+        }
+    }
+
+    // Atualiza o resumo se estiver na última etapa
+    if (currentStep === 4) {
+        updateComboSummary();
+    }
+
+    // Valida se tem pelo menos 1 acompanhamento selecionado
+    const nextBtn = document.querySelector('.btn-next');
+    if (nextBtn) {
+        nextBtn.disabled = !validateStep();
+    }
+}
+    function toggleExtra(item) {
+    const extraName = item.dataset.name;
+    
+    if (item.classList.contains('selected')) {
+        item.classList.remove('selected');
+        comboData.extras = comboData.extras.filter(e => e !== extraName);
+    } else {
+        item.classList.add('selected');
+        comboData.extras.push(extraName);
+    }
+
+    // Atualizar a exibição se necessário
+    if (currentStep === 4) {
+        updateComboSummary();
+    }
+}
+
+function updateComboSummary() {
+    const summaryContent = document.querySelector('.summary-content');
+    let summary = `<strong>Tamanho:</strong> ${comboData.size.size} (R$ ${comboData.size.price})<br><br>`;
+    
+    summary += `<strong>Açaí 1:</strong><br>`;
+    summary += `Sabor Principal: ${comboData.acai1.primaryFlavor}<br>`;
+    if (comboData.acai1.secondaryFlavor) {
+        summary += `Segundo Sabor: ${comboData.acai1.secondaryFlavor}<br>`;
+    }
+    summary += `Acompanhamentos: ${comboData.acai1.toppings.join(', ') || 'Nenhum'}<br><br>`;
+    
+    if (comboData.acai2.primaryFlavor) {
+        summary += `<strong>Açaí 2:</strong><br>`;
+        summary += `Sabor Principal: ${comboData.acai2.primaryFlavor}<br>`;
+        if (comboData.acai2.secondaryFlavor) {
+            summary += `Segundo Sabor: ${comboData.acai2.secondaryFlavor}<br>`;
+        }
+        summary += `Acompanhamentos: ${comboData.acai2.toppings.join(', ') || 'Nenhum'}<br><br>`;
+    }
+    
+    if (comboData.extras.length > 0) {
+        summary += `<strong>Extras:</strong> ${comboData.extras.join(', ')}`;
+    }
+    
+    summaryContent.innerHTML = summary;
+}
+
+function updateCategoryButtons(categories) {
+    const categoriesNav = document.querySelector('.categories');
+    categoriesNav.innerHTML = `
+        <button class="category-btn active" data-category="all">
+            <i class="fas fa-star"></i>
+            Todos
+        </button>
+        <button class="category-btn" data-category="combo">
+            <i class="fas fa-magic"></i>
+            Monte seu Combo
+        </button>
+    `;
+    
+    Object.entries(categories).forEach(([id, category]) => {
+        categoriesNav.innerHTML += `
+            <button class="category-btn" data-category="${id}">
+                <i class="fas fa-${category.icon || 'circle'}"></i>
+                ${category.name}
+            </button>
+        `;
+    });
+    
+    // Adiciona event listeners para todos os botões de categoria
+    categoriesNav.querySelectorAll('.category-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelector('.category-btn.active')?.classList.remove('active');
+            button.classList.add('active');
+            
+            const categoryId = button.dataset.category;
+            if (categoryId === 'combo') {
+                document.getElementById('comboModal').style.display = 'block';
+                resetComboBuilder();
+                initComboBuilder();
+            } else {
+                const filteredProducts = categoryId === 'all' 
+                    ? currentProducts 
+                    : currentProducts.filter(p => p.category === categoryId);
+                displayProducts(filteredProducts);
+            }
+        });
+    });
+}
+
+function checkStoreStatus() {
+    // Remove o status anterior se existir
+    const existingStatus = document.querySelector('.store-status');
+    if (existingStatus) {
+        existingStatus.remove();
+    }
+
+    const statusDiv = document.createElement('div');
+    statusDiv.className = 'store-status';
+    statusDiv.style.cssText = `
+        width: 100%;
+        max-width: 1400px;
+        margin: 100px auto 0;
+        text-align: center;
+        padding: 0.8rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        border-radius: 8px;
+        background: var(--surface);
+        border: 1px solid var(--glass-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    `;
+    
+    db.ref('schedule').once('value')
+        .then(snapshot => {
+            const schedule = snapshot.val() || {};
+            const isOpen = isStoreOpenNow(schedule);
+            
+            statusDiv.style.backgroundColor = isOpen ? '#4CAF50' : '#FF5252';
+            statusDiv.style.color = 'white';
+            statusDiv.innerHTML = `
+                <span style="font-size: 1.2rem;">●</span>
+                <span>Loja ${isOpen ? 'Aberta' : 'Fechada'}</span>
+            `;
+            
+            // Inserir entre o header e as categorias
+            const categories = document.querySelector('.categories');
+            categories.parentNode.insertBefore(statusDiv, categories);
+            
+            // Se estiver fechada, desabilita botões de compra
+            if (!isOpen) {
+                disableOrdering();
+            }
+        });
+}
+
+function isStoreOpenNow(schedule) {
+    const now = new Date();
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const today = days[now.getDay()];
+    const currentTime = now.getHours() * 100 + now.getMinutes();
+    
+    const todaySchedule = schedule[today];
+    if (!todaySchedule || !todaySchedule.isOpen) return false;
+    
+    const openTime = parseInt(todaySchedule.open.replace(':', ''));
+    const closeTime = parseInt(todaySchedule.close.replace(':', ''));
+    
+    return currentTime >= openTime && currentTime < closeTime;
+}
+
+function disableOrdering() {
+    const addButtons = document.querySelectorAll('.add-to-cart-btn');
+    addButtons.forEach(button => {
+        button.disabled = true;
+        button.style.opacity = '0.5';
+        button.style.cursor = 'not-allowed';
+    });
+    
+    document.querySelectorAll('.product-card').forEach(card => {
+        card.style.opacity = '0.7';
+        card.style.cursor = 'not-allowed';
+        card.onclick = (e) => {
+            e.preventDefault();
+            showAlert('error', 'A loja está fechada no momento. Confira nosso horário de funcionamento.');
+        };
+    });
+}
+
+function setupEventListeners() {
+    // Category buttons
+    document.querySelectorAll('.category-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelector('.category-btn.active')?.classList.remove('active');
+            button.classList.add('active');
+            
+            const category = button.textContent.trim();
+            const filteredProducts = category === 'Todos' 
+                ? currentProducts 
+                : currentProducts.filter(p => p.category === category);
+            displayProducts(filteredProducts);
+        });
+    });
+
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const filteredProducts = currentProducts.filter(product => 
+            product.name.toLowerCase().includes(searchTerm) ||
+            product.description.toLowerCase().includes(searchTerm)
+        );
+        displayProducts(filteredProducts);
+    });
+
+    // Modal close buttons
+    document.querySelectorAll('.close-modal').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.style.display = 'none';
+            });
+        });
+    });
+
+    // Continue shopping button
+    document.querySelector('.continue-shopping').addEventListener('click', () => {
+        document.getElementById('productModal').style.display = 'none';
+    });
+
+    // Add to cart button
+    document.querySelector('.add-to-cart').addEventListener('click', () => {
+        const selectedToppings = Array.from(document.querySelectorAll('.topping-item.selected'))
+            .map(item => item.textContent);
+        addToCart(currentProduct, selectedToppings);
+        document.getElementById('productModal').style.display = 'none';
+    });
+}
+
+    function createProductCard(product) {
+   const card = document.createElement('div');
+   card.className = 'product-card';
+   
+   db.ref(`categories/${product.category}`).once('value')
+       .then(snapshot => {
+           const category = snapshot.val();
+           const categoryName = category ? category.name : 'Categoria';
+           
+           card.innerHTML = `
+               <img src="${product.imageUrl || '/api/placeholder/300/200'}" alt="${product.name}" class="product-image">
+               <div class="product-info">
+                   <div class="product-category">${categoryName}</div>
+                   <h3 class="product-title">${product.name}</h3>
+                   <p class="product-description">${product.description}</p>
+                   <div class="product-footer">
+                       <div class="product-price">R$ ${product.price.toFixed(2)}</div>
+                       <button class="add-to-cart-btn">
+                           <i class="fas fa-plus"></i>
+                       </button>
+                   </div>
+               </div>
+           `;
+           
+           card.addEventListener('click', () => openProductModal(product));
+       });
+   
+   return card;
+}
+
+async function getCategoryName(categoryId) {
+   const snapshot = await db.ref(`categories/${categoryId}`).once('value');
+   const category = snapshot.val();
+   return category ? category.name : 'Categoria';
+}
+
+function displayProducts(productsToShow) {
+    const grid = document.getElementById('productsGrid');
+    grid.innerHTML = '';
+
+    productsToShow.forEach(product => {
+        const card = createProductCard(product);
+        grid.appendChild(card);
+    });
+}
+    
+let currentProduct = null;
+
+function openProductModal(product) {
+    currentProduct = product;
+    const modal = document.getElementById('productModal');
+    
+    modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
+    modal.querySelector('.modal-product-title').textContent = product.name;
+    modal.querySelector('.modal-product-description').textContent = product.description;
+    modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
+
+    // Load available toppings and extras from Firebase
+    Promise.all([
+        db.ref('menu/toppings').once('value'),
+        db.ref('extras').once('value')
+    ]).then(([toppingsSnapshot, extrasSnapshot]) => {
+        const toppings = toppingsSnapshot.val() || {};
+        const extras = extrasSnapshot.val() || {};
+
+        // Populate toppings grid
+        const toppingsGrid = modal.querySelector('.toppings-grid');
+        toppingsGrid.innerHTML = Object.values(toppings)
+            .filter(topping => topping.available)
+            .map(topping => `
+                <div class="topping-item" data-topping="${topping.name}">
+                    ${topping.name}
+                    ${topping.price > 0 ? `<span class="topping-price">+R$ ${topping.price.toFixed(2)}</span>` : ''}
+                </div>
+            `).join('');
+
+        // Populate extras grid
+        const extrasGrid = modal.querySelector('.extras-grid');
+        extrasGrid.innerHTML = Object.values(extras)
+            .filter(extra => extra.available)
+            .map(extra => `
+                <div class="extra-item" data-extra="${extra.name}">
+                    ${extra.name}
+                    ${extra.price > 0 ? `<span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>` : ''}
+                </div>
+            `).join('');
+
+        // Setup topping selection
+        const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
+        toppingItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const isCurrentlySelected = item.classList.contains('selected');
+                
+                if (isCurrentlySelected) {
+                    item.classList.remove('selected');
+                } else {
+                    const selectedToppings = document.querySelectorAll('.topping-item.selected');
+                    if (selectedToppings.length < product.toppings.max) {
+                        item.classList.add('selected');
+                    } else {
+                        showNotification(`Você pode selecionar no máximo ${product.toppings.max} acompanhamento${product.toppings.max > 1 ? 's' : ''}`);
+                    }
+                }
+                
+                validateToppingsSelection(product.toppings.min, product.toppings.max);
+                updateTotalPrice(product);
+            });
+        });
+
+        // Setup extras selection
+        const extraItems = extrasGrid.querySelectorAll('.extra-item');
+        extraItems.forEach(item => {
+            item.addEventListener('click', () => {
+                item.classList.toggle('selected');
+                updateTotalPrice(product);
+            });
+        });
+    });
+
+    modal.style.display = 'block';
+}
+
+// Função para gerar um fingerprint do dispositivo
+async function generateDeviceFingerprint() {
+    const components = [
+        navigator.userAgent,
+        navigator.language,
+        new Date().getTimezoneOffset(),
+        navigator.hardwareConcurrency,
+        screen.width,
+        screen.height,
+        navigator.deviceMemory,
+        navigator.platform
+    ];
+    
+    const fingerprint = components.join('|');
+    const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(fingerprint));
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Função para obter o IP do usuário
+async function getUserIP() {
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        return data.ip;
+    } catch (error) {
+        console.error('Erro ao obter IP:', error);
+        return null;
+    }
+}
+    
+function validateToppingsSelection(min, max) {
+    const selectedToppings = document.querySelectorAll('.topping-item.selected').length;
+    
+    if (selectedToppings < min) {
+        showNotification(`Selecione no mínimo ${min} acompanhamento${min > 1 ? 's' : ''}!`);
+        return false;
+    }
+    
+    if (selectedToppings > max) {
+        showNotification(`Você pode selecionar no máximo ${max} acompanhamento${max > 1 ? 's' : ''}!`);
+        return false;
+    }
+    
+    return true;
+}
+
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+}
+
+function updateTotalPrice(product) {
+    const selectedToppings = document.querySelectorAll('.topping-item.selected');
+    const selectedExtras = document.querySelectorAll('.extra-item.selected');
+    let totalPrice = product.price;
+    
+    selectedToppings.forEach(topping => {
+        const priceText = topping.querySelector('.topping-price')?.textContent;
+        if (priceText) {
+            const extraPrice = parseFloat(priceText.replace(/[^0-9.,]/g, '').replace(',', '.'));
+            totalPrice += extraPrice;
+        }
+    });
+
+    selectedExtras.forEach(extra => {
+        const priceText = extra.querySelector('.extra-price')?.textContent;
+        if (priceText) {
+            const extraPrice = parseFloat(priceText.replace(/[^0-9.,]/g, '').replace(',', '.'));
+            totalPrice += extraPrice;
+        }
+    });
+
+    document.querySelector('.modal-product-price').textContent = `R$ ${totalPrice.toFixed(2)}`;
+}
+
+function addToCart(product, selectedToppings) {
+    const selectedExtras = Array.from(document.querySelectorAll('.extra-item.selected'))
+        .map(extra => {
+            const priceText = extra.querySelector('.extra-price')?.textContent;
+            const extraPrice = priceText ? parseFloat(priceText.replace(/[^0-9.,]/g, '').replace(',', '.')) : 0;
+            return {
+                name: extra.textContent.trim(),
+                price: extraPrice
+            };
+        });
+
+    const totalExtrasPrice = selectedExtras.reduce((total, extra) => total + extra.price, 0);
+    const totalPrice = product.price + totalExtrasPrice;
+
+    cart.push({
+        ...product,
+        selectedToppings,
+        selectedExtras: selectedExtras.map(extra => extra.name),
+        price: totalPrice,
+        originalPrice: product.price
+    });
+    updateCartCount();
+    
+    // Close product modal and show cart modal
+    document.getElementById('productModal').style.display = 'none';
+    showCartModal();
+}
+
+async function applyCoupon() {
+    const couponCode = document.getElementById('couponCode').value.toUpperCase();
+    const messageDiv = document.getElementById('couponMessage');
+    
+    if (!couponCode) {
+        messageDiv.innerHTML = '<span style="color: var(--error);">Digite um código de cupom</span>';
+        return;
+    }
+
+    try {
+        // Busca o cupom
+        const couponsSnapshot = await db.ref('coupons').orderByChild('code').equalTo(couponCode).once('value');
+        const coupons = couponsSnapshot.val();
+        
+        if (!coupons) {
+            messageDiv.innerHTML = '<span style="color: var(--error);">Cupom inválido</span>';
+            appliedCoupon = null;
+            updateCartTotal();
+            return;
+        }
+
+        const coupon = Object.values(coupons)[0];
+
+        // Se for cupom de primeira compra, faz verificação adicional
+        if (coupon.isFirstPurchase) {
+            const deviceFingerprint = await generateDeviceFingerprint();
+            const userIP = await getUserIP();
+            
+            // Verifica se já existe compra com este dispositivo ou IP
+            const purchasesSnapshot = await db.ref('purchases').once('value');
+            const purchases = purchasesSnapshot.val() || {};
+            
+            const hasUsedFirstPurchase = Object.values(purchases).some(purchase => 
+                purchase.deviceFingerprint === deviceFingerprint || 
+                purchase.userIP === userIP
+            );
+
+            if (hasUsedFirstPurchase) {
+                messageDiv.innerHTML = '<span style="color: var(--error);">Este cupom é válido apenas para primeira compra</span>';
+                appliedCoupon = null;
+                updateCartTotal();
+                return;
+            }
+
+            // Armazena os identificadores para uso futuro
+            window.deviceFingerprint = deviceFingerprint;
+            window.userIP = userIP;
+        }
+
+        messageDiv.innerHTML = '<span style="color: #4CAF50;">Cupom aplicado com sucesso!</span>';
+        appliedCoupon = coupon;
+        updateCartTotal();
+        
+    } catch (error) {
+        console.error('Erro ao aplicar cupom:', error);
+        messageDiv.innerHTML = '<span style="color: var(--error);">Erro ao aplicar cupom</span>';
+    }
+}
+
+function calculateDiscount(subtotal) {
+    if (!appliedCoupon) return 0;
+    
+    if (appliedCoupon.type === 'percentage') {
+        return (subtotal * appliedCoupon.discount) / 100;
+    } else {
+        return appliedCoupon.discount;
+    }
+}
+
+
+function showCartModal() {
+    const modal = document.getElementById('cartModal');
+    const cartItems = modal.querySelector('.cart-items');
+    cartItems.innerHTML = '';
+    
+    let subtotal = 0;
+    cart.forEach((item, index) => {
+        subtotal += item.price;
+        const isCombo = item.name.includes('Combo');
+        
+        cartItems.innerHTML += `
+            <div class="cart-item">
+                <div class="cart-item-details">
+                    <h3 class="cart-item-title">${item.name}</h3>
+                    <p class="cart-item-description" style="white-space: pre-line;">${item.description}</p>
+                    ${item.selectedExtras.length > 0 && !isCombo ? 
+                        `<p class="cart-item-extras">Extras: ${item.selectedExtras.join(', ')}</p>` : 
+                        ''}
+                </div>
+                <div class="cart-item-price">R$ ${item.price.toFixed(2)}</div>
+                <button class="remove-item" onclick="removeFromCart(${index})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+    });
+
+    updateCartTotal(subtotal);
+    modal.style.display = 'block';
+}
+
+function updateCartTotal(subtotal = null) {
+    const modal = document.getElementById('cartModal');
+    if (subtotal === null) {
+        subtotal = cart.reduce((total, item) => total + item.price, 0);
+    }
+    
+    const discount = calculateDiscount(subtotal);
+    const deliveryFee = 3.00;
+    const total = subtotal - discount + deliveryFee;
+    
+    modal.querySelector('.subtotal span').textContent = subtotal.toFixed(2);
+    
+    const discountDiv = modal.querySelector('.discount');
+    if (discount > 0) {
+        discountDiv.style.display = 'block';
+        discountDiv.querySelector('span').textContent = discount.toFixed(2);
+    } else {
+        discountDiv.style.display = 'none';
+    }
+    
+    modal.querySelector('.total span').textContent = total.toFixed(2);
+}
+
+function removeFromCart(index) {
+    cart.splice(index, 1);
+    updateCartCount();
+    showCartModal(); // Atualiza a exibição do carrinho
+}
+
+function validateToppingsSelection(min, max) {
+    const selectedToppings = document.querySelectorAll('.topping-item.selected').length;
+    const addToCartBtn = document.querySelector('.modal-btn.add-to-cart');
+    
+    if (selectedToppings < min) {
+        showNotification(`Selecione no mínimo ${min} acompanhamento${min > 1 ? 's' : ''}`);
+        addToCartBtn.disabled = true;
+        return false;
+    }
+    
+    if (selectedToppings > max) {
+        showNotification(`Selecione no máximo ${max} acompanhamento${max > 1 ? 's' : ''}`);
+        addToCartBtn.disabled = true;
+        return false;
+    }
+    
+    addToCartBtn.disabled = false;
+    return true;
+}
+
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+}
+
+function handleCheckout() {
+    document.getElementById('cartModal').style.display = 'none';
+    document.getElementById('customerInfoModal').style.display = 'block';
+}
+
+function calculateToppingsPrice(selectedToppings) {
+    let total = 0;
+    selectedToppings.forEach(topping => {
+        const price = topping.split(' - R$')[1];
+        if (price) {
+            total += parseFloat(price);
+        }
+    });
+    return total;
+}
+
+function handleCustomerInfo(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    customerInfo = Object.fromEntries(formData);
+    
+    document.getElementById('customerInfoModal').style.display = 'none';
+    document.getElementById('deliveryInfoModal').style.display = 'block';
+}
+
+async function handleDeliveryInfo(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const deliveryInfo = Object.fromEntries(formData);
+    
+    // Calcular totais
+    const subtotal = cart.reduce((total, item) => total + item.price, 0);
+    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    const deliveryFee = 3.00;
+    const total = subtotal - discount + deliveryFee;
+
+    try {
+        // Adiciona log antes de salvar
+        console.log('Tentando salvar pedido:', {
+            customerInfo,
+            deliveryInfo,
+            items: cart,
+            subtotal,
+            discount,
+            deliveryFee,
+            total
+        });
+
+        // Criar o pedido
+        const orderData = {
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            customerInfo,
+            deliveryInfo,
+            items: cart.map(item => ({
+                ...item,
+                price: parseFloat(item.price),
+                originalPrice: parseFloat(item.originalPrice || item.price),
+                selectedToppings: item.selectedToppings || [],
+                selectedExtras: item.selectedExtras || []
+            })),
+            subtotal: parseFloat(subtotal),
+            discount: parseFloat(discount),
+            deliveryFee: parseFloat(deliveryFee),
+            total: parseFloat(total),
+            cupom: appliedCoupon ? appliedCoupon.code : null,
+            status: 'pending'
+        };
+
+        // Salvar pedido no Firebase e esperar a conclusão
+        const newOrderRef = await db.ref('orders').push(orderData);
+        
+        // Log após salvar
+        console.log('Pedido salvo com sucesso, ID:', newOrderRef.key);
+
+        // Somente após confirmar que o pedido foi salvo, redirecionar para o WhatsApp
+        if (newOrderRef.key) {
+            const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
+            const encodedMessage = encodeURIComponent(message);
+            window.location.href = `https://wa.me/5584987673202?text=${encodedMessage}`;
+        } else {
+            throw new Error('Falha ao salvar o pedido');
+        }
+
+    } catch (error) {
+        // Log de erro
+        console.error('Erro ao processar pedido:', error);
+        alert('Erro ao processar pedido. Por favor, tente novamente.');
+    }
+}
+
+function calculatePercentageDiscount(total, percentage) {
+    return total * (percentage / 100);
+}
+    
+function updateCartCount() {
+    const cartCount = document.querySelector('.cart-count');
+    cartCount.textContent = cart.length;
+    cartCount.style.display = cart.length ? 'flex' : 'none';
+}
+
+function formatOrderForWhatsApp(customerInfo, deliveryInfo, coupon = null, couponDiscount = 0) {
+    let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
+    
+    // Informações do cliente
+    message += `*Cliente:* ${customerInfo.fullName}\n`;
+    message += `*WhatsApp:* ${customerInfo.whatsapp}\n\n`;
+    
+    // Endereço
+    message += `*📍 Endereço de Entrega:*\n`;
+    message += `${deliveryInfo.address}\n`;
+    if (deliveryInfo.complement) message += `Complemento: ${deliveryInfo.complement}\n`;
+    if (deliveryInfo.apt) message += `Apto/Bloco: ${deliveryInfo.apt}\n`;
+    message += `Bairro: ${deliveryInfo.neighborhood}\n`;
+    message += `CEP: ${deliveryInfo.zipcode}\n\n`;
+    
+    // Itens do pedido
+    message += `*🍨 Itens do Pedido:*\n`;
+    let subtotal = 0;
+    cart.forEach(item => {
+        if (item.name.includes('Combo')) {
+            // Formatação especial para combos
+            message += `\n- ${item.name}\n`;
+            
+            // Divide a description em linhas e formata
+            const description = item.description.split('\n').filter(line => line.trim() !== '');
+            description.forEach(line => {
+                if (line.startsWith('•')) {
+                    message += `\n${line}`; // Seção principal (Açaí 1, Açaí 2, Extras)
+                } else {
+                    message += `  ${line}`; // Detalhes indentados
+                }
+            });
+            
+            message += `\n  *Valor: R$ ${item.price.toFixed(2)}*\n`;
+        } else {
+            // Formatação normal para itens não-combo
+            message += `\n- ${item.name}\n`;
+            message += `  Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
+            if (item.selectedExtras && item.selectedExtras.length > 0) {
+                message += `  Extras: ${item.selectedExtras.join(', ')}\n`;
+            }
+            message += `  *Valor: R$ ${item.price.toFixed(2)}*\n`;
+        }
+        subtotal += item.price;
+    });
+
+    // Totais e desconto
+    message += `\n*💰 Resumo do Pedido:*`;
+    message += `\n*Subtotal:* R$ ${subtotal.toFixed(2)}`;
+    if (appliedCoupon) {
+        const discount = calculateDiscount(subtotal);
+        message += `\n*Cupom Aplicado:* ${appliedCoupon.code}`;
+        message += `\n*Desconto:* -R$ ${discount.toFixed(2)}`;
+    }
+    message += `\n*Taxa de Entrega:* R$ 3,00`;
+    const finalTotal = subtotal - (appliedCoupon ? calculateDiscount(subtotal) : 0) + 3;
+    message += `\n*Total:* R$ ${finalTotal.toFixed(2)}\n\n`;
+    
+    // Pagamento
+    message += `*💳 Forma de Pagamento:* ${deliveryInfo.payment.toUpperCase()}`;
+    if (deliveryInfo.payment === 'money' && deliveryInfo.change) {
+        message += `\nTroco para: R$ ${deliveryInfo.change}`;
+    }
+    
+    return message;
+}
+
+document.getElementById('deliveryInfoForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const deliveryInfo = Object.fromEntries(formData);
+    
+    const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
+    const whatsappNumber = "5584987673202";
+    window.location.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+});
+    
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+document.querySelector('.cart-icon').addEventListener('click', showCartModal);
+   // Firebase listeners
+   loadMenuProducts();
+   loadCategories();
+   checkStoreStatus();
+   setInterval(checkStoreStatus, 60000);
+   
+   // Categories
+   document.querySelectorAll('.category-btn').forEach(button => {
+       button.addEventListener('click', () => {
+           document.querySelector('.category-btn.active')?.classList.remove('active');
+           button.classList.add('active');
+           
+           const category = button.textContent.trim();
+           const filteredProducts = category === 'Todos' 
+               ? currentProducts 
+               : currentProducts.filter(p => p.category === category);
+           displayProducts(filteredProducts);
+       });
+   });
+
+
+   // Search
+   document.getElementById('searchInput').addEventListener('input', (e) => {
+       const searchTerm = e.target.value.toLowerCase();
+       const filteredProducts = currentProducts.filter(product => 
+           product.name.toLowerCase().includes(searchTerm) ||
+           product.description.toLowerCase().includes(searchTerm)
+       );
+       displayProducts(filteredProducts);
+   });
+
+   // Modal closes
+   document.querySelectorAll('.close-modal').forEach(button => {
+       button.addEventListener('click', () => {
+           document.querySelectorAll('.modal').forEach(modal => {
+               modal.style.display = 'none';
+           });
+       });
+   });
+
+// Continue shopping buttons
+document.querySelectorAll('.continue-shopping').forEach(button => {
+    button.addEventListener('click', () => {
+        // Close all modals
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.style.display = 'none';
+        });
+        
+        // Scroll to top of the page
+        window.scrollTo(0, 0);
+    });
+});
+    
+   // Cart
+   document.querySelector('.cart-icon').addEventListener('click', showCartModal);
+   document.querySelector('.checkout').addEventListener('click', handleCheckout);
+   document.getElementById('customerInfoForm').addEventListener('submit', handleCustomerInfo);
+   document.getElementById('deliveryInfoForm').addEventListener('submit', handleDeliveryInfo);
+   
+   // Payment options
+   document.querySelectorAll('input[name="payment"]').forEach(radio => {
+       radio.addEventListener('change', (e) => {
+           document.getElementById('changeContainer').style.display = 
+               e.target.value === 'money' ? 'block' : 'none';
+           document.getElementById('pixInfo').style.display = 
+               e.target.value === 'pix' ? 'block' : 'none';
+       });
+   });
+
+   // Continue shopping
+   document.querySelector('.continue-shopping').addEventListener('click', () => {
+       document.getElementById('cartModal').style.display = 'none';
+   });
+
+   // Add to cart from modal
+   document.querySelector('.add-to-cart').addEventListener('click', () => {
+       const selectedToppings = Array.from(document.querySelectorAll('.topping-item.selected'))
+           .map(item => item.textContent.trim());
+       if (validateToppingsSelection(currentProduct.toppings.min, currentProduct.toppings.max)) {
+           addToCart(currentProduct, selectedToppings);
+           document.getElementById('productModal').style.display = 'none';
+       }
+   });
+});
+</script>
+</body>
+</html>
