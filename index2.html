@@ -2899,7 +2899,7 @@ function updateCartCount() {
     cartCount.style.display = cart.length ? 'flex' : 'none';
 }
 
-function formatOrderForWhatsApp(customerInfo, orderInfo) {
+function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     const paymentMethodMap = {
         'money': 'Dinheiro',
         'card': 'Cartão',
@@ -2914,14 +2914,24 @@ function formatOrderForWhatsApp(customerInfo, orderInfo) {
     
     // Endereço
     message += `*📍 Endereço de Entrega:*\n`;
-    message += `${orderInfo.address}\n`;
-    if (orderInfo.complement) message += `Complemento: ${orderInfo.complement}\n`;
-    message += `Bairro: ${orderInfo.neighborhood}\n`;
-    message += `CEP: ${orderInfo.zipcode}\n\n`;
+    message += `${deliveryInfo.address}\n`;
+    if (deliveryInfo.complement) message += `Complemento: ${deliveryInfo.complement}\n`;
+    message += `Bairro: ${deliveryInfo.neighborhood}\n`;
+    message += `CEP: ${deliveryInfo.zipcode}\n\n`;
+    
+    // Detalhes do cupom (se aplicado)
+    if (appliedCoupon) {
+        message += `*🎫 Cupom Aplicado:*\n`;
+        if (appliedCoupon.type === 'percentage') {
+            message += `Código: ${appliedCoupon.code} (${appliedCoupon.discount}% de desconto)\n\n`;
+        } else {
+            message += `Código: ${appliedCoupon.code} (R$ ${appliedCoupon.discount.toFixed(2)} de desconto)\n\n`;
+        }
+    }
     
     // Itens do pedido
     message += `*🍨 Itens do Pedido:*\n`;
-    orderInfo.orderDetails.forEach(item => {
+    cart.forEach(item => {
         if (item.name.includes('Combo')) {
             message += `${item.name}\n${item.description}\n`;
         } else {
@@ -2936,32 +2946,24 @@ function formatOrderForWhatsApp(customerInfo, orderInfo) {
         message += `Valor: R$ ${item.price.toFixed(2)}\n\n`;
     });
 
-    // Resumo financeiro
+    // Resumo financeiro com subtotal e desconto separado
+    const subtotal = cart.reduce((total, item) => total + item.price, 0);
+    const deliveryFee = 3.00;
+    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    const total = subtotal + deliveryFee - discount;
+
     message += `*💰 Resumo do Pedido:*\n`;
-    message += `Subtotal: R$ ${orderInfo.subtotal.toFixed(2)}\n`;
-    message += `Taxa de Entrega: R$ ${orderInfo.deliveryFee.toFixed(2)}\n`;
-    
-    // Informações do cupom e desconto
-    if (orderInfo.appliedCoupon) {
-        message += `Cupom Aplicado: ${orderInfo.appliedCoupon.code}\n`;
-        if (orderInfo.appliedCoupon.type === 'percentage') {
-            message += `Desconto: ${orderInfo.appliedCoupon.discount}% (-R$ ${orderInfo.discount.toFixed(2)})\n`;
-        } else {
-            message += `Desconto: -R$ ${orderInfo.discount.toFixed(2)}\n`;
-        }
+    message += `Subtotal: R$ ${subtotal.toFixed(2)}\n`;
+    message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
+    if (discount > 0) {
+        message += `Desconto: -R$ ${discount.toFixed(2)}\n`;
     }
-    
-    message += `*Total Final: R$ ${orderInfo.total.toFixed(2)}*\n\n`;
+    message += `*Total Final: R$ ${total.toFixed(2)}*\n\n`;
     
     // Pagamento
-    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[orderInfo.payment]}\n`;
-    if (orderInfo.payment === 'money' && orderInfo.change) {
-        message += `Troco para: R$ ${orderInfo.change}\n`;
-    }
-    
-    // Observações (se houver)
-    if (orderInfo.notes) {
-        message += `\n*📝 Observações:*\n${orderInfo.notes}\n`;
+    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[deliveryInfo.payment]}\n`;
+    if (deliveryInfo.payment === 'money' && deliveryInfo.change) {
+        message += `Troco para: R$ ${deliveryInfo.change}\n`;
     }
     
     return message;
