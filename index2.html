@@ -1724,62 +1724,51 @@ async function handleDeliveryInfo(e) {
     const formData = new FormData(e.target);
     const deliveryInfo = Object.fromEntries(formData);
 
-     updateCustomerAndDeliveryInfo(customerInfo, delivery);
-    
-    // Calcular totais
+    // Calculate totals
     const subtotal = cart.reduce((total, item) => total + item.price, 0);
     const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
     const deliveryFee = 3.00;
     const total = subtotal - discount + deliveryFee;
 
     try {
-        // Formatar os dados no padrão da API do Foody
+        // Create standardized order data
         const orderData = {
-            id: "5555",
-            orderDateTime: new Date().toISOString(),
-            status: "open",
-            orderTotal: parseFloat(total),
-            customer: {
-                customerName: customerInfo.fullName,
-                customerPhone: customerInfo.whatsapp
+            id: Math.random().toString(36).substr(2, 9),
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            customerInfo: {
+                fullName: customerInfo.fullName || '',
+                whatsapp: customerInfo.whatsapp || ''
             },
-            deliveryPoint: {
-                address: `${deliveryInfo.address}, ${deliveryInfo.neighborhood}`,
-                street: deliveryInfo.address,
-                neighborhood: deliveryInfo.neighborhood,
-                complement: deliveryInfo.complement || "",
-                postalCode: deliveryInfo.zipcode,
-                city: "Natal",
-                region: "RN",
-                country: "BR"
+            deliveryInfo: {
+                address: deliveryInfo.address || '',
+                neighborhood: deliveryInfo.neighborhood || '',
+                complement: deliveryInfo.complement || '',
+                apt: deliveryInfo.apt || '',
+                payment: (deliveryInfo.payment || '').toUpperCase(),
+                change: deliveryInfo.change || null
             },
             items: cart.map(item => ({
                 name: item.name,
-                quantity: 1,
-                unitPrice: item.price,
-                totalPrice: item.price,
-                observation: (item.selectedToppings?.length || item.selectedExtras?.length) ? 
-                    `Acompanhamentos: ${item.selectedToppings.join(", ")}\n` +
-                    `Extras: ${item.selectedExtras.join(", ")}` : ""
+                price: parseFloat(item.price),
+                selectedToppings: item.selectedToppings || [],
+                selectedExtras: item.selectedExtras || []
             })),
-            paymentMethod: deliveryInfo.payment === 'pix' ? 'online' : deliveryInfo.payment,
-            subTotal: subtotal,
-            deliveryFee: deliveryFee,
-            discount: discount,
-            creationDate: new Date().toISOString(),
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            subtotal: parseFloat(subtotal),
+            discount: parseFloat(discount),
+            deliveryFee: parseFloat(deliveryFee),
+            total: parseFloat(total)
         };
 
-        // Salvar no Firestore
-        await db.collection('orders').add(orderData);
+        // Save to Firebase
+        await realtimeDB.ref('orders').push(orderData);
 
-        // Redirecionar para WhatsApp
+        // Format WhatsApp message and redirect
         const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
         window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
 
     } catch (error) {
-        console.error('Erro ao processar pedido:', error);
-        alert('Erro ao processar pedido. Por favor, tente novamente.');
+        console.error('Error processing order:', error);
+        alert('Error processing order. Please try again.');
     }
 }
 
