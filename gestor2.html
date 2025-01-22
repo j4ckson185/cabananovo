@@ -334,100 +334,109 @@
             setTimeout(() => notification.remove(), 3000);
         }
 
-        function createOrderCard(order) {
-            const card = document.createElement('div');
-            card.className = 'order-card';
-            card.id = `order-${order.id}`;
-            
-            // Garante que os arrays existam
-            const items = order.items.map(item => ({
-                ...item,
-                selectedToppings: item.selectedToppings || [],
-                selectedExtras: item.selectedExtras || []
-            }));
-            
-            card.innerHTML = `
-                <div class="order-header">
-                    <div>
-                        <div class="order-id">Pedido #${order.id.slice(0, 8)}</div>
-                        <div class="order-time">${new Date(order.timestamp).toLocaleString()}</div>
-                    </div>
-                    <div class="order-actions">
-                        <button class="btn btn-print" onclick="handlePrint('${order.id}')" title="Imprimir">
-                            <i class="fas fa-print"></i>
-                        </button>
-                        <button class="btn btn-finish" onclick="handleFinish('${order.id}')" title="Finalizar">
-                            <i class="fas fa-check"></i>
-                        </button>
-                    </div>
-                </div>
+function createOrderCard(order) {
+    // Ensure order has all required properties
+    if (!order || !order.deliveryInfo || !order.customerInfo) {
+        console.error('Invalid order data:', order);
+        return null;
+    }
 
-                <div class="section">
-                    <div class="section-title">Cliente</div>
-                    <div>${order.customerInfo.fullName}</div>
-                    <div>${order.customerInfo.whatsapp}</div>
-                </div>
+    const card = document.createElement('div');
+    card.className = 'order-card';
+    card.id = `order-${order.id}`;
+    
+    // Ensure arrays exist with fallbacks
+    const items = (order.items || []).map(item => ({
+        ...item,
+        selectedToppings: item.selectedToppings || [],
+        selectedExtras: item.selectedExtras || []
+    }));
+    
+    // Format payment method with fallback
+    const paymentMethod = (order.deliveryInfo.payment || '').toUpperCase();
+    
+    card.innerHTML = `
+        <div class="order-header">
+            <div>
+                <div class="order-id">Pedido #${order.id.slice(0, 8)}</div>
+                <div class="order-time">${new Date(order.timestamp).toLocaleString()}</div>
+            </div>
+            <div class="order-actions">
+                <button class="btn btn-print" onclick="handlePrint('${order.id}')" title="Imprimir">
+                    <i class="fas fa-print"></i>
+                </button>
+                <button class="btn btn-finish" onclick="handleFinish('${order.id}')" title="Finalizar">
+                    <i class="fas fa-check"></i>
+                </button>
+            </div>
+        </div>
 
-                <div class="section">
-                    <div class="section-title">Endereço</div>
-                    <div>${order.deliveryInfo.address}</div>
-                    <div>${order.deliveryInfo.neighborhood}</div>
-                    ${order.deliveryInfo.complement ? `<div>Complemento: ${order.deliveryInfo.complement}</div>` : ''}
-                    ${order.deliveryInfo.apt ? `<div>Apto/Bloco: ${order.deliveryInfo.apt}</div>` : ''}
-                </div>
+        <div class="section">
+            <div class="section-title">Cliente</div>
+            <div>${order.customerInfo.fullName || 'Nome não informado'}</div>
+            <div>${order.customerInfo.whatsapp || 'Telefone não informado'}</div>
+        </div>
 
-                <div class="section">
-                    <div class="section-title">Itens</div>
-                    <ul class="items-list">
-                        ${items.map(item => `
-                            <li class="item">
-                                <div class="item-name">${item.name}</div>
-                                ${item.selectedToppings.length ? `
-                                    <div class="item-details">
-                                        Acompanhamentos: ${item.selectedToppings.join(', ')}
-                                    </div>
-                                ` : ''}
-                                ${item.selectedExtras.length ? `
-                                    <div class="item-details">
-                                        Extras: ${item.selectedExtras.join(', ')}
-                                    </div>
-                                ` : ''}
-                                <div class="item-details">${formatCurrency(item.price)}</div>
-                            </li>
-                        `).join('')}
-                    </ul>
-                </div>
+        <div class="section">
+            <div class="section-title">Endereço</div>
+            <div>${order.deliveryInfo.address || ''}</div>
+            <div>${order.deliveryInfo.neighborhood || ''}</div>
+            ${order.deliveryInfo.complement ? `<div>Complemento: ${order.deliveryInfo.complement}</div>` : ''}
+            ${order.deliveryInfo.apt ? `<div>Apto/Bloco: ${order.deliveryInfo.apt}</div>` : ''}
+        </div>
 
-                <div class="section totals">
-                    <div class="total-row">
-                        <span>Subtotal:</span>
-                        <span>${formatCurrency(order.subtotal)}</span>
-                    </div>
-                    ${order.discount ? `
-                        <div class="total-row">
-                            <span>Desconto:</span>
-                            <span>-${formatCurrency(order.discount)}</span>
-                        </div>
-                    ` : ''}
-                    <div class="total-row">
-                        <span>Taxa de Entrega:</span>
-                        <span>${formatCurrency(order.deliveryFee)}</span>
-                    </div>
-                    <div class="total-row final-total">
-                       <span>Total:</span>
-                       <span>${formatCurrency(order.total)}</span>
-                   </div>
-                   <div class="payment-info">
-                       <div>Pagamento: ${order.deliveryInfo.payment.toUpperCase()}</div>
-                       ${order.deliveryInfo.change ? `
-                           <div>Troco para: ${formatCurrency(order.deliveryInfo.change)}</div>
-                       ` : ''}
-                   </div>
-               </div>
-           `;
-           
-           return card;
-       }
+        <div class="section">
+            <div class="section-title">Itens</div>
+            <ul class="items-list">
+                ${items.map(item => `
+                    <li class="item">
+                        <div class="item-name">${item.name}</div>
+                        ${item.selectedToppings.length ? `
+                            <div class="item-details">
+                                Acompanhamentos: ${item.selectedToppings.join(', ')}
+                            </div>
+                        ` : ''}
+                        ${item.selectedExtras.length ? `
+                            <div class="item-details">
+                                Extras: ${item.selectedExtras.join(', ')}
+                            </div>
+                        ` : ''}
+                        <div class="item-details">${formatCurrency(item.price)}</div>
+                    </li>
+                `).join('')}
+            </ul>
+        </div>
+
+        <div class="section totals">
+            <div class="total-row">
+                <span>Subtotal:</span>
+                <span>${formatCurrency(order.subtotal)}</span>
+            </div>
+            ${order.discount ? `
+                <div class="total-row">
+                    <span>Desconto:</span>
+                    <span>-${formatCurrency(order.discount)}</span>
+                </div>
+            ` : ''}
+            <div class="total-row">
+                <span>Taxa de Entrega:</span>
+                <span>${formatCurrency(order.deliveryFee)}</span>
+            </div>
+            <div class="total-row final-total">
+                <span>Total:</span>
+                <span>${formatCurrency(order.total)}</span>
+            </div>
+            <div class="payment-info">
+                <div>Pagamento: ${paymentMethod}</div>
+                ${order.deliveryInfo.change ? `
+                    <div>Troco para: ${formatCurrency(order.deliveryInfo.change)}</div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
 
        function handlePrint(orderId) {
            const order = orders.get(orderId);
