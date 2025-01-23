@@ -1177,28 +1177,7 @@ header {
   <div class="mascot-speech">
     <p>Olá! Bem-vindo à Cabana Açaí! 😊</p>
   </div>
-  <svg viewBox="0 0 100 160" class="mascot-bear">
-    <g class="bear-body">
-      <circle cx="50" cy="40" r="25" fill="#8B4513"/> <!-- Cabeça -->
-      <circle cx="35" cy="25" r="10" fill="#8B4513"/> <!-- Orelha -->
-      <circle cx="65" cy="25" r="10" fill="#8B4513"/> <!-- Orelha -->
-      <circle cx="35" cy="25" r="5" fill="#FFF"/>
-      <circle cx="65" cy="25" r="5" fill="#FFF"/>
-      <circle cx="50" cy="40" r="18" fill="#FFF"/> <!-- Face -->
-      <circle cx="45" cy="35" r="3" fill="black"/> <!-- Olho -->
-      <circle cx="55" cy="35" r="3" fill="black"/> <!-- Olho -->
-      <circle cx="50" cy="42" r="5" fill="black"/> <!-- Nariz -->
-      <path d="M45,48 Q50,52 55,48" stroke="black" stroke-width="2" fill="none"/> <!-- Boca -->
-      <path d="M40,65 L40,120 Q50,125 60,120 L60,65" fill="#8B4513"/> <!-- Corpo -->
-      <rect x="42" y="65" width="16" height="55" fill="#FFF"/> <!-- Barriga -->
-      <g class="bear-arm">
-        <path d="M40,70 Q25,85 30,100" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
-      </g>
-      <path d="M60,70 Q75,85 70,100" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
-      <path d="M42,120 L42,150" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
-      <path d="M58,120 L58,150" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
-    </g>
-  </svg>
+  <img src="https://i.ibb.co/bJy9VxR/mascote.png" alt="Mascote Cabana Açaí" class="mascot-image">
 </div>
 
 <style>
@@ -1206,10 +1185,21 @@ header {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 60px;
-  height: 120px;
+  width: 120px;
+  height: 140px;
   z-index: 1000;
   cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.mascot-container:hover {
+  transform: translateY(-5px);
+}
+
+.mascot-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .mascot-speech {
@@ -1217,15 +1207,16 @@ header {
   bottom: 120%;
   right: 0;
   background: white;
-  padding: 10px;
-  border-radius: 8px;
-  width: 180px;
+  padding: 12px;
+  border-radius: 10px;
+  width: 200px;
   opacity: 0;
   visibility: hidden;
   transform: translateY(10px);
   transition: all 0.3s;
   color: #10002B;
   font-size: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 .mascot-speech:after {
@@ -1243,25 +1234,30 @@ header {
   transform: translateY(0);
 }
 
-.bear-arm {
-  transform-origin: 40px 70px;
-  animation: waveArm 2s ease-in-out infinite;
-}
-
-.bear-body {
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes waveArm {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(-20deg); }
-}
-
-@keyframes float {
+@keyframes bounce {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+  50% { transform: translateY(-10px); }
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const mascot = document.getElementById('mascot');
+  const speech = mascot.querySelector('.mascot-speech p');
+  const messages = [
+    "Olá! Bem-vindo à Cabana Açaí! 😊",
+    "Que tal um açaí delicioso hoje? 🍇",
+    "Experimente nossos combos! 🥄",
+    "Posso ajudar você a escolher? 😃"
+  ];
+  let messageIndex = 0;
+
+  mascot.addEventListener('click', () => {
+    messageIndex = (messageIndex + 1) % messages.length;
+    speech.textContent = messages[messageIndex];
+  });
+});
+</script>
     
     <nav class="categories">
         <button class="category-btn active">
