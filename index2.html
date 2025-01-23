@@ -1148,27 +1148,59 @@ header {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 80px; 
-  height: 160px;
+  width: 60px;
+  height: 120px;
   z-index: 1000;
   cursor: pointer;
-  animation: float 3s ease-in-out infinite;
 }
 
-.mascot-svg {
-  width: 100%;
-  height: 100%;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+.speech-bubble {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  background: white;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+  width: 200px;
+  margin-bottom: 10px;
 }
 
-@keyframes float {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0); }
+.speech-bubble:after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  right: 20px;
+  border-width: 10px 10px 0;
+  border-style: solid;
+  border-color: white transparent;
 }
 
-.mascot:hover {
-  transform: scale(1.1);
+.mascot:hover .speech-bubble {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.waving-arm {
+  transform-origin: 40px 70px;
+  animation: wave 2s infinite;
+}
+
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-20deg); }
+}
+
+.bear {
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
 }
 
 @keyframes bounce {
@@ -1195,43 +1227,40 @@ header {
             </div>
         </div>
     </header>
-    <div class="mascot">
-  <svg viewBox="0 0 200 400" class="mascot-svg">
-    <!-- Cabeça -->
-    <circle cx="100" cy="80" r="40" fill="#8B4513"/>
-    
-    <!-- Orelhas -->
-    <circle cx="70" cy="50" r="15" fill="#8B4513"/>
-    <circle cx="130" cy="50" r="15" fill="#8B4513"/>
-    <circle cx="70" cy="50" r="8" fill="#FFF"/>
-    <circle cx="130" cy="50" r="8" fill="#FFF"/>
-    
-    <!-- Face -->
-    <circle cx="100" cy="80" r="30" fill="#FFF"/>
-    
-    <!-- Olhos -->
-    <circle cx="90" cy="75" r="5" fill="black"/>
-    <circle cx="110" cy="75" r="5" fill="black"/>
-    
-    <!-- Focinho -->
-    <circle cx="100" cy="85" r="8" fill="black"/>
-    <path d="M90,95 Q100,100 110,95" stroke="black" stroke-width="2" fill="none"/>
-    
-    <!-- Corpo -->
-    <path d="M85,120 L85,250 Q100,260 115,250 L115,120" fill="#8B4513"/>
-    <path d="M85,120 Q100,130 115,120" fill="#8B4513"/>
-    <rect x="85" y="120" width="30" height="130" fill="#FFF"/>
-    
-    <!-- Braços -->
-    <path d="M85,130 Q60,180 70,230" stroke="#8B4513" stroke-width="20" stroke-linecap="round"/>
-    <path d="M115,130 Q140,180 130,230" stroke="#8B4513" stroke-width="20" stroke-linecap="round"/>
-    
-    <!-- Pernas -->
-    <path d="M85,250 L85,350 Q100,360 115,350 L115,250" fill="#8B4513"/>
-    
-    <!-- Pés -->
-    <ellipse cx="85" cy="350" rx="15" ry="10" fill="#8B4513"/>
-    <ellipse cx="115" cy="350" rx="15" ry="10" fill="#8B4513"/>
+<div class="mascot" id="mascot">
+  <div class="speech-bubble">
+    <p>Olá! Bem-vindo à Cabana Açaí! 😊</p>
+  </div>
+  <svg viewBox="0 0 100 160" class="mascot-svg">
+    <g class="bear">
+      <!-- Cabeça -->
+      <circle cx="50" cy="40" r="25" fill="#8B4513"/>
+      <circle cx="35" cy="25" r="10" fill="#8B4513"/> <!-- Orelha esquerda -->
+      <circle cx="65" cy="25" r="10" fill="#8B4513"/> <!-- Orelha direita -->
+      <circle cx="35" cy="25" r="5" fill="#FFF"/>
+      <circle cx="65" cy="25" r="5" fill="#FFF"/>
+      
+      <!-- Face -->
+      <circle cx="50" cy="40" r="18" fill="#FFF"/>
+      <circle cx="45" cy="35" r="3" fill="black"/> <!-- Olho esquerdo -->
+      <circle cx="55" cy="35" r="3" fill="black"/> <!-- Olho direito -->
+      <circle cx="50" cy="42" r="5" fill="black"/> <!-- Nariz -->
+      <path d="M45,48 Q50,52 55,48" stroke="black" stroke-width="2" fill="none"/> <!-- Boca -->
+      
+      <!-- Corpo -->
+      <path d="M40,65 L40,120 Q50,125 60,120 L60,65" fill="#8B4513"/>
+      <rect x="42" y="65" width="16" height="55" fill="#FFF"/>
+      
+      <!-- Braços -->
+      <g class="waving-arm">
+        <path d="M40,70 Q25,85 30,100" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
+      </g>
+      <path d="M60,70 Q75,85 70,100" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
+      
+      <!-- Pernas -->
+      <path d="M42,120 L42,150" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
+      <path d="M58,120 L58,150" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
+    </g>
   </svg>
 </div>
 
@@ -2347,6 +2376,23 @@ function checkStoreStatus() {
             console.error('Erro ao verificar status da loja:', error);
         });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+  const mascot = document.getElementById('mascot');
+  const messages = [
+    "Olá! Bem-vindo à Cabana Açaí! 😊",
+    "Que tal um açaí delicioso hoje? 🍇",
+    "Experimente nossos combos! 🥄",
+    "Posso ajudar você a escolher? 😃"
+  ];
+  let messageIndex = 0;
+  
+  mascot.addEventListener('click', function() {
+    const bubble = mascot.querySelector('.speech-bubble p');
+    messageIndex = (messageIndex + 1) % messages.length;
+    bubble.textContent = messages[messageIndex];
+  });
+});
 
 function isStoreOpenNow(schedule) {
     const now = new Date();
