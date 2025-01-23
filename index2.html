@@ -2361,14 +2361,11 @@ function updateCategoryButtons(categories) {
                 document.getElementById('comboModal').insertAdjacentHTML('beforeend', mascotHtml);
                 resetComboBuilder();
                 initComboBuilder();
-            } else {
-                const filteredProducts = categoryId === 'all' 
-                    ? currentProducts 
-                    : currentProducts.filter(p => p.category === categoryId);
-                displayProducts(filteredProducts);
-            }
-        });
-    });
+ } else {
+    const filteredProducts = categoryId === 'all' 
+        ? currentProducts 
+        : currentProducts.filter(p => p.category === categoryId);
+    displayProducts(filteredProducts);
 }
 
 function checkStoreStatus() {
