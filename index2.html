@@ -1157,7 +1157,6 @@ header {
   height: 140px;
   z-index: 1000;
   cursor: pointer;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
 }
 
 .speech-bubble {
@@ -1165,15 +1164,13 @@ header {
   bottom: 100%;
   right: 0;
   background: white;
-  padding: 10px 15px;
+  padding: 10px;
   border-radius: 10px;
-  width: 220px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  width: 200px;
   opacity: 0;
   transform: translateY(20px);
   transition: all 0.3s ease;
-  color: var(--background);
+  color: #10002B;
 }
 
 .speech-bubble:after {
@@ -1194,10 +1191,6 @@ header {
 .waving-arm {
   transform-origin: 40px 70px;
   animation: wave 2s ease-in-out infinite;
-}
-
-.bear {
-  animation: float 3s ease-in-out infinite;
 }
 
 @keyframes wave {
@@ -1229,47 +1222,35 @@ header {
             </div>
         </div>
     </header>
-<div class="mascot" id="mascot">
- <div class="speech-bubble">
-   <p>Olá! Bem-vindo à Cabana Açaí! 😊</p>
- </div>
- <svg viewBox="0 0 100 160" class="mascot-svg">
-   <g class="bear">
-     <!-- Cabeça -->
-     <circle cx="50" cy="40" r="25" fill="#8B4513"/>
-     <!-- Orelhas -->
-     <circle cx="35" cy="25" r="10" fill="#8B4513"/>
-     <circle cx="65" cy="25" r="10" fill="#8B4513"/>
-     <circle cx="35" cy="25" r="5" fill="#FFF"/>
-     <circle cx="65" cy="25" r="5" fill="#FFF"/>
-     
-     <!-- Face -->
-     <circle cx="50" cy="40" r="18" fill="#FFF"/>
-     <!-- Olhos -->
-     <circle cx="45" cy="35" r="3" fill="black"/>
-     <circle cx="55" cy="35" r="3" fill="black"/>
-     <!-- Nariz -->
-     <circle cx="50" cy="42" r="5" fill="black"/>
-     <!-- Boca -->
-     <path d="M45,48 Q50,52 55,48" stroke="black" stroke-width="2" fill="none"/>
-     
-     <!-- Corpo -->
-     <path d="M40,65 L40,120 Q50,125 60,120 L60,65" fill="#8B4513"/>
-     <rect x="42" y="65" width="16" height="55" fill="#FFF"/>
-     
-     <!-- Braços -->
-     <g class="waving-arm">
-       <path d="M40,70 Q25,85 30,100" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
-     </g>
-     <path d="M60,70 Q75,85 70,100" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
-     
-     <!-- Pernas -->
-     <path d="M42,120 L42,150" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
-     <path d="M58,120 L58,150" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
-   </g>
- </svg>
+<!-- Adicione logo após o fechamento do header -->
+<div class="mascot" id="mascot" style="opacity: 0; transition: opacity 0.5s ease;">
+  <div class="speech-bubble">
+    <p>Olá! Bem-vindo à Cabana Açaí! 😊</p>
+  </div>
+  <svg viewBox="0 0 100 160" class="mascot-svg">
+    <g class="bear">
+      <circle cx="50" cy="40" r="25" fill="#8B4513"/>
+      <circle cx="35" cy="25" r="10" fill="#8B4513"/>
+      <circle cx="65" cy="25" r="10" fill="#8B4513"/>
+      <circle cx="35" cy="25" r="5" fill="#FFF"/>
+      <circle cx="65" cy="25" r="5" fill="#FFF"/>
+      <circle cx="50" cy="40" r="18" fill="#FFF"/>
+      <circle cx="45" cy="35" r="3" fill="black"/>
+      <circle cx="55" cy="35" r="3" fill="black"/>
+      <circle cx="50" cy="42" r="5" fill="black"/>
+      <path d="M45,48 Q50,52 55,48" stroke="black" stroke-width="2" fill="none"/>
+      <path d="M40,65 L40,120 Q50,125 60,120 L60,65" fill="#8B4513"/>
+      <rect x="42" y="65" width="16" height="55" fill="#FFF"/>
+      <g class="waving-arm">
+        <path d="M40,70 Q25,85 30,100" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
+      </g>
+      <path d="M60,70 Q75,85 70,100" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
+      <path d="M42,120 L42,150" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
+      <path d="M58,120 L58,150" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
+    </g>
+  </svg>
 </div>
-
+    
     <nav class="categories">
         <button class="category-btn active">
             <i class="fas fa-star"></i>
@@ -3245,6 +3226,28 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
 function closeCreateOrderModal() {
     document.getElementById('createOrderModal').style.display = 'none';
 }
+
+window.addEventListener('load', function() {
+  const mascot = document.getElementById('mascot');
+  const messages = [
+    "Olá! Bem-vindo à Cabana Açaí! 😊",
+    "Que tal um açaí delicioso hoje? 🍇",
+    "Experimente nossos combos! 🥄",
+    "Posso ajudar você a escolher? 😃"
+  ];
+  let messageIndex = 0;
+  
+  // Mostra o mascote com fade
+  setTimeout(() => {
+    mascot.style.opacity = '1';
+  }, 500);
+  
+  mascot.addEventListener('click', function() {
+    const bubble = mascot.querySelector('.speech-bubble p');
+    messageIndex = (messageIndex + 1) % messages.length;
+    bubble.textContent = messages[messageIndex];
+  });
+});
 
 async function submitOrderFromDigitalMenu() {
     const order = {
