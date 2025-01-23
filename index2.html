@@ -1961,9 +1961,11 @@ document.querySelectorAll('.size-option').forEach(option => {
     });
 
     closeBtn.addEventListener('click', () => {
-        comboModal.style.display = 'none';
-        resetComboBuilder();
-    });
+    const mascot = document.getElementById('combo-mascot');
+    if (mascot) mascot.remove();
+    comboModal.style.display = 'none';
+    resetComboBuilder();
+});
 
     addCartBtn.addEventListener('click', () => {
         addComboToCart();
@@ -2144,20 +2146,23 @@ function updateComboView() {
     const backBtn = document.querySelector('.btn-back');
     const nextBtn = document.querySelector('.btn-next');
     const addCartBtn = document.querySelector('.btn-add-cart');
-
+    const mascot = document.getElementById('combo-mascot');
+if (mascot) {
+    const speech = mascot.querySelector('.mascot-speech p');
     switch(currentStep) {
-  case 1:
-    showMascotMessage(mascotMessages.combo);
-    break;
-  case 2:
-    showMascotMessage(mascotMessages.flavors);
-    break;
-  case 3:
-    showMascotMessage(mascotMessages.toppings);
-    break;
-  case 4:
-    showMascotMessage(mascotMessages.confirm);
-    break;
+        case 1:
+            speech.textContent = mascotMessages.combo;
+            break;
+        case 2:
+            speech.textContent = mascotMessages.flavors;
+            break;
+        case 3:
+            speech.textContent = mascotMessages.toppings;
+            break;
+        case 4:
+            speech.textContent = mascotMessages.confirm;
+            break;
+    }
 }
 
     backBtn.style.display = currentStep > 1 ? 'block' : 'none';
@@ -2345,14 +2350,14 @@ function updateCategoryButtons(categories) {
             const categoryId = button.dataset.category;
             if (categoryId === 'combo') {
                 document.getElementById('comboModal').style.display = 'block';
+                if (!document.getElementById('combo-mascot')) {
                     const mascotHtml = `
-        <div id="mascot" class="mascot-container">
-            <div class="mascot-speech">
-                <p>Olá! Bem-vindo à Cabana Açaí! 😊</p>
+       <div id="combo-mascot" class="mascot-container" style="position: fixed; bottom: 20px; right: 20px; width: 120px; height: 140px; z-index: 1001;">
+            <div class="mascot-speech" style="position: absolute; bottom: 120%; right: 0; background: white; padding: 12px; border-radius: 10px; width: 220px; color: #10002B; font-size: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: block; opacity: 1;">
+                <p>${mascotMessages.combo}</p>
             </div>
-            <img src="https://i.ibb.co/bJy9VxR/mascote.png" alt="Mascote Cabana Açaí" class="mascot-image">
-        </div>
-    `;
+            <img src="https://i.ibb.co/KbthVz8/Designer-1.png" alt="Mascote Cabana Açaí" style="width: 100%; height: 100%; object-fit: contain;">
+        </div>`;
                 document.getElementById('comboModal').insertAdjacentHTML('beforeend', mascotHtml);
                 resetComboBuilder();
                 initComboBuilder();
