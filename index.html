@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1143,6 +1142,16 @@ header {
 #createOrderModal .close:hover {
     color: var(--accent);
 }
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
     
 </style>
 </head>
@@ -1163,7 +1172,92 @@ header {
             </div>
         </div>
     </header>
+<div id="mascot" class="mascot-container">
+  <div class="mascot-speech">
+    <p>Olá! Bem-vindo à Cabana Açaí! 😊</p>
+  </div>
+  <img src="https://i.ibb.co/KbthVz8/Designer-1.png" alt="Mascote Cabana Açaí" class="mascot-image">
+</div>
 
+<style>
+.mascot-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 120px;
+  height: 140px;
+  z-index: 1000;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.mascot-container:hover {
+  transform: translateY(-5px);
+}
+
+.mascot-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.mascot-speech {
+  position: absolute;
+  bottom: 120%;
+  right: 0;
+  background: white;
+  padding: 12px;
+  border-radius: 10px;
+  width: 200px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: all 0.3s;
+  color: #10002B;
+  font-size: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.mascot-speech:after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  right: 20px;
+  border: 8px solid transparent;
+  border-top-color: white;
+}
+
+.mascot-container:hover .mascot-speech {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const mascot = document.getElementById('mascot');
+  const speech = mascot.querySelector('.mascot-speech p');
+  const messages = [
+    "Olá! Bem-vindo à Cabana Açaí! 😊",
+    "Que tal um açaí delicioso hoje? 🍇",
+    "Experimente nossos combos! 🥄",
+    "Posso ajudar você a escolher? 😃"
+  ];
+  let messageIndex = 0;
+
+  mascot.addEventListener('click', () => {
+    messageIndex = (messageIndex + 1) % messages.length;
+    speech.textContent = messages[messageIndex];
+  });
+});
+</script>
+    
     <nav class="categories">
         <button class="category-btn active">
             <i class="fas fa-star"></i>
@@ -1198,6 +1292,13 @@ header {
             Monte seu Açaí
         </button>
     </nav>
+
+    <iframe
+    src="https://www.chatbase.co/chatbot-iframe/PpgNSIgeYN1FCucFGP4w3"
+    width="100%"
+    style="height: 100%; min-height: 700px"
+    frameborder="0"
+></iframe>
 
     <div class="search-container">
         <div class="search-bar">
@@ -1808,8 +1909,6 @@ let comboData = {
     extras: []
 };
 
-    (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="PpgNSIgeYN1FCucFGP4w3";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
-
 function initComboBuilder() {
     const comboModal = document.getElementById('comboModal');
     const closeBtn = comboModal.querySelector('.close-modal');
@@ -2276,6 +2375,23 @@ function checkStoreStatus() {
             console.error('Erro ao verificar status da loja:', error);
         });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+  const mascot = document.getElementById('mascot');
+  const messages = [
+    "Olá! Bem-vindo à Cabana Açaí! 😊",
+    "Que tal um açaí delicioso hoje? 🍇",
+    "Experimente nossos combos! 🥄",
+    "Posso ajudar você a escolher? 😃"
+  ];
+  let messageIndex = 0;
+  
+  mascot.addEventListener('click', function() {
+    const bubble = mascot.querySelector('.speech-bubble p');
+    messageIndex = (messageIndex + 1) % messages.length;
+    bubble.textContent = messages[messageIndex];
+  });
+});
 
 function isStoreOpenNow(schedule) {
     const now = new Date();
@@ -3122,6 +3238,28 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
 function closeCreateOrderModal() {
     document.getElementById('createOrderModal').style.display = 'none';
 }
+
+window.addEventListener('load', function() {
+  const mascot = document.getElementById('mascot');
+  const messages = [
+    "Olá! Bem-vindo à Cabana Açaí! 😊",
+    "Que tal um açaí delicioso hoje? 🍇",
+    "Experimente nossos combos! 🥄",
+    "Posso ajudar você a escolher? 😃"
+  ];
+  let messageIndex = 0;
+  
+  // Mostra o mascote com fade
+  setTimeout(() => {
+    mascot.style.opacity = '1';
+  }, 500);
+  
+  mascot.addEventListener('click', function() {
+    const bubble = mascot.querySelector('.speech-bubble p');
+    messageIndex = (messageIndex + 1) % messages.length;
+    bubble.textContent = messages[messageIndex];
+  });
+});
 
 async function submitOrderFromDigitalMenu() {
     const order = {
