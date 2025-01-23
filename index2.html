@@ -1143,6 +1143,38 @@ header {
 #createOrderModal .close:hover {
     color: var(--accent);
 }
+
+.mascot {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 100px;
+  height: 100px;
+  z-index: 1000;
+  cursor: pointer;
+  animation: float 3s ease-in-out infinite;
+}
+
+.mascot-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.mascot:hover {
+  animation: bounce 0.5s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
     
 </style>
 </head>
@@ -1162,6 +1194,55 @@ header {
                 <span class="cart-count">0</span>
             </div>
         </div>
+
+        // Adicione este código antes do fechamento da tag </header>
+<div class="mascot">
+  <svg viewBox="0 0 200 200" class="mascot-svg">
+    <!-- Corpo do urso -->
+    <circle cx="100" cy="100" r="50" fill="#7209B7" class="body">
+      <animate attributeName="r" 
+        values="50;52;50" 
+        dur="2s" 
+        repeatCount="indefinite"/>
+    </circle>
+    
+    <!-- Orelhas -->
+    <circle cx="70" cy="60" r="15" fill="#7209B7" class="ear"/>
+    <circle cx="130" cy="60" r="15" fill="#7209B7" class="ear"/>
+    
+    <!-- Face -->
+    <circle cx="100" cy="90" r="35" fill="#F72585" class="face"/>
+    
+    <!-- Olhos -->
+    <circle cx="85" cy="85" r="5" fill="white" class="eye">
+      <animate attributeName="ry"
+        values="5;1;5"
+        dur="3s"
+        repeatCount="indefinite"/>
+    </circle>
+    <circle cx="115" cy="85" r="5" fill="white" class="eye">
+      <animate attributeName="ry"
+        values="5;1;5"
+        dur="3s"
+        repeatCount="indefinite"/>
+    </circle>
+    
+    <!-- Focinho -->
+    <circle cx="100" cy="95" r="8" fill="#3A0CA3" class="nose"/>
+    
+    <!-- Boca -->
+    <path d="M90,105 Q100,115 110,105" 
+      stroke="#3A0CA3" 
+      stroke-width="3" 
+      fill="none" 
+      class="mouth">
+      <animate attributeName="d"
+        values="M90,105 Q100,115 110,105;M90,105 Q100,120 110,105;M90,105 Q100,115 110,105"
+        dur="3s"
+        repeatCount="indefinite"/>
+    </path>
+  </svg>
+</div>
     </header>
 
     <nav class="categories">
@@ -1719,18 +1800,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Replace the handleDeliveryInfo function in your digital menu with this version:
 async function handleDeliveryInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
     const deliveryInfo = Object.fromEntries(formData);
 
-    // Calculate totals
-    const subtotal = cart.reduce((total, item) => total + item.price, 0);
-    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-    const deliveryFee = 3.00;
-    const total = subtotal - discount + deliveryFee;
-
     try {
+        // Calculate totals
+        const subtotal = cart.reduce((total, item) => total + item.price, 0);
+        const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+        const deliveryFee = 3.00;
+        const total = subtotal - discount + deliveryFee;
+
         // Create standardized order data
         const orderData = {
             id: Math.random().toString(36).substr(2, 9),
@@ -1744,8 +1826,8 @@ async function handleDeliveryInfo(e) {
                 neighborhood: deliveryInfo.neighborhood || '',
                 complement: deliveryInfo.complement || '',
                 apt: deliveryInfo.apt || '',
-                payment: (deliveryInfo.payment || '').toUpperCase(),
-                change: deliveryInfo.change || null
+                payment: (deliveryInfo.payment || 'money').toUpperCase(),
+                change: deliveryInfo.change ? parseFloat(deliveryInfo.change) : null
             },
             items: cart.map(item => ({
                 name: item.name,
@@ -1756,11 +1838,18 @@ async function handleDeliveryInfo(e) {
             subtotal: parseFloat(subtotal),
             discount: parseFloat(discount),
             deliveryFee: parseFloat(deliveryFee),
-            total: parseFloat(total)
+            total: parseFloat(total),
+            status: 'new'
         };
 
+        console.log('Saving order:', orderData); // Debug log
+
         // Save to Firebase
-        await realtimeDB.ref('orders').push(orderData);
+        const newOrderRef = await realtimeDB.ref('orders').push(orderData);
+        
+        if (!newOrderRef.key) {
+            throw new Error('Failed to save order');
+        }
 
         // Format WhatsApp message and redirect
         const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
@@ -1768,7 +1857,7 @@ async function handleDeliveryInfo(e) {
 
     } catch (error) {
         console.error('Error processing order:', error);
-        alert('Error processing order. Please try again.');
+        alert('Erro ao processar pedido. Por favor, tente novamente.');
     }
 }
 
@@ -2252,10 +2341,8 @@ function checkStoreStatus() {
             const schedule = snapshot.val() || {};
             const isOpen = isStoreOpenNow(schedule);
             
-            statusDiv.style.backgroundColor = isOpen ? '#4CAF50' : '#FF5252';
-            statusDiv.style.color = 'white';
             statusDiv.innerHTML = `
-                <span style="font-size: 1.2rem;">●</span>
+                <span style="font-size: 1.2rem; color: ${isOpen ? '#4CAF50' : '#FF5252'}">●</span>
                 <span>Loja ${isOpen ? 'Aberta' : 'Fechada'}</span>
             `;
             
@@ -2265,6 +2352,9 @@ function checkStoreStatus() {
             if (!isOpen) {
                 disableOrdering();
             }
+        })
+        .catch(error => {
+            console.error('Erro ao verificar status da loja:', error);
         });
 }
 
@@ -2272,15 +2362,21 @@ function isStoreOpenNow(schedule) {
     const now = new Date();
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const today = days[now.getDay()];
-    const currentTime = now.getHours() * 100 + now.getMinutes();
     
     const todaySchedule = schedule[today];
     if (!todaySchedule || !todaySchedule.isOpen) return false;
     
-    const openTime = parseInt(todaySchedule.open.replace(':', ''));
-    const closeTime = parseInt(todaySchedule.close.replace(':', ''));
+    // Converte horário atual para minutos desde meia-noite
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
     
-    return currentTime >= openTime && currentTime < closeTime;
+    // Converte horários de abertura/fechamento para minutos
+    const [openHour, openMin] = todaySchedule.open.split(':').map(Number);
+    const [closeHour, closeMin] = todaySchedule.close.split(':').map(Number);
+    
+    const openMinutes = openHour * 60 + openMin;
+    const closeMinutes = closeHour * 60 + closeMin;
+    
+    return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
 }
 
 function disableOrdering() {
