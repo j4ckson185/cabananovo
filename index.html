@@ -2260,10 +2260,8 @@ function checkStoreStatus() {
             const schedule = snapshot.val() || {};
             const isOpen = isStoreOpenNow(schedule);
             
-            statusDiv.style.backgroundColor = isOpen ? '#4CAF50' : '#FF5252';
-            statusDiv.style.color = 'white';
             statusDiv.innerHTML = `
-                <span style="font-size: 1.2rem;">●</span>
+                <span style="font-size: 1.2rem; color: ${isOpen ? '#4CAF50' : '#FF5252'}">●</span>
                 <span>Loja ${isOpen ? 'Aberta' : 'Fechada'}</span>
             `;
             
@@ -2273,6 +2271,9 @@ function checkStoreStatus() {
             if (!isOpen) {
                 disableOrdering();
             }
+        })
+        .catch(error => {
+            console.error('Erro ao verificar status da loja:', error);
         });
 }
 
@@ -2280,15 +2281,21 @@ function isStoreOpenNow(schedule) {
     const now = new Date();
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const today = days[now.getDay()];
-    const currentTime = now.getHours() * 100 + now.getMinutes();
     
     const todaySchedule = schedule[today];
     if (!todaySchedule || !todaySchedule.isOpen) return false;
     
-    const openTime = parseInt(todaySchedule.open.replace(':', ''));
-    const closeTime = parseInt(todaySchedule.close.replace(':', ''));
+    // Converte horário atual para minutos desde meia-noite
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
     
-    return currentTime >= openTime && currentTime < closeTime;
+    // Converte horários de abertura/fechamento para minutos
+    const [openHour, openMin] = todaySchedule.open.split(':').map(Number);
+    const [closeHour, closeMin] = todaySchedule.close.split(':').map(Number);
+    
+    const openMinutes = openHour * 60 + openMin;
+    const closeMinutes = closeHour * 60 + closeMin;
+    
+    return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
 }
 
 function disableOrdering() {
