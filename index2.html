@@ -1149,55 +1149,6 @@ header {
   50% { transform: translateY(-15px); }
 }
 
-.mascot {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 80px;
-  height: 140px;
-  z-index: 1000;
-  cursor: pointer;
-}
-
-.speech-bubble {
-  position: absolute;
-  bottom: 100%;
-  right: 0;
-  background: white;
-  padding: 10px;
-  border-radius: 10px;
-  width: 200px;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.3s ease;
-  color: #10002B;
-}
-
-.speech-bubble:after {
-  content: '';
-  position: absolute;
-  bottom: -10px;
-  right: 20px;
-  border-width: 10px 10px 0;
-  border-style: solid;
-  border-color: white transparent;
-}
-
-.mascot:hover .speech-bubble {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.waving-arm {
-  transform-origin: 40px 70px;
-  animation: wave 2s ease-in-out infinite;
-}
-
-@keyframes wave {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(-20deg); }
-}
-
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
@@ -1222,26 +1173,25 @@ header {
             </div>
         </div>
     </header>
-<!-- Adicione logo após o fechamento do header -->
-<div class="mascot" id="mascot" style="opacity: 0; transition: opacity 0.5s ease;">
-  <div class="speech-bubble">
+<div id="mascot" class="mascot-container">
+  <div class="mascot-speech">
     <p>Olá! Bem-vindo à Cabana Açaí! 😊</p>
   </div>
-  <svg viewBox="0 0 100 160" class="mascot-svg">
-    <g class="bear">
-      <circle cx="50" cy="40" r="25" fill="#8B4513"/>
-      <circle cx="35" cy="25" r="10" fill="#8B4513"/>
-      <circle cx="65" cy="25" r="10" fill="#8B4513"/>
+  <svg viewBox="0 0 100 160" class="mascot-bear">
+    <g class="bear-body">
+      <circle cx="50" cy="40" r="25" fill="#8B4513"/> <!-- Cabeça -->
+      <circle cx="35" cy="25" r="10" fill="#8B4513"/> <!-- Orelha -->
+      <circle cx="65" cy="25" r="10" fill="#8B4513"/> <!-- Orelha -->
       <circle cx="35" cy="25" r="5" fill="#FFF"/>
       <circle cx="65" cy="25" r="5" fill="#FFF"/>
-      <circle cx="50" cy="40" r="18" fill="#FFF"/>
-      <circle cx="45" cy="35" r="3" fill="black"/>
-      <circle cx="55" cy="35" r="3" fill="black"/>
-      <circle cx="50" cy="42" r="5" fill="black"/>
-      <path d="M45,48 Q50,52 55,48" stroke="black" stroke-width="2" fill="none"/>
-      <path d="M40,65 L40,120 Q50,125 60,120 L60,65" fill="#8B4513"/>
-      <rect x="42" y="65" width="16" height="55" fill="#FFF"/>
-      <g class="waving-arm">
+      <circle cx="50" cy="40" r="18" fill="#FFF"/> <!-- Face -->
+      <circle cx="45" cy="35" r="3" fill="black"/> <!-- Olho -->
+      <circle cx="55" cy="35" r="3" fill="black"/> <!-- Olho -->
+      <circle cx="50" cy="42" r="5" fill="black"/> <!-- Nariz -->
+      <path d="M45,48 Q50,52 55,48" stroke="black" stroke-width="2" fill="none"/> <!-- Boca -->
+      <path d="M40,65 L40,120 Q50,125 60,120 L60,65" fill="#8B4513"/> <!-- Corpo -->
+      <rect x="42" y="65" width="16" height="55" fill="#FFF"/> <!-- Barriga -->
+      <g class="bear-arm">
         <path d="M40,70 Q25,85 30,100" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
       </g>
       <path d="M60,70 Q75,85 70,100" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
@@ -1250,6 +1200,68 @@ header {
     </g>
   </svg>
 </div>
+
+<style>
+.mascot-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 60px;
+  height: 120px;
+  z-index: 1000;
+  cursor: pointer;
+}
+
+.mascot-speech {
+  position: absolute;
+  bottom: 120%;
+  right: 0;
+  background: white;
+  padding: 10px;
+  border-radius: 8px;
+  width: 180px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: all 0.3s;
+  color: #10002B;
+  font-size: 14px;
+}
+
+.mascot-speech:after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  right: 20px;
+  border: 8px solid transparent;
+  border-top-color: white;
+}
+
+.mascot-container:hover .mascot-speech {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.bear-arm {
+  transform-origin: 40px 70px;
+  animation: waveArm 2s ease-in-out infinite;
+}
+
+.bear-body {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes waveArm {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-20deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+</style>
     
     <nav class="categories">
         <button class="category-btn active">
