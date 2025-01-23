@@ -1716,6 +1716,12 @@ document.addEventListener('DOMContentLoaded', () => {
 </div>
 
 <script>
+const mascotMessages = {
+  combo: "O Combo de 1 Litro é nosso campeão de vendas!",
+  flavors: "Você pode escolher até 2 sabores pra cada açaí, mas se preferir apenas um.",
+  toppings: "Combine os acompanhamentos da forma que preferir! 😋",
+  confirm: "Confira se está tudo certinho antes de adicionar ao carrinho! 🛒"
+};
 // Firebase initialization
 const firebaseConfig = {
     apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
@@ -2116,6 +2122,12 @@ function resetComboBuilder() {
     updateComboView();
 }
 
+function showMascotMessage(message) {
+  const mascot = document.getElementById('mascot');
+  const speech = mascot.querySelector('.mascot-speech p');
+  speech.textContent = message;
+}
+
 function updateComboView() {
     const steps = ['sizeStep', 'flavorStep', 'toppingsStep', 'extrasStep'];
     steps.forEach((step, index) => {
@@ -2132,6 +2144,21 @@ function updateComboView() {
     const backBtn = document.querySelector('.btn-back');
     const nextBtn = document.querySelector('.btn-next');
     const addCartBtn = document.querySelector('.btn-add-cart');
+
+    switch(currentStep) {
+  case 1:
+    showMascotMessage(mascotMessages.combo);
+    break;
+  case 2:
+    showMascotMessage(mascotMessages.flavors);
+    break;
+  case 3:
+    showMascotMessage(mascotMessages.toppings);
+    break;
+  case 4:
+    showMascotMessage(mascotMessages.confirm);
+    break;
+}
 
     backBtn.style.display = currentStep > 1 ? 'block' : 'none';
     nextBtn.style.display = currentStep < 4 ? 'block' : 'none';
@@ -2318,6 +2345,15 @@ function updateCategoryButtons(categories) {
             const categoryId = button.dataset.category;
             if (categoryId === 'combo') {
                 document.getElementById('comboModal').style.display = 'block';
+                    const mascotHtml = `
+        <div id="mascot" class="mascot-container">
+            <div class="mascot-speech">
+                <p>Olá! Bem-vindo à Cabana Açaí! 😊</p>
+            </div>
+            <img src="https://i.ibb.co/bJy9VxR/mascote.png" alt="Mascote Cabana Açaí" class="mascot-image">
+        </div>
+    `;
+                document.getElementById('comboModal').insertAdjacentHTML('beforeend', mascotHtml);
                 resetComboBuilder();
                 initComboBuilder();
             } else {
