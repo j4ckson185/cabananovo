@@ -1144,14 +1144,20 @@ header {
     color: var(--accent);
 }
 
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
 .mascot {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 60px;
-  height: 120px;
+  width: 80px;
+  height: 140px;
   z-index: 1000;
   cursor: pointer;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
 }
 
 .speech-bubble {
@@ -1159,14 +1165,15 @@ header {
   bottom: 100%;
   right: 0;
   background: white;
-  padding: 10px;
+  padding: 10px 15px;
   border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  width: 220px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   opacity: 0;
   transform: translateY(20px);
   transition: all 0.3s ease;
-  width: 200px;
-  margin-bottom: 10px;
+  color: var(--background);
 }
 
 .speech-bubble:after {
@@ -1186,7 +1193,11 @@ header {
 
 .waving-arm {
   transform-origin: 40px 70px;
-  animation: wave 2s infinite;
+  animation: wave 2s ease-in-out infinite;
+}
+
+.bear {
+  animation: float 3s ease-in-out infinite;
 }
 
 @keyframes wave {
@@ -1194,18 +1205,9 @@ header {
   50% { transform: rotate(-20deg); }
 }
 
-.bear {
-  animation: bounce 2s infinite;
-}
-
-@keyframes bounce {
+@keyframes float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-15px); }
+  50% { transform: translateY(-10px); }
 }
     
 </style>
@@ -1228,40 +1230,44 @@ header {
         </div>
     </header>
 <div class="mascot" id="mascot">
-  <div class="speech-bubble">
-    <p>Olá! Bem-vindo à Cabana Açaí! 😊</p>
-  </div>
-  <svg viewBox="0 0 100 160" class="mascot-svg">
-    <g class="bear">
-      <!-- Cabeça -->
-      <circle cx="50" cy="40" r="25" fill="#8B4513"/>
-      <circle cx="35" cy="25" r="10" fill="#8B4513"/> <!-- Orelha esquerda -->
-      <circle cx="65" cy="25" r="10" fill="#8B4513"/> <!-- Orelha direita -->
-      <circle cx="35" cy="25" r="5" fill="#FFF"/>
-      <circle cx="65" cy="25" r="5" fill="#FFF"/>
-      
-      <!-- Face -->
-      <circle cx="50" cy="40" r="18" fill="#FFF"/>
-      <circle cx="45" cy="35" r="3" fill="black"/> <!-- Olho esquerdo -->
-      <circle cx="55" cy="35" r="3" fill="black"/> <!-- Olho direito -->
-      <circle cx="50" cy="42" r="5" fill="black"/> <!-- Nariz -->
-      <path d="M45,48 Q50,52 55,48" stroke="black" stroke-width="2" fill="none"/> <!-- Boca -->
-      
-      <!-- Corpo -->
-      <path d="M40,65 L40,120 Q50,125 60,120 L60,65" fill="#8B4513"/>
-      <rect x="42" y="65" width="16" height="55" fill="#FFF"/>
-      
-      <!-- Braços -->
-      <g class="waving-arm">
-        <path d="M40,70 Q25,85 30,100" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
-      </g>
-      <path d="M60,70 Q75,85 70,100" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
-      
-      <!-- Pernas -->
-      <path d="M42,120 L42,150" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
-      <path d="M58,120 L58,150" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
-    </g>
-  </svg>
+ <div class="speech-bubble">
+   <p>Olá! Bem-vindo à Cabana Açaí! 😊</p>
+ </div>
+ <svg viewBox="0 0 100 160" class="mascot-svg">
+   <g class="bear">
+     <!-- Cabeça -->
+     <circle cx="50" cy="40" r="25" fill="#8B4513"/>
+     <!-- Orelhas -->
+     <circle cx="35" cy="25" r="10" fill="#8B4513"/>
+     <circle cx="65" cy="25" r="10" fill="#8B4513"/>
+     <circle cx="35" cy="25" r="5" fill="#FFF"/>
+     <circle cx="65" cy="25" r="5" fill="#FFF"/>
+     
+     <!-- Face -->
+     <circle cx="50" cy="40" r="18" fill="#FFF"/>
+     <!-- Olhos -->
+     <circle cx="45" cy="35" r="3" fill="black"/>
+     <circle cx="55" cy="35" r="3" fill="black"/>
+     <!-- Nariz -->
+     <circle cx="50" cy="42" r="5" fill="black"/>
+     <!-- Boca -->
+     <path d="M45,48 Q50,52 55,48" stroke="black" stroke-width="2" fill="none"/>
+     
+     <!-- Corpo -->
+     <path d="M40,65 L40,120 Q50,125 60,120 L60,65" fill="#8B4513"/>
+     <rect x="42" y="65" width="16" height="55" fill="#FFF"/>
+     
+     <!-- Braços -->
+     <g class="waving-arm">
+       <path d="M40,70 Q25,85 30,100" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
+     </g>
+     <path d="M60,70 Q75,85 70,100" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
+     
+     <!-- Pernas -->
+     <path d="M42,120 L42,150" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
+     <path d="M58,120 L58,150" stroke="#8B4513" stroke-width="10" stroke-linecap="round"/>
+   </g>
+ </svg>
 </div>
 
     <nav class="categories">
