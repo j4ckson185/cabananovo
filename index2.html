@@ -1179,6 +1179,38 @@ header {
 #comboModal #comboMascot img {
     cursor: pointer;
 }
+
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        max-width: 100%;
+        margin: 10px;
+        padding: 15px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .modal-product-image {
+        width: 100%;
+        height: auto;
+        max-height: 300px;
+        object-fit: cover;
+        float: none;
+        display: block;
+        margin: 0 auto 1rem;
+    }
+    
+    .product-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .product-image {
+        width: 100%;
+        height: 200px;
+        margin-bottom: 1rem;
+    }
+}
     
 </style>
 </head>
@@ -2331,6 +2363,7 @@ function updateCategoryButtons(categories) {
 }
 
 function checkStoreStatus() {
+    // Remove qualquer status existente anterior
     const existingStatus = document.querySelector('.store-status');
     if (existingStatus) {
         existingStatus.remove();
@@ -2702,11 +2735,12 @@ function addToCart(product, selectedToppings) {
         price: totalPrice,
         originalPrice: product.price
     });
-    updateCartCount();
     
-    // Close product modal and show cart modal
+    updateCartCount();
+    showCartModal(); // Adiciona esta linha para mostrar o carrinho automaticamente
+    
+    // Fecha o modal de produto
     document.getElementById('productModal').style.display = 'none';
-    showCartModal();
 }
 
 async function applyCoupon() {
@@ -2793,7 +2827,7 @@ function showCartModal() {
             <div class="cart-item">
                 <div class="cart-item-details">
                     <h3 class="cart-item-title">${item.name}</h3>
-                    <p class="cart-item-description" style="white-space: pre-line;">${item.description}</p>
+                    <p class="cart-item-description" style="white-space: pre-line;">${item.description || ''}</p>
                     ${item.selectedExtras.length > 0 && !isCombo ? 
                         `<p class="cart-item-extras">Extras: ${item.selectedExtras.join(', ')}</p>` : 
                         ''}
@@ -3293,15 +3327,16 @@ async function submitOrderFromDigitalMenu() {
     
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM Carregado'); // Log para diagnóstico
-
-    // Evento para o ícone do carrinho
     const cartIcon = document.querySelector('.cart-icon');
     if (cartIcon) {
-        cartIcon.addEventListener('click', showCartModal);
+        cartIcon.addEventListener('click', () => {
+            console.log('Ícone do carrinho clicado');
+            showCartModal();
+        });
     } else {
         console.error('Ícone do carrinho não encontrado');
     }
+});
 
     // Evento para botão de checkout
     const checkoutButton = document.querySelector('.checkout');
