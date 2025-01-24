@@ -1157,53 +1157,36 @@ header {
     position: fixed;
     right: 10px;
     bottom: 10px;
-    z-index: 999;
+    z-index: 9999;
     display: none;
-    align-items: flex-end;
-    gap: 8px;
-    pointer-events: none;
 }
 
 .mascot {
-    width: 80px;
-    height: 80px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    pointer-events: auto;
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
 }
 
 .speech-bubble {
-    position: relative;
+    position: absolute;
+    right: 70px;
+    bottom: 10px;
     background: var(--surface);
     border: 1px solid var(--glass-border);
-    padding: 12px;
-    border-radius: 12px;
-    max-width: 200px;
-    font-size: 14px;
-    pointer-events: auto;
-    display: none;
-}
-
-.speech-bubble.active {
-    display: block;
-    animation: fadeIn 0.3s ease;
+    padding: 10px;
+    border-radius: 10px;
+    width: 200px;
+    font-size: 13px;
 }
 
 .speech-bubble:after {
     content: '';
     position: absolute;
     right: -10px;
-    bottom: 20px;
+    bottom: 15px;
     border-width: 10px 0 10px 10px;
     border-style: solid;
     border-color: transparent transparent transparent var(--surface);
-}
-
-.speech-bubble p {
-    margin: 0;
-    color: var(--text);
-    font-size: 0.9rem;
-    line-height: 1.4;
 }
     
 </style>
@@ -2496,9 +2479,20 @@ function displayProducts(productsToShow) {
     
 let currentProduct = null;
 
+function hideMascot() {
+    const mascotContainer = document.querySelector('.mascot-container');
+    mascotContainer.style.display = 'none';
+}
+
 function openProductModal(product) {
     currentProduct = product;
     const modal = document.getElementById('productModal');
+    const mascotContainer = document.querySelector('.mascot-container');
+    const mascotBubble = document.querySelector('.speech-bubble p');
+
+        // Show mascot container immediately when modal opens
+    mascotContainer.style.display = 'block';
+    mascotBubble.textContent = `Ótima escolha! O ${product.name} é uma delícia! 😋`;
     
     modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
     modal.querySelector('.modal-product-title').textContent = product.name;
@@ -2594,20 +2588,6 @@ function openProductModal(product) {
 
     modal.style.display = 'block';
 }
-
-function hideMascotBubble() {
-    document.querySelector('.speech-bubble').classList.remove('active');
-}
-
-// Add to modal close events:
-document.querySelectorAll('.close-modal').forEach(button => {
-    button.addEventListener('click', () => {
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.style.display = 'none';
-        });
-        hideMascotBubble();
-    });
-});
 
 // Função para gerar um fingerprint do dispositivo
 async function generateDeviceFingerprint() {
