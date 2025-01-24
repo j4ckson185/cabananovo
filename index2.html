@@ -1154,7 +1154,7 @@ header {
 }
 
 .mascot-container {
-    position: absolute; /* Mudando de fixed para absolute */
+    position: absolute;
     right: 10px;
     bottom: 10px;
     z-index: 9999;
@@ -1162,21 +1162,27 @@ header {
 }
 
 .mascot {
-    width: 20px; /* Reduzindo tamanho */
-    height: 20px;
+    width: 35px;  /* Reduzido */
+    height: 35px; /* Reduzido */
     object-fit: contain;
 }
 
 .speech-bubble {
     position: absolute;
-    right: 60px;
+    right: 45px; /* Ajustado */
     bottom: 5px;
     background: var(--surface);
     border: 1px solid var(--glass-border);
     padding: 8px;
     border-radius: 8px;
-    width: 180px;
-    font-size: 12px;
+    width: 150px; /* Reduzido */
+    font-size: 11px; /* Reduzido */
+}
+
+.speech-bubble:after {
+    right: -8px; /* Ajustado */
+    bottom: 10px; /* Ajustado */
+    border-width: 8px 0 8px 8px; /* Reduzido */
 }
     
 </style>
