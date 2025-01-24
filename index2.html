@@ -1155,6 +1155,7 @@ header {
 
 #comboMascot .mascot-speech {
     transition: all 0.3s ease;
+    transform: translateX(-20px);
 }
 
 #comboMascot .mascot-speech:after {
@@ -1169,11 +1170,14 @@ header {
 #comboModal #comboMascot {
     display: block;
     opacity: 1;
-    pointer-events: none;
 }
 
 #comboModal #comboMascot .mascot-speech {
     z-index: 2001;
+}
+
+#comboModal #comboMascot img {
+    cursor: pointer;
 }
     
 </style>
@@ -1900,7 +1904,41 @@ document.querySelectorAll('.size-option').forEach(option => {
 
     closeBtn.addEventListener('click', () => {
         comboModal.style.display = 'none';
+            const comboMascot = document.getElementById('comboMascot');
+    if (comboMascot) {
+        comboMascot.querySelector('img').addEventListener('click', () => {
+            const speech = comboMascot.querySelector('.mascot-speech');
+            const speechText = comboMascot.querySelector('.mascot-speech p');
+            
+            if (currentStep === 1) {
+                speechText.textContent = "O Combo de 1 Litro é nosso campeão de vendas!";
+            } else if (currentStep === 2) {
+                speechText.textContent = "Você pode escolher até 2 sabores pra cada açaí, mas se preferir apenas um.";
+            } else if (currentStep === 3) {
+                speechText.textContent = "Escolha seus acompanhamentos favoritos! Lembre-se que a quantidade varia de acordo com o tamanho.";
+            } else if (currentStep === 4) {
+                speechText.textContent = "Confira se está tudo certinho antes de adicionar ao carrinho!";
+            }
+            
+            speech.style.opacity = '1';
+            speech.style.visibility = 'visible';
+            setTimeout(() => {
+                speech.style.opacity = '0';
+                speech.style.visibility = 'hidden';
+            }, 5000);
+        });
+    }
+}
         resetComboBuilder();
+        // Mostrar mensagem inicial
+const mascot = document.getElementById('comboMascot');
+if (mascot) {
+    const speech = mascot.querySelector('.mascot-speech');
+    const speechText = mascot.querySelector('.mascot-speech p');
+    speechText.textContent = "O Combo de 1 Litro é nosso campeão de vendas!";
+    speech.style.opacity = '1';
+    speech.style.visibility = 'visible';
+}
     });
 
     addCartBtn.addEventListener('click', () => {
