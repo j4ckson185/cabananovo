@@ -2399,21 +2399,19 @@ function checkStoreStatus() {
         });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  const mascot = document.getElementById('mascot');
-  const messages = [
-    "Olá! Bem-vindo à Cabana Açaí! 😊",
-    "Que tal um açaí delicioso hoje? 🍇",
-    "Experimente nossos combos! 🥄",
-    "Posso ajudar você a escolher? 😃"
-  ];
-  let messageIndex = 0;
-  
-  mascot.addEventListener('click', function() {
-    const bubble = mascot.querySelector('.speech-bubble p');
-    messageIndex = (messageIndex + 1) % messages.length;
-    bubble.textContent = messages[messageIndex];
-  });
+document.addEventListener('DOMContentLoaded', () => {
+    // Evento para o ícone do carrinho
+    const cartIcon = document.querySelector('.cart-icon');
+    if (cartIcon) {
+        cartIcon.addEventListener('click', showCartModal);
+    }
+
+    // Firebase listeners
+    loadMenuProducts();
+    loadCategories();
+    checkStoreStatus();
+    setInterval(checkStoreStatus, 60000);
+    setupPaymentEvents();
 });
     
 
