@@ -2633,6 +2633,11 @@ function switchToSize(newSize, currentName) {
     if (newProduct) {
         document.getElementById('productModal').style.display = 'none';
         setTimeout(() => {
+            const modal = document.getElementById('productModal');
+            modal.style.display = 'block';
+            
+            const mascotBubble = document.querySelector('.speech-bubble');
+            mascotBubble.innerHTML = `<p>Ótima escolha! Agora é só arrasar nos acompanhamentos! 😋</p>`;
             openProductModal(newProduct);
         }, 100);
     }
