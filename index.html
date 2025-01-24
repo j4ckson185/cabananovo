@@ -1706,68 +1706,87 @@ function updateCustomerAndDeliveryInfo(customer, delivery) {
 }
 
 function showCreateOrderModal() {
-    console.log('showCreateOrderModal iniciado');
+   console.log('showCreateOrderModal iniciado');
 
-    // Defina o ID do pedido como 5555
-    document.getElementById('orderId').value = '5555';
+   const createOrderModal = document.getElementById('createOrderModal');
+   const modalContent = createOrderModal.querySelector('.modal-content');
 
-    // Limpar campos do formulário
-    document.getElementById('customerName').value = '';
-    document.getElementById('customerPhone').value = '';
-    
-    // Endereço
-    document.getElementById('street').value = '';
-    document.getElementById('streetNumber').value = '';
-    document.getElementById('neighborhood').value = '';
-    document.getElementById('complement').value = '';
-    document.getElementById('zipCode').value = '';
-    
-    // Define o valor total do pedido
-    const subtotal = cart.reduce((total, item) => total + item.price, 0);
-    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-    const deliveryFee = 3.00;
-    const total = subtotal - discount + deliveryFee;
-    document.getElementById('orderTotal').value = total.toFixed(2);
-    
-    // Monta os detalhes do pedido
-    let orderDetails = '';
-    cart.forEach(item => {
-        if (item.name.includes('Combo')) {
-            orderDetails += `Combo ${item.name}\n`;
-            const description = item.description.split('\n').filter(line => line.trim() !== '');
-            description.forEach(line => {
-                orderDetails += `${line}\n`;
-            });
-        } else {
-            orderDetails += `${item.name}\n`;
-            orderDetails += `Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
-            if (item.selectedExtras && item.selectedExtras.length > 0) {
-                orderDetails += `Extras: ${item.selectedExtras.join(', ')}\n`;
-            }
-        }
-        orderDetails += `Valor: R$ ${item.price.toFixed(2)}\n\n`;
-    });
-    document.getElementById('orderDetails').value = orderDetails;
+   modalContent.insertAdjacentHTML('beforeend', `
+       <div class="mascot-container" style="position: fixed; right: 10px; bottom: 10px; z-index: 9999;">
+           <div class="speech-bubble">
+               <p>Show, agora preciso que preencha todos os dados, ok? 😊</p>
+           </div>
+           <img src="https://i.ibb.co/KbthVz8/Designer-1.png" alt="Mascote" class="mascot" id="mascot">
+       </div>
+   `);
 
-    // Configuração inicial do formulário
-    document.getElementById('notes').value = '';
-    
-    // Resetar seleção de pagamento
-    document.getElementById('paymentMoney').checked = false;
-    document.getElementById('paymentCard').checked = false;
-    document.getElementById('paymentOnline').checked = false;
+   const mascotContainer = modalContent.querySelector('.mascot-container');
+   mascotContainer.style.display = 'flex';
 
-    // Mostra o modal
-    const createOrderModal = document.getElementById('createOrderModal');
-    if (createOrderModal) {
-        createOrderModal.style.display = 'block';
-        console.log('Modal exibido');
-    } else {
-        console.error('Modal não encontrado');
-    }
+   setTimeout(() => {
+       const mascotBubble = modalContent.querySelector('.speech-bubble p');
+       mascotBubble.textContent = 'Assim que preencher pode clicar em Finalizar Pedido que te transfiro pro WhatsApp da loja! 📱';
+   }, 5000);
 
-    // Configurar eventos de pagamento para troco
-    setupPaymentEvents();
+   // Defina o ID do pedido como 5555
+   document.getElementById('orderId').value = '5555';
+
+   // Limpar campos do formulário
+   document.getElementById('customerName').value = '';
+   document.getElementById('customerPhone').value = '';
+   
+   // Endereço
+   document.getElementById('street').value = '';
+   document.getElementById('streetNumber').value = '';
+   document.getElementById('neighborhood').value = '';
+   document.getElementById('complement').value = '';
+   document.getElementById('zipCode').value = '';
+   
+   // Define o valor total do pedido
+   const subtotal = cart.reduce((total, item) => total + item.price, 0);
+   const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+   const deliveryFee = 3.00;
+   const total = subtotal - discount + deliveryFee;
+   document.getElementById('orderTotal').value = total.toFixed(2);
+   
+   // Monta os detalhes do pedido
+   let orderDetails = '';
+   cart.forEach(item => {
+       if (item.name.includes('Combo')) {
+           orderDetails += `Combo ${item.name}\n`;
+           const description = item.description.split('\n').filter(line => line.trim() !== '');
+           description.forEach(line => {
+               orderDetails += `${line}\n`;
+           });
+       } else {
+           orderDetails += `${item.name}\n`;
+           orderDetails += `Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
+           if (item.selectedExtras && item.selectedExtras.length > 0) {
+               orderDetails += `Extras: ${item.selectedExtras.join(', ')}\n`;
+           }
+       }
+       orderDetails += `Valor: R$ ${item.price.toFixed(2)}\n\n`;
+   });
+   document.getElementById('orderDetails').value = orderDetails;
+
+   // Configuração inicial do formulário
+   document.getElementById('notes').value = '';
+   
+   // Resetar seleção de pagamento
+   document.getElementById('paymentMoney').checked = false;
+   document.getElementById('paymentCard').checked = false;
+   document.getElementById('paymentOnline').checked = false;
+
+   // Mostra o modal
+   if (createOrderModal) {
+       createOrderModal.style.display = 'block';
+       console.log('Modal exibido');
+   } else {
+       console.error('Modal não encontrado');
+   }
+
+   // Configurar eventos de pagamento para troco
+   setupPaymentEvents();
 }
 
 // Adicionar event listener para o botão de checkout
