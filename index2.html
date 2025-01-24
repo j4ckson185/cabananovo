@@ -1154,35 +1154,49 @@ header {
 }
 
 .mascot-container {
-    position: absolute;
-    right: 10px;
-    bottom: 10px;
-    z-index: 9999;
-    display: none;
+   position: fixed; /* Alterado para fixed */
+   right: 15px;
+   bottom: 15px;
+   z-index: 9999;
+   display: none;
 }
 
 .mascot {
-    width: 35px;  /* Reduzido */
-    height: 35px; /* Reduzido */
-    object-fit: contain;
+   width: 45px;  
+   height: 45px;
+   object-fit: contain;
 }
 
 .speech-bubble {
-    position: absolute;
-    right: 45px; /* Ajustado */
-    bottom: 5px;
-    background: var(--surface);
-    border: 1px solid var(--glass-border);
-    padding: 8px;
-    border-radius: 8px;
-    width: 150px; /* Reduzido */
-    font-size: 11px; /* Reduzido */
+   position: absolute;
+   right: 55px;
+   bottom: 5px;
+   background: var(--surface);
+   border: 1px solid var(--glass-border);
+   padding: 10px;
+   border-radius: 8px;
+   width: 180px;
+   font-size: 13px;
 }
 
 .speech-bubble:after {
-    right: -8px; /* Ajustado */
-    bottom: 10px; /* Ajustado */
-    border-width: 8px 0 8px 8px; /* Reduzido */
+   right: -8px;
+   bottom: 12px;
+   border-width: 8px 0 8px 8px;
+}
+
+/* Responsivo para celular */
+@media (max-width: 768px) {
+   .mascot {
+       width: 60px;
+       height: 60px;
+   }
+   
+   .speech-bubble {
+       width: 200px;
+       right: 70px;
+       font-size: 14px;
+   }
 }
     
 </style>
