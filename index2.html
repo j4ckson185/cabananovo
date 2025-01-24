@@ -2626,35 +2626,25 @@ function openProductModal(product) {
 }
 
 function switchToSize(newSize, currentName) {
-    // Remove qualquer menção de tamanho existente no nome
-    const baseName = currentName.replace(/300ml|500ml|1L/g, '').trim();
-    
-    // Cria o novo nome do produto completo
-    const newProductName = `${baseName} ${newSize}`;
-    
-    // Encontra o produto correspondente
-    const newProduct = currentProducts.find(p => p.name === newProductName);
+    // Encontra o produto correspondente usando uma comparação mais flexível
+    const newProduct = currentProducts.find(p => 
+        p.name.includes(currentName.split(' ')[2]) && 
+        p.name.includes(newSize)
+    );
     
     if (newProduct) {
         // Fecha o modal atual
         document.getElementById('productModal').style.display = 'none';
         
-        // Pequeno delay para garantir que o modal anterior feche
         setTimeout(() => {
-            // Abre o novo modal com o produto do novo tamanho
             const modal = document.getElementById('productModal');
             modal.style.display = 'block';
             
-            // Redefine a mensagem do mascote
             const mascotBubble = document.querySelector('.speech-bubble');
             mascotBubble.innerHTML = `<p>Ótima escolha! Agora é só arrasar nos acompanhamentos! 😋</p>`;
             
-            // Abre o modal do novo produto
             openProductModal(newProduct);
         }, 100);
-    } else {
-        // Caso não encontre o produto, mostra uma notificação
-        showNotification(`Desculpe, o produto ${newProductName} não está disponível.`);
     }
 }
 
