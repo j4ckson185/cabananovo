@@ -1865,31 +1865,47 @@ function initComboBuilder() {
     const backBtn = comboModal.querySelector('.btn-back');
     const addCartBtn = comboModal.querySelector('.btn-add-cart');
     
-// Size selection
-document.querySelectorAll('.size-option').forEach(option => {
-    option.addEventListener('click', function() {
-        // Remove seleção anterior
-        document.querySelectorAll('.size-option').forEach(opt => {
-            opt.classList.remove('selected');
-            opt.style.background = ''; // Remove background anterior
+    // Inicialização do mascote do combo
+    setTimeout(() => {
+        const comboMascot = document.getElementById('comboMascot');
+        if (comboMascot) {
+            const speech = comboMascot.querySelector('.mascot-speech');
+            const speechText = comboMascot.querySelector('.mascot-speech p');
+            
+            // Mensagem inicial
+            speechText.textContent = "O Combo de 1 Litro é nosso campeão de vendas!";
+            speech.style.opacity = '1';
+            speech.style.visibility = 'visible';
+
+            // Click handler do mascote
+            comboMascot.querySelector('img').addEventListener('click', () => {
+                showMascotMessage(currentStep);
+            });
+        }
+    }, 100);
+
+    // Size selection
+    document.querySelectorAll('.size-option').forEach(option => {
+        option.addEventListener('click', function() {
+            document.querySelectorAll('.size-option').forEach(opt => {
+                opt.classList.remove('selected');
+                opt.style.background = '';
+            });
+            
+            this.classList.add('selected');
+            this.style.background = 'var(--gradient)';
+            
+            comboData.size = {
+                size: this.dataset.size,
+                price: parseFloat(this.dataset.price)
+            };
+            
+            nextBtn.disabled = false;
         });
-        
-        // Adiciona nova seleção com gradiente
-        this.classList.add('selected');
-        this.style.background = 'var(--gradient)';
-        
-        comboData.size = {
-            size: this.dataset.size,
-            price: parseFloat(this.dataset.price)
-        };
-        
-        nextBtn.disabled = false;
     });
-});
 
-        setupFlavorSelectors();
+    setupFlavorSelectors();
 
-    // Configuração dos botões de navegação
     nextBtn.addEventListener('click', () => {
         if (validateStep()) {
             currentStep++;
@@ -1904,40 +1920,7 @@ document.querySelectorAll('.size-option').forEach(option => {
 
     closeBtn.addEventListener('click', () => {
         comboModal.style.display = 'none';
-            const comboMascot = document.getElementById('comboMascot');
-    if (comboMascot) {
-        comboMascot.querySelector('img').addEventListener('click', () => {
-            const speech = comboMascot.querySelector('.mascot-speech');
-            const speechText = comboMascot.querySelector('.mascot-speech p');
-            
-            if (currentStep === 1) {
-                speechText.textContent = "O Combo de 1 Litro é nosso campeão de vendas!";
-            } else if (currentStep === 2) {
-                speechText.textContent = "Você pode escolher até 2 sabores pra cada açaí, mas se preferir apenas um.";
-            } else if (currentStep === 3) {
-                speechText.textContent = "Escolha seus acompanhamentos favoritos! Lembre-se que a quantidade varia de acordo com o tamanho.";
-            } else if (currentStep === 4) {
-                speechText.textContent = "Confira se está tudo certinho antes de adicionar ao carrinho!";
-            }
-            
-            speech.style.opacity = '1';
-            speech.style.visibility = 'visible';
-            setTimeout(() => {
-                speech.style.opacity = '0';
-                speech.style.visibility = 'hidden';
-            }, 5000);
-        });
-    }
         resetComboBuilder();
-        // Mostrar mensagem inicial
-const mascot = document.getElementById('comboMascot');
-if (mascot) {
-    const speech = mascot.querySelector('.mascot-speech');
-    const speechText = mascot.querySelector('.mascot-speech p');
-    speechText.textContent = "O Combo de 1 Litro é nosso campeão de vendas!";
-    speech.style.opacity = '1';
-    speech.style.visibility = 'visible';
-}
     });
 
     addCartBtn.addEventListener('click', () => {
@@ -1946,11 +1929,37 @@ if (mascot) {
         resetComboBuilder();
     });
 
-    // Load toppings and extras
     loadToppingsAndExtras();
-    
-    // Reset inicial
     resetComboBuilder();
+}
+
+    function showMascotMessage(step) {
+    const mascot = document.getElementById('comboMascot');
+    if (!mascot) return;
+
+    const speech = mascot.querySelector('.mascot-speech');
+    const speechText = mascot.querySelector('.mascot-speech p');
+
+    let message = "";
+    switch(step) {
+        case 1: message = "O Combo de 1 Litro é nosso campeão de vendas!"; break;
+        case 2: message = "Você pode escolher até 2 sabores pra cada açaí, mas se preferir apenas um."; break;
+        case 3: message = "Escolha seus acompanhamentos favoritos! Lembre-se que a quantidade varia de acordo com o tamanho."; break;
+        case 4: message = "Confira se está tudo certinho antes de adicionar ao carrinho!"; break;
+        default: message = "O Combo de 1 Litro é nosso campeão de vendas!";
+    }
+
+    speechText.textContent = message;
+    speech.style.opacity = '1';
+    speech.style.visibility = 'visible';
+    
+    // Esconde a mensagem após 5 segundos
+    setTimeout(() => {
+        if (speech) {
+            speech.style.opacity = '0';
+            speech.style.visibility = 'hidden';
+        }
+    }, 5000);
 }
 
     function setupFlavorSelectors() {
@@ -2407,6 +2416,7 @@ document.addEventListener('DOMContentLoaded', function() {
     bubble.textContent = messages[messageIndex];
   });
 });
+    
 
 function isStoreOpenNow(schedule) {
     const now = new Date();
