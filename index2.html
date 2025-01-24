@@ -1860,24 +1860,23 @@ let comboData = {
 
 function initComboBuilder() {
     const comboModal = document.getElementById('comboModal');
-    const closeBtn = comboModal.querySelector('.close-modal');
-    const nextBtn = comboModal.querySelector('.btn-next');
-    const backBtn = comboModal.querySelector('.btn-back');
-    const addCartBtn = comboModal.querySelector('.btn-add-cart');
     
-    // Inicialização do mascote do combo
+    // Adicione o HTML do mascote dinamicamente
+    const mascotHTML = `
+        <div id="comboMascot" class="mascot-container" style="position: fixed; bottom: 20px; right: 20px; width: 120px; height: 140px; z-index: 2000;">
+            <div class="mascot-speech" style="position: absolute; bottom: 120%; right: 0; background: white; padding: 12px; border-radius: 10px; width: 200px; opacity: 0; visibility: hidden; color: #10002B; font-size: 14px;">
+                <p></p>
+            </div>
+            <img src="https://i.ibb.co/KbthVz8/Designer-1.png" alt="Mascote Cabana Açaí" style="width: 100%; height: 100%; object-fit: contain; cursor: pointer;">
+        </div>
+    `;
+    
+    comboModal.querySelector('.modal-content').insertAdjacentHTML('afterbegin', mascotHTML);
+    
     setTimeout(() => {
         const comboMascot = document.getElementById('comboMascot');
         if (comboMascot) {
-            const speech = comboMascot.querySelector('.mascot-speech');
-            const speechText = comboMascot.querySelector('.mascot-speech p');
-            
-            // Mensagem inicial
-            speechText.textContent = "O Combo de 1 Litro é nosso campeão de vendas!";
-            speech.style.opacity = '1';
-            speech.style.visibility = 'visible';
-
-            // Click handler do mascote
+            showMascotMessage(1);
             comboMascot.querySelector('img').addEventListener('click', () => {
                 showMascotMessage(currentStep);
             });
