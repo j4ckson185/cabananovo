@@ -1154,7 +1154,7 @@ header {
 }
 
 .mascot-container {
-    position: fixed;
+    position: absolute; /* Mudando de fixed para absolute */
     right: 10px;
     bottom: 10px;
     z-index: 9999;
@@ -1162,21 +1162,21 @@ header {
 }
 
 .mascot {
-    width: 80px;
-    height: 80px;
+    width: 50px; /* Reduzindo tamanho */
+    height: 50px;
     object-fit: contain;
 }
 
 .speech-bubble {
     position: absolute;
-    right: 85px;
-    bottom: 10px;
+    right: 60px;
+    bottom: 5px;
     background: var(--surface);
     border: 1px solid var(--glass-border);
-    padding: 12px;
-    border-radius: 12px;
-    width: 220px;
-    font-size: 14px;
+    padding: 8px;
+    border-radius: 8px;
+    width: 180px;
+    font-size: 12px;
 }
     
 </style>
@@ -1268,45 +1268,54 @@ header {
     </div>
 
     <!-- Product Modal -->
-    <div class="modal" id="productModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button class="close-modal">&times;</button>
-            </div>
-            <img src="/api/placeholder/800/400" alt="" class="modal-product-image">
-            <div class="modal-product-info">
-                <h2 class="modal-product-title">Açaí com Leite Ninho</h2>
-                <p class="modal-product-description">
-                    Açaí cremoso coberto com leite ninho em pó e frutas selecionadas da melhor qualidade.
-                </p>
-                <div class="modal-product-price">R$ 18,90</div>
-            </div>
-            
-            <div class="toppings-section">
-                <h3 class="toppings-title">Escolha seus Acompanhamentos</h3>
-                <div class="toppings-grid">
-                    <div class="topping-item">Granola</div>
-                    <div class="topping-item">Leite em Pó</div>
-                    <div class="topping-item">Morango</div>
-                    <div class="topping-item">Banana</div>
-                    <div class="topping-item">Kiwi</div>
-                    <div class="topping-item">Paçoca</div>
-                </div>
-            </div>
+<!-- Product Modal -->
+<div class="modal" id="productModal">
+   <div class="modal-content">
+       <div class="modal-header">
+           <button class="close-modal">&times;</button>
+       </div>
+       <img src="/api/placeholder/800/400" alt="" class="modal-product-image">
+       <div class="modal-product-info">
+           <h2 class="modal-product-title">Açaí com Leite Ninho</h2>
+           <p class="modal-product-description">
+               Açaí cremoso coberto com leite ninho em pó e frutas selecionadas da melhor qualidade.
+           </p>
+           <div class="modal-product-price">R$ 18,90</div>
+       </div>
+       
+       <div class="toppings-section">
+           <h3 class="toppings-title">Escolha seus Acompanhamentos</h3>
+           <div class="toppings-grid">
+               <div class="topping-item">Granola</div>
+               <div class="topping-item">Leite em Pó</div>
+               <div class="topping-item">Morango</div>
+               <div class="topping-item">Banana</div>
+               <div class="topping-item">Kiwi</div>
+               <div class="topping-item">Paçoca</div>
+           </div>
+       </div>
 
-            <div class="extras-section">
-    <h3 class="extras-title">Adicione Itens Extras (opcional)</h3>
-    <div class="extras-grid">
-        <!-- Items will be loaded dynamically -->
-    </div>
+       <div class="extras-section">
+           <h3 class="extras-title">Adicione Itens Extras (opcional)</h3>
+           <div class="extras-grid">
+               <!-- Items will be loaded dynamically -->
+           </div>
+       </div>
+           
+       <div class="modal-buttons">
+           <button class="modal-btn add-to-cart">Adicionar ao Carrinho</button>
+           <button class="modal-btn continue-shopping">Continuar Comprando</button>
+       </div>
+
+       <!-- Mascote aqui -->
+       <div class="mascot-container">
+           <div class="speech-bubble">
+               <p>Olá! Bem-vindo à Cabana Açaí! 😊</p>
+           </div>
+           <img src="https://i.ibb.co/KbthVz8/Designer-1.png" alt="Mascote" class="mascot" id="mascot">
+       </div>
+   </div>
 </div>
-            
-            <div class="modal-buttons">
-                <button class="modal-btn add-to-cart">Adicionar ao Carrinho</button>
-                <button class="modal-btn continue-shopping">Continuar Comprando</button>
-            </div>
-        </div>
-    </div>
 
     <!-- Combo Builder Modal -->
 <div class="modal" id="comboModal">
@@ -3321,14 +3330,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(checkStoreStatus, 60000);
     setupPaymentEvents();
 
-        // Add mascot initialization here
-    const mascot = document.querySelector('.mascot');
-    if (mascot) {
-        setTimeout(() => {
-            mascot.style.opacity = '1';
-            document.querySelector('.speech-bubble').style.opacity = '1';
-        }, 1000);
-    }
 });
    
    // Categories
@@ -3472,12 +3473,6 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
         </form>
     </div>
 </div>
-</div>
-<div class="mascot-container">
-    <div class="speech-bubble">
-        <p>Olá! Bem-vindo à Cabana Açaí! 😊</p>
-    </div>
-    <img src="https://i.ibb.co/KbthVz8/Designer-1.png" alt="Mascote" class="mascot" id="mascot">
 </div>
 </body>
 </html>
