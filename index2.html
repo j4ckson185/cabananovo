@@ -1254,13 +1254,6 @@ header {
         </button>
     </nav>
 
-    <iframe
-    src="https://www.chatbase.co/chatbot-iframe/PpgNSIgeYN1FCucFGP4w3"
-    width="100%"
-    style="height: 100%; min-height: 700px"
-    frameborder="0"
-></iframe>
-
     <div class="search-container">
         <div class="search-bar">
             <i class="fas fa-search search-icon"></i>
@@ -1501,6 +1494,13 @@ header {
 <div class="modal" id="customerInfoModal">
     <div class="modal-content">
         <div class="modal-header">
+            <div class="mascot-container">
+    <div class="speech-bubble">
+        <p>Show, agora só preencher todos os dados, ok? 😊</p>
+    </div>
+    <img src="https://i.ibb.co/KbthVz8/Designer-1.png" alt="Mascote" class="mascot" id="deliveryMascot">
+</div>
+
             <h2>Seus Dados</h2>
             <button class="close-modal">&times;</button>
         </div>
@@ -1522,6 +1522,12 @@ header {
 <div class="modal" id="deliveryInfoModal">
     <div class="modal-content">
         <div class="modal-header">
+            <div class="mascot-container">
+    <div class="speech-bubble">
+        <p>Show, agora só preencher todos os dados, ok? 😊</p>
+    </div>
+    <img src="https://i.ibb.co/KbthVz8/Designer-1.png" alt="Mascote" class="mascot" id="deliveryMascot">
+</div>
             <h2>Endereço de Entrega</h2>
             <button class="close-modal">&times;</button>
         </div>
@@ -3486,6 +3492,18 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
            document.getElementById('productModal').style.display = 'none';
        }
    });
+    (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="PpgNSIgeYN1FCucFGP4w3";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+// Adicione este script no final do arquivo
+document.addEventListener('DOMContentLoaded', function() {
+    const deliveryMascot = document.getElementById('deliveryMascot');
+    const mascotBubble = deliveryMascot.closest('.mascot-container').querySelector('.speech-bubble p');
+    
+    if (deliveryMascot) {
+        setTimeout(() => {
+            mascotBubble.textContent = 'Após preencher, só clicar em Finalizar Pedido que vou te encaminhar pro Whatsapp da loja. 📱';
+        }, 5000);
+    }
+});
 </script>
 <<!-- Modal para Criar Novo Pedido -->
 <!-- Modal para Criar Novo Pedido -->
