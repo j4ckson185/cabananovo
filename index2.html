@@ -1162,31 +1162,21 @@ header {
 }
 
 .mascot {
-    width: 60px;
-    height: 60px;
+    width: 80px;
+    height: 80px;
     object-fit: contain;
 }
 
 .speech-bubble {
     position: absolute;
-    right: 70px;
+    right: 85px;
     bottom: 10px;
     background: var(--surface);
     border: 1px solid var(--glass-border);
-    padding: 10px;
-    border-radius: 10px;
-    width: 200px;
-    font-size: 13px;
-}
-
-.speech-bubble:after {
-    content: '';
-    position: absolute;
-    right: -10px;
-    bottom: 15px;
-    border-width: 10px 0 10px 10px;
-    border-style: solid;
-    border-color: transparent transparent transparent var(--surface);
+    padding: 12px;
+    border-radius: 12px;
+    width: 220px;
+    font-size: 14px;
 }
     
 </style>
@@ -2409,13 +2399,14 @@ function setupEventListeners() {
     });
 
     // Modal close buttons
-    document.querySelectorAll('.close-modal').forEach(button => {
-        button.addEventListener('click', () => {
-            document.querySelectorAll('.modal').forEach(modal => {
-                modal.style.display = 'none';
-            });
+document.querySelectorAll('.close-modal').forEach(button => {
+    button.addEventListener('click', () => {
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.style.display = 'none';
         });
+        hideMascot();
     });
+});
 
     // Continue shopping button
     document.querySelector('.continue-shopping').addEventListener('click', () => {
@@ -2489,9 +2480,9 @@ function openProductModal(product) {
     const modal = document.getElementById('productModal');
     const mascotContainer = document.querySelector('.mascot-container');
     const mascotBubble = document.querySelector('.speech-bubble p');
-
-        // Show mascot container immediately when modal opens
-    mascotContainer.style.display = 'block';
+    
+    // Show mascot container immediately when modal opens
+    mascotContainer.style.display = 'flex';
     mascotBubble.textContent = `Ótima escolha! O ${product.name} é uma delícia! 😋`;
     
     modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
