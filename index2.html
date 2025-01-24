@@ -2626,10 +2626,9 @@ function openProductModal(product) {
 }
 
 function switchToSize(newSize, currentName) {
-    // Encontra o produto correspondente usando uma comparação mais flexível
+    // Encontra o produto correspondente
     const newProduct = currentProducts.find(p => 
-        p.name.includes(currentName.split(' ')[2]) && 
-        p.name.includes(newSize)
+        p.name === currentName.replace(/500ml|300ml/g, newSize)
     );
     
     if (newProduct) {
