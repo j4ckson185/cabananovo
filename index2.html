@@ -1712,7 +1712,7 @@ function showCreateOrderModal() {
    const modalContent = createOrderModal.querySelector('.modal-content');
 
    modalContent.insertAdjacentHTML('beforeend', `
-       <div class="mascot-container" style="position: absolute; right: 10px; bottom: 10px;">
+       <div class="mascot-container" style="position: fixed; right: 10px; bottom: 10px; z-index: 9999;">
            <div class="speech-bubble">
                <p>Show, agora preciso que preencha todos os dados, ok? 😊</p>
            </div>
