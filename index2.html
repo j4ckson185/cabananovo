@@ -3261,28 +3261,6 @@ function closeCreateOrderModal() {
     document.getElementById('createOrderModal').style.display = 'none';
 }
 
-window.addEventListener('load', function() {
-  const mascot = document.getElementById('mascot');
-  const messages = [
-    "Olá! Bem-vindo à Cabana Açaí! 😊",
-    "Que tal um açaí delicioso hoje? 🍇",
-    "Experimente nossos combos! 🥄",
-    "Posso ajudar você a escolher? 😃"
-  ];
-  let messageIndex = 0;
-  
-  // Mostra o mascote com fade
-  setTimeout(() => {
-    mascot.style.opacity = '1';
-  }, 500);
-  
-  mascot.addEventListener('click', function() {
-    const bubble = mascot.querySelector('.speech-bubble p');
-    messageIndex = (messageIndex + 1) % messages.length;
-    bubble.textContent = messages[messageIndex];
-  });
-});
-
 async function submitOrderFromDigitalMenu() {
     const order = {
         id: document.getElementById('orderId').value,
