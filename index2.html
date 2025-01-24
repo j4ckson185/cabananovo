@@ -1155,53 +1155,38 @@ header {
 
 .mascot-container {
     position: fixed;
-    right: 20px;
-    bottom: 20px;
+    right: 10px;
+    bottom: 10px;
     z-index: 999;
     display: flex;
     align-items: flex-end;
-    gap: 10px;
+    gap: 8px;
+    pointer-events: none;
 }
 
 .mascot {
-    width: 120px;
-    height: 120px;
+    width: 80px;
+    height: 80px;
     cursor: pointer;
     transition: all 0.3s ease;
-    opacity: 0;
-}
-
-.mascot:hover {
-    transform: scale(1.1);
+    pointer-events: auto;
 }
 
 .speech-bubble {
     position: relative;
     background: var(--surface);
     border: 1px solid var(--glass-border);
-    padding: 15px;
-    border-radius: 15px;
-    max-width: 250px;
-    margin-bottom: 20px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    padding: 12px;
+    border-radius: 12px;
+    max-width: 200px;
+    font-size: 14px;
+    pointer-events: auto;
+    display: none;
 }
 
-.speech-bubble:after {
-    content: '';
-    position: absolute;
-    right: -10px;
-    bottom: 20px;
-    border-width: 10px 0 10px 10px;
-    border-style: solid;
-    border-color: transparent transparent transparent var(--surface);
-}
-
-.speech-bubble p {
-    margin: 0;
-    color: var(--text);
-    font-size: 0.9rem;
-    line-height: 1.4;
+.speech-bubble.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
 }
     
 </style>
@@ -2497,15 +2482,15 @@ let currentProduct = null;
 function openProductModal(product) {
     currentProduct = product;
     const modal = document.getElementById('productModal');
-    const mascotBubble = document.querySelector('.speech-bubble p');
+    const mascotBubble = document.querySelector('.speech-bubble');
     
     modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
     modal.querySelector('.modal-product-title').textContent = product.name;
     modal.querySelector('.modal-product-description').textContent = product.description;
     modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
 
-    mascotBubble.textContent = `Ótima escolha! O ${product.name} é uma delícia! 😋`;
-    mascotBubble.parentElement.style.opacity = '1';
+    mascotBubble.classList.add('active');
+    mascotBubble.querySelector('p').textContent = `Ótima escolha! O ${product.name} é uma delícia! 😋`;
 
     Promise.all([
         realtimeDB.ref('menu/toppings').once('value'),
@@ -2541,15 +2526,16 @@ function openProductModal(product) {
                             `Se estiver com mais fome, temos opções maiores disponíveis! 🍨`,
                             `Este acompanhamento combina perfeitamente com ${product.name}! 😍`
                         ];
-                        mascotBubble.textContent = messages[Math.floor(Math.random() * messages.length)];
+                        mascotBubble.classList.add('active');
+                        mascotBubble.querySelector('p').textContent = messages[Math.floor(Math.random() * messages.length)];
                         
                         if (product.name.includes('300ml')) {
                             setTimeout(() => {
-                                mascotBubble.textContent = 'Sabia que temos a opção de 500ml? Mais açaí, mais sabor! 🤤';
+                                mascotBubble.querySelector('p').textContent = 'Sabia que temos a opção de 500ml? Mais açaí, mais sabor! 🤤';
                             }, 3000);
                         } else if (product.name.includes('500ml')) {
                             setTimeout(() => {
-                                mascotBubble.textContent = 'Para compartilhar, nossa opção de 1 litro é perfeita! 🎉';
+                                mascotBubble.querySelector('p').textContent = 'Para compartilhar, nossa opção de 1 litro é perfeita! 🎉';
                             }, 3000);
                         }
                     } else {
@@ -2562,7 +2548,6 @@ function openProductModal(product) {
             });
         });
 
-        // Populate extras grid
         const extrasGrid = modal.querySelector('.extras-grid');
         extrasGrid.innerHTML = Object.values(extras)
             .filter(extra => extra.available)
@@ -2573,7 +2558,6 @@ function openProductModal(product) {
                 </div>
             `).join('');
 
-        // Setup extras selection
         const extraItems = extrasGrid.querySelectorAll('.extra-item');
         extraItems.forEach(item => {
             item.addEventListener('click', () => {
@@ -2585,6 +2569,20 @@ function openProductModal(product) {
 
     modal.style.display = 'block';
 }
+
+function hideMascotBubble() {
+    document.querySelector('.speech-bubble').classList.remove('active');
+}
+
+// Add to modal close events:
+document.querySelectorAll('.close-modal').forEach(button => {
+    button.addEventListener('click', () => {
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.style.display = 'none';
+        });
+        hideMascotBubble();
+    });
+});
 
 // Função para gerar um fingerprint do dispositivo
 async function generateDeviceFingerprint() {
