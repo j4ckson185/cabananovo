@@ -2505,126 +2505,124 @@ function hideMascot() {
 }
 
 function openProductModal(product) {
-    currentProduct = product;
-    const modal = document.getElementById('productModal');
-    const mascotContainer = document.querySelector('.mascot-container');
-    const mascotBubble = document.querySelector('.speech-bubble p');
-    
-    // Show mascot container immediately when modal opens
-    mascotContainer.style.display = 'flex';
-    mascotBubble.textContent = `Ótima escolha! O ${product.name} é uma delícia! 😋`;
-    
-    modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
-    modal.querySelector('.modal-product-title').textContent = product.name;
-    modal.querySelector('.modal-product-description').textContent = product.description;
-    modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
+   currentProduct = product;
+   const modal = document.getElementById('productModal');
+   const mascotContainer = document.querySelector('.mascot-container');
+   const mascotBubble = document.querySelector('.speech-bubble p');
+   
+   mascotContainer.style.display = 'flex';
+   mascotBubble.textContent = `Ótima escolha! Agora é só arrasar nos acompanhamentos! 😋`;
+   
+   modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
+   modal.querySelector('.modal-product-title').textContent = product.name;
+   modal.querySelector('.modal-product-description').textContent = product.description;
+   modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
 
-    Promise.all([
-        realtimeDB.ref('menu/toppings').once('value'),
-        realtimeDB.ref('extras').once('value')
-    ]).then(([toppingsSnapshot, extrasSnapshot]) => {
-        const toppings = toppingsSnapshot.val() || {};
-        const extras = extrasSnapshot.val() || {};
+   Promise.all([
+       realtimeDB.ref('menu/toppings').once('value'),
+       realtimeDB.ref('extras').once('value')
+   ]).then(([toppingsSnapshot, extrasSnapshot]) => {
+       const toppings = toppingsSnapshot.val() || {};
+       const extras = extrasSnapshot.val() || {};
 
-        const toppingsGrid = modal.querySelector('.toppings-grid');
-        toppingsGrid.innerHTML = Object.values(toppings)
-            .filter(topping => topping.available)
-            .map(topping => `
-                <div class="topping-item" data-topping="${topping.name}">
-                    ${topping.name}
-                    ${topping.price > 0 ? `<span class="topping-price">+R$ ${topping.price.toFixed(2)}</span>` : ''}
-                </div>
-            `).join('');
+       const toppingsGrid = modal.querySelector('.toppings-grid');
+       toppingsGrid.innerHTML = Object.values(toppings)
+           .filter(topping => topping.available)
+           .map(topping => `
+               <div class="topping-item" data-topping="${topping.name}">
+                   ${topping.name}
+                   ${topping.price > 0 ? `<span class="topping-price">+R$ ${topping.price.toFixed(2)}</span>` : ''}
+               </div>
+           `).join('');
 
-        let isFirstTopping = true;
-        const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
-        toppingItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const isCurrentlySelected = item.classList.contains('selected');
-                const selectedToppings = document.querySelectorAll('.topping-item.selected');
-                
-                if (isCurrentlySelected) {
-                    item.classList.remove('selected');
-                } else {
-                    if (selectedToppings.length < product.toppings.max) {
-                        item.classList.add('selected');
-                        
-                        if (isFirstTopping) {
-                            const mascot = document.querySelector('.mascot-container');
-                            mascot.style.display = 'flex';
-                            const mascotBubble = document.querySelector('.speech-bubble');
-                            mascotBubble.classList.add('active');
-                            mascotBubble.querySelector('p').textContent = `${item.textContent.trim()}? Excelente escolha! Que tal adicionar mais acompanhamentos para deixar seu açaí ainda mais especial? 😋`;
-                            isFirstTopping = false;
-                        } else {
-                            const messages = [
-                                `${item.textContent.trim()}? Ótimo complemento! 👌`,
-                                `Que tal adicionar alguns extras para deixar ainda mais especial? 🌟`,
-                                `Este acompanhamento combina perfeitamente com ${product.name}! 😍`
-                            ];
-                            const mascotBubble = document.querySelector('.speech-bubble');
-                            mascotBubble.querySelector('p').textContent = messages[Math.floor(Math.random() * messages.length)];
-                            
-if (product.name.includes('300ml')) {
-    setTimeout(() => {
-        const mascotBubble = document.querySelector('.speech-bubble');
-        mascotBubble.innerHTML = `
-            <p>Por apenas R$ 5,00 a mais, você pode levar o de 500ml! Mais açaí, mais sabor! 🤤</p>
-            <button onclick="switchToSize('500ml', '${product.name}')" 
-                    style="background: var(--gradient); color: white; border: none; 
-                    padding: 5px 10px; border-radius: 5px; margin-top: 8px; 
-                    cursor: pointer; font-size: 12px;">
-                Ver opção de 500ml
-            </button>
-        `;
-    }, 3000);
-} else if (product.name.includes('500ml')) {
-    setTimeout(() => {
-        const mascotBubble = document.querySelector('.speech-bubble');
-        mascotBubble.innerHTML = `
-            <p>Por apenas R$ 10,00 a mais, você leva o dobro! Opção de 1 litro perfeita para compartilhar! 🎉</p>
-            <button onclick="switchToSize('1L', '${product.name}')" 
-                    style="background: var(--gradient); color: white; border: none; 
-                    padding: 5px 10px; border-radius: 5px; margin-top: 8px; 
-                    cursor: pointer; font-size: 12px;">
-                Ver opção de 1 litro
-            </button>
-        `;
-    }, 3000);
-}
-                        }
-                    } else {
-                        showNotification(`Você pode selecionar no máximo ${product.toppings.max} acompanhamento${product.toppings.max > 1 ? 's' : ''}`);
-                    }
-                }
-                
-                validateToppingsSelection(product.toppings.min, product.toppings.max);
-                updateTotalPrice(product);
-            });
-        });
+       let isFirstTopping = true;
+       const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
+       toppingItems.forEach(item => {
+           item.addEventListener('click', () => {
+               const isCurrentlySelected = item.classList.contains('selected');
+               const selectedToppings = document.querySelectorAll('.topping-item.selected');
+               
+               if (isCurrentlySelected) {
+                   item.classList.remove('selected');
+               } else {
+                   if (selectedToppings.length < product.toppings.max) {
+                       item.classList.add('selected');
+                       
+                       if (isFirstTopping) {
+                           const mascot = document.querySelector('.mascot-container');
+                           mascot.style.display = 'flex';
+                           const mascotBubble = document.querySelector('.speech-bubble');
+                           mascotBubble.innerHTML = `${item.textContent.trim()}? Excelente escolha! Que tal adicionar mais acompanhamentos para deixar seu açaí ainda mais especial? 😋`;
+                           isFirstTopping = false;
+                       } else {
+                           const messages = [
+                               `${item.textContent.trim()}? Ótimo complemento! 👌`,
+                               `Que tal adicionar alguns extras para deixar ainda mais especial? 🌟`,
+                               `Este acompanhamento combina perfeitamente com ${product.name}! 😍`
+                           ];
+                           const mascotBubble = document.querySelector('.speech-bubble');
+                           mascotBubble.innerHTML = messages[Math.floor(Math.random() * messages.length)];
+                       }
 
-        const extrasGrid = modal.querySelector('.extras-grid');
-        extrasGrid.innerHTML = Object.values(extras)
-            .filter(extra => extra.available)
-            .map(extra => `
-                <div class="extra-item" data-extra="${extra.name}">
-                    ${extra.name}
-                    ${extra.price > 0 ? `<span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>` : ''}
-                </div>
-            `).join('');
+                       if (product.name.includes('300ml')) {
+                           setTimeout(() => {
+                               const mascotBubble = document.querySelector('.speech-bubble');
+                               mascotBubble.innerHTML = `
+                                   <p>Por apenas R$ 5,00 a mais, você pode levar o de 500ml! Mais açaí, mais sabor! 🤤</p>
+                                   <button onclick="switchToSize('500ml', '${product.name}')" 
+                                           style="background: var(--gradient); color: white; border: none; 
+                                           padding: 5px 10px; border-radius: 5px; margin-top: 8px; 
+                                           cursor: pointer; font-size: 12px;">
+                                       Ver opção de 500ml
+                                   </button>
+                               `;
+                           }, 3000);
+                       } else if (product.name.includes('500ml')) {
+                           setTimeout(() => {
+                               const mascotBubble = document.querySelector('.speech-bubble');
+                               mascotBubble.innerHTML = `
+                                   <p>Por apenas R$ 10,00 a mais, você leva o dobro! Opção de 1 litro perfeita para compartilhar! 🎉</p>
+                                   <button onclick="switchToSize('1L', '${product.name}')" 
+                                           style="background: var(--gradient); color: white; border: none; 
+                                           padding: 5px 10px; border-radius: 5px; margin-top: 8px; 
+                                           cursor: pointer; font-size: 12px;">
+                                       Ver opção de 1 litro
+                                   </button>
+                               `;
+                           }, 3000);
+                       }
+                   } else {
+                       showNotification(`Você pode selecionar no máximo ${product.toppings.max} acompanhamento${product.toppings.max > 1 ? 's' : ''}`);
+                   }
+               }
+               
+               validateToppingsSelection(product.toppings.min, product.toppings.max);
+               updateTotalPrice(product);
+           });
+       });
 
-        const extraItems = extrasGrid.querySelectorAll('.extra-item');
-        extraItems.forEach(item => {
-            item.addEventListener('click', () => {
-                item.classList.toggle('selected');
-                const mascotBubble = document.querySelector('.speech-bubble');
-                mascotBubble.querySelector('p').textContent = 'Excelente escolha! Os extras deixam seu açaí ainda mais especial! 🎉';
-                updateTotalPrice(product);
-            });
-        });
-    });
+       const extrasGrid = modal.querySelector('.extras-grid');
+       extrasGrid.innerHTML = Object.values(extras)
+           .filter(extra => extra.available)
+           .map(extra => `
+               <div class="extra-item" data-extra="${extra.name}">
+                   ${extra.name}
+                   ${extra.price > 0 ? `<span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>` : ''}
+               </div>
+           `).join('');
 
-    modal.style.display = 'block';
+       const extraItems = extrasGrid.querySelectorAll('.extra-item');
+       extraItems.forEach(item => {
+           item.addEventListener('click', () => {
+               item.classList.toggle('selected');
+               const mascotBubble = document.querySelector('.speech-bubble');
+               mascotBubble.querySelector('p').textContent = 'Excelente escolha! Os extras deixam seu açaí ainda mais especial! 🎉';
+               updateTotalPrice(product);
+           });
+       });
+   });
+
+   modal.style.display = 'block';
 }
 
 function switchToSize(newSize, currentName) {
