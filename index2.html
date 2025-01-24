@@ -879,8 +879,8 @@ header {
        padding: 0.8rem;
        font-size: 0.9rem;
    }
-}
 
+    /* Adicione antes do último } da tag <style> */
 .store-status {
     max-width: 1400px;
     margin: 100px auto 0;
@@ -911,9 +911,10 @@ header {
     }
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
 }
 
 /* Combo Builder Styles */
@@ -1151,65 +1152,7 @@ header {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
 }
-
-#comboMascot .mascot-speech {
-    transition: all 0.3s ease;
-    transform: translateX(-20px);
-}
-
-#comboMascot .mascot-speech:after {
-    content: '';
-    position: absolute;
-    bottom: -8px;
-    right: 20px;
-    border: 8px solid transparent;
-    border-top-color: white;
-}
-
-#comboModal #comboMascot {
-    display: block;
-    opacity: 1;
-}
-
-#comboModal #comboMascot .mascot-speech {
-    z-index: 2001;
-}
-
-#comboModal #comboMascot img {
-    cursor: pointer;
-}
-
-@media (max-width: 768px) {
-    .modal-content {
-        width: 95%;
-        max-width: 100%;
-        margin: 10px;
-        padding: 15px;
-        max-height: 90vh;
-        overflow-y: auto;
-    }
     
-    .modal-product-image {
-        width: 100%;
-        height: auto;
-        max-height: 300px;
-        object-fit: cover;
-        float: none;
-        display: block;
-        margin: 0 auto 1rem;
-    }
-    
-    .product-card {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .product-image {
-        width: 100%;
-        height: 200px;
-        margin-bottom: 1rem;
-    }
-}
 </style>
 </head>
 <body>
@@ -1300,6 +1243,7 @@ header {
 
     <!-- Product Modal -->
     <div class="modal" id="productModal">
+        <div class="modal-content">
             <div class="modal-header">
                 <button class="close-modal">&times;</button>
             </div>
@@ -1341,7 +1285,6 @@ header {
     <!-- Combo Builder Modal -->
 <div class="modal" id="comboModal">
     <div class="modal-content">
-                <div class="modal-content">
         <div class="modal-header">
             <h2 class="modal-product-title">Monte seu Combo</h2>
             <button class="close-modal">&times;</button>
@@ -1664,6 +1607,28 @@ header {
     </div>
 </div>
 
+    <!-- Antes de fechar o </body> -->
+<div class="modal" id="cartModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Seu Carrinho</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="cart-items"></div>
+        <div class="cart-total">
+            <div class="subtotal">Subtotal: R$ <span>0.00</span></div>
+            <div class="delivery-fee">
+                <i class="fas fa-motorcycle"></i> Taxa de Entrega: R$ 3,00
+            </div>
+            <div class="total">Total: R$ <span>0.00</span></div>
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn continue-shopping">Continuar Comprando</button>
+            <button class="modal-btn checkout">Finalizar Pedido</button>
+        </div>
+    </div>
+</div>
+
 <script>
 // Firebase initialization
 const firebaseConfig = {
@@ -1866,53 +1831,31 @@ function initComboBuilder() {
     const backBtn = comboModal.querySelector('.btn-back');
     const addCartBtn = comboModal.querySelector('.btn-add-cart');
     
-    // First, add the mascot HTML
-    const mascotHTML = `
-        <div id="comboMascot" class="mascot-container" style="position: fixed; bottom: 20px; right: 20px; width: 120px; height: 140px; z-index: 2000;">
-            <div class="mascot-speech" style="position: absolute; bottom: 120%; right: 0; background: white; padding: 12px; border-radius: 10px; width: 200px; opacity: 0; visibility: hidden; color: #10002B; font-size: 14px;">
-                <p></p>
-            </div>
-            <img src="https://i.ibb.co/KbthVz8/Designer-1.png" alt="Mascote Cabana Açaí" style="width: 100%; height: 100%; object-fit: contain; cursor: pointer;">
-        </div>
-    `;
-    
-    comboModal.querySelector('.modal-content').insertAdjacentHTML('afterbegin', mascotHTML);
-    
-    // Show initial message
-    setTimeout(() => {
-        showMascotMessage(1);
-        
-        // Add click event to mascot
-        const mascot = document.getElementById('comboMascot');
-        if (mascot) {
-            mascot.querySelector('img').addEventListener('click', () => {
-                showMascotMessage(currentStep);
-            });
-        }
-    }, 100);
-
-    // Size selection
-    document.querySelectorAll('.size-option').forEach(option => {
-        option.addEventListener('click', function() {
-            document.querySelectorAll('.size-option').forEach(opt => {
-                opt.classList.remove('selected');
-                opt.style.background = '';
-            });
-            
-            this.classList.add('selected');
-            this.style.background = 'var(--gradient)';
-            
-            comboData.size = {
-                size: this.dataset.size,
-                price: parseFloat(this.dataset.price)
-            };
-            
-            nextBtn.disabled = false;
+// Size selection
+document.querySelectorAll('.size-option').forEach(option => {
+    option.addEventListener('click', function() {
+        // Remove seleção anterior
+        document.querySelectorAll('.size-option').forEach(opt => {
+            opt.classList.remove('selected');
+            opt.style.background = ''; // Remove background anterior
         });
+        
+        // Adiciona nova seleção com gradiente
+        this.classList.add('selected');
+        this.style.background = 'var(--gradient)';
+        
+        comboData.size = {
+            size: this.dataset.size,
+            price: parseFloat(this.dataset.price)
+        };
+        
+        nextBtn.disabled = false;
     });
+});
 
-    setupFlavorSelectors();
+        setupFlavorSelectors();
 
+    // Configuração dos botões de navegação
     nextBtn.addEventListener('click', () => {
         if (validateStep()) {
             currentStep++;
@@ -1936,37 +1879,11 @@ function initComboBuilder() {
         resetComboBuilder();
     });
 
+    // Load toppings and extras
     loadToppingsAndExtras();
-    resetComboBuilder();
-}
-
-    function showMascotMessage(step) {
-    const mascot = document.getElementById('comboMascot');
-    if (!mascot) return;
-
-    const speech = mascot.querySelector('.mascot-speech');
-    const speechText = mascot.querySelector('.mascot-speech p');
-
-    let message = "";
-    switch(step) {
-        case 1: message = "O Combo de 1 Litro é nosso campeão de vendas!"; break;
-        case 2: message = "Você pode escolher até 2 sabores pra cada açaí, mas se preferir apenas um."; break;
-        case 3: message = "Escolha seus acompanhamentos favoritos! Lembre-se que a quantidade varia de acordo com o tamanho."; break;
-        case 4: message = "Confira se está tudo certinho antes de adicionar ao carrinho!"; break;
-        default: message = "O Combo de 1 Litro é nosso campeão de vendas!";
-    }
-
-    speechText.textContent = message;
-    speech.style.opacity = '1';
-    speech.style.visibility = 'visible';
     
-    // Esconde a mensagem após 5 segundos
-    setTimeout(() => {
-        if (speech) {
-            speech.style.opacity = '0';
-            speech.style.visibility = 'hidden';
-        }
-    }, 5000);
+    // Reset inicial
+    resetComboBuilder();
 }
 
     function setupFlavorSelectors() {
@@ -2111,13 +2028,6 @@ function resetComboBuilder() {
         extras: []
     };
     updateComboView();
-        // Add this new code block here, before the closing }
-    const mascot = document.getElementById('comboMascot');
-    if (mascot) {
-        const speech = mascot.querySelector('.mascot-speech');
-        speech.style.opacity = '0';
-        speech.style.visibility = 'hidden';
-    }
 }
 
 function updateComboView() {
@@ -2148,32 +2058,6 @@ function updateComboView() {
     if (currentStep === 4) {
         updateComboSummary();
     }
-       // Add this new code block here, before the closing }
-const mascot = document.getElementById('comboMascot');
-if (mascot) {
-    const speech = mascot.querySelector('.mascot-speech');
-    const speechText = mascot.querySelector('.mascot-speech p');
-
-    if (currentStep === 1) {
-        speechText.textContent = "O Combo de 1 Litro é nosso campeão de vendas!";
-    } else if (currentStep === 2) {
-        speechText.textContent = "Você pode escolher até 2 sabores pra cada açaí, mas se preferir apenas um.";
-    } else if (currentStep === 3) {
-        speechText.textContent = "Escolha seus acompanhamentos favoritos! Lembre-se que a quantidade varia de acordo com o tamanho.";
-    } else if (currentStep === 4) {
-        speechText.textContent = "Confira se está tudo certinho antes de adicionar ao carrinho!";
-    }
-
-    speech.style.opacity = '1';
-    speech.style.visibility = 'visible';
-
-    setTimeout(() => {
-        if (speech) {
-            speech.style.opacity = '0';
-            speech.style.visibility = 'hidden';
-        }
-    }, 5000);
-}
 }
 
 function loadToppingsAndExtras() {
@@ -2361,7 +2245,6 @@ function updateCategoryButtons(categories) {
 }
 
 function checkStoreStatus() {
-    // Remove qualquer status existente anterior
     const existingStatus = document.querySelector('.store-status');
     if (existingStatus) {
         existingStatus.remove();
@@ -2408,21 +2291,22 @@ function checkStoreStatus() {
         });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Evento para o ícone do carrinho
-    const cartIcon = document.querySelector('.cart-icon');
-    if (cartIcon) {
-        cartIcon.addEventListener('click', showCartModal);
-    }
-
-    // Firebase listeners
-    loadMenuProducts();
-    loadCategories();
-    checkStoreStatus();
-    setInterval(checkStoreStatus, 60000);
-    setupPaymentEvents();
+document.addEventListener('DOMContentLoaded', function() {
+  const mascot = document.getElementById('mascot');
+  const messages = [
+    "Olá! Bem-vindo à Cabana Açaí! 😊",
+    "Que tal um açaí delicioso hoje? 🍇",
+    "Experimente nossos combos! 🥄",
+    "Posso ajudar você a escolher? 😃"
+  ];
+  let messageIndex = 0;
+  
+  mascot.addEventListener('click', function() {
+    const bubble = mascot.querySelector('.speech-bubble p');
+    messageIndex = (messageIndex + 1) % messages.length;
+    bubble.textContent = messages[messageIndex];
+  });
 });
-    
 
 function isStoreOpenNow(schedule) {
     const now = new Date();
@@ -2733,12 +2617,11 @@ function addToCart(product, selectedToppings) {
         price: totalPrice,
         originalPrice: product.price
     });
-    
     updateCartCount();
-    showCartModal(); // Adiciona esta linha para mostrar o carrinho automaticamente
     
-    // Fecha o modal de produto
+    // Close product modal and show cart modal
     document.getElementById('productModal').style.display = 'none';
+    showCartModal();
 }
 
 async function applyCoupon() {
@@ -2825,7 +2708,7 @@ function showCartModal() {
             <div class="cart-item">
                 <div class="cart-item-details">
                     <h3 class="cart-item-title">${item.name}</h3>
-                    <p class="cart-item-description" style="white-space: pre-line;">${item.description || ''}</p>
+                    <p class="cart-item-description" style="white-space: pre-line;">${item.description}</p>
                     ${item.selectedExtras.length > 0 && !isCombo ? 
                         `<p class="cart-item-extras">Extras: ${item.selectedExtras.join(', ')}</p>` : 
                         ''}
@@ -3271,6 +3154,28 @@ function closeCreateOrderModal() {
     document.getElementById('createOrderModal').style.display = 'none';
 }
 
+window.addEventListener('load', function() {
+  const mascot = document.getElementById('mascot');
+  const messages = [
+    "Olá! Bem-vindo à Cabana Açaí! 😊",
+    "Que tal um açaí delicioso hoje? 🍇",
+    "Experimente nossos combos! 🥄",
+    "Posso ajudar você a escolher? 😃"
+  ];
+  let messageIndex = 0;
+  
+  // Mostra o mascote com fade
+  setTimeout(() => {
+    mascot.style.opacity = '1';
+  }, 500);
+  
+  mascot.addEventListener('click', function() {
+    const bubble = mascot.querySelector('.speech-bubble p');
+    messageIndex = (messageIndex + 1) % messages.length;
+    bubble.textContent = messages[messageIndex];
+  });
+});
+
 async function submitOrderFromDigitalMenu() {
     const order = {
         id: document.getElementById('orderId').value,
@@ -3325,16 +3230,15 @@ async function submitOrderFromDigitalMenu() {
     
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM Carregado'); // Log para diagnóstico
+
+    // Evento para o ícone do carrinho
     const cartIcon = document.querySelector('.cart-icon');
     if (cartIcon) {
-        cartIcon.addEventListener('click', () => {
-            console.log('Ícone do carrinho clicado');
-            showCartModal();
-        });
+        cartIcon.addEventListener('click', showCartModal);
     } else {
         console.error('Ícone do carrinho não encontrado');
     }
-});
 
     // Evento para botão de checkout
     const checkoutButton = document.querySelector('.checkout');
