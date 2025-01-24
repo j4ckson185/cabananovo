@@ -2504,25 +2504,25 @@ function hideMascot() {
     mascotContainer.style.display = 'none';
 }
 
-const toppingMessages = [
-    "Uau! Ótima escolha de acompanhamento! 🌟",
-    "Esse é um dos meus favoritos! Vai ficar delicioso! 😋",
-    "Hmm... isso combina perfeitamente com o seu açaí! 🥰",
-    "Mais sabor para sua taça! Continue escolhendo! 🍓🍫",
-    "Você tem um ótimo paladar! Isso vai ser incrível! 👌",
-    "Quem sabe escolher, sabe! 😎 Que ótima escolha!",
-    "Adicionando um toque especial ao seu açaí! ✨",
-    "Isso vai deixar o seu pedido ainda mais irresistível! 😍",
-    "Ótima pedida! Já estou com água na boca só de imaginar! 🤤",
-    "Que delícia! Seu açaí vai ser um espetáculo! 🎉",
-    "Essa combinação é campeã! Boa escolha! 🏆",
-    "Você está criando uma obra-prima de sabores! 🎨🍧",
-    "Hmm, essa escolha é perfeita para os amantes de doce! 🍬",
-    "Seu açaí vai ser o destaque do dia! 😍🥳",
-    "Mais um toque especial! Já está ficando incrível! 🌟🍴"
-];
-
 function openProductModal(product) {
+   const toppingMessages = [
+       "Uau! Ótima escolha de acompanhamento! 🌟",
+       "Esse é um dos meus favoritos! Vai ficar delicioso! 😋",
+       "Hmm... isso combina perfeitamente com o seu açaí! 🥰",
+       "Mais sabor para sua taça! Continue escolhendo! 🍓🍫",
+       "Você tem um ótimo paladar! Isso vai ser incrível! 👌",
+       "Quem sabe escolher, sabe! 😎 Que ótima escolha!",
+       "Adicionando um toque especial ao seu açaí! ✨",
+       "Isso vai deixar o seu pedido ainda mais irresistível! 😍",
+       "Ótima pedida! Já estou com água na boca só de imaginar! 🤤",
+       "Que delícia! Seu açaí vai ser um espetáculo! 🎉",
+       "Essa combinação é campeã! Boa escolha! 🏆",
+       "Você está criando uma obra-prima de sabores! 🎨🍧",
+       "Hmm, essa escolha é perfeita para os amantes de doce! 🍬",
+       "Seu açaí vai ser o destaque do dia! 😍🥳",
+       "Mais um toque especial! Já está ficando incrível! 🌟🍴"
+   ];
+
    currentProduct = product;
    const modal = document.getElementById('productModal');
    const mascotContainer = document.querySelector('.mascot-container');
@@ -2570,10 +2570,41 @@ function openProductModal(product) {
                        mascot.style.display = 'flex';
                        const mascotBubble = document.querySelector('.speech-bubble p');
                        
+                       const randomMessage = toppingMessages[Math.floor(Math.random() * toppingMessages.length)];
+                       
                        if (selectedToppings.length === 0) {
-                           mascotBubble.textContent = `Primeiro acompanhamento: ${item.textContent.trim()}! Ótima escolha!`;
+                           mascotBubble.innerHTML = `Primeiro acompanhamento: ${item.textContent.trim()}! ${randomMessage}`;
                        } else {
-                           mascotBubble.textContent = 'Mais um acompanhamento delicioso!';
+                           mascotBubble.innerHTML = randomMessage;
+                       }
+                       
+                       // Sugestão de tamanho maior
+                       if (selectedToppings.length === 1) {
+                           if (product.name.includes('300ml')) {
+                               setTimeout(() => {
+                                   mascotBubble.innerHTML = `
+                                       <p>Por apenas R$ 5,00 a mais, você pode levar o de 500ml! Mais açaí, mais sabor! 🤤</p>
+                                       <button onclick="switchToSize('500ml', '${product.name}')" 
+                                               style="background: var(--gradient); color: white; border: none; 
+                                               padding: 5px 10px; border-radius: 5px; margin-top: 8px; 
+                                               cursor: pointer; font-size: 12px;">
+                                           Ver opção de 500ml
+                                       </button>
+                                   `;
+                               }, 3000);
+                           } else if (product.name.includes('500ml')) {
+                               setTimeout(() => {
+                                   mascotBubble.innerHTML = `
+                                       <p>Por apenas R$ 10,00 a mais, você leva o dobro! Opção de 1 litro perfeita para compartilhar! 🎉</p>
+                                       <button onclick="switchToSize('1 Litro', '${product.name}')" 
+                                               style="background: var(--gradient); color: white; border: none; 
+                                               padding: 5px 10px; border-radius: 5px; margin-top: 8px; 
+                                               cursor: pointer; font-size: 12px;">
+                                           Ver opção de 1 litro
+                                       </button>
+                                   `;
+                               }, 3000);
+                           }
                        }
                        
                        if (selectedToppings.length === product.toppings.max - 1) {
