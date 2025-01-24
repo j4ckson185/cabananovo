@@ -1152,6 +1152,52 @@ header {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
 }
+
+.mascot-container {
+   position: fixed; /* Alterado para fixed */
+   right: 15px;
+   bottom: 15px;
+   z-index: 9999;
+   display: none;
+}
+
+.mascot {
+   width: 45px;  
+   height: 45px;
+   object-fit: contain;
+}
+
+.speech-bubble {
+   position: absolute;
+   right: 55px;
+   bottom: 5px;
+   background: var(--surface);
+   border: 1px solid var(--glass-border);
+   padding: 10px;
+   border-radius: 8px;
+   width: 180px;
+   font-size: 13px;
+}
+
+.speech-bubble:after {
+   right: -8px;
+   bottom: 12px;
+   border-width: 8px 0 8px 8px;
+}
+
+/* Responsivo para celular */
+@media (max-width: 768px) {
+   .mascot {
+       width: 60px;
+       height: 60px;
+   }
+   
+   .speech-bubble {
+       width: 200px;
+       right: 70px;
+       font-size: 14px;
+   }
+}
     
 </style>
 </head>
@@ -1242,45 +1288,54 @@ header {
     </div>
 
     <!-- Product Modal -->
-    <div class="modal" id="productModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button class="close-modal">&times;</button>
-            </div>
-            <img src="/api/placeholder/800/400" alt="" class="modal-product-image">
-            <div class="modal-product-info">
-                <h2 class="modal-product-title">Açaí com Leite Ninho</h2>
-                <p class="modal-product-description">
-                    Açaí cremoso coberto com leite ninho em pó e frutas selecionadas da melhor qualidade.
-                </p>
-                <div class="modal-product-price">R$ 18,90</div>
-            </div>
-            
-            <div class="toppings-section">
-                <h3 class="toppings-title">Escolha seus Acompanhamentos</h3>
-                <div class="toppings-grid">
-                    <div class="topping-item">Granola</div>
-                    <div class="topping-item">Leite em Pó</div>
-                    <div class="topping-item">Morango</div>
-                    <div class="topping-item">Banana</div>
-                    <div class="topping-item">Kiwi</div>
-                    <div class="topping-item">Paçoca</div>
-                </div>
-            </div>
+<!-- Product Modal -->
+<div class="modal" id="productModal">
+   <div class="modal-content">
+       <div class="modal-header">
+           <button class="close-modal">&times;</button>
+       </div>
+       <img src="/api/placeholder/800/400" alt="" class="modal-product-image">
+       <div class="modal-product-info">
+           <h2 class="modal-product-title">Açaí com Leite Ninho</h2>
+           <p class="modal-product-description">
+               Açaí cremoso coberto com leite ninho em pó e frutas selecionadas da melhor qualidade.
+           </p>
+           <div class="modal-product-price">R$ 18,90</div>
+       </div>
+       
+       <div class="toppings-section">
+           <h3 class="toppings-title">Escolha seus Acompanhamentos</h3>
+           <div class="toppings-grid">
+               <div class="topping-item">Granola</div>
+               <div class="topping-item">Leite em Pó</div>
+               <div class="topping-item">Morango</div>
+               <div class="topping-item">Banana</div>
+               <div class="topping-item">Kiwi</div>
+               <div class="topping-item">Paçoca</div>
+           </div>
+       </div>
 
-            <div class="extras-section">
-    <h3 class="extras-title">Adicione Itens Extras (opcional)</h3>
-    <div class="extras-grid">
-        <!-- Items will be loaded dynamically -->
-    </div>
+       <div class="extras-section">
+           <h3 class="extras-title">Adicione Itens Extras (opcional)</h3>
+           <div class="extras-grid">
+               <!-- Items will be loaded dynamically -->
+           </div>
+       </div>
+           
+       <div class="modal-buttons">
+           <button class="modal-btn add-to-cart">Adicionar ao Carrinho</button>
+           <button class="modal-btn continue-shopping">Continuar Comprando</button>
+       </div>
+
+       <!-- Mascote aqui -->
+       <div class="mascot-container">
+           <div class="speech-bubble">
+               <p>Olá! Bem-vindo à Cabana Açaí! 😊</p>
+           </div>
+           <img src="https://i.ibb.co/KbthVz8/Designer-1.png" alt="Mascote" class="mascot" id="mascot">
+       </div>
+   </div>
 </div>
-            
-            <div class="modal-buttons">
-                <button class="modal-btn add-to-cart">Adicionar ao Carrinho</button>
-                <button class="modal-btn continue-shopping">Continuar Comprando</button>
-            </div>
-        </div>
-    </div>
 
     <!-- Combo Builder Modal -->
 <div class="modal" id="comboModal">
@@ -2373,13 +2428,14 @@ function setupEventListeners() {
     });
 
     // Modal close buttons
-    document.querySelectorAll('.close-modal').forEach(button => {
-        button.addEventListener('click', () => {
-            document.querySelectorAll('.modal').forEach(modal => {
-                modal.style.display = 'none';
-            });
+document.querySelectorAll('.close-modal').forEach(button => {
+    button.addEventListener('click', () => {
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.style.display = 'none';
         });
+        hideMascot();
     });
+});
 
     // Continue shopping button
     document.querySelector('.continue-shopping').addEventListener('click', () => {
@@ -2443,78 +2499,171 @@ function displayProducts(productsToShow) {
     
 let currentProduct = null;
 
+function hideMascot() {
+    const mascotContainer = document.querySelector('.mascot-container');
+    mascotContainer.style.display = 'none';
+}
+
 function openProductModal(product) {
-    currentProduct = product;
-    const modal = document.getElementById('productModal');
+   const toppingMessages = [
+       "Uau! Ótima escolha de acompanhamento! 🌟",
+       "Esse é um dos meus favoritos! Vai ficar delicioso! 😋",
+       "Hmm... isso combina perfeitamente com o seu açaí! 🥰",
+       "Mais sabor para sua taça! Continue escolhendo! 🍓🍫",
+       "Você tem um ótimo paladar! Isso vai ser incrível! 👌",
+       "Quem sabe escolher, sabe! 😎 Que ótima escolha!",
+       "Adicionando um toque especial ao seu açaí! ✨",
+       "Isso vai deixar o seu pedido ainda mais irresistível! 😍",
+       "Ótima pedida! Já estou com água na boca só de imaginar! 🤤",
+       "Que delícia! Seu açaí vai ser um espetáculo! 🎉",
+       "Essa combinação é campeã! Boa escolha! 🏆",
+       "Você está criando uma obra-prima de sabores! 🎨🍧",
+       "Hmm, essa escolha é perfeita para os amantes de doce! 🍬",
+       "Seu açaí vai ser o destaque do dia! 😍🥳",
+       "Mais um toque especial! Já está ficando incrível! 🌟🍴"
+   ];
+
+   currentProduct = product;
+   const modal = document.getElementById('productModal');
+   const mascotContainer = document.querySelector('.mascot-container');
+   const mascotBubble = document.querySelector('.speech-bubble p');
+   
+   mascotContainer.style.display = 'flex';
+   mascotBubble.textContent = `Ótima escolha! Agora é só arrasar nos acompanhamentos! 😊`;
+   
+   modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
+   modal.querySelector('.modal-product-title').textContent = product.name;
+   modal.querySelector('.modal-product-description').textContent = product.description;
+   modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
+
+   Promise.all([
+       realtimeDB.ref('menu/toppings').once('value'),
+       realtimeDB.ref('extras').once('value')
+   ]).then(([toppingsSnapshot, extrasSnapshot]) => {
+       const toppings = toppingsSnapshot.val() || {};
+       const extras = extrasSnapshot.val() || {};
+
+       const toppingsGrid = modal.querySelector('.toppings-grid');
+       toppingsGrid.innerHTML = Object.values(toppings)
+           .filter(topping => topping.available)
+           .map(topping => `
+               <div class="topping-item" data-topping="${topping.name}">
+                   ${topping.name}
+                   ${topping.price > 0 ? `<span class="topping-price">+R$ ${topping.price.toFixed(2)}</span>` : ''}
+               </div>
+           `).join('');
+
+       let isFirstTopping = true;
+       const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
+       toppingItems.forEach(item => {
+           item.addEventListener('click', () => {
+               const isCurrentlySelected = item.classList.contains('selected');
+               const selectedToppings = document.querySelectorAll('.topping-item.selected');
+               
+               if (isCurrentlySelected) {
+                   item.classList.remove('selected');
+               } else {
+                   if (selectedToppings.length < product.toppings.max) {
+                       item.classList.add('selected');
+                       
+                       const mascot = document.querySelector('.mascot-container');
+                       mascot.style.display = 'flex';
+                       const mascotBubble = document.querySelector('.speech-bubble p');
+                       
+                       const randomMessage = toppingMessages[Math.floor(Math.random() * toppingMessages.length)];
+                       
+                       if (selectedToppings.length === 0) {
+                           mascotBubble.innerHTML = `Primeiro acompanhamento: ${item.textContent.trim()}! ${randomMessage}`;
+                       } else {
+                           mascotBubble.innerHTML = randomMessage;
+                       }
+                       
+                       // Sugestão de tamanho maior
+                       if (selectedToppings.length === 1) {
+                           if (product.name.includes('300ml')) {
+                               setTimeout(() => {
+                                   mascotBubble.innerHTML = `
+                                       <p>Por apenas R$ 5,00 a mais, você pode levar o de 500ml! Mais açaí, mais sabor! 🤤</p>
+                                       <button onclick="switchToSize('500ml', '${product.name}')" 
+                                               style="background: var(--gradient); color: white; border: none; 
+                                               padding: 5px 10px; border-radius: 5px; margin-top: 8px; 
+                                               cursor: pointer; font-size: 12px;">
+                                           Ver opção de 500ml
+                                       </button>
+                                   `;
+                               }, 3000);
+                           } else if (product.name.includes('500ml')) {
+                               setTimeout(() => {
+                                   mascotBubble.innerHTML = `
+                                       <p>Por apenas R$ 10,00 a mais, você leva o dobro! Opção de 1 litro perfeita para compartilhar! 🎉</p>
+                                       <button onclick="switchToSize('1 Litro', '${product.name}')" 
+                                               style="background: var(--gradient); color: white; border: none; 
+                                               padding: 5px 10px; border-radius: 5px; margin-top: 8px; 
+                                               cursor: pointer; font-size: 12px;">
+                                           Ver opção de 1 litro
+                                       </button>
+                                   `;
+                               }, 3000);
+                           }
+                       }
+                       
+                       if (selectedToppings.length === product.toppings.max - 1) {
+                           setTimeout(() => {
+                               mascotBubble.textContent = 'Último acompanhamento! Escolha com sabedoria! 🧐';
+                           }, 3000);
+                       }
+                   } else {
+                       showNotification(`Você pode selecionar no máximo ${product.toppings.max} acompanhamento${product.toppings.max > 1 ? 's' : ''}!`);
+                   }
+               }
+               
+               validateToppingsSelection(product.toppings.min, product.toppings.max);
+               updateTotalPrice(product);
+           });
+       });
+
+       const extrasGrid = modal.querySelector('.extras-grid');
+       extrasGrid.innerHTML = Object.values(extras)
+           .filter(extra => extra.available)
+           .map(extra => `
+               <div class="extra-item" data-extra="${extra.name}">
+                   ${extra.name}
+                   ${extra.price > 0 ? `<span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>` : ''}
+               </div>
+           `).join('');
+
+       const extraItems = extrasGrid.querySelectorAll('.extra-item');
+       extraItems.forEach(item => {
+           item.addEventListener('click', () => {
+               item.classList.toggle('selected');
+               const mascotBubble = document.querySelector('.speech-bubble p');
+               mascotBubble.textContent = 'Excelente escolha! Os extras deixam seu açaí ainda mais especial! 🎉';
+               updateTotalPrice(product);
+           });
+       });
+   });
+
+   modal.style.display = 'block';
+}
+
+function switchToSize(newSize, currentName) {
+    const newProductName = currentName.replace(/500ml|300ml|1 Litro/g, newSize);
     
-    modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
-    modal.querySelector('.modal-product-title').textContent = product.name;
-    modal.querySelector('.modal-product-description').textContent = product.description;
-    modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
-
-    // Load available toppings and extras from Firebase
-    Promise.all([
-        realtimeDB.ref('menu/toppings').once('value'),
-        realtimeDB.ref('extras').once('value')
-    ]).then(([toppingsSnapshot, extrasSnapshot]) => {
-        const toppings = toppingsSnapshot.val() || {};
-        const extras = extrasSnapshot.val() || {};
-
-        // Populate toppings grid
-        const toppingsGrid = modal.querySelector('.toppings-grid');
-        toppingsGrid.innerHTML = Object.values(toppings)
-            .filter(topping => topping.available)
-            .map(topping => `
-                <div class="topping-item" data-topping="${topping.name}">
-                    ${topping.name}
-                    ${topping.price > 0 ? `<span class="topping-price">+R$ ${topping.price.toFixed(2)}</span>` : ''}
-                </div>
-            `).join('');
-
-        // Populate extras grid
-        const extrasGrid = modal.querySelector('.extras-grid');
-        extrasGrid.innerHTML = Object.values(extras)
-            .filter(extra => extra.available)
-            .map(extra => `
-                <div class="extra-item" data-extra="${extra.name}">
-                    ${extra.name}
-                    ${extra.price > 0 ? `<span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>` : ''}
-                </div>
-            `).join('');
-
-        // Setup topping selection
-        const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
-        toppingItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const isCurrentlySelected = item.classList.contains('selected');
-                
-                if (isCurrentlySelected) {
-                    item.classList.remove('selected');
-                } else {
-                    const selectedToppings = document.querySelectorAll('.topping-item.selected');
-                    if (selectedToppings.length < product.toppings.max) {
-                        item.classList.add('selected');
-                    } else {
-                        showNotification(`Você pode selecionar no máximo ${product.toppings.max} acompanhamento${product.toppings.max > 1 ? 's' : ''}`);
-                    }
-                }
-                
-                validateToppingsSelection(product.toppings.min, product.toppings.max);
-                updateTotalPrice(product);
-            });
-        });
-
-        // Setup extras selection
-        const extraItems = extrasGrid.querySelectorAll('.extra-item');
-        extraItems.forEach(item => {
-            item.addEventListener('click', () => {
-                item.classList.toggle('selected');
-                updateTotalPrice(product);
-            });
-        });
-    });
-
-    modal.style.display = 'block';
+    const newProduct = currentProducts.find(p => p.name === newProductName);
+    
+    if (newProduct) {
+        document.getElementById('productModal').style.display = 'none';
+        
+        setTimeout(() => {
+            const modal = document.getElementById('productModal');
+            modal.style.display = 'block';
+            
+            const mascotBubble = document.querySelector('.speech-bubble');
+            mascotBubble.innerHTML = `<p>Ótima escolha! Agora é só arrasar nos acompanhamentos! 😋</p>`;
+            
+            openProductModal(newProduct);
+        }, 100);
+    }
 }
 
 // Função para gerar um fingerprint do dispositivo
@@ -3257,6 +3406,7 @@ document.addEventListener('DOMContentLoaded', () => {
     checkStoreStatus();
     setInterval(checkStoreStatus, 60000);
     setupPaymentEvents();
+
 });
    
    // Categories
