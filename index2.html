@@ -2565,15 +2565,33 @@ function openProductModal(product) {
                             const mascotBubble = document.querySelector('.speech-bubble');
                             mascotBubble.querySelector('p').textContent = messages[Math.floor(Math.random() * messages.length)];
                             
-                            if (product.name.includes('300ml')) {
-                                setTimeout(() => {
-                                    mascotBubble.querySelector('p').textContent = 'Sabia que temos a opção de 500ml? Mais açaí, mais sabor! 🤤';
-                                }, 3000);
-                            } else if (product.name.includes('500ml')) {
-                                setTimeout(() => {
-                                    mascotBubble.querySelector('p').textContent = 'Para compartilhar, nossa opção de 1 litro é perfeita! 🎉';
-                                }, 3000);
-                            }
+if (product.name.includes('300ml')) {
+    setTimeout(() => {
+        const mascotBubble = document.querySelector('.speech-bubble');
+        mascotBubble.innerHTML = `
+            <p>Por apenas R$ 5,00 a mais, você pode levar o de 500ml! Mais açaí, mais sabor! 🤤</p>
+            <button onclick="switchToSize('500ml', '${product.name}')" 
+                    style="background: var(--gradient); color: white; border: none; 
+                    padding: 5px 10px; border-radius: 5px; margin-top: 8px; 
+                    cursor: pointer; font-size: 12px;">
+                Ver opção de 500ml
+            </button>
+        `;
+    }, 3000);
+} else if (product.name.includes('500ml')) {
+    setTimeout(() => {
+        const mascotBubble = document.querySelector('.speech-bubble');
+        mascotBubble.innerHTML = `
+            <p>Por apenas R$ 10,00 a mais, você leva o dobro! Opção de 1 litro perfeita para compartilhar! 🎉</p>
+            <button onclick="switchToSize('1L', '${product.name}')" 
+                    style="background: var(--gradient); color: white; border: none; 
+                    padding: 5px 10px; border-radius: 5px; margin-top: 8px; 
+                    cursor: pointer; font-size: 12px;">
+                Ver opção de 1 litro
+            </button>
+        `;
+    }, 3000);
+}
                         }
                     } else {
                         showNotification(`Você pode selecionar no máximo ${product.toppings.max} acompanhamento${product.toppings.max > 1 ? 's' : ''}`);
@@ -2607,6 +2625,19 @@ function openProductModal(product) {
     });
 
     modal.style.display = 'block';
+}
+
+function switchToSize(newSize, currentName) {
+    const baseName = currentName.replace(/300ml|500ml|1L/g, '').trim();
+    const newProductName = `${baseName} ${newSize}`;
+    
+    const newProduct = currentProducts.find(p => p.name === newProductName);
+    if (newProduct) {
+        document.getElementById('productModal').style.display = 'none';
+        setTimeout(() => {
+            openProductModal(newProduct);
+        }, 100);
+    }
 }
 
 // Função para gerar um fingerprint do dispositivo
