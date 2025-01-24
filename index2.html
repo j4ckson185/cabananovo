@@ -3523,17 +3523,30 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
     (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="PpgNSIgeYN1FCucFGP4w3";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
 // Adicione este script no final do arquivo
 document.addEventListener('DOMContentLoaded', function() {
-    const deliveryMascot = document.getElementById('deliveryMascot');
-    const mascotBubble = deliveryMascot.closest('.mascot-container').querySelector('.speech-bubble p');
+    const customerMascot = document.querySelector('#customerInfoModal .mascot-container');
+    const deliveryMascot = document.querySelector('#deliveryInfoModal .mascot-container');
+    
+    if (customerMascot) {
+        const customerBubble = customerMascot.querySelector('.speech-bubble p');
+        
+        customerMascot.style.display = 'flex';
+        
+        setTimeout(() => {
+            customerBubble.textContent = 'Após preencher, só clicar em Finalizar Pedido que vou te encaminhar pro Whatsapp da loja. 📱';
+        }, 5000);
+    }
     
     if (deliveryMascot) {
+        const deliveryBubble = deliveryMascot.querySelector('.speech-bubble p');
+        
+        deliveryMascot.style.display = 'flex';
+        
         setTimeout(() => {
-            mascotBubble.textContent = 'Após preencher, só clicar em Finalizar Pedido que vou te encaminhar pro Whatsapp da loja. 📱';
+            deliveryBubble.textContent = 'Após preencher, só clicar em Finalizar Pedido que vou te encaminhar pro Whatsapp da loja. 📱';
         }, 5000);
     }
 });
 </script>
-<<!-- Modal para Criar Novo Pedido -->
 <!-- Modal para Criar Novo Pedido -->
 <div id="createOrderModal" class="modal">
     <div class="modal-content">
