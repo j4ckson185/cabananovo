@@ -2632,22 +2632,24 @@ function openProductModal(product) {
     
 function switchToSize(newSize, currentName) {
     const newProductName = currentName.replace(/500ml|300ml|1 Litro/g, newSize);
+    const modal = document.getElementById('productModal');
     
-    const newProduct = currentProducts.find(p => p.name === newProductName);
+    // Fechar modal atual
+    modal.style.display = 'none';
     
-    if (newProduct) {
-        document.getElementById('productModal').style.display = 'none';
-        
-        setTimeout(() => {
-            const modal = document.getElementById('productModal');
-            modal.style.display = 'block';
+    // Buscar o novo produto
+    realtimeDB.ref('menu/products').once('value')
+        .then(snapshot => {
+            const products = snapshot.val();
+            const newProduct = Object.values(products)
+                .find(p => p.name === newProductName && p.status);
             
-            const mascotBubble = document.querySelector('.speech-bubble');
-            mascotBubble.innerHTML = `<p>Ótima escolha! Agora é só arrasar nos acompanhamentos! 😋</p>`;
-            
-            openProductModal(newProduct);
-        }, 100);
-    }
+            if (newProduct) {
+                setTimeout(() => {
+                    openProductModal(newProduct);
+                }, 100);
+            }
+        });
 }
 
 // Função para gerar um fingerprint do dispositivo
