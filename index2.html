@@ -2575,35 +2575,15 @@ function openProductModal(product) {
            });
        });
 
-       // Adicionar vídeo e botão para produtos de 500ml
-if (product.name.includes('500ml')) {
-    const modalButtons = modal.querySelector('.modal-buttons');
-    const videoContainer = document.createElement('div');
-    videoContainer.className = 'video-container';
-    videoContainer.innerHTML = `
-        <video autoplay loop playsinline class="product-video">
-            <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Cabana.mp4?alt=media&token=dec0775e-3d71-4a3d-b1f2-f4473653eaea" type="video/mp4">
-        </video>
-    `;
-
-    const upgradeButton = document.createElement('button');
-    upgradeButton.onclick = () => switchToSize('1 Litro', product.name);
-    upgradeButton.className = 'modal-btn';
-    upgradeButton.innerHTML = 'Ver opção de 1 Litro';
-    upgradeButton.style.cssText = `
-        background: var(--gradient);
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px;
-        margin-top: 1rem;
-        cursor: pointer;
-        font-size: 14px;
-        width: 100%;
-    `;
-
-    videoContainer.appendChild(upgradeButton);
-    modalButtons.before(videoContainer);
+       // Adicionar vídeo para produtos de 500ml
+       if (product.name.includes('500ml')) {
+           const videoContainer = document.createElement('div');
+           videoContainer.className = 'video-container';
+           videoContainer.innerHTML = `
+               <video autoplay loop playsinline class="product-video">
+                   <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Cabana.mp4?alt=media&token=dec0775e-3d71-4a3d-b1f2-f4473653eaea" type="video/mp4">
+               </video>
+           `;
 
            // Controle de som baseado na visibilidade
            const video = videoContainer.querySelector('video');
@@ -2617,11 +2597,32 @@ if (product.name.includes('500ml')) {
                });
            }, { threshold: 0.5 });
            observer.observe(videoContainer);
+
+           const modalButtons = modal.querySelector('.modal-buttons');
+           modalButtons.before(videoContainer);
+
+           // Adicionar botão de upgrade para 1 Litro
+           const upgradeButton = document.createElement('button');
+           upgradeButton.className = 'modal-btn';
+           upgradeButton.innerHTML = 'Ver opção de 1 Litro';
+           upgradeButton.onclick = () => switchToSize('1 Litro', product.name);
+           upgradeButton.style.cssText = `
+               background: var(--gradient);
+               color: white;
+               border: none;
+               padding: 10px 20px;
+               border-radius: 5px;
+               margin-bottom: 1rem;
+               cursor: pointer;
+               width: 100%;
+           `;
+           modalButtons.insertAdjacentElement('beforebegin', upgradeButton);
        }
    });
 
    modal.style.display = 'block';
 }
+    
 function switchToSize(newSize, currentName) {
     const newProductName = currentName.replace(/500ml|300ml|1 Litro/g, newSize);
     
