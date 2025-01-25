@@ -2528,15 +2528,6 @@ function openProductModal(product) {
    modal.querySelector('.modal-product-description').textContent = product.description;
    modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
 
-   // Mascote apenas para produtos de 300ml
-   const mascotContainer = document.querySelector('.mascot-container');
-   if (product.name.includes('300ml')) {
-       mascotContainer.style.display = 'flex';
-       document.querySelector('.speech-bubble p').textContent = 'Ótima escolha! Agora é só arrasar nos acompanhamentos! 😊';
-   } else {
-       mascotContainer.style.display = 'none';
-   }
-
    Promise.all([
        realtimeDB.ref('menu/toppings').once('value'),
        realtimeDB.ref('extras').once('value')
