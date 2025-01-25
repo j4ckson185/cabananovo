@@ -2576,22 +2576,34 @@ function openProductModal(product) {
        });
 
        // Adicionar vídeo e botão para produtos de 500ml
-       if (product.name.includes('500ml')) {
-           const modalButtons = modal.querySelector('.modal-buttons');
-           const videoContainer = document.createElement('div');
-           videoContainer.className = 'video-container';
-           videoContainer.innerHTML = `
-               <video autoplay loop playsinline class="product-video">
-                   <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Cabana.mp4?alt=media&token=dec0775e-3d71-4a3d-b1f2-f4473653eaea" type="video/mp4">
-               </video>
-               <button onclick="switchToSize('1 Litro', '${product.name}')" 
-                       style="background: var(--gradient); color: white; border: none; 
-                       padding: 10px 20px; border-radius: 5px; margin-top: 1rem; 
-                       cursor: pointer; font-size: 14px; width: 100%;">
-                   Ver opção de 1 Litro
-               </button>
-           `;
-           modalButtons.before(videoContainer);
+if (product.name.includes('500ml')) {
+    const modalButtons = modal.querySelector('.modal-buttons');
+    const videoContainer = document.createElement('div');
+    videoContainer.className = 'video-container';
+    videoContainer.innerHTML = `
+        <video autoplay loop playsinline class="product-video">
+            <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Cabana.mp4?alt=media&token=dec0775e-3d71-4a3d-b1f2-f4473653eaea" type="video/mp4">
+        </video>
+    `;
+
+    const upgradeButton = document.createElement('button');
+    upgradeButton.onclick = () => switchToSize('1 Litro', product.name);
+    upgradeButton.className = 'modal-btn';
+    upgradeButton.innerHTML = 'Ver opção de 1 Litro';
+    upgradeButton.style.cssText = `
+        background: var(--gradient);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        margin-top: 1rem;
+        cursor: pointer;
+        font-size: 14px;
+        width: 100%;
+    `;
+
+    videoContainer.appendChild(upgradeButton);
+    modalButtons.before(videoContainer);
 
            // Controle de som baseado na visibilidade
            const video = videoContainer.querySelector('video');
