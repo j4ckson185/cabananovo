@@ -3054,37 +3054,49 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
         'online': 'PIX'
     };
 
+    // Pegar valores diretamente dos campos do formulário
+    const customerName = document.getElementById('customerName').value;
+    const customerPhone = document.getElementById('customerPhone').value;
+    const street = document.getElementById('street').value;
+    const streetNumber = document.getElementById('streetNumber').value;
+    const neighborhood = document.getElementById('neighborhood').value;
+    const complement = document.getElementById('complement').value;
+    const zipCode = document.getElementById('zipCode').value;
+    const notes = document.getElementById('notes').value;
+    
+    // Pegar método de pagamento selecionado
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || '';
+
     let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
     
     // Informações do cliente
-    message += `*Cliente:* ${deliveryInfo.customerName || customerInfo.fullName}\n`;
-    message += `*WhatsApp:* ${customerInfo.whatsapp}\n\n`;
+    message += `*Cliente:* ${customerName}\n`;
+    message += `*WhatsApp:* ${customerPhone}\n\n`;
     
     // Endereço
     message += `*📍 Endereço de Entrega:*\n`;
-    message += `${deliveryInfo.street}, ${deliveryInfo.streetNumber}\n`;
-    if (deliveryInfo.complement) message += `Complemento: ${deliveryInfo.complement}\n`;
-    message += `Bairro: ${deliveryInfo.neighborhood}\n`;
-    message += `CEP: ${deliveryInfo.zipCode}\n\n`;
+    message += `${street}, ${streetNumber}\n`;
+    if (complement) message += `Complemento: ${complement}\n`;
+    message += `Bairro: ${neighborhood}\n`;
+    message += `CEP: ${zipCode}\n\n`;
     
     // Itens do pedido
     message += `*🍨 Itens do Pedido:*\n`;
     const orderDetails = document.getElementById('orderDetails').value;
-    message += `${orderDetails}\n\n`;
+    message += `${orderDetails}\n`;
 
-    // Calcular subtotal e totais
+    // Calcular totais
     const subtotal = cart.reduce((total, item) => total + item.price, 0);
     const deliveryFee = 3.00;
     const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
     const total = subtotal - discount + deliveryFee;
-
+    
     // Resumo do pedido
     message += `*💰 Resumo do Pedido:*\n`;
     message += `*Subtotal:* R$ ${subtotal.toFixed(2)}\n`;
     message += `*Taxa de Entrega:* R$ ${deliveryFee.toFixed(2)}\n`;
     
     if (appliedCoupon) {
-        const discount = calculateDiscount(subtotal);
         message += `*Cupom Aplicado:* ${appliedCoupon.code}\n`;
         message += `*Desconto:* -R$ ${discount.toFixed(2)}\n`;
     }
@@ -3092,14 +3104,17 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     message += `*Total:* R$ ${total.toFixed(2)}\n\n`;
     
     // Pagamento
-    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[deliveryInfo.payment]}\n`;
-    if (deliveryInfo.payment === 'money' && deliveryInfo.change) {
-        message += `Troco para: R$ ${deliveryInfo.change}\n`;
+    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod] || paymentMethod}\n`;
+    if (paymentMethod === 'money') {
+        const changeAmount = document.querySelector('input[name="change"]')?.value;
+        if (changeAmount) {
+            message += `Troco para: R$ ${parseFloat(changeAmount).toFixed(2)}\n`;
+        }
     }
     
-    // Observações, se houver
-    if (document.getElementById('notes').value) {
-        message += `*Observações:* ${document.getElementById('notes').value}\n`;
+    // Observações
+    if (notes) {
+        message += `\n*Observações:* ${notes}\n`;
     }
     
     return message;
