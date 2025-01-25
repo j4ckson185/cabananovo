@@ -2500,18 +2500,15 @@ function openProductModal(product) {
    currentProduct = product;
    const modal = document.getElementById('productModal');
    
-   // Limpar vídeo existente
-   const existingVideo = modal.querySelector('.video-container');
-   if (existingVideo) {
-       existingVideo.remove();
-   }
+   // Remove existing videos and upgrade buttons
+   modal.querySelectorAll('.video-container, .upgrade-button').forEach(el => el.remove());
    
    modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
    modal.querySelector('.modal-product-title').textContent = product.name;
    modal.querySelector('.modal-product-description').textContent = product.description;
    modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
 
-   // Mostrar mascote apenas para produtos de 300ml
+   // Mascote apenas para produtos de 300ml
    const mascotContainer = document.querySelector('.mascot-container');
    if (product.name.includes('300ml')) {
        mascotContainer.style.display = 'flex';
@@ -2575,8 +2572,8 @@ function openProductModal(product) {
            });
        });
 
-       // Adicionar vídeo para produtos de 500ml
-       if (product.name.includes('500ml')) {
+       // Video e botão apenas para produtos de 500ml
+       if (product.name.includes('500ml') && !product.name.includes('1 Litro')) {
            const videoContainer = document.createElement('div');
            videoContainer.className = 'video-container';
            videoContainer.innerHTML = `
@@ -2585,7 +2582,6 @@ function openProductModal(product) {
                </video>
            `;
 
-           // Controle de som baseado na visibilidade
            const video = videoContainer.querySelector('video');
            const observer = new IntersectionObserver((entries) => {
                entries.forEach(entry => {
@@ -2601,9 +2597,9 @@ function openProductModal(product) {
            const modalButtons = modal.querySelector('.modal-buttons');
            modalButtons.before(videoContainer);
 
-           // Adicionar botão de upgrade para 1 Litro
+           // Botão de upgrade único
            const upgradeButton = document.createElement('button');
-           upgradeButton.className = 'modal-btn';
+           upgradeButton.className = 'modal-btn upgrade-button';
            upgradeButton.innerHTML = 'Ver opção de 1 Litro';
            upgradeButton.onclick = () => switchToSize('1 Litro', product.name);
            upgradeButton.style.cssText = `
