@@ -1160,6 +1160,9 @@ header {
     border-radius: 10px;
     overflow: hidden;
     background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .product-video {
@@ -1169,55 +1172,7 @@ header {
     border-radius: 10px;
 }
 
-.mascot-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 1rem;
-    background: var(--glass);
-    border-radius: 10px;
-    border: 1px solid var(--glass-border);
-    margin: 1rem 15px;
-}
-
-.speech-bubble {
-    background: var(--surface);
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    text-align: center;
-    width: 100%;
-    font-size: 14px;
-}
-
-.mascot {
-    margin: 1rem 0;
-    width: 120px;
-    height: 120px;
-    object-fit: contain;
-}
-
-@media (max-width: 768px) {
-    .mascot-container {
-        margin: 1rem 10px;
-    }
-    
-    .speech-bubble {
-        font-size: 13px;
-        padding: 0.8rem;
-    }
-    
-    .mascot {
-        width: 100px;
-        height: 100px;
-    }
-}
-
 @media (max-width: 480px) {
-    .mascot-container {
-        margin: 1rem 5px;
-    }
-    
     .video-container {
         width: 120px;
         height: 120px;
@@ -2542,62 +2497,28 @@ function hideMascot() {
 }
 
 function openProductModal(product) {
-   const toppingMessages = [
-       "Uau! Ótima escolha de acompanhamento! 🌟",
-       "Esse é um dos meus favoritos! Vai ficar delicioso! 😋",
-       "Hmm... isso combina perfeitamente com o seu açaí! 🥰",
-       "Mais sabor para sua taça! Continue escolhendo! 🍓🍫",
-       "Você tem um ótimo paladar! Isso vai ser incrível! 👌",
-       "Quem sabe escolher, sabe! 😎 Que ótima escolha!",
-       "Adicionando um toque especial ao seu açaí! ✨",
-       "Isso vai deixar o seu pedido ainda mais irresistível! 😍",
-       "Ótima pedida! Já estou com água na boca só de imaginar! 🤤",
-       "Que delícia! Seu açaí vai ser um espetáculo! 🎉",
-       "Essa combinação é campeã! Boa escolha! 🏆",
-       "Você está criando uma obra-prima de sabores! 🎨🍧",
-       "Hmm, essa escolha é perfeita para os amantes de doce! 🍬",
-       "Seu açaí vai ser o destaque do dia! 😍🥳",
-       "Mais um toque especial! Já está ficando incrível! 🌟🍴"
-   ];
-
    currentProduct = product;
    const modal = document.getElementById('productModal');
    
-   // Remover vídeo existente se houver
+   // Limpar vídeo existente
    const existingVideo = modal.querySelector('.video-container');
    if (existingVideo) {
        existingVideo.remove();
-   }
-   
-   // Adicionar vídeo para produtos de 500ml
-   if (product.name.includes('500ml')) {
-       const videoContainer = document.createElement('div');
-       videoContainer.className = 'video-container';
-       videoContainer.innerHTML = `
-           <video autoplay loop playsinline class="product-video">
-               <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Cabana.mp4?alt=media&token=dec0775e-3d71-4a3d-b1f2-f4473653eaea" type="video/mp4">
-           </video>
-       `;
-       modal.querySelector('.modal-header').after(videoContainer);
-
-       // Controle de som baseado na visibilidade
-       const video = videoContainer.querySelector('video');
-       const observer = new IntersectionObserver((entries) => {
-           entries.forEach(entry => {
-               if (entry.isIntersecting) {
-                   video.muted = false;
-               } else {
-                   video.muted = true;
-               }
-           });
-       }, { threshold: 0.5 });
-       observer.observe(videoContainer);
    }
    
    modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
    modal.querySelector('.modal-product-title').textContent = product.name;
    modal.querySelector('.modal-product-description').textContent = product.description;
    modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
+
+   // Mostrar mascote apenas para produtos de 300ml
+   const mascotContainer = document.querySelector('.mascot-container');
+   if (product.name.includes('300ml')) {
+       mascotContainer.style.display = 'flex';
+       document.querySelector('.speech-bubble p').textContent = 'Ótima escolha! Agora é só arrasar nos acompanhamentos! 😊';
+   } else {
+       mascotContainer.style.display = 'none';
+   }
 
    Promise.all([
        realtimeDB.ref('menu/toppings').once('value'),
@@ -2616,7 +2537,6 @@ function openProductModal(product) {
                </div>
            `).join('');
 
-       let isFirstTopping = true;
        const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
        toppingItems.forEach(item => {
            item.addEventListener('click', () => {
@@ -2628,8 +2548,6 @@ function openProductModal(product) {
                } else {
                    if (selectedToppings.length < product.toppings.max) {
                        item.classList.add('selected');
-                       const randomMessage = toppingMessages[Math.floor(Math.random() * toppingMessages.length)];
-                       document.querySelector('.speech-bubble p').innerHTML = randomMessage;
                    } else {
                        showNotification(`Você pode selecionar no máximo ${product.toppings.max} acompanhamento${product.toppings.max > 1 ? 's' : ''}!`);
                    }
@@ -2649,43 +2567,49 @@ function openProductModal(product) {
                </div>
            `).join('');
 
+       const extraItems = extrasGrid.querySelectorAll('.extra-item');
        extraItems.forEach(item => {
            item.addEventListener('click', () => {
                item.classList.toggle('selected');
                updateTotalPrice(product);
            });
        });
-   });
 
-   // Remover mascote existente se houver
-   const existingMascot = modal.querySelector('.mascot-container');
-   if (existingMascot) {
-       existingMascot.remove();
-   }
-
-   // Adicionar mascote após os extras
-   const extrasSection = modal.querySelector('.extras-section');
-   const mascotHTML = `
-       <div class="mascot-container" style="margin: 1rem 0;">
-           <div class="speech-bubble">
-               <p>Ótima escolha! Que tal experimentar nosso tamanho de 1 Litro? Perfeito para compartilhar! 😊</p>
-           </div>
-           <img src="https://i.ibb.co/KbthVz8/Designer-1.png" alt="Mascote" class="mascot" style="width: 150px; height: 150px;">
-           ${product.name.includes('500ml') ? `
+       // Adicionar vídeo e botão para produtos de 500ml
+       if (product.name.includes('500ml')) {
+           const modalButtons = modal.querySelector('.modal-buttons');
+           const videoContainer = document.createElement('div');
+           videoContainer.className = 'video-container';
+           videoContainer.innerHTML = `
+               <video autoplay loop playsinline class="product-video">
+                   <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Cabana.mp4?alt=media&token=dec0775e-3d71-4a3d-b1f2-f4473653eaea" type="video/mp4">
+               </video>
                <button onclick="switchToSize('1 Litro', '${product.name}')" 
                        style="background: var(--gradient); color: white; border: none; 
                        padding: 10px 20px; border-radius: 5px; margin-top: 1rem; 
                        cursor: pointer; font-size: 14px; width: 100%;">
                    Ver opção de 1 Litro
                </button>
-           ` : ''}
-       </div>
-   `;
-   extrasSection.insertAdjacentHTML('afterend', mascotHTML);
+           `;
+           modalButtons.before(videoContainer);
+
+           // Controle de som baseado na visibilidade
+           const video = videoContainer.querySelector('video');
+           const observer = new IntersectionObserver((entries) => {
+               entries.forEach(entry => {
+                   if (entry.isIntersecting) {
+                       video.muted = false;
+                   } else {
+                       video.muted = true;
+                   }
+               });
+           }, { threshold: 0.5 });
+           observer.observe(videoContainer);
+       }
+   });
 
    modal.style.display = 'block';
 }
-
 function switchToSize(newSize, currentName) {
     const newProductName = currentName.replace(/500ml|300ml|1 Litro/g, newSize);
     
