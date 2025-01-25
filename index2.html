@@ -1178,6 +1178,29 @@ header {
         height: 120px;
     }
 }
+
+#createOrderModal .video-container {
+    width: 150px;
+    height: 150px;
+    margin: 2rem auto;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--surface);
+}
+
+#createOrderModal .product-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+@media (max-width: 480px) {
+    #createOrderModal .video-container {
+        width: 120px;
+        height: 120px;
+    }
+}
     
 </style>
 </head>
@@ -1686,42 +1709,33 @@ function updateCustomerAndDeliveryInfo(customer, delivery) {
 }
 
 function showCreateOrderModal() {
-   console.log('showCreateOrderModal iniciado');
-
    const createOrderModal = document.getElementById('createOrderModal');
    const modalContent = createOrderModal.querySelector('.modal-content');
 
-   modalContent.insertAdjacentHTML('beforeend', `
-       <div class="mascot-container" style="position: fixed; right: 10px; bottom: 10px; z-index: 9999;">
-           <div class="speech-bubble">
-               <p>Show, agora preciso que preencha todos os dados, ok? 😊</p>
-           </div>
-           <img src="https://i.ibb.co/KbthVz8/Designer-1.png" alt="Mascote" class="mascot" id="mascot">
-       </div>
-   `);
+   // Limpar qualquer mascote existente
+   const existingMascot = modalContent.querySelector('.mascot-container');
+   if (existingMascot) {
+       existingMascot.remove();
+   }
 
-   const mascotContainer = modalContent.querySelector('.mascot-container');
-   mascotContainer.style.display = 'flex';
-
-   setTimeout(() => {
-       const mascotBubble = modalContent.querySelector('.speech-bubble p');
-       mascotBubble.textContent = 'Assim que preencher pode clicar em Finalizar Pedido que te transfiro pro WhatsApp da loja! 📱';
-   }, 5000);
-
-   // Defina o ID do pedido como 5555
+   // Definir ID do pedido como 5555
    document.getElementById('orderId').value = '5555';
 
    // Limpar campos do formulário
    document.getElementById('customerName').value = '';
    document.getElementById('customerPhone').value = '';
-   
-   // Endereço
    document.getElementById('street').value = '';
    document.getElementById('streetNumber').value = '';
    document.getElementById('neighborhood').value = '';
    document.getElementById('complement').value = '';
    document.getElementById('zipCode').value = '';
+   document.getElementById('notes').value = '';
    
+   // Resetar seleção de pagamento
+   document.getElementById('paymentMoney').checked = false;
+   document.getElementById('paymentCard').checked = false;
+   document.getElementById('paymentOnline').checked = false;
+
    // Define o valor total do pedido
    const subtotal = cart.reduce((total, item) => total + item.price, 0);
    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
@@ -1749,23 +1763,39 @@ function showCreateOrderModal() {
    });
    document.getElementById('orderDetails').value = orderDetails;
 
-   // Configuração inicial do formulário
-   document.getElementById('notes').value = '';
-   
-   // Resetar seleção de pagamento
-   document.getElementById('paymentMoney').checked = false;
-   document.getElementById('paymentCard').checked = false;
-   document.getElementById('paymentOnline').checked = false;
+   // Adicionar novo mascote com vídeo no final do formulário
+   const mascotContainer = document.createElement('div');
+   mascotContainer.innerHTML = `
+       <div class="video-container" style="margin-top: 2rem;">
+           <video autoplay loop playsinline class="product-video">
+               <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Gisele%20Cabana.mp4?alt=media&token=0be9ff3c-4178-4e89-9a95-0a778bf38d24" type="video/mp4">
+           </video>
+       </div>
+   `;
 
-   // Mostra o modal
+   // Adicionar o controle de som do vídeo
+   const video = mascotContainer.querySelector('video');
+   const observer = new IntersectionObserver((entries) => {
+       entries.forEach(entry => {
+           if (entry.isIntersecting) {
+               video.muted = false;
+           } else {
+               video.muted = true;
+           }
+       });
+   }, { threshold: 0.5 });
+   
+   // Adicionar depois do último botão do formulário
+   const submitButton = modalContent.querySelector('button[type="button"]');
+   submitButton.parentNode.appendChild(mascotContainer);
+   observer.observe(mascotContainer);
+
    if (createOrderModal) {
        createOrderModal.style.display = 'block';
-       console.log('Modal exibido');
    } else {
        console.error('Modal não encontrado');
    }
 
-   // Configurar eventos de pagamento para troco
    setupPaymentEvents();
 }
 
