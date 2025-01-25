@@ -1153,50 +1153,53 @@ header {
   50% { transform: translateY(-10px); }
 }
 
-.mascot-container {
-   position: fixed; /* Alterado para fixed */
-   right: 15px;
-   bottom: 15px;
-   z-index: 9999;
-   display: none;
+.video-container {
+    width: 150px;
+    height: 150px;
+    margin: 1rem auto;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-.mascot {
-   width: 45px;  
-   height: 45px;
-   object-fit: contain;
+.product-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
 }
 
-.speech-bubble {
-   position: absolute;
-   right: 55px;
-   bottom: 5px;
-   background: var(--surface);
-   border: 1px solid var(--glass-border);
-   padding: 10px;
-   border-radius: 8px;
-   width: 180px;
-   font-size: 13px;
+@media (max-width: 480px) {
+    .video-container {
+        width: 120px;
+        height: 120px;
+    }
 }
 
-.speech-bubble:after {
-   right: -8px;
-   bottom: 12px;
-   border-width: 8px 0 8px 8px;
+#createOrderModal .video-container {
+    width: 250px;
+    height: 250px;
+    margin: 2rem auto;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--surface);
 }
 
-/* Responsivo para celular */
-@media (max-width: 768px) {
-   .mascot {
-       width: 60px;
-       height: 60px;
-   }
-   
-   .speech-bubble {
-       width: 200px;
-       right: 70px;
-       font-size: 14px;
-   }
+#createOrderModal .product-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 10px;
+}
+
+@media (max-width: 480px) {
+    #createOrderModal .video-container {
+        width: 200px;
+        height: 200px;
+    }
 }
     
 </style>
@@ -1706,50 +1709,34 @@ function updateCustomerAndDeliveryInfo(customer, delivery) {
 }
 
 function showCreateOrderModal() {
-   console.log('showCreateOrderModal iniciado');
-
    const createOrderModal = document.getElementById('createOrderModal');
    const modalContent = createOrderModal.querySelector('.modal-content');
 
-   modalContent.insertAdjacentHTML('beforeend', `
-       <div class="mascot-container" style="position: fixed; right: 10px; bottom: 10px; z-index: 9999;">
-           <div class="speech-bubble">
-               <p>Show, agora preciso que preencha todos os dados, ok? 😊</p>
-           </div>
-           <img src="https://i.ibb.co/KbthVz8/Designer-1.png" alt="Mascote" class="mascot" id="mascot">
-       </div>
-   `);
+   // Remover containers de vídeo existentes
+   modalContent.querySelectorAll('.video-container').forEach(el => el.remove());
 
-   const mascotContainer = modalContent.querySelector('.mascot-container');
-   mascotContainer.style.display = 'flex';
-
-   setTimeout(() => {
-       const mascotBubble = modalContent.querySelector('.speech-bubble p');
-       mascotBubble.textContent = 'Assim que preencher pode clicar em Finalizar Pedido que te transfiro pro WhatsApp da loja! 📱';
-   }, 5000);
-
-   // Defina o ID do pedido como 5555
    document.getElementById('orderId').value = '5555';
 
    // Limpar campos do formulário
    document.getElementById('customerName').value = '';
    document.getElementById('customerPhone').value = '';
-   
-   // Endereço
    document.getElementById('street').value = '';
    document.getElementById('streetNumber').value = '';
    document.getElementById('neighborhood').value = '';
    document.getElementById('complement').value = '';
    document.getElementById('zipCode').value = '';
+   document.getElementById('notes').value = '';
    
-   // Define o valor total do pedido
+   document.getElementById('paymentMoney').checked = false;
+   document.getElementById('paymentCard').checked = false;
+   document.getElementById('paymentOnline').checked = false;
+
    const subtotal = cart.reduce((total, item) => total + item.price, 0);
    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
    const deliveryFee = 3.00;
    const total = subtotal - discount + deliveryFee;
    document.getElementById('orderTotal').value = total.toFixed(2);
    
-   // Monta os detalhes do pedido
    let orderDetails = '';
    cart.forEach(item => {
        if (item.name.includes('Combo')) {
@@ -1769,23 +1756,36 @@ function showCreateOrderModal() {
    });
    document.getElementById('orderDetails').value = orderDetails;
 
-   // Configuração inicial do formulário
-   document.getElementById('notes').value = '';
-   
-   // Resetar seleção de pagamento
-   document.getElementById('paymentMoney').checked = false;
-   document.getElementById('paymentCard').checked = false;
-   document.getElementById('paymentOnline').checked = false;
+   // Adicionar vídeo mascote
+   const mascotContainer = document.createElement('div');
+   mascotContainer.className = 'video-container';
+   mascotContainer.innerHTML = `
+       <video autoplay loop playsinline class="product-video">
+           <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Gisele%20Cabana.mp4?alt=media&token=0be9ff3c-4178-4e89-9a95-0a778bf38d24" type="video/mp4">
+       </video>
+   `;
 
-   // Mostra o modal
+   const video = mascotContainer.querySelector('video');
+   const observer = new IntersectionObserver((entries) => {
+       entries.forEach(entry => {
+           if (entry.isIntersecting) {
+               video.muted = false;
+           } else {
+               video.muted = true;
+           }
+       });
+   }, { threshold: 0.5 });
+   
+   const submitButton = modalContent.querySelector('button[type="button"]');
+   submitButton.parentNode.appendChild(mascotContainer);
+   observer.observe(mascotContainer);
+
    if (createOrderModal) {
        createOrderModal.style.display = 'block';
-       console.log('Modal exibido');
    } else {
        console.error('Modal não encontrado');
    }
 
-   // Configurar eventos de pagamento para troco
    setupPaymentEvents();
 }
 
@@ -2517,31 +2517,11 @@ function hideMascot() {
 }
 
 function openProductModal(product) {
-   const toppingMessages = [
-       "Uau! Ótima escolha de acompanhamento! 🌟",
-       "Esse é um dos meus favoritos! Vai ficar delicioso! 😋",
-       "Hmm... isso combina perfeitamente com o seu açaí! 🥰",
-       "Mais sabor para sua taça! Continue escolhendo! 🍓🍫",
-       "Você tem um ótimo paladar! Isso vai ser incrível! 👌",
-       "Quem sabe escolher, sabe! 😎 Que ótima escolha!",
-       "Adicionando um toque especial ao seu açaí! ✨",
-       "Isso vai deixar o seu pedido ainda mais irresistível! 😍",
-       "Ótima pedida! Já estou com água na boca só de imaginar! 🤤",
-       "Que delícia! Seu açaí vai ser um espetáculo! 🎉",
-       "Essa combinação é campeã! Boa escolha! 🏆",
-       "Você está criando uma obra-prima de sabores! 🎨🍧",
-       "Hmm, essa escolha é perfeita para os amantes de doce! 🍬",
-       "Seu açaí vai ser o destaque do dia! 😍🥳",
-       "Mais um toque especial! Já está ficando incrível! 🌟🍴"
-   ];
-
    currentProduct = product;
    const modal = document.getElementById('productModal');
-   const mascotContainer = document.querySelector('.mascot-container');
-   const mascotBubble = document.querySelector('.speech-bubble p');
    
-   mascotContainer.style.display = 'flex';
-   mascotBubble.textContent = `Ótima escolha! Agora é só arrasar nos acompanhamentos! 😊`;
+   // Remove existing videos and upgrade buttons
+   modal.querySelectorAll('.video-container, .upgrade-button, .mascot-container').forEach(el => el.remove());
    
    modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
    modal.querySelector('.modal-product-title').textContent = product.name;
@@ -2565,7 +2545,6 @@ function openProductModal(product) {
                </div>
            `).join('');
 
-       let isFirstTopping = true;
        const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
        toppingItems.forEach(item => {
            item.addEventListener('click', () => {
@@ -2577,58 +2556,10 @@ function openProductModal(product) {
                } else {
                    if (selectedToppings.length < product.toppings.max) {
                        item.classList.add('selected');
-                       
-                       const mascot = document.querySelector('.mascot-container');
-                       mascot.style.display = 'flex';
-                       const mascotBubble = document.querySelector('.speech-bubble p');
-                       
-                       const randomMessage = toppingMessages[Math.floor(Math.random() * toppingMessages.length)];
-                       
-                       if (selectedToppings.length === 0) {
-                           mascotBubble.innerHTML = `Primeiro acompanhamento: ${item.textContent.trim()}! ${randomMessage}`;
-                       } else {
-                           mascotBubble.innerHTML = randomMessage;
-                       }
-                       
-                       // Sugestão de tamanho maior
-                       if (selectedToppings.length === 1) {
-                           if (product.name.includes('300ml')) {
-                               setTimeout(() => {
-                                   mascotBubble.innerHTML = `
-                                       <p>Por apenas R$ 5,00 a mais, você pode levar o de 500ml! Mais açaí, mais sabor! 🤤</p>
-                                       <button onclick="switchToSize('500ml', '${product.name}')" 
-                                               style="background: var(--gradient); color: white; border: none; 
-                                               padding: 5px 10px; border-radius: 5px; margin-top: 8px; 
-                                               cursor: pointer; font-size: 12px;">
-                                           Ver opção de 500ml
-                                       </button>
-                                   `;
-                               }, 3000);
-                           } else if (product.name.includes('500ml')) {
-                               setTimeout(() => {
-                                   mascotBubble.innerHTML = `
-                                       <p>Por apenas R$ 10,00 a mais, você leva o dobro! Opção de 1 litro perfeita para compartilhar! 🎉</p>
-                                       <button onclick="switchToSize('1 Litro', '${product.name}')" 
-                                               style="background: var(--gradient); color: white; border: none; 
-                                               padding: 5px 10px; border-radius: 5px; margin-top: 8px; 
-                                               cursor: pointer; font-size: 12px;">
-                                           Ver opção de 1 litro
-                                       </button>
-                                   `;
-                               }, 3000);
-                           }
-                       }
-                       
-                       if (selectedToppings.length === product.toppings.max - 1) {
-                           setTimeout(() => {
-                               mascotBubble.textContent = 'Último acompanhamento! Escolha com sabedoria! 🧐';
-                           }, 3000);
-                       }
                    } else {
                        showNotification(`Você pode selecionar no máximo ${product.toppings.max} acompanhamento${product.toppings.max > 1 ? 's' : ''}!`);
                    }
                }
-               
                validateToppingsSelection(product.toppings.min, product.toppings.max);
                updateTotalPrice(product);
            });
@@ -2648,34 +2579,77 @@ function openProductModal(product) {
        extraItems.forEach(item => {
            item.addEventListener('click', () => {
                item.classList.toggle('selected');
-               const mascotBubble = document.querySelector('.speech-bubble p');
-               mascotBubble.textContent = 'Excelente escolha! Os extras deixam seu açaí ainda mais especial! 🎉';
                updateTotalPrice(product);
            });
        });
+
+       // Video e botão apenas para produtos de 500ml
+       if (product.name.includes('500ml') && !product.name.includes('1 Litro')) {
+           const videoContainer = document.createElement('div');
+           videoContainer.className = 'video-container';
+           videoContainer.innerHTML = `
+               <video autoplay loop playsinline class="product-video">
+                   <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Cabana.mp4?alt=media&token=dec0775e-3d71-4a3d-b1f2-f4473653eaea" type="video/mp4">
+               </video>
+           `;
+
+           const video = videoContainer.querySelector('video');
+           const observer = new IntersectionObserver((entries) => {
+               entries.forEach(entry => {
+                   if (entry.isIntersecting) {
+                       video.muted = false;
+                   } else {
+                       video.muted = true;
+                   }
+               });
+           }, { threshold: 0.5 });
+           observer.observe(videoContainer);
+
+           const modalButtons = modal.querySelector('.modal-buttons');
+           modalButtons.before(videoContainer);
+
+           // Botão de upgrade único
+           const upgradeButton = document.createElement('button');
+           upgradeButton.className = 'modal-btn upgrade-button';
+           upgradeButton.innerHTML = 'Ver opção de 1 Litro';
+           upgradeButton.onclick = () => switchToSize('1 Litro', product.name);
+           upgradeButton.style.cssText = `
+               background: var(--gradient);
+               color: white;
+               border: none;
+               padding: 10px 20px;
+               border-radius: 5px;
+               margin-bottom: 1rem;
+               cursor: pointer;
+               width: 100%;
+           `;
+           modalButtons.insertAdjacentElement('beforebegin', upgradeButton);
+       }
    });
 
    modal.style.display = 'block';
 }
-
+    
 function switchToSize(newSize, currentName) {
     const newProductName = currentName.replace(/500ml|300ml|1 Litro/g, newSize);
+    const modal = document.getElementById('productModal');
     
-    const newProduct = currentProducts.find(p => p.name === newProductName);
+    // Fechar modal atual
+    modal.style.display = 'none';
     
-    if (newProduct) {
-        document.getElementById('productModal').style.display = 'none';
-        
-        setTimeout(() => {
-            const modal = document.getElementById('productModal');
-            modal.style.display = 'block';
+    // Buscar o novo produto
+    realtimeDB.ref('menu/products').once('value')
+        .then(snapshot => {
+            const products = snapshot.val();
+            const newProduct = Object.values(products)
+                .find(p => p.name === newProductName && p.status);
             
-            const mascotBubble = document.querySelector('.speech-bubble');
-            mascotBubble.innerHTML = `<p>Ótima escolha! Agora é só arrasar nos acompanhamentos! 😋</p>`;
-            
-            openProductModal(newProduct);
-        }, 100);
-    }
+            if (newProduct) {
+                setTimeout(() => {
+                    openProductModal(newProduct);
+                }, 100);
+            }
+        });
 }
 
 // Função para gerar um fingerprint do dispositivo
@@ -3080,37 +3054,49 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
         'online': 'PIX'
     };
 
+    // Pegar valores diretamente dos campos do formulário
+    const customerName = document.getElementById('customerName').value;
+    const customerPhone = document.getElementById('customerPhone').value;
+    const street = document.getElementById('street').value;
+    const streetNumber = document.getElementById('streetNumber').value;
+    const neighborhood = document.getElementById('neighborhood').value;
+    const complement = document.getElementById('complement').value;
+    const zipCode = document.getElementById('zipCode').value;
+    const notes = document.getElementById('notes').value;
+    
+    // Pegar método de pagamento selecionado
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || '';
+
     let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
     
     // Informações do cliente
-    message += `*Cliente:* ${deliveryInfo.customerName || customerInfo.fullName}\n`;
-    message += `*WhatsApp:* ${customerInfo.whatsapp}\n\n`;
+    message += `*Cliente:* ${customerName}\n`;
+    message += `*WhatsApp:* ${customerPhone}\n\n`;
     
     // Endereço
     message += `*📍 Endereço de Entrega:*\n`;
-    message += `${deliveryInfo.street}, ${deliveryInfo.streetNumber}\n`;
-    if (deliveryInfo.complement) message += `Complemento: ${deliveryInfo.complement}\n`;
-    message += `Bairro: ${deliveryInfo.neighborhood}\n`;
-    message += `CEP: ${deliveryInfo.zipCode}\n\n`;
+    message += `${street}, ${streetNumber}\n`;
+    if (complement) message += `Complemento: ${complement}\n`;
+    message += `Bairro: ${neighborhood}\n`;
+    message += `CEP: ${zipCode}\n\n`;
     
     // Itens do pedido
     message += `*🍨 Itens do Pedido:*\n`;
     const orderDetails = document.getElementById('orderDetails').value;
-    message += `${orderDetails}\n\n`;
+    message += `${orderDetails}\n`;
 
-    // Calcular subtotal e totais
+    // Calcular totais
     const subtotal = cart.reduce((total, item) => total + item.price, 0);
     const deliveryFee = 3.00;
     const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
     const total = subtotal - discount + deliveryFee;
-
+    
     // Resumo do pedido
     message += `*💰 Resumo do Pedido:*\n`;
     message += `*Subtotal:* R$ ${subtotal.toFixed(2)}\n`;
     message += `*Taxa de Entrega:* R$ ${deliveryFee.toFixed(2)}\n`;
     
     if (appliedCoupon) {
-        const discount = calculateDiscount(subtotal);
         message += `*Cupom Aplicado:* ${appliedCoupon.code}\n`;
         message += `*Desconto:* -R$ ${discount.toFixed(2)}\n`;
     }
@@ -3118,14 +3104,17 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     message += `*Total:* R$ ${total.toFixed(2)}\n\n`;
     
     // Pagamento
-    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[deliveryInfo.payment]}\n`;
-    if (deliveryInfo.payment === 'money' && deliveryInfo.change) {
-        message += `Troco para: R$ ${deliveryInfo.change}\n`;
+    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod] || paymentMethod}\n`;
+    if (paymentMethod === 'money') {
+        const changeAmount = document.querySelector('input[name="change"]')?.value;
+        if (changeAmount) {
+            message += `Troco para: R$ ${parseFloat(changeAmount).toFixed(2)}\n`;
+        }
     }
     
-    // Observações, se houver
-    if (document.getElementById('notes').value) {
-        message += `*Observações:* ${document.getElementById('notes').value}\n`;
+    // Observações
+    if (notes) {
+        message += `\n*Observações:* ${notes}\n`;
     }
     
     return message;
