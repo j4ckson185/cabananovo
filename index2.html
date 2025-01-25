@@ -1180,8 +1180,8 @@ header {
 }
 
 #createOrderModal .video-container {
-    width: 150px;
-    height: 150px;
+    width: 250px;
+    height: 250px;
     margin: 2rem auto;
     border-radius: 10px;
     overflow: hidden;
@@ -1191,14 +1191,14 @@ header {
 #createOrderModal .product-video {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     border-radius: 10px;
 }
 
 @media (max-width: 480px) {
     #createOrderModal .video-container {
-        width: 120px;
-        height: 120px;
+        width: 200px;
+        height: 200px;
     }
 }
     
@@ -1712,13 +1712,9 @@ function showCreateOrderModal() {
    const createOrderModal = document.getElementById('createOrderModal');
    const modalContent = createOrderModal.querySelector('.modal-content');
 
-   // Limpar qualquer mascote existente
-   const existingMascot = modalContent.querySelector('.mascot-container');
-   if (existingMascot) {
-       existingMascot.remove();
-   }
+   // Remover containers de vídeo existentes
+   modalContent.querySelectorAll('.video-container').forEach(el => el.remove());
 
-   // Definir ID do pedido como 5555
    document.getElementById('orderId').value = '5555';
 
    // Limpar campos do formulário
@@ -1731,19 +1727,16 @@ function showCreateOrderModal() {
    document.getElementById('zipCode').value = '';
    document.getElementById('notes').value = '';
    
-   // Resetar seleção de pagamento
    document.getElementById('paymentMoney').checked = false;
    document.getElementById('paymentCard').checked = false;
    document.getElementById('paymentOnline').checked = false;
 
-   // Define o valor total do pedido
    const subtotal = cart.reduce((total, item) => total + item.price, 0);
    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
    const deliveryFee = 3.00;
    const total = subtotal - discount + deliveryFee;
    document.getElementById('orderTotal').value = total.toFixed(2);
    
-   // Monta os detalhes do pedido
    let orderDetails = '';
    cart.forEach(item => {
        if (item.name.includes('Combo')) {
@@ -1763,17 +1756,15 @@ function showCreateOrderModal() {
    });
    document.getElementById('orderDetails').value = orderDetails;
 
-   // Adicionar novo mascote com vídeo no final do formulário
+   // Adicionar vídeo mascote
    const mascotContainer = document.createElement('div');
+   mascotContainer.className = 'video-container';
    mascotContainer.innerHTML = `
-       <div class="video-container" style="margin-top: 2rem;">
-           <video autoplay loop playsinline class="product-video">
-               <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Gisele%20Cabana.mp4?alt=media&token=0be9ff3c-4178-4e89-9a95-0a778bf38d24" type="video/mp4">
-           </video>
-       </div>
+       <video autoplay loop playsinline class="product-video">
+           <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Gisele%20Cabana.mp4?alt=media&token=0be9ff3c-4178-4e89-9a95-0a778bf38d24" type="video/mp4">
+       </video>
    `;
 
-   // Adicionar o controle de som do vídeo
    const video = mascotContainer.querySelector('video');
    const observer = new IntersectionObserver((entries) => {
        entries.forEach(entry => {
@@ -1785,7 +1776,6 @@ function showCreateOrderModal() {
        });
    }, { threshold: 0.5 });
    
-   // Adicionar depois do último botão do formulário
    const submitButton = modalContent.querySelector('button[type="button"]');
    submitButton.parentNode.appendChild(mascotContainer);
    observer.observe(mascotContainer);
