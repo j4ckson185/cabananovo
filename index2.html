@@ -2521,7 +2521,7 @@ function openProductModal(product) {
    const modal = document.getElementById('productModal');
    
    // Remove existing videos and upgrade buttons
-   modal.querySelectorAll('.video-container, .upgrade-button').forEach(el => el.remove());
+   modal.querySelectorAll('.video-container, .upgrade-button, .mascot-container').forEach(el => el.remove());
    
    modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
    modal.querySelector('.modal-product-title').textContent = product.name;
