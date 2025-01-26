@@ -3047,11 +3047,11 @@ function updateCartCount() {
     cartCount.style.display = cart.length ? 'flex' : 'none';
 }
 
-function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
+function formatOrderForWhatsApp() {
     const paymentMethodMap = {
         'money': 'Dinheiro',
         'card': 'Cartão',
-        'online': 'PIX'
+        'pix': 'PIX'
     };
 
     const customerName = document.getElementById('customerName').value;
@@ -3062,7 +3062,7 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     const complement = document.getElementById('complement').value;
     const zipCode = document.getElementById('zipCode').value;
     const notes = document.getElementById('notes').value;
-    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || '';
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
 
     let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
     
@@ -3079,16 +3079,7 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
         if (item.name.includes('Combo')) {
             message += `*${item.name}*\n`;
             if (item.description) {
-                const lines = item.description.split('\n').filter(line => line.trim());
-                lines.forEach(line => {
-                    message += `${line}\n`;
-                });
-            }
-            if (item.selectedToppings && item.selectedToppings.length > 0) {
-                message += `Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
-            }
-            if (item.selectedExtras && item.selectedExtras.length > 0) {
-                message += `Extras: ${item.selectedExtras.join(', ')}\n`;
+                message += item.description + '\n';
             }
         } else {
             message += `*${item.name}*\n`;
@@ -3117,9 +3108,11 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     }
     
     message += `*Total:* R$ ${total.toFixed(2)}\n\n`;
-    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod] || paymentMethod}\n`;
     
-    if (paymentMethod === 'money') {
+    const paymentValue = paymentMethod ? paymentMethod.value : '';
+    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentValue] || paymentValue}\n`;
+    
+    if (paymentValue === 'money') {
         const changeAmount = document.querySelector('input[name="change"]')?.value;
         if (changeAmount) {
             message += `Troco para: R$ ${parseFloat(changeAmount).toFixed(2)}\n`;
