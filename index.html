@@ -3054,7 +3054,6 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
         'online': 'PIX'
     };
 
-    // Pegar valores diretamente dos campos do formulário
     const customerName = document.getElementById('customerName').value;
     const customerPhone = document.getElementById('customerPhone').value;
     const street = document.getElementById('street').value;
@@ -3063,35 +3062,51 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     const complement = document.getElementById('complement').value;
     const zipCode = document.getElementById('zipCode').value;
     const notes = document.getElementById('notes').value;
-    
-    // Pegar método de pagamento selecionado
     const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || '';
 
     let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
     
-    // Informações do cliente
     message += `*Cliente:* ${customerName}\n`;
     message += `*WhatsApp:* ${customerPhone}\n\n`;
-    
-    // Endereço
     message += `*📍 Endereço de Entrega:*\n`;
     message += `${street}, ${streetNumber}\n`;
     if (complement) message += `Complemento: ${complement}\n`;
     message += `Bairro: ${neighborhood}\n`;
     message += `CEP: ${zipCode}\n\n`;
     
-    // Itens do pedido
     message += `*🍨 Itens do Pedido:*\n`;
-    const orderDetails = document.getElementById('orderDetails').value;
-    message += `${orderDetails}\n`;
+    cart.forEach(item => {
+        if (item.name.includes('Combo')) {
+            message += `*${item.name}*\n`;
+            if (item.description) {
+                const lines = item.description.split('\n').filter(line => line.trim());
+                lines.forEach(line => {
+                    message += `${line}\n`;
+                });
+            }
+            if (item.selectedToppings && item.selectedToppings.length > 0) {
+                message += `Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
+            }
+            if (item.selectedExtras && item.selectedExtras.length > 0) {
+                message += `Extras: ${item.selectedExtras.join(', ')}\n`;
+            }
+        } else {
+            message += `*${item.name}*\n`;
+            if (item.selectedToppings && item.selectedToppings.length > 0) {
+                message += `Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
+            }
+            if (item.selectedExtras && item.selectedExtras.length > 0) {
+                message += `Extras: ${item.selectedExtras.join(', ')}\n`;
+            }
+        }
+        message += `Valor: R$ ${item.price.toFixed(2)}\n\n`;
+    });
 
-    // Calcular totais
     const subtotal = cart.reduce((total, item) => total + item.price, 0);
     const deliveryFee = 3.00;
     const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
     const total = subtotal - discount + deliveryFee;
     
-    // Resumo do pedido
     message += `*💰 Resumo do Pedido:*\n`;
     message += `*Subtotal:* R$ ${subtotal.toFixed(2)}\n`;
     message += `*Taxa de Entrega:* R$ ${deliveryFee.toFixed(2)}\n`;
@@ -3102,9 +3117,8 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     }
     
     message += `*Total:* R$ ${total.toFixed(2)}\n\n`;
-    
-    // Pagamento
     message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod] || paymentMethod}\n`;
+    
     if (paymentMethod === 'money') {
         const changeAmount = document.querySelector('input[name="change"]')?.value;
         if (changeAmount) {
@@ -3112,10 +3126,12 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
         }
     }
     
-    // Observações
     if (notes) {
         message += `\n*Observações:* ${notes}\n`;
     }
+    
+    return message;
+}
     
     return message;
 }
