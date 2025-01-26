@@ -2368,7 +2368,7 @@ function checkStoreStatus() {
                 `;
                 
                 videoContainer.innerHTML = `
-                    <video loop playsinline muted class="product-video" style="width: 100%; height: 120%; object-fit: cover; position: absolute; top: -10%;">
+                    <video loop playsinline autoplay class="product-video" style="width: 100%; height: 120%; object-fit: cover; position: absolute; top: -10%;">
                         <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Work%20(1).mp4?alt=media&token=9d7b640d-ef3d-4df4-a835-90f02f9740d1" type="video/mp4">
                     </video>
                 `;
@@ -2376,15 +2376,20 @@ function checkStoreStatus() {
                 categories.parentNode.insertBefore(videoContainer, categories);
                 
                 const video = videoContainer.querySelector('video');
-                video.muted = false;
+                
+                // Garantir que tem áudio quando inicia
+                video.addEventListener('canplay', () => {
+                    video.muted = false;
+                });
 
-                // Usar Intersection Observer para controlar a reprodução
+                // Intersection Observer para controle de visibilidade
                 const observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
-                            video.play().catch(e => {
-                                video.muted = true;
-                                video.play();
+                            video.play().then(() => {
+                                video.muted = false;
+                            }).catch(e => {
+                                console.log('Erro ao reproduzir vídeo:', e);
                             });
                         } else {
                             video.pause();
