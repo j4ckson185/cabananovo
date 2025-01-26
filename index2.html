@@ -2335,20 +2335,20 @@ function checkStoreStatus() {
         justify-content: center;
         gap: 0.5rem;
     `;
-    
+
     realtimeDB.ref('schedule').once('value')
         .then(snapshot => {
             const schedule = snapshot.val() || {};
             const isOpen = isStoreOpenNow(schedule);
-            
+
             statusDiv.innerHTML = `
                 <span style="font-size: 1.2rem; color: ${isOpen ? '#4CAF50' : '#FF5252'}">●</span>
                 <span>Loja ${isOpen ? 'Aberta' : 'Fechada'}</span>
             `;
-            
+
             const categories = document.querySelector('.categories');
             categories.parentNode.insertBefore(statusDiv, categories);
-            
+
             if (!isOpen) {
                 const videoContainer = document.createElement('div');
                 videoContainer.className = 'store-closed-video';
@@ -2362,21 +2362,20 @@ function checkStoreStatus() {
                     background: var(--surface);
                     position: relative;
                 `;
-                
+
                 videoContainer.innerHTML = `
-                    <video autoplay loop playsinline class="product-video" style="width: 100%; height: 120%; object-fit: cover; position: absolute; top: -10%;">
+                    <video autoplay loop muted playsinline class="product-video" style="width: 100%; height: 120%; object-fit: cover; position: absolute; top: -10%;">
                         <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Work%20(1).mp4?alt=media&token=9d7b640d-ef3d-4df4-a835-90f02f9740d1" type="video/mp4">
                     </video>
                 `;
 
                 const video = videoContainer.querySelector('video');
+
+                // Configurar IntersectionObserver para controlar a reprodução do vídeo
                 const observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
-                            video.muted = false;
-                            video.play().then(() => {
-                                video.muted = false;
-                            });
+                            video.play().catch(err => console.warn('Erro ao tentar reproduzir o vídeo:', err));
                         } else {
                             video.pause();
                         }
@@ -2385,12 +2384,16 @@ function checkStoreStatus() {
 
                 categories.parentNode.insertBefore(videoContainer, categories);
                 observer.observe(videoContainer);
-                
-                // Garantir que o vídeo tenha áudio após carregamento
+
+                // Garantir que o vídeo seja reproduzido com áudio ao carregar
                 video.addEventListener('loadedmetadata', () => {
                     video.muted = false;
                 });
-                
+
+                // Tentar habilitar áudio de forma programática
+                video.muted = false;
+                video.play().catch(err => console.warn('Erro ao reproduzir o vídeo automaticamente:', err));
+
                 disableOrdering();
             }
         })
