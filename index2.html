@@ -2367,18 +2367,31 @@ function checkStoreStatus() {
                     position: relative;
                 `;
                 
-                videoContainer.innerHTML = `
-                    <video autoplay loop playsinline class="product-video" style="width: 100%; height: 120%; object-fit: cover; position: absolute; top: -10%;">
-                        <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Work%20(1).mp4?alt=media&token=9d7b640d-ef3d-4df4-a835-90f02f9740d1" type="video/mp4">
-                    </video>
-                `;
-
-                const video = videoContainer.querySelector('video');
+                const video = document.createElement('video');
+                video.autoplay = true;
+                video.loop = true;
+                video.playsinline = true;
                 video.muted = false;
+                video.style.cssText = `
+                    width: 100%;
+                    height: 120%;
+                    object-fit: cover;
+                    position: absolute;
+                    top: -10%;
+                `;
                 
-                // Garantir que o vídeo começa a reproduzir
-                video.play().catch(function(error) {
-                    console.log("Erro ao reproduzir vídeo:", error);
+                const source = document.createElement('source');
+                source.src = "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Work%20(1).mp4?alt=media&token=9d7b640d-ef3d-4df4-a835-90f02f9740d1";
+                source.type = "video/mp4";
+                
+                video.appendChild(source);
+                videoContainer.appendChild(video);
+                
+                // Garantir reprodução automática
+                video.addEventListener('loadedmetadata', () => {
+                    video.play().catch(error => {
+                        console.log("Erro ao reproduzir vídeo:", error);
+                    });
                 });
                 
                 categories.parentNode.insertBefore(videoContainer, categories);
