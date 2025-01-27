@@ -3123,25 +3123,25 @@ function formatOrderForWhatsApp() {
         'pix': 'PIX'
     };
 
-    const customerName = document.getElementById('customerName').value;
-    const customerPhone = document.getElementById('customerPhone').value;
-    const street = document.getElementById('street').value;
-    const streetNumber = document.getElementById('streetNumber').value;
-    const neighborhood = document.getElementById('neighborhood').value;
-    const complement = document.getElementById('complement').value;
-    const zipCode = document.getElementById('zipCode').value;
-    const notes = document.getElementById('notes').value;
-    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+    // Corrigindo os seletores para corresponder ao seu formulário
+    const customerName = document.querySelector('input[name="fullName"]')?.value;
+    const customerPhone = document.querySelector('input[name="whatsapp"]')?.value;
+    const street = document.querySelector('input[name="address"]')?.value;
+    const complement = document.querySelector('input[name="complement"]')?.value;
+    const neighborhood = document.querySelector('input[name="neighborhood"]')?.value;
+    const zipCode = document.querySelector('input[name="zipcode"]')?.value;
+    const paymentMethod = document.querySelector('input[name="payment"]:checked');
+    const notes = document.querySelector('textarea[name="notes"]')?.value;
 
     let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
     
-    message += `*Cliente:* ${customerName}\n`;
-    message += `*WhatsApp:* ${customerPhone}\n\n`;
+    message += `*Cliente:* ${customerName || 'Não informado'}\n`;
+    message += `*WhatsApp:* ${customerPhone || 'Não informado'}\n\n`;
     message += `*📍 Endereço de Entrega:*\n`;
-    message += `${street}, ${streetNumber}\n`;
+    message += `${street || 'Não informado'}\n`;
     if (complement) message += `Complemento: ${complement}\n`;
-    message += `Bairro: ${neighborhood}\n`;
-    message += `CEP: ${zipCode}\n\n`;
+    message += `Bairro: ${neighborhood || 'Não informado'}\n`;
+    message += `CEP: ${zipCode || 'Não informado'}\n\n`;
     
     message += `*🍨 Itens do Pedido:*\n`;
     cart.forEach(item => {
@@ -3179,7 +3179,7 @@ function formatOrderForWhatsApp() {
     message += `*Total:* R$ ${total.toFixed(2)}\n\n`;
     
     const paymentValue = paymentMethod ? paymentMethod.value : '';
-    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentValue] || paymentValue}\n`;
+    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentValue] || 'Não selecionado'}\n`;
     
     if (paymentValue === 'money') {
         const changeAmount = document.querySelector('input[name="change"]')?.value;
