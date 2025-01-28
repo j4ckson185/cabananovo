@@ -3464,6 +3464,7 @@ async function submitOrderFromDigitalMenu() {
 }
 
     // Função para adicionar o mascote nos produtos de 500ml
+// Função para adicionar o mascote nos produtos de 500ml
 function addMascotToProduct(modalContent) {
     // Remove qualquer container de mascote existente
     const existingMascot = modalContent.querySelector('.sabrina-mascot-container');
@@ -3480,6 +3481,9 @@ function addMascotToProduct(modalContent) {
         margin: 1rem auto;
         position: relative;
         cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     `;
 
     // Adicionar vídeo
@@ -3493,30 +3497,64 @@ function addMascotToProduct(modalContent) {
     video.src = 'https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/V%C3%ADdeo%20sem%20t%C3%ADtulo.mp4?alt=media&token=66d8d710-8d8b-4861-b493-fa6a107145f8';
     video.loop = true;
 
+    // Container para o balão de diálogo
+    const dialogContainer = document.createElement('div');
+    dialogContainer.style.cssText = `
+        position: relative;
+        width: 300px;
+        margin-top: 15px;
+    `;
+
     // Adicionar balão de diálogo
     const dialogBubble = document.createElement('div');
     dialogBubble.className = 'dialog-bubble';
     dialogBubble.style.cssText = `
-        position: absolute;
         background: var(--glass);
         border: 1px solid var(--glass-border);
         padding: 1rem;
         border-radius: 15px;
-        max-width: 250px;
         font-size: 0.9rem;
         color: var(--text);
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        margin-bottom: 10px;
         backdrop-filter: blur(10px);
-        z-index: 1;
-        text-align: center;
+        text-align: left;
+        position: relative;
+        margin-bottom: 15px;
     `;
     dialogBubble.textContent = "Oi, td bem? Me chamo Sabrina, sou especialista em Açaí. Caso queira dicas sobre combinações de ingredientes ou saber curiosidades sobre a origem dos sabores, é só clicar ou dar um toque em mim.";
 
+    // Adicionar a seta do diálogo
+    const dialogArrow = document.createElement('div');
+    dialogArrow.style.cssText = `
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-bottom: 10px solid var(--glass-border);
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+    `;
+
+    // Adicionar a seta interna do diálogo (para criar borda)
+    const dialogArrowInner = document.createElement('div');
+    dialogArrowInner.style.cssText = `
+        width: 0;
+        height: 0;
+        border-left: 9px solid transparent;
+        border-right: 9px solid transparent;
+        border-bottom: 9px solid var(--glass);
+        position: absolute;
+        top: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+    `;
+
+    dialogBubble.appendChild(dialogArrow);
+    dialogBubble.appendChild(dialogArrowInner);
+    dialogContainer.appendChild(dialogBubble);
     mascotContainer.appendChild(video);
-    mascotContainer.appendChild(dialogBubble);
+    mascotContainer.appendChild(dialogContainer);
 
     // Adicionar evento de clique
     let isPlaying = false;
@@ -3537,9 +3575,12 @@ function addMascotToProduct(modalContent) {
                 width: 150px;
                 height: 150px;
             }
-            .dialog-bubble {
+            .sabrina-mascot-container .dialog-bubble {
                 font-size: 0.8rem;
-                max-width: 200px;
+                padding: 0.75rem;
+            }
+            .sabrina-mascot-container div[style*="width: 300px"] {
+                width: 250px !important;
             }
         }
         @media (max-width: 480px) {
@@ -3547,10 +3588,12 @@ function addMascotToProduct(modalContent) {
                 width: 120px;
                 height: 120px;
             }
-            .dialog-bubble {
+            .sabrina-mascot-container .dialog-bubble {
                 font-size: 0.75rem;
-                max-width: 180px;
                 padding: 0.75rem;
+            }
+            .sabrina-mascot-container div[style*="width: 300px"] {
+                width: 200px !important;
             }
         }
     `;
