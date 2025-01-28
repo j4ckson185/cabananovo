@@ -3524,23 +3524,22 @@ const productViewHistory = {
 
         const messages = is1L ? messages1L : messages500ml;
 
-        // Se está retornando ao mesmo produto exato
-        if (isReturningToSameProduct) {
+        // Lógica de seleção de mensagem
+        if (sizeCount === 0) {
+            // Primeira vez vendo qualquer produto deste tamanho
+            return messages.firstView;
+        } else if (isReturningToSameProduct) {
+            // Se voltou ao mesmo produto exato
             const index = Math.min(
                 this.viewCounts[productTitle] - 1,
                 messages.returningProduct.length - 1
             );
             return messages.returningProduct[index];
-        }
-        
-        // Se já viu algum produto deste tamanho antes
-        if (sizeCount > 0) {
+        } else {
+            // Se já viu outro produto do mesmo tamanho
             const index = (sizeCount - 1) % messages.sameSize.length;
             return messages.sameSize[index];
         }
-
-        // Se é a primeira vez vendo qualquer produto deste tamanho
-        return messages.firstView;
     },
     updateHistory: function(productTitle) {
         const is1L = productTitle.includes('1L') || productTitle.includes('1 Litro');
@@ -3557,6 +3556,7 @@ const productViewHistory = {
         this.lastProduct = productTitle;
     }
 };
+    
 // Função para adicionar o mascote nos produtos
 function addMascotToProduct(modalContent, productSize) {
     // Remove qualquer container de mascote existente
