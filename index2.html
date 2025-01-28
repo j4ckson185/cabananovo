@@ -2421,23 +2421,32 @@ function checkStoreStatus() {
         position: relative;
     `;
 
+    // Criar o container do vídeo para melhor controle do enquadramento
+    const videoContainer = document.createElement('div');
+    videoContainer.style.cssText = `
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 2px solid var(--accent);
+        position: relative;
+        cursor: pointer;
+    `;
+
     // Criar o vídeo do mascote
     const mascotVideo = document.createElement('video');
     mascotVideo.className = 'mascot-video';
     mascotVideo.loop = true;
-    mascotVideo.muted = true;
     mascotVideo.playsInline = true;
+    mascotVideo.muted = true; // Começa mutado mas pode ser desmutado ao clicar
     mascotVideo.style.cssText = `
-        width: 200px;
-        height: 200px;
-        border-radius: 50%;
+        width: 100%;
+        height: 140%;
         object-fit: cover;
-        border: 2px solid var(--accent);
-        cursor: pointer;
+        object-position: center 30%;
+        transform: scale(1.2);
     `;
-    mascotVideo.innerHTML = `
-        <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness.mp4?alt=media&token=904bfced-6f04-459b-943a-50fa1a998aaf" type="video/mp4">
-    `;
+    mascotVideo.src = "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness.mp4?alt=media&token=904bfced-6f04-459b-943a-50fa1a998aaf";
 
     // Criar o diálogo do mascote
     const mascotDialog = document.createElement('div');
@@ -2484,7 +2493,7 @@ function checkStoreStatus() {
             border-bottom: 9px solid var(--surface);
         }
         @media (max-width: 768px) {
-            .mascot-video {
+            .mascot-video-section > div:first-child {
                 width: 150px;
                 height: 150px;
             }
@@ -2494,7 +2503,7 @@ function checkStoreStatus() {
             }
         }
         @media (max-width: 480px) {
-            .mascot-video {
+            .mascot-video-section > div:first-child {
                 width: 120px;
                 height: 120px;
             }
@@ -2513,7 +2522,8 @@ function checkStoreStatus() {
             `;
             
             // Montar a estrutura
-            mascotSection.appendChild(mascotVideo);
+            videoContainer.appendChild(mascotVideo);
+            mascotSection.appendChild(videoContainer);
             mascotSection.appendChild(mascotDialog);
             
             const categories = document.querySelector('.categories');
@@ -2536,16 +2546,89 @@ function checkStoreStatus() {
             observer.observe(mascotVideo);
 
             // Adicionar interatividade ao clicar no vídeo
-            mascotVideo.addEventListener('click', () => {
+            let isMuted = true;
+            videoContainer.addEventListener('click', () => {
                 if (mascotVideo.paused) {
                     mascotVideo.play();
                 } else {
                     mascotVideo.pause();
                 }
+                // Toggle mute status
+                mascotVideo.muted = !mascotVideo.muted;
+                isMuted = !isMuted;
             });
             
             if (!isOpen) {
-                // ... resto do código para loja fechada ...
+                const showVideo = () => {
+                    const existingVideo = document.querySelector('.video-modal');
+                    if (existingVideo) return;
+
+                    const videoModal = document.createElement('div');
+                    videoModal.className = 'video-modal';
+                    videoModal.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100vh;
+                        background: rgba(0, 0, 0, 0.9);
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        z-index: 9999;
+                    `;
+
+                    const videoContainer = document.createElement('div');
+                    videoContainer.style.cssText = `
+                        width: 90%;
+                        max-width: 400px;
+                        height: 280px;
+                        position: relative;
+                        border-radius: 10px;
+                        overflow: hidden;
+                    `;
+
+                    videoContainer.innerHTML = `
+                        <video autoplay loop playsinline class="product-video" style="width: 100%; height: 120%; object-fit: cover; position: absolute; top: -10%;">
+                            <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Work%20(1).mp4?alt=media&token=9d7b640d-ef3d-4df4-a835-90f02f9740d1" type="video/mp4">
+                        </video>
+                        <button class="close-video" style="
+                            position: absolute;
+                            top: 10px;
+                            right: 10px;
+                            background: none;
+                            border: none;
+                            color: white;
+                            font-size: 24px;
+                            cursor: pointer;
+                            z-index: 1000;
+                        ">&times;</button>
+                    `;
+
+                    const video = videoContainer.querySelector('video');
+                    video.muted = false;
+
+                    const closeBtn = videoContainer.querySelector('.close-video');
+                    closeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        videoModal.remove();
+                    });
+
+                    videoModal.appendChild(videoContainer);
+                    document.body.appendChild(videoModal);
+
+                    videoModal.addEventListener('click', (e) => {
+                        if (e.target === videoModal) {
+                            videoModal.remove();
+                        }
+                    });
+                };
+
+                if (!document.hasVideoListener) {
+                    document.addEventListener('click', showVideo, { once: true });
+                    document.hasVideoListener = true;
+                }
+
                 disableOrdering();
             }
         })
