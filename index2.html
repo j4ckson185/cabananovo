@@ -1200,6 +1200,76 @@ header {
         width: 200px;
         height: 200px;
     }
+    .mascot-video-section {
+    max-width: 1400px;
+    margin: 0 auto 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 1rem;
+    position: relative;
+}
+
+.mascot-dialog {
+    background: var(--surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1.2rem;
+    margin-top: 1rem;
+    max-width: 800px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    backdrop-filter: blur(10px);
+}
+
+.mascot-dialog::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 10px solid var(--glass-border);
+}
+
+.mascot-dialog::after {
+    content: '';
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-bottom: 9px solid var(--surface);
+}
+
+.mascot-video {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent);
+}
+
+@media (max-width: 768px) {
+    .mascot-video {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .mascot-dialog {
+        font-size: 0.9rem;
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .mascot-video {
+        width: 120px;
+        height: 120px;
+    }
 }
     
 </style>
@@ -2315,6 +2385,10 @@ function checkStoreStatus() {
     const existingStatus = document.querySelector('.store-status');
     if (existingStatus) existingStatus.remove();
 
+    // Remove também a seção do mascote existente se houver
+    const existingMascot = document.querySelector('.mascot-video-section');
+    if (existingMascot) existingMascot.remove();
+
     const statusDiv = document.createElement('div');
     statusDiv.className = 'store-status';
     statusDiv.style.cssText = `
@@ -2334,6 +2408,100 @@ function checkStoreStatus() {
         gap: 0.5rem;
     `;
     
+    // Criar a seção do mascote
+    const mascotSection = document.createElement('div');
+    mascotSection.className = 'mascot-video-section';
+    mascotSection.style.cssText = `
+        max-width: 1400px;
+        margin: 1rem auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0 1rem;
+        position: relative;
+    `;
+
+    // Criar o vídeo do mascote
+    const mascotVideo = document.createElement('video');
+    mascotVideo.className = 'mascot-video';
+    mascotVideo.loop = true;
+    mascotVideo.muted = true;
+    mascotVideo.playsInline = true;
+    mascotVideo.style.cssText = `
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--accent);
+        cursor: pointer;
+    `;
+    mascotVideo.innerHTML = `
+        <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness.mp4?alt=media&token=904bfced-6f04-459b-943a-50fa1a998aaf" type="video/mp4">
+    `;
+
+    // Criar o diálogo do mascote
+    const mascotDialog = document.createElement('div');
+    mascotDialog.className = 'mascot-dialog';
+    mascotDialog.style.cssText = `
+        background: var(--surface);
+        border: 1px solid var(--glass-border);
+        border-radius: 15px;
+        padding: 1.2rem;
+        margin-top: 1rem;
+        max-width: 800px;
+        width: 100%;
+        text-align: center;
+        position: relative;
+        backdrop-filter: blur(10px);
+    `;
+    mascotDialog.innerHTML = `
+        <strong>E aí, campeão(a)! 🏋️‍♂️💪</strong> Eu sou o Açaizão, seu personal açaí! 
+        Clique em mim e descubra como o açaí pode turbinar seu treino e ajudar você a 
+        alcançar seus objetivos fitness. Vamos juntos nessa jornada de energia e saúde!
+    `;
+
+    // Adicionar as setas do diálogo
+    const style = document.createElement('style');
+    style.textContent = `
+        .mascot-dialog::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 10px solid var(--glass-border);
+        }
+        .mascot-dialog::after {
+            content: '';
+            position: absolute;
+            top: -9px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 9px solid transparent;
+            border-right: 9px solid transparent;
+            border-bottom: 9px solid var(--surface);
+        }
+        @media (max-width: 768px) {
+            .mascot-video {
+                width: 150px;
+                height: 150px;
+            }
+            .mascot-dialog {
+                font-size: 0.9rem;
+                padding: 1rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .mascot-video {
+                width: 120px;
+                height: 120px;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
     realtimeDB.ref('schedule').once('value')
         .then(snapshot => {
             const schedule = snapshot.val() || {};
@@ -2344,81 +2512,40 @@ function checkStoreStatus() {
                 <span>Loja ${isOpen ? 'Aberta' : 'Fechada'}</span>
             `;
             
+            // Montar a estrutura
+            mascotSection.appendChild(mascotVideo);
+            mascotSection.appendChild(mascotDialog);
+            
             const categories = document.querySelector('.categories');
             categories.parentNode.insertBefore(statusDiv, categories);
+            categories.parentNode.insertBefore(mascotSection, categories);
+
+            // Configurar o Intersection Observer para o vídeo
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        mascotVideo.play();
+                    } else {
+                        mascotVideo.pause();
+                    }
+                });
+            }, {
+                threshold: 0.5
+            });
+
+            observer.observe(mascotVideo);
+
+            // Adicionar interatividade ao clicar no vídeo
+            mascotVideo.addEventListener('click', () => {
+                if (mascotVideo.paused) {
+                    mascotVideo.play();
+                } else {
+                    mascotVideo.pause();
+                }
+            });
             
             if (!isOpen) {
-                const showVideo = () => {
-                    const existingVideo = document.querySelector('.video-modal');
-                    if (existingVideo) return;
-
-                    const videoModal = document.createElement('div');
-                    videoModal.className = 'video-modal';
-                    videoModal.style.cssText = `
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100vh;
-                        background: rgba(0, 0, 0, 0.9);
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        z-index: 9999;
-                    `;
-
-                    const videoContainer = document.createElement('div');
-                    videoContainer.style.cssText = `
-                        width: 90%;
-                        max-width: 400px;
-                        height: 280px;
-                        position: relative;
-                        border-radius: 10px;
-                        overflow: hidden;
-                    `;
-
-                    videoContainer.innerHTML = `
-                        <video autoplay loop playsinline class="product-video" style="width: 100%; height: 120%; object-fit: cover; position: absolute; top: -10%;">
-                            <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Work%20(1).mp4?alt=media&token=9d7b640d-ef3d-4df4-a835-90f02f9740d1" type="video/mp4">
-                        </video>
-                        <button class="close-video" style="
-                            position: absolute;
-                            top: 10px;
-                            right: 10px;
-                            background: none;
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            z-index: 1000;
-                        ">&times;</button>
-                    `;
-
-                    const video = videoContainer.querySelector('video');
-                    video.muted = false;
-
-                    const closeBtn = videoContainer.querySelector('.close-video');
-                    closeBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        videoModal.remove();
-                    });
-
-                    videoModal.appendChild(videoContainer);
-                    document.body.appendChild(videoModal);
-
-                    videoModal.addEventListener('click', (e) => {
-                        if (e.target === videoModal) {
-                            videoModal.remove();
-                        }
-                    });
-                };
-
-                // Adicionar evento de clique ao documento apenas uma vez
-                if (!document.hasVideoListener) {
-                    document.addEventListener('click', showVideo, { once: true });
-                    document.hasVideoListener = true;
-                }
-
+                // ... resto do código para loja fechada ...
                 disableOrdering();
             }
         })
@@ -3515,16 +3642,16 @@ const productViewHistory = {
         const messages500ml = {
             firstView: "Oi, td bem? Me chamo Sabrina, sou especialista em Açaí. " + this.dicsText,
             sameSize: [
-                "O 500ml é perfeito pra matar a vontade, né? 😋",
+                "O de 500ml é perfeito pra matar a vontade, né? 😋",
                 "Gostou do tamanho 500ml? É o nosso best-seller!",
                 "500ml é o tamanho ideal pra um momento de açaí perfeito!",
                 "Tá curtindo os nossos de 500ml? São demais, né?",
                 "Esse tamanho é o queridinho da galera!",
-                "O 500ml é tipo aquele amigo que nunca decepciona 😉",
+                "O Açaí de 500ml é tipo aquele amigo que nunca decepciona 😉",
                 "Com 500ml dá pra experimentar vários acompanhamentos!",
-                "Sabia que o 500ml é o tamanho mais pedido?",
+                "Sabia que o de 500ml é o tamanho mais pedido?",
                 "500ml: nem muito, nem pouco... é o tamanho perfeito!",
-                "Tá explorando os sabores no 500ml? Ótima escolha!"
+                "Tá explorando os sabores de 500ml? Ótima escolha!"
             ],
             returningProduct: [
                 "Esse açaí tá te chamando, hein? 😋",
@@ -3798,6 +3925,32 @@ document.addEventListener('DOMContentLoaded', () => {
     checkStoreStatus();
     setInterval(checkStoreStatus, 60000);
     setupPaymentEvents();
+
+        // Configuração do Intersection Observer para o mascote
+    const mascotVideo = document.querySelector('.mascot-video');
+    if (mascotVideo) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    mascotVideo.play();
+                } else {
+                    mascotVideo.pause();
+                }
+            });
+        }, {
+            threshold: 0.5
+        });
+
+        observer.observe(mascotVideo);
+
+        mascotVideo.addEventListener('click', () => {
+            if (mascotVideo.paused) {
+                mascotVideo.play();
+            } else {
+                mascotVideo.pause();
+            }
+        });
+    }
 
 });
    
