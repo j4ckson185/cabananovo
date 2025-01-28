@@ -3463,7 +3463,69 @@ async function submitOrderFromDigitalMenu() {
     }
 }
 
-// Função para adicionar o mascote nos produtos de 500ml
+// Função para adicionar o mascote nos produtos
+// Sistema de rastreamento de visualizações
+const productViewHistory = {
+    lastProduct: null,
+    viewCounts: {},
+    getContextualMessage: function(productTitle) {
+        const isReturning = this.lastProduct === productTitle;
+        const viewCount = this.viewCounts[productTitle] || 0;
+        const isSwitchingProducts = this.lastProduct && this.lastProduct !== productTitle;
+        
+        // Mensagens para produtos de 500ml
+        const messages500ml = {
+            firstView: "Oi, td bem? Me chamo Sabrina, sou especialista em Açaí. Caso queira dicas sobre combinações de acompanhamentos ou saber curiosidades sobre a origem dos sabores, é só clicar ou dar um toque em mim.",
+            returning: [
+                "Tá em dúvida sobre esse? Posso te ajudar a escolher os melhores acompanhamentos!",
+                "Voltou pra dar mais uma olhada? Esse açaí é realmente especial!",
+                "Que bom que voltou! Quer saber mais sobre esse sabor?"
+            ],
+            switching: [
+                "Opa, tô aqui de novo pra te ajudar!",
+                "Que tal esse? Também é uma ótima opção!",
+                "Esse também faz muito sucesso! Quer uma dica especial?"
+            ]
+        };
+
+        // Mensagens para produtos de 1 Litro
+        const messages1L = {
+            firstView: "Oi, td bem? Me chamo Sabrina, sou especialista em Açaí. Caso queira dicas sobre combinações de acompanhamentos ou saber curiosidades sobre a origem dos sabores, é só clicar ou dar um toque em mim.",
+            returning: [
+                "O 1 Litro é perfeito pra compartilhar! Que tal?",
+                "Voltou pro tamanho família? Excelente escolha!",
+                "Esse tamanho é ideal para guardar uma parte pra depois!"
+            ],
+            switching: [
+                "O 1 Litro tem o melhor custo-benefício!",
+                "Pensando em levar mais? Ótima escolha!",
+                "Com 1 Litro dá pra todo mundo experimentar!"
+            ]
+        };
+
+        const messages = productTitle.includes('1L') || productTitle.includes('1 Litro') 
+            ? messages1L 
+            : messages500ml;
+
+        // Seleciona a mensagem apropriada
+        if (viewCount === 0) {
+            return messages.firstView;
+        } else if (isReturning) {
+            const index = Math.min(viewCount - 1, messages.returning.length - 1);
+            return messages.returning[index];
+        } else if (isSwitchingProducts) {
+            const index = Math.min(viewCount - 1, messages.switching.length - 1);
+            return messages.switching[index];
+        }
+
+        return messages.firstView;
+    },
+    updateHistory: function(productTitle) {
+        this.viewCounts[productTitle] = (this.viewCounts[productTitle] || 0) + 1;
+        this.lastProduct = productTitle;
+    }
+};
+
 // Função para adicionar o mascote nos produtos
 function addMascotToProduct(modalContent, productSize) {
     // Remove qualquer container de mascote existente
@@ -3517,6 +3579,10 @@ function addMascotToProduct(modalContent, productSize) {
         margin-bottom: 20px;
     `;
 
+    // Pegar a mensagem contextual
+    const productTitle = modalContent.querySelector('.modal-product-title').textContent;
+    const contextualMessage = productViewHistory.getContextualMessage(productTitle);
+
     // Adicionar balão de diálogo
     const dialogBubble = document.createElement('div');
     dialogBubble.className = 'dialog-bubble';
@@ -3532,7 +3598,7 @@ function addMascotToProduct(modalContent, productSize) {
         position: relative;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     `;
-    dialogBubble.textContent = "Oi, td bem? Me chamo Sabrina, sou especialista em Açaí. Caso queira dicas sobre combinações de acompanhamentos ou saber curiosidades sobre a origem dos sabores, é só clicar ou dar um toque em mim.";
+    dialogBubble.textContent = contextualMessage;
 
     // Adicionar a seta do diálogo
     const dialogArrow = document.createElement('div');
@@ -3637,6 +3703,9 @@ openProductModal = function(product) {
     if (existingMascot) {
         existingMascot.remove();
     }
+    
+    // Atualizar histórico de visualizações
+    productViewHistory.updateHistory(productTitle);
     
     // Adicionar mascote baseado no tamanho do produto
     if (productTitle.includes('500ml')) {
