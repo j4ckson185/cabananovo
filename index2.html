@@ -3462,6 +3462,119 @@ async function submitOrderFromDigitalMenu() {
         alert('Erro ao criar pedido: ' + error.message);
     }
 }
+
+    // Função para adicionar o mascote nos produtos de 500ml
+function addMascotToProduct(modalContent) {
+    // Remove qualquer container de mascote existente
+    const existingMascot = modalContent.querySelector('.sabrina-mascot-container');
+    if (existingMascot) {
+        existingMascot.remove();
+    }
+
+    // Criar container do mascote
+    const mascotContainer = document.createElement('div');
+    mascotContainer.className = 'sabrina-mascot-container';
+    mascotContainer.style.cssText = `
+        width: 200px;
+        height: 200px;
+        margin: 1rem auto;
+        position: relative;
+        cursor: pointer;
+    `;
+
+    // Adicionar vídeo
+    const video = document.createElement('video');
+    video.style.cssText = `
+        width: 100%;
+        height: 100%;
+        border-radius: 10px;
+        object-fit: cover;
+    `;
+    video.src = 'https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/V%C3%ADdeo%20sem%20t%C3%ADtulo.mp4?alt=media&token=66d8d710-8d8b-4861-b493-fa6a107145f8';
+    video.loop = true;
+
+    // Adicionar balão de diálogo
+    const dialogBubble = document.createElement('div');
+    dialogBubble.className = 'dialog-bubble';
+    dialogBubble.style.cssText = `
+        position: absolute;
+        background: var(--glass);
+        border: 1px solid var(--glass-border);
+        padding: 1rem;
+        border-radius: 15px;
+        max-width: 250px;
+        font-size: 0.9rem;
+        color: var(--text);
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        margin-bottom: 10px;
+        backdrop-filter: blur(10px);
+        z-index: 1;
+        text-align: center;
+    `;
+    dialogBubble.textContent = "Oi, td bem? Me chamo Sabrina, sou especialista em Açaí. Caso queira dicas sobre combinações de ingredientes ou saber curiosidades sobre a origem dos sabores, é só clicar ou dar um toque em mim.";
+
+    mascotContainer.appendChild(video);
+    mascotContainer.appendChild(dialogBubble);
+
+    // Adicionar evento de clique
+    let isPlaying = false;
+    mascotContainer.addEventListener('click', () => {
+        if (isPlaying) {
+            video.pause();
+        } else {
+            video.play();
+        }
+        isPlaying = !isPlaying;
+    });
+
+    // Adicionar estilos responsivos
+    const style = document.createElement('style');
+    style.textContent = `
+        @media (max-width: 768px) {
+            .sabrina-mascot-container {
+                width: 150px;
+                height: 150px;
+            }
+            .dialog-bubble {
+                font-size: 0.8rem;
+                max-width: 200px;
+            }
+        }
+        @media (max-width: 480px) {
+            .sabrina-mascot-container {
+                width: 120px;
+                height: 120px;
+            }
+            .dialog-bubble {
+                font-size: 0.75rem;
+                max-width: 180px;
+                padding: 0.75rem;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Inserir o mascote após a imagem do produto e antes da seção de acompanhamentos
+    const toppingsSection = modalContent.querySelector('.toppings-section');
+    if (toppingsSection) {
+        toppingsSection.parentNode.insertBefore(mascotContainer, toppingsSection);
+    }
+}
+
+// Modificar a função openProductModal existente para incluir o mascote
+const originalOpenProductModal = openProductModal;
+openProductModal = function(product) {
+    originalOpenProductModal(product);
+    
+    const modalContent = document.querySelector('#productModal .modal-content');
+    
+    // Adicionar mascote apenas para produtos de 500ml
+    if (product.name.includes('500ml') && !product.name.includes('1 Litro')) {
+        addMascotToProduct(modalContent);
+    }
+};
     
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
