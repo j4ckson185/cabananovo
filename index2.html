@@ -3466,7 +3466,7 @@ async function submitOrderFromDigitalMenu() {
 // Função para adicionar o mascote nos produtos de 500ml
 function addMascotToProduct(modalContent) {
     // Remove qualquer container de mascote existente
-    const existingMascot = modalContent.querySelector('.sabrina-mascot-container');
+    const existingMascot = modalContent.querySelector('.mascot-section');
     if (existingMascot) {
         existingMascot.remove();
     }
@@ -3624,11 +3624,16 @@ openProductModal = function(product) {
     originalOpenProductModal(product);
     
     const modalContent = document.querySelector('#productModal .modal-content');
-    // Pegar o título do produto
     const productTitle = modalContent.querySelector('.modal-product-title').textContent;
     
-    // Adicionar mascote apenas para produtos que têm "500ml" no título
-    if (productTitle.includes('500ml')) {
+    // Limpar qualquer mascote existente
+    const existingMascot = modalContent.querySelector('.mascot-section');
+    if (existingMascot) {
+        existingMascot.remove();
+    }
+    
+    // Adicionar mascote apenas para produtos com '500ml' no título
+    if (productTitle.includes('500ml') && !productTitle.includes('1L') && !productTitle.includes('1 Litro')) {
         addMascotToProduct(modalContent);
     }
 };
