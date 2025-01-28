@@ -3464,12 +3464,18 @@ async function submitOrderFromDigitalMenu() {
 }
 
 // Função para adicionar o mascote nos produtos de 500ml
-function addMascotToProduct(modalContent) {
+// Função para adicionar o mascote nos produtos
+function addMascotToProduct(modalContent, productSize) {
     // Remove qualquer container de mascote existente
     const existingMascot = modalContent.querySelector('.mascot-section');
     if (existingMascot) {
         existingMascot.remove();
     }
+
+    // Definir URL do vídeo baseado no tamanho do produto
+    const videoUrl = productSize === '1L' 
+        ? 'https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Acai%201%20Litro.mp4?alt=media&token=6caa0bef-e4f9-44ee-823e-5d1205f3ed1f'
+        : 'https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/V%C3%ADdeo%20sem%20t%C3%ADtulo.mp4?alt=media&token=66d8d710-8d8b-4861-b493-fa6a107145f8';
 
     // Criar container do mascote e diálogo como uma seção separada
     const mascotSection = document.createElement('div');
@@ -3499,7 +3505,7 @@ function addMascotToProduct(modalContent) {
         border-radius: 10px;
         object-fit: cover;
     `;
-    video.src = 'https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/V%C3%ADdeo%20sem%20t%C3%ADtulo.mp4?alt=media&token=66d8d710-8d8b-4861-b493-fa6a107145f8';
+    video.src = videoUrl;
     video.loop = true;
 
     // Container para o balão de diálogo
@@ -3632,9 +3638,11 @@ openProductModal = function(product) {
         existingMascot.remove();
     }
     
-    // Adicionar mascote apenas para produtos com '500ml' no título
-    if (productTitle.includes('500ml') && !productTitle.includes('1L') && !productTitle.includes('1 Litro')) {
-        addMascotToProduct(modalContent);
+    // Adicionar mascote baseado no tamanho do produto
+    if (productTitle.includes('500ml')) {
+        addMascotToProduct(modalContent, '500ml');
+    } else if (productTitle.includes('1L') || productTitle.includes('1 Litro')) {
+        addMascotToProduct(modalContent, '1L');
     }
 };
     
