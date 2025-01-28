@@ -3463,7 +3463,7 @@ async function submitOrderFromDigitalMenu() {
     }
 }
 
-    // Função para adicionar o mascote nos produtos de 500ml
+// Função para adicionar o mascote nos produtos de 500ml
 // Função para adicionar o mascote nos produtos de 500ml
 function addMascotToProduct(modalContent) {
     // Remove qualquer container de mascote existente
@@ -3503,6 +3503,7 @@ function addMascotToProduct(modalContent) {
         position: relative;
         width: 300px;
         margin-top: 15px;
+        margin-bottom: 20px;
     `;
 
     // Adicionar balão de diálogo
@@ -3520,7 +3521,7 @@ function addMascotToProduct(modalContent) {
         position: relative;
         margin-bottom: 15px;
     `;
-    dialogBubble.textContent = "Oi, td bem? Me chamo Sabrina, sou especialista em Açaí. Caso queira dicas sobre combinações de ingredientes ou saber curiosidades sobre a origem dos sabores, é só clicar ou dar um toque em mim.";
+    dialogBubble.textContent = "Oi, td bem? Me chamo Sabrina, sou especialista em Açaí. Caso queira dicas sobre combinações de acompanhamentos ou saber curiosidades sobre a origem dos sabores, é só clicar ou dar um toque em mim.";
 
     // Adicionar a seta do diálogo
     const dialogArrow = document.createElement('div');
@@ -3599,10 +3600,10 @@ function addMascotToProduct(modalContent) {
     `;
     document.head.appendChild(style);
 
-    // Inserir o mascote após a imagem do produto e antes da seção de acompanhamentos
-    const toppingsSection = modalContent.querySelector('.toppings-section');
-    if (toppingsSection) {
-        toppingsSection.parentNode.insertBefore(mascotContainer, toppingsSection);
+    // Inserir o mascote antes da modal-product-price
+    const productPrice = modalContent.querySelector('.modal-product-price');
+    if (productPrice) {
+        productPrice.parentNode.insertBefore(mascotContainer, productPrice.nextSibling);
     }
 }
 
@@ -3612,9 +3613,11 @@ openProductModal = function(product) {
     originalOpenProductModal(product);
     
     const modalContent = document.querySelector('#productModal .modal-content');
+    // Pegar o título do produto
+    const productTitle = modalContent.querySelector('.modal-product-title').textContent;
     
-    // Adicionar mascote apenas para produtos de 500ml
-    if (product.name.includes('500ml') && !product.name.includes('1 Litro')) {
+    // Adicionar mascote apenas para produtos que têm "500ml" no título
+    if (productTitle.includes('500ml')) {
         addMascotToProduct(modalContent);
     }
 };
