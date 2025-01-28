@@ -3477,6 +3477,19 @@ const productViewHistory = {
         '1L': new Set()
     },
     dicsText: "Quer dicas de acompanhamentos ou saber curiosidades sobre a origem dos sabores? é só clicar ou dar um toque em mim.",
+    
+    getVideoUrl: function(size, count) {
+        if (size === '1L') {
+            return 'https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Acai%201%20Litro.mp4?alt=media&token=6caa0bef-e4f9-44ee-823e-5d1205f3ed1f';
+        } else {
+            // Para 500ml, alterna entre os dois vídeos
+            const isAlternateVideo = count % 2 === 1; // Se for ímpar, usa o vídeo alternativo
+            return isAlternateVideo 
+                ? 'https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/V%C3%ADdeo%20sem%20t%C3%ADtulo%20(1).mp4?alt=media&token=f8f4d13e-d648-486d-ac49-5325c681f625'
+                : 'https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/V%C3%ADdeo%20sem%20t%C3%ADtulo.mp4?alt=media&token=66d8d710-8d8b-4861-b493-fa6a107145f8';
+        }
+    },
+
     getNextMessage: function(size, messages) {
         const usedSet = this.usedMessages[size];
         
@@ -3491,6 +3504,7 @@ const productViewHistory = {
         
         return `${selectedMessage} ${this.dicsText}`;
     },
+    
     getContextualMessage: function(productTitle) {
         const is1L = productTitle.includes('1L') || productTitle.includes('1 Litro');
         const size = is1L ? '1L' : '500ml';
@@ -3568,7 +3582,7 @@ const productViewHistory = {
         this.lastProduct = productTitle;
     }
 };
-    
+
 // Função para adicionar o mascote nos produtos
 function addMascotToProduct(modalContent, productSize) {
     // Remove qualquer container de mascote existente
@@ -3577,10 +3591,11 @@ function addMascotToProduct(modalContent, productSize) {
         existingMascot.remove();
     }
 
-    // Definir URL do vídeo baseado no tamanho do produto
-    const videoUrl = productSize === '1L' 
-        ? 'https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Acai%201%20Litro.mp4?alt=media&token=6caa0bef-e4f9-44ee-823e-5d1205f3ed1f'
-        : 'https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/V%C3%ADdeo%20sem%20t%C3%ADtulo.mp4?alt=media&token=66d8d710-8d8b-4861-b493-fa6a107145f8';
+    // Pegar o título do produto
+    const productTitle = modalContent.querySelector('.modal-product-title').textContent;
+
+    // Definir URL do vídeo baseado no tamanho e contagem
+    const videoUrl = productViewHistory.getVideoUrl(productSize, productViewHistory.sizeViewCounts[productSize]);
 
     // Criar container do mascote e diálogo como uma seção separada
     const mascotSection = document.createElement('div');
@@ -3622,10 +3637,6 @@ function addMascotToProduct(modalContent, productSize) {
         margin-bottom: 20px;
     `;
 
-    // Pegar a mensagem contextual
-    const productTitle = modalContent.querySelector('.modal-product-title').textContent;
-    const contextualMessage = productViewHistory.getContextualMessage(productTitle);
-
     // Adicionar balão de diálogo
     const dialogBubble = document.createElement('div');
     dialogBubble.className = 'dialog-bubble';
@@ -3641,7 +3652,7 @@ function addMascotToProduct(modalContent, productSize) {
         position: relative;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     `;
-    dialogBubble.textContent = contextualMessage;
+    dialogBubble.textContent = productViewHistory.getContextualMessage(productTitle);
 
     // Adicionar a seta do diálogo
     const dialogArrow = document.createElement('div');
