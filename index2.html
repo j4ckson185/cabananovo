@@ -2388,17 +2388,21 @@ function checkStoreStatus() {
 
     // Função para determinar qual vídeo mostrar
     function getMascotVideoUrl() {
+        const videos = [
+            "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness.mp4?alt=media&token=904bfced-6f04-459b-943a-50fa1a998aaf",
+            "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness2.mp4?alt=media&token=b66fcb5e-1dfb-467f-926d-dbeb92d03061",
+            "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/C%C3%B3pia%20de%20C%C3%B3pia%20de%20V%C3%ADdeo%20sem%20t%C3%ADtulo%202.mp4?alt=media&token=8c88b590-4f3f-4a52-b259-8b4b6e6c22b1"
+        ];
+
         if (visitCount === 0) {
-            // Primeira visita
-            return "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness.mp4?alt=media&token=904bfced-6f04-459b-943a-50fa1a998aaf";
+            return videos[0]; // Primeira visita
         } else if (visitCount === 1) {
-            // Segunda visita
-            return "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness2.mp4?alt=media&token=b66fcb5e-1dfb-467f-926d-dbeb92d03061";
+            return videos[1]; // Segunda visita
+        } else if (visitCount === 2) {
+            return videos[2]; // Terceira visita
         } else {
-            // Terceira visita em diante - alterna entre os dois
-            return visitCount % 2 === 0 
-                ? "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness.mp4?alt=media&token=904bfced-6f04-459b-943a-50fa1a998aaf"
-                : "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness2.mp4?alt=media&token=b66fcb5e-1dfb-467f-926d-dbeb92d03061";
+            // Quarta visita em diante - alterna entre os três
+            return videos[visitCount % 3];
         }
     }
 
@@ -2479,7 +2483,7 @@ function checkStoreStatus() {
         backdrop-filter: blur(10px);
     `;
     mascotDialog.innerHTML = `
-        <strong>E aí, campeão(a)! 🏋️‍♂️💪</strong> Eu sou o Açaizão, seu personal açaí, com a dica do dia! 
+        <strong>E aí, campeão(a)! 🏋️‍♂️💪</strong> Eu sou o Açaizão, seu personal açaí! 
         Clique em mim e descubra como o açaí pode turbinar seu treino e ajudar você a 
         alcançar seus objetivos fitness. Vamos juntos nessa jornada de energia e saúde!
     `;
