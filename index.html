@@ -3462,6 +3462,301 @@ async function submitOrderFromDigitalMenu() {
         alert('Erro ao criar pedido: ' + error.message);
     }
 }
+
+// Função para adicionar o mascote nos produtos
+// Sistema de rastreamento de visualizações
+const productViewHistory = {
+    lastProduct: null,
+    viewCounts: {},
+    sizeViewCounts: {
+        '500ml': 0,
+        '1L': 0
+    },
+    usedMessages: {
+        '500ml': new Set(),
+        '1L': new Set()
+    },
+    dicsText: "Quer dicas de acompanhamentos ou saber curiosidades sobre a origem dos sabores? é só clicar ou dar um toque em mim.",
+    getNextMessage: function(size, messages) {
+        const usedSet = this.usedMessages[size];
+        
+        if (usedSet.size >= messages.length) {
+            usedSet.clear();
+        }
+        
+        const availableMessages = messages.filter(msg => !usedSet.has(msg));
+        const selectedMessage = availableMessages[Math.floor(Math.random() * availableMessages.length)];
+        
+        usedSet.add(selectedMessage);
+        
+        return `${selectedMessage} ${this.dicsText}`;
+    },
+    getContextualMessage: function(productTitle) {
+        const is1L = productTitle.includes('1L') || productTitle.includes('1 Litro');
+        const size = is1L ? '1L' : '500ml';
+        const sizeCount = this.sizeViewCounts[size];
+        const isReturningToSameProduct = this.lastProduct === productTitle;
+
+        // Mensagens para produtos de 500ml
+        const messages500ml = {
+            firstView: "Oi, td bem? Me chamo Sabrina, sou especialista em Açaí. " + this.dicsText,
+            sameSize: [
+                "O 500ml é perfeito pra matar a vontade, né? 😋",
+                "Gostou do tamanho 500ml? É o nosso best-seller!",
+                "500ml é o tamanho ideal pra um momento de açaí perfeito!",
+                "Tá curtindo os nossos de 500ml? São demais, né?",
+                "Esse tamanho é o queridinho da galera!",
+                "O 500ml é tipo aquele amigo que nunca decepciona 😉",
+                "Com 500ml dá pra experimentar vários acompanhamentos!",
+                "Sabia que o 500ml é o tamanho mais pedido?",
+                "500ml: nem muito, nem pouco... é o tamanho perfeito!",
+                "Tá explorando os sabores no 500ml? Ótima escolha!"
+            ],
+            returningProduct: [
+                "Esse açaí tá te chamando, hein? 😋",
+                "Voltou pra esse sabor? Ele é especial mesmo!",
+                "Tá pensando bem nesse, né? Ótima escolha!"
+            ]
+        };
+
+        // Mensagens para produtos de 1 Litro
+        const messages1L = {
+            firstView: "Oi, td bem? Me chamo Sabrina, sou especialista em Açaí. " + this.dicsText,
+            sameSize: [
+                "1 Litro é 1 Litro, né? Não tem comparação, kkk",
+                "Tou vendo que você quer mesmo é 1 Litro, vamos lá.. arrasa aí nos acompanhamentos!",
+                "Já decidiu pelo 1 Litro? Você sabe o que quer! 😎",
+                "Com 1 Litro a diversão dura mais! 🎉",
+                "Quem escolhe 1 Litro sabe das coisas! 😉",
+                "1 Litro é pra quem não brinca em serviço! 💪",
+                "Tá no time do 1 Litro? É assim que se faz!",
+                "1 Litro é garantia de festa boa! 🎈",
+                "Mais açaí = mais felicidade! E 1 Litro tem de sobra!",
+                "Com 1 Litro você vira o mestre do açaí! 👑"
+            ],
+            returningProduct: [
+                "Esse 1 Litro tá te conquistando, né? 😊",
+                "Voltou pro grandão? É uma excelente escolha!",
+                "Tá pensando nesse 1 Litro? Vai ser sucesso!"
+            ]
+        };
+
+        const messages = is1L ? messages1L : messages500ml;
+
+        // Lógica de seleção de mensagem
+        if (sizeCount === 0) {
+            return messages.firstView;
+        } else if (isReturningToSameProduct && this.viewCounts[productTitle] > 1) {
+            // Se voltou ao mesmo produto exato
+            const returningMessages = messages.returningProduct;
+            const index = Math.min(this.viewCounts[productTitle] - 2, returningMessages.length - 1);
+            return `${returningMessages[index]} ${this.dicsText}`;
+        } else {
+            // Se já viu outro produto do mesmo tamanho
+            return this.getNextMessage(size, messages.sameSize);
+        }
+    },
+    updateHistory: function(productTitle) {
+        const is1L = productTitle.includes('1L') || productTitle.includes('1 Litro');
+        const size = is1L ? '1L' : '500ml';
+        
+        if (this.lastProduct !== productTitle) {
+            this.sizeViewCounts[size] += 1;
+        }
+        
+        this.viewCounts[productTitle] = (this.viewCounts[productTitle] || 0) + 1;
+        this.lastProduct = productTitle;
+    }
+};
+    
+// Função para adicionar o mascote nos produtos
+function addMascotToProduct(modalContent, productSize) {
+    // Remove qualquer container de mascote existente
+    const existingMascot = modalContent.querySelector('.mascot-section');
+    if (existingMascot) {
+        existingMascot.remove();
+    }
+
+    // Definir URL do vídeo baseado no tamanho do produto
+    const videoUrl = productSize === '1L' 
+        ? 'https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Acai%201%20Litro.mp4?alt=media&token=6caa0bef-e4f9-44ee-823e-5d1205f3ed1f'
+        : 'https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/V%C3%ADdeo%20sem%20t%C3%ADtulo.mp4?alt=media&token=66d8d710-8d8b-4861-b493-fa6a107145f8';
+
+    // Criar container do mascote e diálogo como uma seção separada
+    const mascotSection = document.createElement('div');
+    mascotSection.className = 'mascot-section';
+    mascotSection.style.cssText = `
+        margin: 2rem 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    `;
+
+    // Container do mascote
+    const mascotContainer = document.createElement('div');
+    mascotContainer.className = 'sabrina-mascot-container';
+    mascotContainer.style.cssText = `
+        width: 200px;
+        height: 200px;
+        position: relative;
+        cursor: pointer;
+    `;
+
+    // Adicionar vídeo
+    const video = document.createElement('video');
+    video.style.cssText = `
+        width: 100%;
+        height: 100%;
+        border-radius: 10px;
+        object-fit: cover;
+    `;
+    video.src = videoUrl;
+    video.loop = true;
+
+    // Container para o balão de diálogo
+    const dialogContainer = document.createElement('div');
+    dialogContainer.style.cssText = `
+        position: relative;
+        width: 300px;
+        margin-top: 15px;
+        margin-bottom: 20px;
+    `;
+
+    // Pegar a mensagem contextual
+    const productTitle = modalContent.querySelector('.modal-product-title').textContent;
+    const contextualMessage = productViewHistory.getContextualMessage(productTitle);
+
+    // Adicionar balão de diálogo
+    const dialogBubble = document.createElement('div');
+    dialogBubble.className = 'dialog-bubble';
+    dialogBubble.style.cssText = `
+        background: var(--glass);
+        border: 1px solid var(--glass-border);
+        padding: 1rem;
+        border-radius: 15px;
+        font-size: 0.9rem;
+        color: var(--text);
+        backdrop-filter: blur(10px);
+        text-align: left;
+        position: relative;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    `;
+    dialogBubble.textContent = contextualMessage;
+
+    // Adicionar a seta do diálogo
+    const dialogArrow = document.createElement('div');
+    dialogArrow.style.cssText = `
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-bottom: 10px solid var(--glass-border);
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+    `;
+
+    // Adicionar a seta interna do diálogo
+    const dialogArrowInner = document.createElement('div');
+    dialogArrowInner.style.cssText = `
+        width: 0;
+        height: 0;
+        border-left: 9px solid transparent;
+        border-right: 9px solid transparent;
+        border-bottom: 9px solid var(--glass);
+        position: absolute;
+        top: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+    `;
+
+    dialogBubble.appendChild(dialogArrow);
+    dialogBubble.appendChild(dialogArrowInner);
+    dialogContainer.appendChild(dialogBubble);
+    mascotContainer.appendChild(video);
+    mascotSection.appendChild(mascotContainer);
+    mascotSection.appendChild(dialogContainer);
+
+    // Adicionar evento de clique
+    let isPlaying = false;
+    mascotContainer.addEventListener('click', () => {
+        if (isPlaying) {
+            video.pause();
+        } else {
+            video.play();
+        }
+        isPlaying = !isPlaying;
+    });
+
+    // Adicionar estilos responsivos
+    const style = document.createElement('style');
+    style.textContent = `
+        .mascot-section {
+            margin: 2rem 0;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        @media (max-width: 768px) {
+            .sabrina-mascot-container {
+                width: 150px;
+                height: 150px;
+            }
+            .mascot-section div[style*="width: 300px"] {
+                width: 250px !important;
+            }
+            .dialog-bubble {
+                font-size: 0.8rem;
+                padding: 0.75rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .sabrina-mascot-container {
+                width: 120px;
+                height: 120px;
+            }
+            .mascot-section div[style*="width: 300px"] {
+                width: 200px !important;
+            }
+            .dialog-bubble {
+                font-size: 0.75rem;
+                padding: 0.75rem;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Inserir todo o conteúdo do mascote antes da seção de acompanhamentos
+    const toppingsSection = modalContent.querySelector('.toppings-section');
+    if (toppingsSection) {
+        toppingsSection.parentNode.insertBefore(mascotSection, toppingsSection);
+    }
+}
+
+// Modificar a função openProductModal existente para incluir o mascote
+const originalOpenProductModal = openProductModal;
+openProductModal = function(product) {
+    originalOpenProductModal(product);
+    
+    const modalContent = document.querySelector('#productModal .modal-content');
+    const productTitle = modalContent.querySelector('.modal-product-title').textContent;
+    
+    // Limpar qualquer mascote existente
+    const existingMascot = modalContent.querySelector('.mascot-section');
+    if (existingMascot) {
+        existingMascot.remove();
+    }
+    
+    // Atualizar histórico de visualizações
+    productViewHistory.updateHistory(productTitle);
+    
+    // Adicionar mascote baseado no tamanho do produto
+    if (productTitle.includes('500ml')) {
+        addMascotToProduct(modalContent, '500ml');
+    } else if (productTitle.includes('1L') || productTitle.includes('1 Litro')) {
+        addMascotToProduct(modalContent, '1L');
+    }
+};
     
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
