@@ -3472,18 +3472,26 @@ const productViewHistory = {
         '500ml': 0,
         '1L': 0
     },
-    lastSizeMessageIndex: {
-        '500ml': -1,
-        '1L': -1
+    usedMessages: {
+        '500ml': new Set(),
+        '1L': new Set()
     },
-    getRandomMessageIndex: function(currentSize, maxLength) {
-        let newIndex;
-        do {
-            newIndex = Math.floor(Math.random() * maxLength);
-        } while (newIndex === this.lastSizeMessageIndex[currentSize]);
+    getNextMessage: function(size, messages) {
+        const usedSet = this.usedMessages[size];
         
-        this.lastSizeMessageIndex[currentSize] = newIndex;
-        return newIndex;
+        // Se todas as mensagens já foram usadas, limpa o histórico
+        if (usedSet.size >= messages.length) {
+            usedSet.clear();
+        }
+        
+        // Encontra uma mensagem que ainda não foi usada
+        const availableMessages = messages.filter(msg => !usedSet.has(msg));
+        const selectedMessage = availableMessages[Math.floor(Math.random() * availableMessages.length)];
+        
+        // Marca a mensagem como usada
+        usedSet.add(selectedMessage);
+        
+        return selectedMessage;
     },
     getContextualMessage: function(productTitle) {
         const is1L = productTitle.includes('1L') || productTitle.includes('1 Litro');
@@ -3541,31 +3549,27 @@ const productViewHistory = {
         if (sizeCount === 0) {
             // Primeira vez vendo qualquer produto deste tamanho
             return messages.firstView;
-        } else if (isReturningToSameProduct) {
+        } else if (isReturningToSameProduct && this.viewCounts[productTitle] > 1) {
             // Se voltou ao mesmo produto exato
-            const index = Math.min(
-                this.viewCounts[productTitle] - 1,
-                messages.returningProduct.length - 1
-            );
-            return messages.returningProduct[index];
+            const returningMessages = messages.returningProduct;
+            const index = Math.min(this.viewCounts[productTitle] - 2, returningMessages.length - 1);
+            return returningMessages[index];
         } else {
-            // Se já viu outro produto do mesmo tamanho, escolhe uma mensagem aleatória diferente da última
-            const index = this.getRandomMessageIndex(size, messages.sameSize.length);
-            return messages.sameSize[index];
+            // Se já viu outro produto do mesmo tamanho
+            return this.getNextMessage(size, messages.sameSize);
         }
     },
     updateHistory: function(productTitle) {
         const is1L = productTitle.includes('1L') || productTitle.includes('1 Litro');
         const size = is1L ? '1L' : '500ml';
         
-        // Atualiza contagem do produto específico
-        this.viewCounts[productTitle] = (this.viewCounts[productTitle] || 0) + 1;
-        
-        // Se é um produto diferente do último, atualiza contagem do tamanho
+        // Se é um produto diferente do último
         if (this.lastProduct !== productTitle) {
             this.sizeViewCounts[size] += 1;
         }
         
+        // Atualiza contagem do produto específico
+        this.viewCounts[productTitle] = (this.viewCounts[productTitle] || 0) + 1;
         this.lastProduct = productTitle;
     }
 };
