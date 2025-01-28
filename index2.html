@@ -3476,22 +3476,20 @@ const productViewHistory = {
         '500ml': new Set(),
         '1L': new Set()
     },
+    dicsText: "Quer dicas de acompanhamentos ou saber curiosidades sobre a origem dos sabores? é só clicar ou dar um toque em mim.",
     getNextMessage: function(size, messages) {
         const usedSet = this.usedMessages[size];
         
-        // Se todas as mensagens já foram usadas, limpa o histórico
         if (usedSet.size >= messages.length) {
             usedSet.clear();
         }
         
-        // Encontra uma mensagem que ainda não foi usada
         const availableMessages = messages.filter(msg => !usedSet.has(msg));
         const selectedMessage = availableMessages[Math.floor(Math.random() * availableMessages.length)];
         
-        // Marca a mensagem como usada
         usedSet.add(selectedMessage);
         
-        return selectedMessage;
+        return `${selectedMessage} ${this.dicsText}`;
     },
     getContextualMessage: function(productTitle) {
         const is1L = productTitle.includes('1L') || productTitle.includes('1 Litro');
@@ -3501,7 +3499,7 @@ const productViewHistory = {
 
         // Mensagens para produtos de 500ml
         const messages500ml = {
-            firstView: "Oi, td bem? Me chamo Sabrina, sou especialista em Açaí. Caso queira dicas sobre combinações de acompanhamentos ou saber curiosidades sobre a origem dos sabores, é só clicar ou dar um toque em mim.",
+            firstView: "Oi, td bem? Me chamo Sabrina, sou especialista em Açaí. " + this.dicsText,
             sameSize: [
                 "O 500ml é perfeito pra matar a vontade, né? 😋",
                 "Gostou do tamanho 500ml? É o nosso best-seller!",
@@ -3523,7 +3521,7 @@ const productViewHistory = {
 
         // Mensagens para produtos de 1 Litro
         const messages1L = {
-            firstView: "Oi, td bem? Me chamo Sabrina, sou especialista em Açaí. Caso queira dicas sobre combinações de acompanhamentos ou saber curiosidades sobre a origem dos sabores, é só clicar ou dar um toque em mim.",
+            firstView: "Oi, td bem? Me chamo Sabrina, sou especialista em Açaí. " + this.dicsText,
             sameSize: [
                 "1 Litro é 1 Litro, né? Não tem comparação, kkk",
                 "Tou vendo que você quer mesmo é 1 Litro, vamos lá.. arrasa aí nos acompanhamentos!",
@@ -3547,13 +3545,12 @@ const productViewHistory = {
 
         // Lógica de seleção de mensagem
         if (sizeCount === 0) {
-            // Primeira vez vendo qualquer produto deste tamanho
             return messages.firstView;
         } else if (isReturningToSameProduct && this.viewCounts[productTitle] > 1) {
             // Se voltou ao mesmo produto exato
             const returningMessages = messages.returningProduct;
             const index = Math.min(this.viewCounts[productTitle] - 2, returningMessages.length - 1);
-            return returningMessages[index];
+            return `${returningMessages[index]} ${this.dicsText}`;
         } else {
             // Se já viu outro produto do mesmo tamanho
             return this.getNextMessage(size, messages.sameSize);
@@ -3563,12 +3560,10 @@ const productViewHistory = {
         const is1L = productTitle.includes('1L') || productTitle.includes('1 Litro');
         const size = is1L ? '1L' : '500ml';
         
-        // Se é um produto diferente do último
         if (this.lastProduct !== productTitle) {
             this.sizeViewCounts[size] += 1;
         }
         
-        // Atualiza contagem do produto específico
         this.viewCounts[productTitle] = (this.viewCounts[productTitle] || 0) + 1;
         this.lastProduct = productTitle;
     }
