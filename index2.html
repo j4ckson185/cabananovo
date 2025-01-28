@@ -3468,10 +3468,16 @@ async function submitOrderFromDigitalMenu() {
 const productViewHistory = {
     lastProduct: null,
     viewCounts: {},
+    sizeViewCounts: {
+        '500ml': 0,
+        '1L': 0
+    },
     getContextualMessage: function(productTitle) {
         const isReturning = this.lastProduct === productTitle;
         const viewCount = this.viewCounts[productTitle] || 0;
-        const isSwitchingProducts = this.lastProduct && this.lastProduct !== productTitle;
+        const is1L = productTitle.includes('1L') || productTitle.includes('1 Litro');
+        const size = is1L ? '1L' : '500ml';
+        const sizeViewCount = this.sizeViewCounts[size];
         
         // Mensagens para produtos de 500ml
         const messages500ml = {
@@ -3481,10 +3487,17 @@ const productViewHistory = {
                 "Voltou pra dar mais uma olhada? Esse açaí é realmente especial!",
                 "Que bom que voltou! Quer saber mais sobre esse sabor?"
             ],
-            switching: [
-                "Opa, tô aqui de novo pra te ajudar!",
-                "Que tal esse? Também é uma ótima opção!",
-                "Esse também faz muito sucesso! Quer uma dica especial?"
+            sameSizeDifferentProduct: [
+                "O 500ml é perfeito pra matar a vontade, né? 😋",
+                "Gostou do tamanho 500ml? É o nosso best-seller!",
+                "500ml é o tamanho ideal pra um momento de açaí perfeito!",
+                "Tá curtindo os nossos de 500ml? São demais, né?",
+                "Esse tamanho é o queridinho da galera!",
+                "O 500ml é tipo aquele amigo que nunca decepciona 😉",
+                "Com 500ml dá pra experimentar vários acompanhamentos!",
+                "Sabia que o 500ml é o tamanho mais pedido?",
+                "500ml: nem muito, nem pouco... é o tamanho perfeito!",
+                "Tá explorando os sabores no 500ml? Ótima escolha!"
             ]
         };
 
@@ -3492,20 +3505,25 @@ const productViewHistory = {
         const messages1L = {
             firstView: "Oi, td bem? Me chamo Sabrina, sou especialista em Açaí. Caso queira dicas sobre combinações de acompanhamentos ou saber curiosidades sobre a origem dos sabores, é só clicar ou dar um toque em mim.",
             returning: [
-                "O 1 Litro é perfeito pra compartilhar! Que tal?",
+                "1 Litro é perfeito pra compartilhar! Que tal?",
                 "Voltou pro tamanho família? Excelente escolha!",
                 "Esse tamanho é ideal para guardar uma parte pra depois!"
             ],
-            switching: [
-                "O 1 Litro tem o melhor custo-benefício!",
-                "Pensando em levar mais? Ótima escolha!",
-                "Com 1 Litro dá pra todo mundo experimentar!"
+            sameSizeDifferentProduct: [
+                "1 Litro é 1 Litro, né? Não tem comparação, kkk",
+                "Tou vendo que você quer mesmo é 1 Litro, vamos lá.. arrasa aí nos acompanhamentos!",
+                "Já decidiu pelo 1 Litro? Você sabe o que quer! 😎",
+                "Com 1 Litro a diversão dura mais! 🎉",
+                "Quem escolhe 1 Litro sabe das coisas! 😉",
+                "1 Litro é pra quem não brinca em serviço! 💪",
+                "Tá no time do 1 Litro? É assim que se faz!",
+                "1 Litro é garantia de festa boa! 🎈",
+                "Mais açaí = mais felicidade! E 1 Litro tem de sobra!",
+                "Com 1 Litro você vira o mestre do açaí! 👑"
             ]
         };
 
-        const messages = productTitle.includes('1L') || productTitle.includes('1 Litro') 
-            ? messages1L 
-            : messages500ml;
+        const messages = is1L ? messages1L : messages500ml;
 
         // Seleciona a mensagem apropriada
         if (viewCount === 0) {
@@ -3513,15 +3531,20 @@ const productViewHistory = {
         } else if (isReturning) {
             const index = Math.min(viewCount - 1, messages.returning.length - 1);
             return messages.returning[index];
-        } else if (isSwitchingProducts) {
-            const index = Math.min(viewCount - 1, messages.switching.length - 1);
-            return messages.switching[index];
+        } else if (sizeViewCount > 0) {
+            // Usa o contador de visualizações do tamanho para variar as mensagens
+            const index = (sizeViewCount - 1) % messages.sameSizeDifferentProduct.length;
+            return messages.sameSizeDifferentProduct[index];
         }
 
         return messages.firstView;
     },
     updateHistory: function(productTitle) {
+        const is1L = productTitle.includes('1L') || productTitle.includes('1 Litro');
+        const size = is1L ? '1L' : '500ml';
+        
         this.viewCounts[productTitle] = (this.viewCounts[productTitle] || 0) + 1;
+        this.sizeViewCounts[size] += 1;
         this.lastProduct = productTitle;
     }
 };
