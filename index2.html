@@ -3464,7 +3464,6 @@ async function submitOrderFromDigitalMenu() {
 }
 
 // Função para adicionar o mascote nos produtos de 500ml
-// Função para adicionar o mascote nos produtos de 500ml
 function addMascotToProduct(modalContent) {
     // Remove qualquer container de mascote existente
     const existingMascot = modalContent.querySelector('.sabrina-mascot-container');
@@ -3484,6 +3483,7 @@ function addMascotToProduct(modalContent) {
         display: flex;
         flex-direction: column;
         align-items: center;
+        z-index: 1;
     `;
 
     // Adicionar vídeo
@@ -3504,6 +3504,7 @@ function addMascotToProduct(modalContent) {
         width: 300px;
         margin-top: 15px;
         margin-bottom: 20px;
+        z-index: 2;
     `;
 
     // Adicionar balão de diálogo
@@ -3520,6 +3521,7 @@ function addMascotToProduct(modalContent) {
         text-align: left;
         position: relative;
         margin-bottom: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     `;
     dialogBubble.textContent = "Oi, td bem? Me chamo Sabrina, sou especialista em Açaí. Caso queira dicas sobre combinações de acompanhamentos ou saber curiosidades sobre a origem dos sabores, é só clicar ou dar um toque em mim.";
 
@@ -3600,10 +3602,10 @@ function addMascotToProduct(modalContent) {
     `;
     document.head.appendChild(style);
 
-    // Inserir o mascote antes da modal-product-price
-    const productPrice = modalContent.querySelector('.modal-product-price');
-    if (productPrice) {
-        productPrice.parentNode.insertBefore(mascotContainer, productPrice.nextSibling);
+    // Inserir o mascote antes da seção de acompanhamentos
+    const toppingsSection = modalContent.querySelector('.toppings-section');
+    if (toppingsSection) {
+        toppingsSection.parentNode.insertBefore(mascotContainer, toppingsSection);
     }
 }
 
