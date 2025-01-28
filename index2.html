@@ -3483,7 +3483,7 @@ function addMascotToProduct(modalContent) {
         display: flex;
         flex-direction: column;
         align-items: center;
-        z-index: 1;
+        clear: both;
     `;
 
     // Adicionar vídeo
@@ -3503,8 +3503,7 @@ function addMascotToProduct(modalContent) {
         position: relative;
         width: 300px;
         margin-top: 15px;
-        margin-bottom: 20px;
-        z-index: 2;
+        margin-bottom: 30px;
     `;
 
     // Adicionar balão de diálogo
@@ -3599,13 +3598,27 @@ function addMascotToProduct(modalContent) {
                 width: 200px !important;
             }
         }
+        .toppings-section {
+            clear: both;
+            padding-top: 20px;
+            position: relative;
+            z-index: 1;
+        }
     `;
     document.head.appendChild(style);
 
-    // Inserir o mascote antes da seção de acompanhamentos
+    // Encontrar a área de preço do produto e a seção de acompanhamentos
+    const modalProductInfo = modalContent.querySelector('.modal-product-info');
     const toppingsSection = modalContent.querySelector('.toppings-section');
-    if (toppingsSection) {
-        toppingsSection.parentNode.insertBefore(mascotContainer, toppingsSection);
+
+    // Inserir o mascote após as informações do produto
+    if (modalProductInfo) {
+        modalProductInfo.after(mascotContainer);
+        
+        // Garantir que a seção de acompanhamentos venha depois do mascote
+        if (toppingsSection) {
+            mascotContainer.after(toppingsSection);
+        }
     }
 }
 
