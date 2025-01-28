@@ -3472,6 +3472,19 @@ const productViewHistory = {
         '500ml': 0,
         '1L': 0
     },
+    lastSizeMessageIndex: {
+        '500ml': -1,
+        '1L': -1
+    },
+    getRandomMessageIndex: function(currentSize, maxLength) {
+        let newIndex;
+        do {
+            newIndex = Math.floor(Math.random() * maxLength);
+        } while (newIndex === this.lastSizeMessageIndex[currentSize]);
+        
+        this.lastSizeMessageIndex[currentSize] = newIndex;
+        return newIndex;
+    },
     getContextualMessage: function(productTitle) {
         const is1L = productTitle.includes('1L') || productTitle.includes('1 Litro');
         const size = is1L ? '1L' : '500ml';
@@ -3536,8 +3549,8 @@ const productViewHistory = {
             );
             return messages.returningProduct[index];
         } else {
-            // Se já viu outro produto do mesmo tamanho
-            const index = (sizeCount - 1) % messages.sameSize.length;
+            // Se já viu outro produto do mesmo tamanho, escolhe uma mensagem aleatória diferente da última
+            const index = this.getRandomMessageIndex(size, messages.sameSize.length);
             return messages.sameSize[index];
         }
     },
