@@ -2743,7 +2743,7 @@ function openProductModal(product) {
     currentProduct = product;
     const modal = document.getElementById('productModal');
     
-    modal.querySelectorAll('.video-container, .upgrade-button, .mascot-container').forEach(el => el.remove());
+    modal.querySelectorAll('.video-container, .upgrade-button, .mascot-container, .upgrade-section').forEach(el => el.remove());
     
     modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
     modal.querySelector('.modal-product-title').textContent = product.name;
@@ -2881,51 +2881,54 @@ function openProductModal(product) {
             });
         });
 
-        // Vídeo e botão apenas para produtos de 500ml
+        // Mensagem e botão apenas para produtos de 500ml
         if (product.name.includes('500ml') && !product.name.includes('1 Litro')) {
-           const videoContainer = document.createElement('div');
-           videoContainer.className = 'video-container';
-           videoContainer.innerHTML = `
-               <video autoplay loop playsinline class="product-video">
-                   <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Cabana.mp4?alt=media&token=dec0775e-3d71-4a3d-b1f2-f4473653eaea" type="video/mp4">
-               </video>
-           `;
+            const upgradeSection = document.createElement('div');
+            upgradeSection.className = 'upgrade-section';
+            upgradeSection.style.cssText = `
+                margin: 1.5rem 0;
+                padding: 1.5rem;
+                background: var(--glass);
+                border: 1px solid var(--glass-border);
+                border-radius: 15px;
+                text-align: center;
+                color: var(--text);
+                font-size: 1.1rem;
+                line-height: 1.5;
+            `;
+            upgradeSection.innerHTML = `
+                <p>Sabia que por apenas R$10 a mais você leva o dobro de açai, o dobro de creme e o dobro de Acompanhamentos? Só clicar no botão abaixo:</p>
+            `;
 
-           const video = videoContainer.querySelector('video');
-           const observer = new IntersectionObserver((entries) => {
-               entries.forEach(entry => {
-                   if (entry.isIntersecting) {
-                       video.muted = false;
-                   } else {
-                       video.muted = true;
-                   }
-               });
-           }, { threshold: 0.5 });
-           observer.observe(videoContainer);
+            const upgradeButton = document.createElement('button');
+            upgradeButton.className = 'modal-btn upgrade-button';
+            upgradeButton.innerHTML = 'Ver opção de 1 Litro';
+            upgradeButton.onclick = () => switchToSize('1 Litro', product.name);
+            upgradeButton.style.cssText = `
+                background: var(--gradient);
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                margin-top: 1rem;
+                cursor: pointer;
+                width: 100%;
+                transition: transform 0.2s ease;
+            `;
+            upgradeButton.addEventListener('mouseover', () => {
+                upgradeButton.style.transform = 'translateY(-2px)';
+            });
+            upgradeButton.addEventListener('mouseout', () => {
+                upgradeButton.style.transform = 'translateY(0)';
+            });
 
-           const modalButtons = modal.querySelector('.modal-buttons');
-           modalButtons.before(videoContainer);
+            const modalButtons = modal.querySelector('.modal-buttons');
+            modalButtons.insertAdjacentElement('beforebegin', upgradeSection);
+            upgradeSection.appendChild(upgradeButton);
+        }
+    });
 
-           // Botão de upgrade único
-           const upgradeButton = document.createElement('button');
-           upgradeButton.className = 'modal-btn upgrade-button';
-           upgradeButton.innerHTML = 'Ver opção de 1 Litro';
-           upgradeButton.onclick = () => switchToSize('1 Litro', product.name);
-           upgradeButton.style.cssText = `
-               background: var(--gradient);
-               color: white;
-               border: none;
-               padding: 10px 20px;
-               border-radius: 5px;
-               margin-bottom: 1rem;
-               cursor: pointer;
-               width: 100%;
-           `;
-           modalButtons.insertAdjacentElement('beforebegin', upgradeButton);
-       }
-   });
-
-   modal.style.display = 'block';
+    modal.style.display = 'block';
 }
     
 function switchToSize(newSize, currentName) {
