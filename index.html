@@ -2483,7 +2483,7 @@ function checkStoreStatus() {
         backdrop-filter: blur(10px);
     `;
     mascotDialog.innerHTML = `
-        <strong>E aí, campeão(a)! 🏋️‍♂️💪</strong> Eu sou o Açaizão, seu personal açaí, com a dica do dia! 
+        <strong>E aí, campeão(a)! 🏋️‍♂️💪</strong> Eu sou o Açaizão, seu personal açaí! 
         Clique em mim e descubra como o açaí pode turbinar seu treino e ajudar você a 
         alcançar seus objetivos fitness. Vamos juntos nessa jornada de energia e saúde!
     `;
@@ -2743,12 +2743,43 @@ function openProductModal(product) {
     currentProduct = product;
     const modal = document.getElementById('productModal');
     
-    modal.querySelectorAll('.video-container, .upgrade-button, .mascot-container, .upgrade-section').forEach(el => el.remove());
+    modal.querySelectorAll('.video-container, .upgrade-button, .mascot-container, .upgrade-section, .benefits-section').forEach(el => el.remove());
     
     modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
     modal.querySelector('.modal-product-title').textContent = product.name;
     modal.querySelector('.modal-product-description').textContent = product.description;
     modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
+
+    // Objeto com os benefícios dos acompanhamentos
+    const toppingBenefits = {
+        'Amendoim': 'Rico em proteínas e gorduras boas, ajuda na construção muscular e fornece energia duradoura.',
+        'Granola': 'Fonte de fibras e carboidratos complexos, fornece energia sustentada para seus treinos.',
+        'Chocoball': 'Fonte rápida de energia e carboidratos, perfeito para pré-treino.',
+        'Côco Ralado': 'Rico em fibras e gorduras boas, ajuda no funcionamento intestinal e fornece energia.',
+        'Ovomaltine': 'Fonte de vitaminas e minerais, contribui para a recuperação muscular.',
+        'M&M': 'Fonte rápida de energia e açúcares, ideal para reposição de glicose.',
+        'Leite condensado': 'Rico em cálcio e carboidratos, fornece energia imediata.',
+        'Calda de Morango': 'Fonte de vitamina C e antioxidantes, fortalece o sistema imunológico.',
+        'Calda de Chocolate': 'Rica em antioxidantes e magnésio, ajuda no humor e na disposição.',
+        'Farinha Láctea': 'Rica em vitaminas e minerais, contribui para a saúde dos ossos.',
+        'Leite em pó': 'Excelente fonte de proteínas e cálcio, fundamental para recuperação muscular.'
+    };
+
+    // Criar seção de benefícios
+    const benefitsSection = document.createElement('div');
+    benefitsSection.className = 'benefits-section';
+    benefitsSection.style.cssText = `
+        margin: 1.5rem 0;
+        padding: 1.5rem;
+        background: var(--glass);
+        border: 1px solid var(--glass-border);
+        border-radius: 15px;
+        display: none;
+    `;
+    benefitsSection.innerHTML = `
+        <h3 style="color: white; margin-bottom: 1rem; font-size: 1.2rem;">Benefícios dos itens escolhidos:</h3>
+        <div class="benefits-list" style="color: var(--text); line-height: 1.5;"></div>
+    `;
 
     // Verificar status da loja e mostrar vídeo quando estiver fechada
     realtimeDB.ref('schedule').once('value')
@@ -2843,6 +2874,31 @@ function openProductModal(product) {
                 </div>
             `).join('');
 
+        // Função para atualizar benefícios
+        function updateBenefits() {
+            const selectedToppings = Array.from(document.querySelectorAll('.topping-item.selected'))
+                .map(item => item.textContent.trim().replace(/\+R\$.*$/, '').trim());
+            
+            const benefitsList = benefitsSection.querySelector('.benefits-list');
+            benefitsList.innerHTML = '';
+            
+            if (selectedToppings.length > 0) {
+                benefitsSection.style.display = 'block';
+                selectedToppings.forEach(topping => {
+                    if (toppingBenefits[topping]) {
+                        benefitsList.innerHTML += `
+                            <p style="margin-bottom: 0.8rem;">
+                                <strong style="color: white;">${topping}:</strong> 
+                                ${toppingBenefits[topping]}
+                            </p>
+                        `;
+                    }
+                });
+            } else {
+                benefitsSection.style.display = 'none';
+            }
+        }
+
         const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
         toppingItems.forEach(item => {
             item.addEventListener('click', () => {
@@ -2860,6 +2916,7 @@ function openProductModal(product) {
                 }
                 validateToppingsSelection(product.toppings.min, product.toppings.max);
                 updateTotalPrice(product);
+                updateBenefits();
             });
         });
 
@@ -2880,6 +2937,12 @@ function openProductModal(product) {
                 updateTotalPrice(product);
             });
         });
+
+        // Inserir seção de benefícios antes da seção de extras
+        const extrasSection = modal.querySelector('.extras-section');
+        if (extrasSection) {
+            extrasSection.parentNode.insertBefore(benefitsSection, extrasSection);
+        }
 
         // Mensagem e botão apenas para produtos de 500ml
         if (product.name.includes('500ml') && !product.name.includes('1 Litro')) {
