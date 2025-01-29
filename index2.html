@@ -1294,53 +1294,6 @@ header {
 .login-btn:hover {
     color: var(--accent);
 }
-
-    /* Estilos para o histórico de pedidos */
-.order-history-container {
-    max-height: 70vh;
-    overflow-y: auto;
-    padding: 1rem;
-}
-
-.order-history-item {
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: 10px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    position: relative;
-}
-
-.order-history-item h3 {
-    color: white;
-    margin-bottom: 0.5rem;
-}
-
-.order-history-item .order-details {
-    color: var(--text);
-    margin-bottom: 1rem;
-    line-height: 1.5;
-}
-
-.order-history-item .order-date {
-    color: var(--text);
-    font-size: 0.8rem;
-    margin-bottom: 0.5rem;
-}
-
-.repeat-order-btn {
-    background: var(--gradient);
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: transform 0.2s ease;
-}
-
-.repeat-order-btn:hover {
-    transform: translateY(-2px);
-}
     
 </style>
 </head>
@@ -1947,42 +1900,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-        // Adicionar botão de histórico de pedidos
-    const historyButton = document.createElement('button');
-    historyButton.textContent = 'Meus Pedidos';
-    historyButton.className = 'login-btn history-btn';
-    historyButton.style.cssText = `
-        background: none;
-        border: none;
-        color: var(--text);
-        font-size: 1.5rem;
-        cursor: pointer;
-        transition: color 0.3s ease;
-        padding: 0.5rem;
-        display: none;  /* Inicialmente escondido */
-    `;
-
-    // Adicionar evento de clique
-    historyButton.addEventListener('click', showOrderHistory);
-    
-    // Adicionar ao header
-    const headerIcons = document.querySelector('.header-icons');
-    headerIcons.appendChild(historyButton);
-
-    // Função para atualizar visibilidade do botão
-    const updateHistoryButtonVisibility = () => {
-        const userData = localStorage.getItem('userData');
-        const historyBtn = document.querySelector('.history-btn');
-        if (historyBtn) {
-            historyBtn.style.display = userData ? 'block' : 'none';
-    };
-
-    // Verificar visibilidade ao carregar
-    updateHistoryButtonVisibility();
-
-    // Opcional: Atualizar visibilidade quando o localStorage mudar
-    window.addEventListener('storage', updateHistoryButtonVisibility);
-
 // Replace the handleDeliveryInfo function in your digital menu with this version:
 async function handleDeliveryInfo(e) {
     e.preventDefault();
@@ -2028,7 +1945,7 @@ async function handleDeliveryInfo(e) {
         console.log('Saving order:', orderData); // Debug log
 
         // Save to Firebase
-        const newOrderRef = await realtimeDB.ref()('orders').push(orderData);
+        const newOrderRef = await realtimeDB.ref('orders').push(orderData);
         
         if (!newOrderRef.key) {
             throw new Error('Failed to save order');
@@ -3683,7 +3600,7 @@ async function handleDeliveryInfo(e) {
         };
 
         // Salvar pedido no Firebase
-        const newOrderRef = await realtimeDB.ref('orders').push(orderData);
+        const newOrderRef = await realtimeDB.ref()('orders').push(orderData);
         
         // Log após salvar
         console.log('Pedido salvo com sucesso, ID:', newOrderRef.key);
@@ -4521,151 +4438,6 @@ function formatDate(input) {
         e.target.value = value;
     });
 }
-
-    // Função para buscar histórico de pedidos
-async function fetchOrderHistory(phoneNumber) {
-    try {
-        const ordersRef = realtimeDB.ref('orders');
-        const snapshot = await ordersRef
-            .orderByChild('customerInfo/whatsapp')
-            .equalTo(phoneNumber)
-            .once('value');
-        
-        const orders = snapshot.val() || {};
-        return Object.entries(orders)
-            .map(([key, order]) => ({
-                id: key,
-                ...order
-            }))
-            .sort((a, b) => b.timestamp - a.timestamp); // Ordenar do mais recente para o mais antigo
-    } catch (error) {
-        console.error('Erro ao buscar histórico de pedidos:', error);
-        return [];
-    }
-}
-
-// Função para exibir histórico de pedidos
-async function displayOrderHistory(phoneNumber) {
-    const orderHistoryModal = document.getElementById('orderHistoryModal');
-    const orderHistoryContainer = document.getElementById('orderHistoryContainer');
-    
-    // Limpar container anterior
-    orderHistoryContainer.innerHTML = '';
-    
-    // Buscar pedidos
-    const orders = await fetchOrderHistory(phoneNumber);
-    
-    if (orders.length === 0) {
-        orderHistoryContainer.innerHTML = `
-            <div style="text-align: center; color: var(--text); padding: 2rem;">
-                Você ainda não tem pedidos anteriores.
-            </div>
-        `;
-    } else {
-        orders.forEach(order => {
-            // Formatar data
-            const orderDate = new Date(order.timestamp);
-            const formattedDate = orderDate.toLocaleString('pt-BR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            
-            // Criar item de pedido
-            const orderItem = document.createElement('div');
-            orderItem.className = 'order-history-item';
-            
-            // Detalhes do pedido
-            let orderDetailsHtml = `
-                <div class="order-date">${formattedDate}</div>
-                <h3>Pedido #${order.id.slice(-4)}</h3>
-                <div class="order-details">
-                    <strong>Total:</strong> R$ ${order.total.toFixed(2)}<br>
-                    <strong>Método de Pagamento:</strong> ${
-                        order.deliveryInfo.payment === 'money' ? 'Dinheiro' : 
-                        order.deliveryInfo.payment === 'card' ? 'Cartão' : 'PIX'
-                    }<br>
-                    <br>
-                    <strong>Itens:</strong><br>
-            
-            // Adicionar itens do pedido
-            order.items.forEach(item => {
-                orderDetailsHtml += `
-                    ${item.name} - R$ ${item.price.toFixed(2)}<br>
-                    ${item.selectedToppings ? `Acompanhamentos: ${item.selectedToppings.join(', ')}<br>` : ''}
-                    ${item.selectedExtras ? `Extras: ${item.selectedExtras.join(', ')}<br>` : ''}
-                `;
-            });
-            
-            orderDetailsHtml += `</div>`;
-            
-            orderItem.innerHTML = `
-                ${orderDetailsHtml}
-                <button class="repeat-order-btn" onclick="repeatOrder('${order.id}')">
-                    Repetir Pedido
-                </button>
-            `;
-            
-            orderHistoryContainer.appendChild(orderItem);
-        });
-    }
-    
-    // Exibir modal
-    orderHistoryModal.style.display = 'block';
-}
-
-    // Função para mostrar o histórico de pedidos quando o usuário está logado
-async function showOrderHistory() {
-    const userData = JSON.parse(localStorage.getItem('userData'));
-    if (!userData || !userData.whatsapp) {
-        showNotification('Faça login para ver seu histórico');
-        return;
-    }
-    
-    await displayOrderHistory(userData.whatsapp);
-}
-
-// Função para repetir pedido
-function repeatOrder(orderId) {
-    // Buscar o pedido específico pelo ID
-    realtimeDB.ref(`orders/${orderId}`).once('value')
-        .then(snapshot => {
-            const order = snapshot.val();
-            if (!order) {
-                showNotification('Pedido não encontrado');
-                return;
-            }
-            
-            // Limpar carrinho atual
-            cart = [];
-            
-            // Adicionar itens do pedido anterior ao carrinho
-            order.items.forEach(item => {
-                cart.push({
-                    name: item.name,
-                    price: item.price,
-                    selectedToppings: item.selectedToppings || [],
-                    selectedExtras: item.selectedExtras || [],
-                    description: item.description || ''
-                });
-            });
-            
-            // Atualizar contagem do carrinho
-            updateCartCount();
-            
-            // Fechar modal de histórico
-            document.getElementById('orderHistoryModal').style.display = 'none';
-            
-            // Mostrar modal do carrinho
-            showCartModal();
-        })
-        .catch(error => {
-            console.error('Erro ao repetir pedido:', error);
-            showNotification('Erro ao repetir pedido');
-        });
-}
     
     (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="PpgNSIgeYN1FCucFGP4w3";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
 </script>
@@ -4732,18 +4504,6 @@ function repeatOrder(orderId) {
         </form>
     </div>
 </div>
-</div>
-    <!-- Modal de Histórico de Pedidos -->
-<div class="modal" id="orderHistoryModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Meu Histórico de Pedidos</h2>
-            <button class="close-modal">&times;</button>
-        </div>
-        <div id="orderHistoryContainer" class="order-history-container">
-            <!-- Pedidos serão carregados dinamicamente aqui -->
-        </div>
-    </div>
 </div>
 </body>
 </html>
