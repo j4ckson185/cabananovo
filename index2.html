@@ -2609,7 +2609,8 @@ function checkStoreStatus() {
         });
 }
 
-function showUserModal(type = 'login') {
+Vou enviar a função showUserModal completa e também a modificação necessária para vincular os pedidos não-logados:
+javascriptCopyfunction showUserModal(type = 'login') {
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'block';
@@ -2636,6 +2637,157 @@ function showUserModal(type = 'login') {
     `;
     title.textContent = type === 'login' ? 'Entrar na Conta' : 'Criar Conta';
 
+    // Função para formatar a data
+    function formatDate(input) {
+        input.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            if (value.length > 8) value = value.slice(0, 8);
+            
+            if (value.length >= 2) {
+                value = value.replace(/^(\d{2})/, '$1/');
+            }
+            if (value.length >= 5) {
+                value = value.replace(/^(\d{2})\/(\d{2})/, '$1/$2/');
+            }
+            
+            e.target.value = value;
+        });
+    }
+
+    // Função para mostrar histórico após login
+    function showOrderHistory(whatsapp) {
+        content.innerHTML = '';
+        content.style.maxWidth = '800px';
+
+        const title = document.createElement('h2');
+        title.style.cssText = `
+            color: white;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-size: 1.5rem;
+        `;
+        title.textContent = 'Meus Pedidos';
+
+        const ordersList = document.createElement('div');
+        ordersList.style.cssText = `
+            max-height: 70vh;
+            overflow-y: auto;
+            padding-right: 1rem;
+        `;
+
+        // Buscar pedidos pelo WhatsApp
+        realtimeDB.ref('orders')
+            .orderByChild('customer/customerPhone')
+            .equalTo(whatsapp)
+            .once('value')
+            .then(snapshot => {
+                const orders = snapshot.val();
+                if (!orders) {
+                    ordersList.innerHTML = `
+                        <p style="text-align: center; color: var(--text);">
+                            Você ainda não fez nenhum pedido.
+                        </p>
+                    `;
+                    return;
+                }
+
+                const ordersArray = Object.entries(orders)
+                    .map(([key, value]) => ({...value, key}))
+                    .sort((a, b) => b.timestamp - a.timestamp);
+
+                ordersArray.forEach(order => {
+                    const orderDate = new Date(order.timestamp);
+                    const orderCard = document.createElement('div');
+                    orderCard.style.cssText = `
+                        background: var(--glass);
+                        border: 1px solid var(--glass-border);
+                        border-radius: 15px;
+                        padding: 1.5rem;
+                        margin-bottom: 1rem;
+                        color: var(--text);
+                    `;
+
+                    let itemsList = '';
+                    order.items.forEach(item => {
+                        itemsList += `
+                            <div style="margin-bottom: 0.5rem;">
+                                <strong style="color: white;">${item.name}</strong><br>
+                                ${item.selectedToppings && item.selectedToppings.length ? 
+                                    `Acompanhamentos: ${item.selectedToppings.join(', ')}<br>` : ''}
+                                ${item.selectedExtras && item.selectedExtras.length ? 
+                                    `Extras: ${item.selectedExtras.join(', ')}<br>` : ''}
+                                Preço: R$ ${item.price.toFixed(2)}
+                            </div>
+                        `;
+                    });
+
+                    orderCard.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <div>
+                                <strong style="color: white;">Data:</strong> 
+                                ${orderDate.toLocaleDateString()} ${orderDate.toLocaleTimeString()}
+                            </div>
+                            <div>
+                                <strong style="color: white;">Total:</strong> 
+                                R$ ${order.orderTotal.toFixed(2)}
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            ${itemsList}
+                        </div>
+                        <button class="repeat-order" style="
+                            background: var(--gradient);
+                            color: white;
+                            border: none;
+                            padding: 0.8rem 1.5rem;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-weight: 600;
+                            width: 100%;
+                            transition: transform 0.2s ease;
+                        ">Repetir este pedido</button>
+                    `;
+
+                    const repeatBtn = orderCard.querySelector('.repeat-order');
+                    repeatBtn.addEventListener('click', () => {
+                        cart = order.items.map(item => ({
+                            ...item,
+                            price: parseFloat(item.price),
+                            selectedToppings: item.selectedToppings || [],
+                            selectedExtras: item.selectedExtras || []
+                        }));
+                        updateCartCount();
+                        modal.remove();
+                        showCartModal();
+                    });
+
+                    ordersList.appendChild(orderCard);
+                });
+            });
+
+        const backButton = document.createElement('button');
+        backButton.style.cssText = `
+            background: var(--gradient);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 1rem;
+            transition: transform 0.2s ease;
+        `;
+        backButton.textContent = 'Voltar';
+        backButton.onclick = () => modal.remove();
+
+        content.appendChild(closeBtn);
+        content.appendChild(title);
+        content.appendChild(ordersList);
+        content.appendChild(backButton);
+    }
+
     const form = document.createElement('form');
     form.style.cssText = `
         display: flex;
@@ -2655,11 +2807,11 @@ function showUserModal(type = 'login') {
                 <input type="tel" id="whatsapp" required placeholder="84 987673202"
                     style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
             </div>
-<div class="form-group">
-    <label>Data de Nascimento</label>
-    <input type="text" id="birthDate" required placeholder="DD/MM/AAAA" maxlength="10"
-        style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-</div>
+            <div class="form-group">
+                <label>Data de Nascimento</label>
+                <input type="text" id="birthDate" required placeholder="DD/MM/AAAA" maxlength="10"
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
             <button type="submit" style="
                 background: var(--gradient);
                 color: white;
@@ -2720,11 +2872,11 @@ function showUserModal(type = 'login') {
                 <input type="tel" id="loginWhatsapp" required placeholder="84 987673202"
                     style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
             </div>
-<div class="form-group">
-    <label>Data de Nascimento</label>
-    <input type="text" id="loginBirthDate" required placeholder="DD/MM/AAAA" maxlength="10"
-        style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-</div>
+            <div class="form-group">
+                <label>Data de Nascimento</label>
+                <input type="text" id="loginBirthDate" required placeholder="DD/MM/AAAA" maxlength="10"
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
             <button type="submit" style="
                 background: var(--gradient);
                 color: white;
@@ -2741,21 +2893,21 @@ function showUserModal(type = 'login') {
             </p>
         `;
 
-form.onsubmit = async (e) => {
-    e.preventDefault();
-    const whatsapp = document.getElementById('loginWhatsapp').value.replace(/\D/g, '');
-    const birthDate = document.getElementById('loginBirthDate').value;
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const whatsapp = document.getElementById('loginWhatsapp').value.replace(/\D/g, '');
+            const birthDate = document.getElementById('loginBirthDate').value;
 
-    try {
-        const userSnapshot = await realtimeDB.ref('users')
-            .orderByChild('whatsapp')
-            .equalTo(whatsapp)
-            .once('value');
+            try {
+                const userSnapshot = await realtimeDB.ref('users')
+                    .orderByChild('whatsapp')
+                    .equalTo(whatsapp)
+                    .once('value');
 
-        if (!userSnapshot.exists()) {
-            showNotification('Você ainda não tem uma conta. Clique em "Criar conta" para se cadastrar.');
-            return;
-        }
+                if (!userSnapshot.exists()) {
+                    showNotification('Você ainda não tem uma conta. Clique em "Criar conta" para se cadastrar.');
+                    return;
+                }
 
                 const userData = Object.values(userSnapshot.val())[0];
                 if (userData.birthDate !== birthDate) {
@@ -2765,7 +2917,7 @@ form.onsubmit = async (e) => {
 
                 localStorage.setItem('userData', JSON.stringify(userData));
                 showNotification('Login realizado com sucesso!');
-                modal.remove();
+                showOrderHistory(whatsapp);
 
             } catch (error) {
                 console.error('Erro ao fazer login:', error);
@@ -2780,14 +2932,12 @@ form.onsubmit = async (e) => {
     modal.appendChild(content);
     document.body.appendChild(modal);
 
-    // Máscaras para o campo de WhatsApp
     const whatsappInput = document.getElementById(type === 'register' ? 'whatsapp' : 'loginWhatsapp');
     if (whatsappInput) {
         whatsappInput.addEventListener('input', (e) => {
             let value = e.target.value.replace(/\D/g, '');
             if (value.length > 11) value = value.slice(0, 11);
             
-            // Formata como: 84 987673202
             if (value.length >= 2) {
                 value = value.replace(/^(\d{2})/, '$1 ');
             }
@@ -2795,7 +2945,8 @@ form.onsubmit = async (e) => {
             e.target.value = value;
         });
     }
-        const birthDateInput = document.getElementById(type === 'register' ? 'birthDate' : 'loginBirthDate');
+
+    const birthDateInput = document.getElementById(type === 'register' ? 'birthDate' : 'loginBirthDate');
     if (birthDateInput) {
         formatDate(birthDateInput);
     }
@@ -4422,22 +4573,23 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
        }
    });
 
-function formatDate(input) {
-    input.addEventListener('input', (e) => {
-        let value = e.target.value.replace(/\D/g, '');
-        
-        if (value.length > 8) value = value.slice(0, 8);
-        
-        if (value.length >= 2) {
-            value = value.replace(/^(\d{2})/, '$1/');
-        }
-        if (value.length >= 5) {
-            value = value.replace(/^(\d{2})\/(\d{2})/, '$1/$2/');
-        }
-        
-        e.target.value = value;
-    });
-}
+    // Função para formatar a data
+    function formatDate(input) {
+        input.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            if (value.length > 8) value = value.slice(0, 8);
+            
+            if (value.length >= 2) {
+                value = value.replace(/^(\d{2})/, '$1/');
+            }
+            if (value.length >= 5) {
+                value = value.replace(/^(\d{2})\/(\d{2})/, '$1/$2/');
+            }
+            
+            e.target.value = value;
+        });
+    }
     
     (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="PpgNSIgeYN1FCucFGP4w3";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
 </script>
