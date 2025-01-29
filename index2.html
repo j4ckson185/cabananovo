@@ -3072,21 +3072,6 @@ else {
     modal.appendChild(content);
     document.body.appendChild(modal);
 
-const whatsappInput = document.getElementById(type === 'register' ? 'whatsapp' : 'loginWhatsapp');
-    if (whatsappInput) {
-        
-        function formatWhatsApp(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 11) value = value.slice(0, 11);
-            
-            // Formata como: 84 987673202
-            if (value.length >= 2) {
-                value = value.replace(/^(\d{2})/, '$1 ');
-            }
-            
-            e.target.value = value;
-        }
-
         whatsappInput.addEventListener('input', formatWhatsApp);
         whatsappInput.addEventListener('blur', (e) => {
             const value = e.target.value.replace(/\D/g, '');
