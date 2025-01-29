@@ -2667,19 +2667,56 @@ function formatDate(input) {
     });
 }
 
-    function formatWhatsApp(input) {
-    input.addEventListener('input', (e) => {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length > 11) value = value.slice(0, 11);
-        
-        // Formata como: 84 987673202
-        if (value.length >= 2) {
-            value = value.replace(/^(\d{2})/, '$1 ');
+    const whatsappInput = document.getElementById(type === 'register' ? 'whatsapp' : 'loginWhatsapp');
+    if (whatsappInput) {
+        function formatWhatsApp(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+            
+            // Formata como: 84 987673202
+            if (value.length >= 2) {
+                value = value.replace(/^(\d{2})/, '$1 ');
+            }
+            
+            e.target.value = value;
         }
+
+        whatsappInput.addEventListener('input', formatWhatsApp);
+        whatsappInput.addEventListener('blur', (e) => {
+            const value = e.target.value.replace(/\D/g, '');
+            if (value.length !== 11) {
+                showNotification('Digite um número de WhatsApp válido (exemplo: 84 987673202)');
+                e.target.value = '';
+            }
+        });
+    }
+
+    const birthDateInput = document.getElementById(type === 'register' ? 'birthDate' : 'loginBirthDate');
+    if (birthDateInput) {
+        // Remove validação padrão do HTML
+        birthDateInput.removeAttribute('required');
         
-        e.target.value = value;
-    });
-}
+        function formatDate(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            if (value.length >= 2 && value.length <= 8) {
+                if (value.length >= 2) value = value.replace(/^(\d{2})/, '$1/');
+                if (value.length >= 4) value = value.replace(/^(\d{2})\/(\d{2})/, '$1/$2/');
+            }
+            
+            e.target.value = value;
+        }
+
+        birthDateInput.addEventListener('input', formatDate);
+        birthDateInput.addEventListener('blur', (e) => {
+            const value = e.target.value;
+            const parts = value.split('/');
+            if (!value || parts.length !== 3 || parts[2].length !== 4) {
+                showNotification('Digite o ano com 4 dígitos, exemplo: 1988');
+                e.target.value = '';
+            }
+        });
+    }
 
  // Atualizar a função validateAndFormatDate
 function validateAndFormatDate(dateString, isRegistration = false) {
@@ -2873,16 +2910,16 @@ function validateAndFormatDate(dateString, isRegistration = false) {
                 <input type="text" id="fullName" required 
                     style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
             </div>
-            <div class="form-group">
-                <label>WhatsApp com DDD</label>
-                <input type="tel" id="whatsapp" required placeholder="84 987673202"
-                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-            </div>
-            <div class="form-group">
-                <label>Data de Nascimento</label>
-                <input type="text" id="birthDate" required placeholder="DD/MM/AAAA" maxlength="10"
-                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-            </div>
+    <div class="form-group">
+        <label>WhatsApp com DDD</label>
+        <input type="tel" id="loginWhatsapp" required placeholder="84 987673202"
+            style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+    </div>
+    <div class="form-group">
+        <label>Data de Nascimento</label>
+        <input type="text" id="loginBirthDate" placeholder="DD/MM/AAAA" maxlength="10" novalidate
+            style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+    </div>
             <button type="submit" style="
                 background: var(--gradient);
                 color: white;
