@@ -2632,13 +2632,7 @@ function showUserModal(type = 'login') {
     const closeBtn = document.createElement('button');
     closeBtn.className = 'close-modal';
     closeBtn.innerHTML = '&times;';
-    closeBtn.onclick = () => {
-        if (userData) {
-            modal.remove();
-        } else {
-            window.location.reload();
-        }
-    };
+    closeBtn.onclick = () => modal.remove();
 
     const title = document.createElement('h2');
     title.style.cssText = `
@@ -2650,6 +2644,7 @@ function showUserModal(type = 'login') {
     title.textContent = type === 'login' ? 'Entrar na Conta' : 'Criar Conta';
 
     // Função para formatar a data
+    // Função para formatar data
     function formatDate(input) {
         input.addEventListener('input', (e) => {
             let value = e.target.value.replace(/\D/g, '');
@@ -2667,56 +2662,51 @@ function showUserModal(type = 'login') {
         });
     }
 
-        // Função para validar e converter data
  // Atualizar a função validateAndFormatDate
-function validateAndFormatDate(dateString) {
-    if (!dateString) {
+    function validateAndFormatDate(dateString, isRegistration = false) {
+        if (!dateString) {
+            return {
+                isValid: false,
+                message: 'Por favor, digite uma data de nascimento'
+            };
+        }
+
+        const parts = dateString.split('/');
+        if (parts.length !== 3) {
+            return {
+                isValid: false,
+                message: 'Data inválida. Use o formato DD/MM/AAAA'
+            };
+        }
+
+        let [day, month, year] = parts.map(Number);
+
+        // Se o ano tem 2 dígitos e é cadastro novo
+        if (year < 100 && isRegistration) {
+            return {
+                isValid: false,
+                message: 'Por favor, digite o ano de nascimento completo com 4 números (exemplo: 1990)'
+            };
+        }
+
+        // Se o ano tem 2 dígitos e é login, converte para 4 dígitos
+        if (year < 100 && !isRegistration) {
+            year = year < 30 ? 2000 + year : 1900 + year;
+        }
+
+        const date = new Date(year, month - 1, day);
+        const isValid = date.getDate() === day &&
+                       date.getMonth() === month - 1 &&
+                       date.getFullYear() === year &&
+                       year >= 1900 &&
+                       year <= new Date().getFullYear();
+
         return {
-            isValid: false,
-            message: 'Por favor, digite uma data de nascimento'
+            isValid,
+            formattedDate: isValid ? `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}` : null,
+            message: isValid ? null : 'Data de nascimento inválida'
         };
     }
-
-    const parts = dateString.split('/');
-    if (parts.length !== 3) {
-        return {
-            isValid: false,
-            message: 'Data inválida. Use o formato DD/MM/AAAA'
-        };
-    }
-
-    let [day, month, year] = parts.map(Number);
-
-    // Se alguma parte não for um número válido
-    if (isNaN(day) || isNaN(month) || isNaN(year)) {
-        return {
-            isValid: false,
-            message: 'Data inválida. Use apenas números'
-        };
-    }
-
-    // Se o ano tem 2 dígitos
-    if (year < 100) {
-        return {
-            isValid: false,
-            message: 'Por favor, digite o ano de nascimento completo com 4 números (exemplo: 1990)'
-        };
-    }
-
-    // Validar data
-    const date = new Date(year, month - 1, day);
-    const isValid = date.getDate() === day &&
-                   date.getMonth() === month - 1 &&
-                   date.getFullYear() === year &&
-                   year >= 1900 &&
-                   year <= new Date().getFullYear();
-
-    return {
-        isValid,
-        formattedDate: isValid ? `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}` : null,
-        message: isValid ? null : 'Data de nascimento inválida'
-    };
-}
 
     // Função para mostrar histórico após login
     function showOrderHistory(whatsapp) {
@@ -2739,7 +2729,7 @@ function validateAndFormatDate(dateString) {
             padding-right: 1rem;
         `;
 
-        // Buscar pedidos pelo WhatsApp
+        // Buscar pedidos
         realtimeDB.ref('orders')
             .orderByChild('customer/customerPhone')
             .equalTo(whatsapp)
@@ -2845,7 +2835,8 @@ function validateAndFormatDate(dateString) {
         logoutButton.textContent = 'Sair da Conta';
         logoutButton.onclick = () => {
             localStorage.removeItem('userData');
-            window.location.reload();
+            modal.remove();
+            showUserModal('login');
         };
 
         content.appendChild(closeBtn);
@@ -2894,63 +2885,62 @@ function validateAndFormatDate(dateString) {
             </p>
         `;
 
-form.onsubmit = async (e) => {
-    e.preventDefault();
-    const fullName = document.getElementById('fullName').value;
-    const whatsapp = document.getElementById('whatsapp').value.replace(/\D/g, '');
-    const birthDate = document.getElementById('birthDate').value;
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const fullName = document.getElementById('fullName').value;
+            const whatsapp = document.getElementById('whatsapp').value.replace(/\D/g, '');
+            const birthDate = document.getElementById('birthDate').value;
 
-    // Validar nome
-    if (fullName.trim().length < 3) {
-        showNotification('Digite seu nome completo');
-        return;
-    }
+            // Validar nome
+            if (fullName.trim().length < 3) {
+                showNotification('Digite seu nome completo');
+                return;
+            }
 
-    // Validar WhatsApp
-    if (whatsapp.length !== 11) {
-        showNotification('Digite um número de WhatsApp válido');
-        return;
-    }
+            // Validar WhatsApp
+            if (whatsapp.length !== 11) {
+                showNotification('Digite um número de WhatsApp válido');
+                return;
+            }
 
-    // Validar data
-    const dateValidation = validateAndFormatDate(birthDate);
-    if (!dateValidation.isValid) {
-        showNotification(dateValidation.message || 'Data de nascimento inválida');
-        return;
-    }
+            const dateValidation = validateAndFormatDate(birthDate, true);
+            if (!dateValidation.isValid) {
+                showNotification(dateValidation.message);
+                return;
+            }
 
-    try {
-        const userSnapshot = await realtimeDB.ref('users')
-            .orderByChild('whatsapp')
-            .equalTo(whatsapp)
-            .once('value');
+            try {
+                const userSnapshot = await realtimeDB.ref('users')
+                    .orderByChild('whatsapp')
+                    .equalTo(whatsapp)
+                    .once('value');
 
-        if (userSnapshot.exists()) {
-            showNotification('Este número de WhatsApp já está cadastrado');
-            return;
-        }
+                if (userSnapshot.exists()) {
+                    showNotification('Este número de WhatsApp já está cadastrado');
+                    return;
+                }
 
-        const newUser = {
-            fullName,
-            whatsapp,
-            birthDate: dateValidation.formattedDate,
-            createdAt: firebase.database.ServerValue.TIMESTAMP,
-            preferences: {
-                favoriteTopings: [],
-                lastOrders: []
+                const newUser = {
+                    fullName,
+                    whatsapp,
+                    birthDate: dateValidation.formattedDate,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP,
+                    preferences: {
+                        favoriteTopings: [],
+                        lastOrders: []
+                    }
+                };
+
+                await realtimeDB.ref('users').push(newUser);
+                localStorage.setItem('userData', JSON.stringify(newUser));
+                showNotification('Cadastro realizado com sucesso!');
+                showOrderHistory(whatsapp);
+
+            } catch (error) {
+                console.error('Erro ao cadastrar:', error);
+                showNotification('Erro ao cadastrar. Tente novamente.');
             }
         };
-
-        await realtimeDB.ref('users').push(newUser);
-        localStorage.setItem('userData', JSON.stringify(newUser));
-        showNotification('Cadastro realizado com sucesso!');
-        showOrderHistory(whatsapp);
-
-    } catch (error) {
-        console.error('Erro ao cadastrar:', error);
-        showNotification('Erro ao cadastrar. Tente novamente.');
-    }
-};
     } else {
         form.innerHTML = `
             <div class="form-group">
@@ -2979,50 +2969,49 @@ form.onsubmit = async (e) => {
             </p>
         `;
 
-form.onsubmit = async (e) => {
-    e.preventDefault();
-    const whatsapp = document.getElementById('loginWhatsapp').value.replace(/\D/g, '');
-    const birthDate = document.getElementById('loginBirthDate').value;
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const whatsapp = document.getElementById('loginWhatsapp').value.replace(/\D/g, '');
+            const birthDate = document.getElementById('loginBirthDate').value;
 
-    // Validar WhatsApp
-    if (whatsapp.length !== 11) {
-        showNotification('Digite um número de WhatsApp válido');
-        return;
-    }
+            // Validar WhatsApp
+            if (whatsapp.length !== 11) {
+                showNotification('Digite um número de WhatsApp válido');
+                return;
+            }
 
-    // Validar data
-    const dateValidation = validateAndFormatDate(birthDate);
-    if (!dateValidation.isValid) {
-        showNotification(dateValidation.message || 'Data de nascimento inválida');
-        return;
-    }
+            const dateValidation = validateAndFormatDate(birthDate, false);
+            if (!dateValidation.isValid) {
+                showNotification(dateValidation.message);
+                return;
+            }
 
-    try {
-        const userSnapshot = await realtimeDB.ref('users')
-            .orderByChild('whatsapp')
-            .equalTo(whatsapp)
-            .once('value');
+            try {
+                const userSnapshot = await realtimeDB.ref('users')
+                    .orderByChild('whatsapp')
+                    .equalTo(whatsapp)
+                    .once('value');
 
-        if (!userSnapshot.exists()) {
-            showNotification('Você ainda não tem uma conta. Clique em "Criar conta" para se cadastrar.');
-            return;
-        }
+                if (!userSnapshot.exists()) {
+                    showNotification('Você ainda não tem uma conta. Clique em "Criar conta" para se cadastrar.');
+                    return;
+                }
 
-        const userData = Object.values(userSnapshot.val())[0];
-        if (userData.birthDate !== dateValidation.formattedDate) {
-            showNotification('Data de nascimento incorreta');
-            return;
-        }
+                const userData = Object.values(userSnapshot.val())[0];
+                if (userData.birthDate !== dateValidation.formattedDate) {
+                    showNotification('Data de nascimento incorreta');
+                    return;
+                }
 
-        localStorage.setItem('userData', JSON.stringify(userData));
-        showNotification('Login realizado com sucesso!');
-        showOrderHistory(whatsapp);
+                localStorage.setItem('userData', JSON.stringify(userData));
+                showNotification('Login realizado com sucesso!');
+                showOrderHistory(whatsapp);
 
-    } catch (error) {
-        console.error('Erro ao fazer login:', error);
-        showNotification('Erro ao fazer login. Tente novamente.');
-    }
-};
+            } catch (error) {
+                console.error('Erro ao fazer login:', error);
+                showNotification('Erro ao fazer login. Tente novamente.');
+            }
+        };
     }
 
     content.appendChild(closeBtn);
