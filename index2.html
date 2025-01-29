@@ -2644,69 +2644,83 @@ function showUserModal(type = 'login') {
     title.textContent = type === 'login' ? 'Entrar na Conta' : 'Criar Conta';
 
     // Função para formatar a data
-    // Função para formatar data
-    function formatDate(input) {
-        input.addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\D/g, '');
-            
-            if (value.length > 8) value = value.slice(0, 8);
-            
-            if (value.length >= 2) {
-                value = value.replace(/^(\d{2})/, '$1/');
-            }
-            if (value.length >= 5) {
-                value = value.replace(/^(\d{2})\/(\d{2})/, '$1/$2/');
-            }
-            
-            e.target.value = value;
-        });
-    }
+function formatDate(input) {
+    input.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        
+        if (value.length >= 2 && value.length <= 8) {
+            if (value.length >= 2) value = value.replace(/^(\d{2})/, '$1/');
+            if (value.length >= 4) value = value.replace(/^(\d{2})\/(\d{2})/, '$1/$2/');
+        }
+        
+        e.target.value = value;
+    });
+
+    // Adicionar validação ao sair do campo
+    input.addEventListener('blur', (e) => {
+        const value = e.target.value;
+        const parts = value.split('/');
+        if (parts.length === 3 && parts[2].length !== 4) {
+            showNotification('Digite o ano com 4 dígitos (exemplo: 1990)');
+            e.target.value = ''; // Limpa o campo se o ano não tiver 4 dígitos
+        }
+    });
+}
+
+    function formatWhatsApp(input) {
+    input.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+        
+        // Formata como: 84 987673202
+        if (value.length >= 2) {
+            value = value.replace(/^(\d{2})/, '$1 ');
+        }
+        
+        e.target.value = value;
+    });
+}
 
  // Atualizar a função validateAndFormatDate
-    function validateAndFormatDate(dateString, isRegistration = false) {
-        if (!dateString) {
-            return {
-                isValid: false,
-                message: 'Por favor, digite uma data de nascimento'
-            };
-        }
-
-        const parts = dateString.split('/');
-        if (parts.length !== 3) {
-            return {
-                isValid: false,
-                message: 'Data inválida. Use o formato DD/MM/AAAA'
-            };
-        }
-
-        let [day, month, year] = parts.map(Number);
-
-        // Se o ano tem 2 dígitos e é cadastro novo
-        if (year < 100 && isRegistration) {
-            return {
-                isValid: false,
-                message: 'Por favor, digite o ano de nascimento completo com 4 números (exemplo: 1990)'
-            };
-        }
-
-        // Se o ano tem 2 dígitos e é login, converte para 4 dígitos
-        if (year < 100 && !isRegistration) {
-            year = year < 30 ? 2000 + year : 1900 + year;
-        }
-
-        const date = new Date(year, month - 1, day);
-        const isValid = date.getDate() === day &&
-                       date.getMonth() === month - 1 &&
-                       date.getFullYear() === year &&
-                       year >= 1900 &&
-                       year <= new Date().getFullYear();
-
+function validateAndFormatDate(dateString, isRegistration = false) {
+    if (!dateString) {
         return {
-            isValid,
-            formattedDate: isValid ? `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}` : null,
-            message: isValid ? null : 'Data de nascimento inválida'
+            isValid: false,
+            message: 'Por favor, digite uma data de nascimento'
         };
     }
+
+    const parts = dateString.split('/');
+    if (parts.length !== 3) {
+        return {
+            isValid: false,
+            message: 'Data inválida. Use o formato DD/MM/AAAA'
+        };
+    }
+
+    let [day, month, year] = parts.map(Number);
+
+    // Sempre exigir 4 dígitos no ano
+    if (year < 1000) {
+        return {
+            isValid: false,
+            message: 'Digite o ano com 4 dígitos (exemplo: 1990)'
+        };
+    }
+
+    const date = new Date(year, month - 1, day);
+    const isValid = date.getDate() === day &&
+                   date.getMonth() === month - 1 &&
+                   date.getFullYear() === year &&
+                   year >= 1900 &&
+                   year <= new Date().getFullYear();
+
+    return {
+        isValid,
+        formattedDate: isValid ? `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}` : null,
+        message: isValid ? null : 'Data de nascimento inválida'
+    };
+}
 
     // Função para mostrar histórico após login
     function showOrderHistory(whatsapp) {
@@ -3020,17 +3034,27 @@ function showUserModal(type = 'login') {
     modal.appendChild(content);
     document.body.appendChild(modal);
 
-    const whatsappInput = document.getElementById(type === 'register' ? 'whatsapp' : 'loginWhatsapp');
+const whatsappInput = document.getElementById(type === 'register' ? 'whatsapp' : 'loginWhatsapp');
     if (whatsappInput) {
-        whatsappInput.addEventListener('input', (e) => {
+        function formatWhatsApp(e) {
             let value = e.target.value.replace(/\D/g, '');
             if (value.length > 11) value = value.slice(0, 11);
             
+            // Formata como: 84 987673202
             if (value.length >= 2) {
                 value = value.replace(/^(\d{2})/, '$1 ');
             }
             
             e.target.value = value;
+        }
+
+        whatsappInput.addEventListener('input', formatWhatsApp);
+        whatsappInput.addEventListener('blur', (e) => {
+            const value = e.target.value.replace(/\D/g, '');
+            if (value.length !== 11) {
+                showNotification('Digite um número de WhatsApp válido (exemplo: 84 987673202)');
+                e.target.value = '';
+            }
         });
     }
 
