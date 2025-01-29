@@ -2610,6 +2610,13 @@ function checkStoreStatus() {
 }
 
 function showUserModal(type = 'login') {
+    // Verificar se já está logado
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    if (userData && type === 'login') {
+        showOrderHistory(userData.whatsapp);
+        return;
+    }
+
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'block';
@@ -2625,7 +2632,13 @@ function showUserModal(type = 'login') {
     const closeBtn = document.createElement('button');
     closeBtn.className = 'close-modal';
     closeBtn.innerHTML = '&times;';
-    closeBtn.onclick = () => modal.remove();
+    closeBtn.onclick = () => {
+        if (userData) {
+            modal.remove();
+        } else {
+            window.location.reload();
+        }
+    };
 
     const title = document.createElement('h2');
     title.style.cssText = `
@@ -2652,6 +2665,36 @@ function showUserModal(type = 'login') {
             
             e.target.value = value;
         });
+    }
+
+        // Função para validar e converter data
+    function validateAndFormatDate(dateString) {
+        const parts = dateString.split('/');
+        if (parts.length !== 3) return null;
+
+        let [day, month, year] = parts.map(Number);
+
+        // Se o ano tem 2 dígitos
+        if (year < 100) {
+            return {
+                isValid: false,
+                message: 'Por favor, digite o ano de nascimento completo com 4 números (exemplo: 1990)'
+            };
+        }
+
+        // Validar data
+        const date = new Date(year, month - 1, day);
+        const isValid = date.getDate() === day &&
+                       date.getMonth() === month - 1 &&
+                       date.getFullYear() === year &&
+                       year >= 1900 &&
+                       year <= new Date().getFullYear();
+
+        return {
+            isValid,
+            formattedDate: isValid ? dateString : null,
+            message: isValid ? null : 'Data de nascimento inválida'
+        };
     }
 
     // Função para mostrar histórico após login
@@ -2765,8 +2808,8 @@ function showUserModal(type = 'login') {
                 });
             });
 
-        const backButton = document.createElement('button');
-        backButton.style.cssText = `
+        const logoutButton = document.createElement('button');
+        logoutButton.style.cssText = `
             background: var(--gradient);
             color: white;
             border: none;
@@ -2778,13 +2821,16 @@ function showUserModal(type = 'login') {
             margin-top: 1rem;
             transition: transform 0.2s ease;
         `;
-        backButton.textContent = 'Voltar';
-        backButton.onclick = () => modal.remove();
+        logoutButton.textContent = 'Sair da Conta';
+        logoutButton.onclick = () => {
+            localStorage.removeItem('userData');
+            window.location.reload();
+        };
 
         content.appendChild(closeBtn);
         content.appendChild(title);
         content.appendChild(ordersList);
-        content.appendChild(backButton);
+        content.appendChild(logoutButton);
     }
 
     const form = document.createElement('form');
@@ -2833,6 +2879,12 @@ function showUserModal(type = 'login') {
             const whatsapp = document.getElementById('whatsapp').value.replace(/\D/g, '');
             const birthDate = document.getElementById('birthDate').value;
 
+            const dateValidation = validateAndFormatDate(birthDate);
+            if (!dateValidation.isValid) {
+                showNotification(dateValidation.message);
+                return;
+            }
+
             try {
                 const userSnapshot = await realtimeDB.ref('users')
                     .orderByChild('whatsapp')
@@ -2847,7 +2899,7 @@ function showUserModal(type = 'login') {
                 const newUser = {
                     fullName,
                     whatsapp,
-                    birthDate,
+                    birthDate: dateValidation.formattedDate,
                     createdAt: firebase.database.ServerValue.TIMESTAMP,
                     preferences: {
                         favoriteTopings: [],
@@ -2856,8 +2908,9 @@ function showUserModal(type = 'login') {
                 };
 
                 await realtimeDB.ref('users').push(newUser);
-                showNotification('Cadastro realizado com sucesso! Para acessar sua conta, use seu número de WhatsApp e data de nascimento.');
-                modal.remove();
+                localStorage.setItem('userData', JSON.stringify(newUser));
+                showNotification('Cadastro realizado com sucesso!');
+                showOrderHistory(whatsapp);
 
             } catch (error) {
                 console.error('Erro ao cadastrar:', error);
@@ -2897,6 +2950,12 @@ function showUserModal(type = 'login') {
             const whatsapp = document.getElementById('loginWhatsapp').value.replace(/\D/g, '');
             const birthDate = document.getElementById('loginBirthDate').value;
 
+            const dateValidation = validateAndFormatDate(birthDate);
+            if (!dateValidation.isValid) {
+                showNotification(dateValidation.message);
+                return;
+            }
+
             try {
                 const userSnapshot = await realtimeDB.ref('users')
                     .orderByChild('whatsapp')
@@ -2909,7 +2968,7 @@ function showUserModal(type = 'login') {
                 }
 
                 const userData = Object.values(userSnapshot.val())[0];
-                if (userData.birthDate !== birthDate) {
+                if (userData.birthDate !== dateValidation.formattedDate) {
                     showNotification('Data de nascimento incorreta');
                     return;
                 }
@@ -4571,6 +4630,14 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
            document.getElementById('productModal').style.display = 'none';
        }
    });
+
+    const loginButton = document.querySelector('.login-btn');
+if (loginButton) {
+    loginButton.addEventListener('click', () => {
+        const userData = JSON.parse(localStorage.getItem('userData'));
+        showUserModal(userData ? 'history' : 'login');
+    });
+}
 
     // Função para formatar a data
     function formatDate(input) {
