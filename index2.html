@@ -2750,82 +2750,6 @@ function openProductModal(product) {
     modal.querySelector('.modal-product-description').textContent = product.description;
     modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
 
-    // Verificar status da loja e mostrar vídeo quando estiver fechada
-    realtimeDB.ref('schedule').once('value')
-        .then(snapshot => {
-            const schedule = snapshot.val() || {};
-            const isOpen = isStoreOpenNow(schedule);
-            
-            if (!isOpen) {
-                const showVideo = () => {
-                    const existingVideo = document.querySelector('.video-modal');
-                    if (existingVideo) return;
-
-                    const videoModal = document.createElement('div');
-                    videoModal.className = 'video-modal';
-                    videoModal.style.cssText = `
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100vh;
-                        background: rgba(0, 0, 0, 0.9);
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        z-index: 9999;
-                    `;
-
-                    const videoContainer = document.createElement('div');
-                    videoContainer.style.cssText = `
-                        width: 90%;
-                        max-width: 400px;
-                        height: 280px;
-                        position: relative;
-                        border-radius: 10px;
-                        overflow: hidden;
-                    `;
-
-                    videoContainer.innerHTML = `
-                        <video autoplay loop playsinline class="product-video" style="width: 100%; height: 120%; object-fit: cover; position: absolute; top: -10%;">
-                            <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Work%20(1).mp4?alt=media&token=9d7b640d-ef3d-4df4-a835-90f02f9740d1" type="video/mp4">
-                        </video>
-                        <button class="close-video" style="
-                            position: absolute;
-                            top: 10px;
-                            right: 10px;
-                            background: none;
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            z-index: 1000;
-                        ">&times;</button>
-                    `;
-
-                    const video = videoContainer.querySelector('video');
-                    video.muted = false;
-
-                    const closeBtn = videoContainer.querySelector('.close-video');
-                    closeBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        videoModal.remove();
-                    });
-
-                    videoModal.appendChild(videoContainer);
-                    document.body.appendChild(videoModal);
-
-                    videoModal.addEventListener('click', (e) => {
-                        if (e.target === videoModal) {
-                            videoModal.remove();
-                        }
-                    });
-                };
-
-                showVideo();
-            }
-        });
-
     Promise.all([
         realtimeDB.ref('menu/toppings').once('value'),
         realtimeDB.ref('extras').once('value')
@@ -2881,51 +2805,53 @@ function openProductModal(product) {
             });
         });
 
-        // Vídeo e botão apenas para produtos de 500ml
+        // Mensagem e botão apenas para produtos de 500ml
         if (product.name.includes('500ml') && !product.name.includes('1 Litro')) {
-           const videoContainer = document.createElement('div');
-           videoContainer.className = 'video-container';
-           videoContainer.innerHTML = `
-               <video autoplay loop playsinline class="product-video">
-                   <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Cabana.mp4?alt=media&token=dec0775e-3d71-4a3d-b1f2-f4473653eaea" type="video/mp4">
-               </video>
-           `;
+            const upgradeSection = document.createElement('div');
+            upgradeSection.style.cssText = `
+                margin: 1.5rem 0;
+                padding: 1.5rem;
+                background: var(--glass);
+                border: 1px solid var(--glass-border);
+                border-radius: 15px;
+                text-align: center;
+                color: var(--text);
+                font-size: 1.1rem;
+                line-height: 1.5;
+            `;
+            upgradeSection.innerHTML = `
+                <p>Sabia que por apenas R$10 a mais você leva o dobro de açai, o dobro de creme e o dobro de Acompanhamentos? Só clicar no botão abaixo:</p>
+            `;
 
-           const video = videoContainer.querySelector('video');
-           const observer = new IntersectionObserver((entries) => {
-               entries.forEach(entry => {
-                   if (entry.isIntersecting) {
-                       video.muted = false;
-                   } else {
-                       video.muted = true;
-                   }
-               });
-           }, { threshold: 0.5 });
-           observer.observe(videoContainer);
+            const upgradeButton = document.createElement('button');
+            upgradeButton.className = 'modal-btn upgrade-button';
+            upgradeButton.innerHTML = 'Ver opção de 1 Litro';
+            upgradeButton.onclick = () => switchToSize('1 Litro', product.name);
+            upgradeButton.style.cssText = `
+                background: var(--gradient);
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                margin-top: 1rem;
+                cursor: pointer;
+                width: 100%;
+                transition: transform 0.2s ease;
+            `;
+            upgradeButton.addEventListener('mouseover', () => {
+                upgradeButton.style.transform = 'translateY(-2px)';
+            });
+            upgradeButton.addEventListener('mouseout', () => {
+                upgradeButton.style.transform = 'translateY(0)';
+            });
 
-           const modalButtons = modal.querySelector('.modal-buttons');
-           modalButtons.before(videoContainer);
+            const modalButtons = modal.querySelector('.modal-buttons');
+            modalButtons.insertAdjacentElement('beforebegin', upgradeSection);
+            upgradeSection.appendChild(upgradeButton);
+        }
+    });
 
-           // Botão de upgrade único
-           const upgradeButton = document.createElement('button');
-           upgradeButton.className = 'modal-btn upgrade-button';
-           upgradeButton.innerHTML = 'Ver opção de 1 Litro';
-           upgradeButton.onclick = () => switchToSize('1 Litro', product.name);
-           upgradeButton.style.cssText = `
-               background: var(--gradient);
-               color: white;
-               border: none;
-               padding: 10px 20px;
-               border-radius: 5px;
-               margin-bottom: 1rem;
-               cursor: pointer;
-               width: 100%;
-           `;
-           modalButtons.insertAdjacentElement('beforebegin', upgradeButton);
-       }
-   });
-
-   modal.style.display = 'block';
+    modal.style.display = 'block';
 }
     
 function switchToSize(newSize, currentName) {
