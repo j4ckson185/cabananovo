@@ -2030,7 +2030,7 @@ async function handleDeliveryInfo(e) {
         console.log('Saving order:', orderData); // Debug log
 
         // Save to Firebase
-        const newOrderRef = await realtimeDB.ref('orders').push(orderData);
+        const newOrderRef = await realtimeDB.ref()('orders').push(orderData);
         
         if (!newOrderRef.key) {
             throw new Error('Failed to save order');
@@ -4591,7 +4591,6 @@ async function displayOrderHistory(phoneNumber) {
                     }<br>
                     <br>
                     <strong>Itens:</strong><br>
-            `;
             
             // Adicionar itens do pedido
             order.items.forEach(item => {
