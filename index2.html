@@ -2903,23 +2903,23 @@ function validateAndFormatDate(dateString, isRegistration = false) {
         gap: 1rem;
     `;
 
-    if (type === 'register') {
+if (type === 'register') {
         form.innerHTML = `
             <div class="form-group">
                 <label>Nome Completo</label>
                 <input type="text" id="fullName" required 
                     style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
             </div>
-    <div class="form-group">
-        <label>WhatsApp com DDD</label>
-        <input type="tel" id="loginWhatsapp" required placeholder="84 987673202"
-            style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-    </div>
-    <div class="form-group">
-        <label>Data de Nascimento</label>
-        <input type="text" id="loginBirthDate" placeholder="DD/MM/AAAA" maxlength="10" novalidate
-            style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-    </div>
+            <div class="form-group">
+                <label>WhatsApp com DDD</label>
+                <input type="tel" id="whatsapp" required placeholder="84 987673202"
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
+            <div class="form-group">
+                <label>Data de Nascimento</label>
+                <input type="text" id="birthDate" placeholder="DD/MM/AAAA" maxlength="10" novalidate
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
             <button type="submit" style="
                 background: var(--gradient);
                 color: white;
@@ -2992,7 +2992,8 @@ function validateAndFormatDate(dateString, isRegistration = false) {
                 showNotification('Erro ao cadastrar. Tente novamente.');
             }
         };
-    } else {
+    }
+else {
         form.innerHTML = `
             <div class="form-group">
                 <label>WhatsApp com DDD</label>
@@ -3001,7 +3002,7 @@ function validateAndFormatDate(dateString, isRegistration = false) {
             </div>
             <div class="form-group">
                 <label>Data de Nascimento</label>
-                <input type="text" id="loginBirthDate" required placeholder="DD/MM/AAAA" maxlength="10"
+                <input type="text" id="loginBirthDate" placeholder="DD/MM/AAAA" maxlength="10" novalidate
                     style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
             </div>
             <button type="submit" style="
