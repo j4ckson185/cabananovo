@@ -3685,7 +3685,7 @@ async function handleDeliveryInfo(e) {
         };
 
         // Salvar pedido no Firebase
-        const newOrderRef = await realtimeDB.ref()('orders').push(orderData);
+        const newOrderRef = await realtimeDB.ref('orders').push(orderData);
         
         // Log após salvar
         console.log('Pedido salvo com sucesso, ID:', newOrderRef.key);
