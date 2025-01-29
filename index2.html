@@ -2656,11 +2656,14 @@ function checkStoreStatus() {
                 <input type="tel" id="whatsapp" required placeholder="84 9 8888-8888"
                     style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
             </div>
-            <div class="form-group">
-                <label>Data de Nascimento</label>
-                <input type="date" id="birthDate" required
-                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-            </div>
+<div class="form-group">
+    <label>Data de Nascimento</label>
+    <input type="date" id="birthDate" required max="${new Date().toISOString().split('T')[0]}" min="1923-01-01"
+        style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+    <small style="color: var(--text); margin-top: 0.5rem; display: block;">
+        Selecione o ano primeiro, depois mês e dia
+    </small>
+</div>
             <button type="submit" style="
                 background: var(--gradient);
                 color: white;
@@ -2722,11 +2725,14 @@ function checkStoreStatus() {
                 <input type="tel" id="loginWhatsapp" required placeholder="84 9 8888-8888"
                     style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
             </div>
-            <div class="form-group">
-                <label>Data de Nascimento</label>
-                <input type="date" id="loginBirthDate" required
-                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-            </div>
+<div class="form-group">
+    <label>Data de Nascimento</label>
+    <input type="date" id="loginBirthDate" required max="${new Date().toISOString().split('T')[0]}" min="1923-01-01"
+        style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+    <small style="color: var(--text); margin-top: 0.5rem; display: block;">
+        Selecione o ano primeiro, depois mês e dia
+    </small>
+</div>
             <button type="submit" style="
                 background: var(--gradient);
                 color: white;
@@ -2783,20 +2789,19 @@ function checkStoreStatus() {
     document.body.appendChild(modal);
 
     // Máscaras para o campo de WhatsApp
-    const whatsappInput = document.getElementById(type === 'register' ? 'whatsapp' : 'loginWhatsapp');
-    if (whatsappInput) {
-        whatsappInput.addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 11) value = value.slice(0, 11);
-            
-            if (value.length > 0) {
-                value = value.match(new RegExp('.{1,2}$|.{1,2}|.{1,5}', 'g'))
-                             .join(' ');
-            }
-            
-            e.target.value = value;
-        });
-    }
+const whatsappInput = document.getElementById(type === 'register' ? 'whatsapp' : 'loginWhatsapp');
+if (whatsappInput) {
+    whatsappInput.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+        
+        // Formata como: 84 987673202
+        if (value.length >= 2) {
+            value = value.replace(/^(\d{2})/, '$1 ');
+        }
+        
+        e.target.value = value;
+    });
 }
     
 document.addEventListener('DOMContentLoaded', function() {
