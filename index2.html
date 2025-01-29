@@ -2573,76 +2573,6 @@ function checkStoreStatus() {
             });
             
             if (!isOpen) {
-                const showVideo = () => {
-                    const existingVideo = document.querySelector('.video-modal');
-                    if (existingVideo) return;
-
-                    const videoModal = document.createElement('div');
-                    videoModal.className = 'video-modal';
-                    videoModal.style.cssText = `
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100vh;
-                        background: rgba(0, 0, 0, 0.9);
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        z-index: 9999;
-                    `;
-
-                    const videoContainer = document.createElement('div');
-                    videoContainer.style.cssText = `
-                        width: 90%;
-                        max-width: 400px;
-                        height: 280px;
-                        position: relative;
-                        border-radius: 10px;
-                        overflow: hidden;
-                    `;
-
-                    videoContainer.innerHTML = `
-                        <video autoplay loop playsinline class="product-video" style="width: 100%; height: 120%; object-fit: cover; position: absolute; top: -10%;">
-                            <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Work%20(1).mp4?alt=media&token=9d7b640d-ef3d-4df4-a835-90f02f9740d1" type="video/mp4">
-                        </video>
-                        <button class="close-video" style="
-                            position: absolute;
-                            top: 10px;
-                            right: 10px;
-                            background: none;
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            z-index: 1000;
-                        ">&times;</button>
-                    `;
-
-                    const video = videoContainer.querySelector('video');
-                    video.muted = false;
-
-                    const closeBtn = videoContainer.querySelector('.close-video');
-                    closeBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        videoModal.remove();
-                    });
-
-                    videoModal.appendChild(videoContainer);
-                    document.body.appendChild(videoModal);
-
-                    videoModal.addEventListener('click', (e) => {
-                        if (e.target === videoModal) {
-                            videoModal.remove();
-                        }
-                    });
-                };
-
-                if (!document.hasVideoListener) {
-                    document.addEventListener('click', showVideo, { once: true });
-                    document.hasVideoListener = true;
-                }
-
                 disableOrdering();
             }
         })
@@ -2810,74 +2740,149 @@ function hideMascot() {
 }
 
 function openProductModal(product) {
-   currentProduct = product;
-   const modal = document.getElementById('productModal');
-   
-   // Remove existing videos and upgrade buttons
-   modal.querySelectorAll('.video-container, .upgrade-button, .mascot-container').forEach(el => el.remove());
-   
-   modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
-   modal.querySelector('.modal-product-title').textContent = product.name;
-   modal.querySelector('.modal-product-description').textContent = product.description;
-   modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
+    currentProduct = product;
+    const modal = document.getElementById('productModal');
+    
+    modal.querySelectorAll('.video-container, .upgrade-button, .mascot-container').forEach(el => el.remove());
+    
+    modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
+    modal.querySelector('.modal-product-title').textContent = product.name;
+    modal.querySelector('.modal-product-description').textContent = product.description;
+    modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
 
-   Promise.all([
-       realtimeDB.ref('menu/toppings').once('value'),
-       realtimeDB.ref('extras').once('value')
-   ]).then(([toppingsSnapshot, extrasSnapshot]) => {
-       const toppings = toppingsSnapshot.val() || {};
-       const extras = extrasSnapshot.val() || {};
+    // Verificar status da loja e mostrar vídeo quando estiver fechada
+    realtimeDB.ref('schedule').once('value')
+        .then(snapshot => {
+            const schedule = snapshot.val() || {};
+            const isOpen = isStoreOpenNow(schedule);
+            
+            if (!isOpen) {
+                const showVideo = () => {
+                    const existingVideo = document.querySelector('.video-modal');
+                    if (existingVideo) return;
 
-       const toppingsGrid = modal.querySelector('.toppings-grid');
-       toppingsGrid.innerHTML = Object.values(toppings)
-           .filter(topping => topping.available)
-           .map(topping => `
-               <div class="topping-item" data-topping="${topping.name}">
-                   ${topping.name}
-                   ${topping.price > 0 ? `<span class="topping-price">+R$ ${topping.price.toFixed(2)}</span>` : ''}
-               </div>
-           `).join('');
+                    const videoModal = document.createElement('div');
+                    videoModal.className = 'video-modal';
+                    videoModal.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100vh;
+                        background: rgba(0, 0, 0, 0.9);
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        z-index: 9999;
+                    `;
 
-       const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
-       toppingItems.forEach(item => {
-           item.addEventListener('click', () => {
-               const isCurrentlySelected = item.classList.contains('selected');
-               const selectedToppings = document.querySelectorAll('.topping-item.selected');
-               
-               if (isCurrentlySelected) {
-                   item.classList.remove('selected');
-               } else {
-                   if (selectedToppings.length < product.toppings.max) {
-                       item.classList.add('selected');
-                   } else {
-                       showNotification(`Você pode selecionar no máximo ${product.toppings.max} acompanhamento${product.toppings.max > 1 ? 's' : ''}!`);
-                   }
-               }
-               validateToppingsSelection(product.toppings.min, product.toppings.max);
-               updateTotalPrice(product);
-           });
-       });
+                    const videoContainer = document.createElement('div');
+                    videoContainer.style.cssText = `
+                        width: 90%;
+                        max-width: 400px;
+                        height: 280px;
+                        position: relative;
+                        border-radius: 10px;
+                        overflow: hidden;
+                    `;
 
-       const extrasGrid = modal.querySelector('.extras-grid');
-       extrasGrid.innerHTML = Object.values(extras)
-           .filter(extra => extra.available)
-           .map(extra => `
-               <div class="extra-item" data-extra="${extra.name}">
-                   ${extra.name}
-                   ${extra.price > 0 ? `<span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>` : ''}
-               </div>
-           `).join('');
+                    videoContainer.innerHTML = `
+                        <video autoplay loop playsinline class="product-video" style="width: 100%; height: 120%; object-fit: cover; position: absolute; top: -10%;">
+                            <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Work%20(1).mp4?alt=media&token=9d7b640d-ef3d-4df4-a835-90f02f9740d1" type="video/mp4">
+                        </video>
+                        <button class="close-video" style="
+                            position: absolute;
+                            top: 10px;
+                            right: 10px;
+                            background: none;
+                            border: none;
+                            color: white;
+                            font-size: 24px;
+                            cursor: pointer;
+                            z-index: 1000;
+                        ">&times;</button>
+                    `;
 
-       const extraItems = extrasGrid.querySelectorAll('.extra-item');
-       extraItems.forEach(item => {
-           item.addEventListener('click', () => {
-               item.classList.toggle('selected');
-               updateTotalPrice(product);
-           });
-       });
+                    const video = videoContainer.querySelector('video');
+                    video.muted = false;
 
-       // Video e botão apenas para produtos de 500ml
-       if (product.name.includes('500ml') && !product.name.includes('1 Litro')) {
+                    const closeBtn = videoContainer.querySelector('.close-video');
+                    closeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        videoModal.remove();
+                    });
+
+                    videoModal.appendChild(videoContainer);
+                    document.body.appendChild(videoModal);
+
+                    videoModal.addEventListener('click', (e) => {
+                        if (e.target === videoModal) {
+                            videoModal.remove();
+                        }
+                    });
+                };
+
+                showVideo();
+            }
+        });
+
+    Promise.all([
+        realtimeDB.ref('menu/toppings').once('value'),
+        realtimeDB.ref('extras').once('value')
+    ]).then(([toppingsSnapshot, extrasSnapshot]) => {
+        const toppings = toppingsSnapshot.val() || {};
+        const extras = extrasSnapshot.val() || {};
+
+        const toppingsGrid = modal.querySelector('.toppings-grid');
+        toppingsGrid.innerHTML = Object.values(toppings)
+            .filter(topping => topping.available)
+            .map(topping => `
+                <div class="topping-item" data-topping="${topping.name}">
+                    ${topping.name}
+                    ${topping.price > 0 ? `<span class="topping-price">+R$ ${topping.price.toFixed(2)}</span>` : ''}
+                </div>
+            `).join('');
+
+        const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
+        toppingItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const isCurrentlySelected = item.classList.contains('selected');
+                const selectedToppings = document.querySelectorAll('.topping-item.selected');
+                
+                if (isCurrentlySelected) {
+                    item.classList.remove('selected');
+                } else {
+                    if (selectedToppings.length < product.toppings.max) {
+                        item.classList.add('selected');
+                    } else {
+                        showNotification(`Você pode selecionar no máximo ${product.toppings.max} acompanhamento${product.toppings.max > 1 ? 's' : ''}!`);
+                    }
+                }
+                validateToppingsSelection(product.toppings.min, product.toppings.max);
+                updateTotalPrice(product);
+            });
+        });
+
+        const extrasGrid = modal.querySelector('.extras-grid');
+        extrasGrid.innerHTML = Object.values(extras)
+            .filter(extra => extra.available)
+            .map(extra => `
+                <div class="extra-item" data-extra="${extra.name}">
+                    ${extra.name}
+                    ${extra.price > 0 ? `<span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>` : ''}
+                </div>
+            `).join('');
+
+        const extraItems = extrasGrid.querySelectorAll('.extra-item');
+        extraItems.forEach(item => {
+            item.addEventListener('click', () => {
+                item.classList.toggle('selected');
+                updateTotalPrice(product);
+            });
+        });
+
+        // Vídeo e botão apenas para produtos de 500ml
+        if (product.name.includes('500ml') && !product.name.includes('1 Litro')) {
            const videoContainer = document.createElement('div');
            videoContainer.className = 'video-container';
            videoContainer.innerHTML = `
