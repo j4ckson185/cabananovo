@@ -1288,6 +1288,9 @@ header {
             <div class="cart-icon">
                 <i class="fas fa-shopping-cart"></i>
                 <span class="cart-count">0</span>
+                    <button class="login-btn">
+        <i class="fas fa-user"></i>
+    </button>
             </div>
         </div>
     </header>
@@ -2579,6 +2582,196 @@ function checkStoreStatus() {
         .catch(error => {
             console.error('Erro ao verificar status da loja:', error);
         });
+}
+
+    function showUserModal(type = 'login') {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+
+    const content = document.createElement('div');
+    content.className = 'modal-content';
+    content.style.cssText = `
+        max-width: 500px;
+        width: 90%;
+        padding: 2rem;
+    `;
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'close-modal';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.onclick = () => modal.remove();
+
+    const title = document.createElement('h2');
+    title.style.cssText = `
+        color: white;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        font-size: 1.5rem;
+    `;
+    title.textContent = type === 'login' ? 'Entrar na Conta' : 'Criar Conta';
+
+    const form = document.createElement('form');
+    form.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    `;
+
+    if (type === 'register') {
+        // Formulário de cadastro
+        form.innerHTML = `
+            <div class="form-group">
+                <label>Nome Completo</label>
+                <input type="text" id="fullName" required 
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
+            <div class="form-group">
+                <label>WhatsApp com DDD</label>
+                <input type="tel" id="whatsapp" required placeholder="84 9 8888-8888"
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
+            <div class="form-group">
+                <label>Data de Nascimento</label>
+                <input type="date" id="birthDate" required
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
+            <button type="submit" style="
+                background: var(--gradient);
+                color: white;
+                padding: 1rem;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                margin-top: 1rem;
+                transition: transform 0.2s ease;
+            ">Criar Conta</button>
+            <p style="text-align: center; margin-top: 1rem; color: var(--text);">
+                Já tem conta? <a href="#" style="color: var(--accent);" onclick="showUserModal('login'); return false;">Entrar</a>
+            </p>
+        `;
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const fullName = document.getElementById('fullName').value;
+            const whatsapp = document.getElementById('whatsapp').value.replace(/\D/g, '');
+            const birthDate = document.getElementById('birthDate').value;
+
+            try {
+                const userSnapshot = await realtimeDB.ref('users')
+                    .orderByChild('whatsapp')
+                    .equalTo(whatsapp)
+                    .once('value');
+
+                if (userSnapshot.exists()) {
+                    showNotification('Este número de WhatsApp já está cadastrado');
+                    return;
+                }
+
+                const newUser = {
+                    fullName,
+                    whatsapp,
+                    birthDate,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP,
+                    preferences: {
+                        favoriteTopings: [],
+                        lastOrders: []
+                    }
+                };
+
+                await realtimeDB.ref('users').push(newUser);
+                showNotification('Cadastro realizado com sucesso! Para acessar sua conta, use seu número de WhatsApp e data de nascimento.');
+                modal.remove();
+
+            } catch (error) {
+                console.error('Erro ao cadastrar:', error);
+                showNotification('Erro ao cadastrar. Tente novamente.');
+            }
+        };
+    } else {
+        // Formulário de login
+        form.innerHTML = `
+            <div class="form-group">
+                <label>WhatsApp com DDD</label>
+                <input type="tel" id="loginWhatsapp" required placeholder="84 9 8888-8888"
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
+            <div class="form-group">
+                <label>Data de Nascimento</label>
+                <input type="date" id="loginBirthDate" required
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
+            <button type="submit" style="
+                background: var(--gradient);
+                color: white;
+                padding: 1rem;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                margin-top: 1rem;
+                transition: transform 0.2s ease;
+            ">Entrar</button>
+            <p style="text-align: center; margin-top: 1rem; color: var(--text);">
+                Não tem conta? <a href="#" style="color: var(--accent);" onclick="showUserModal('register'); return false;">Criar conta</a>
+            </p>
+        `;
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const whatsapp = document.getElementById('loginWhatsapp').value.replace(/\D/g, '');
+            const birthDate = document.getElementById('loginBirthDate').value;
+
+            try {
+                const userSnapshot = await realtimeDB.ref('users')
+                    .orderByChild('whatsapp')
+                    .equalTo(whatsapp)
+                    .once('value');
+
+                if (!userSnapshot.exists()) {
+                    showNotification('Usuário não encontrado');
+                    return;
+                }
+
+                const userData = Object.values(userSnapshot.val())[0];
+                if (userData.birthDate !== birthDate) {
+                    showNotification('Data de nascimento incorreta');
+                    return;
+                }
+
+                localStorage.setItem('userData', JSON.stringify(userData));
+                showNotification('Login realizado com sucesso!');
+                modal.remove();
+
+            } catch (error) {
+                console.error('Erro ao fazer login:', error);
+                showNotification('Erro ao fazer login. Tente novamente.');
+            }
+        };
+    }
+
+    content.appendChild(closeBtn);
+    content.appendChild(title);
+    content.appendChild(form);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    // Máscaras para o campo de WhatsApp
+    const whatsappInput = document.getElementById(type === 'register' ? 'whatsapp' : 'loginWhatsapp');
+    if (whatsappInput) {
+        whatsappInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+            
+            if (value.length > 0) {
+                value = value.match(new RegExp('.{1,2}$|.{1,2}|.{1,5}', 'g'))
+                             .join(' ');
+            }
+            
+            e.target.value = value;
+        });
+    }
 }
     
 document.addEventListener('DOMContentLoaded', function() {
