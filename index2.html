@@ -2437,13 +2437,7 @@ function showUserModal(type = 'login') {
     const closeBtn = document.createElement('button');
     closeBtn.className = 'close-modal';
     closeBtn.innerHTML = '&times;';
-    closeBtn.onclick = () => {
-        if (userData) {
-            modal.remove();
-        } else {
-            window.location.reload();
-        }
-    };
+    closeBtn.onclick = () => modal.remove();
 
     const title = document.createElement('h2');
     title.style.cssText = `
@@ -2454,23 +2448,219 @@ function showUserModal(type = 'login') {
     `;
     title.textContent = type === 'login' ? 'Entrar na Conta' : 'Criar Conta';
 
-    // Função para formatar a data
-    function formatDate(input) {
-        input.addEventListener('input', (e) => {
+    const form = document.createElement('form');
+    form.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    `;
+
+    if (type === 'register') {
+        form.innerHTML = `
+            <div class="form-group">
+                <label>Nome Completo</label>
+                <input type="text" id="fullName" required 
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
+            <div class="form-group">
+                <label>WhatsApp com DDD</label>
+                <input type="tel" id="whatsapp" required placeholder="84 987673202"
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
+            <div class="form-group">
+                <label>Data de Nascimento</label>
+                <input type="text" id="birthDate" required placeholder="DD/MM/AAAA" maxlength="10"
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
+            <button type="submit" style="
+                background: var(--gradient);
+                color: white;
+                padding: 1rem;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                margin-top: 1rem;
+                transition: transform 0.2s ease;
+            ">Criar Conta</button>
+            <p style="text-align: center; margin-top: 1rem; color: var(--text);">
+                Já tem conta? <a href="#" style="color: var(--accent);" onclick="showUserModal('login'); return false;">Entrar</a>
+            </p>
+        `;
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const fullName = document.getElementById('fullName').value;
+            const whatsapp = document.getElementById('whatsapp').value.replace(/\D/g, '');
+            const birthDate = document.getElementById('birthDate').value;
+
+            if (fullName.trim().length < 3) {
+                showNotification('Digite seu nome completo');
+                return;
+            }
+
+            if (whatsapp.length !== 11) {
+                showNotification('Digite um número de WhatsApp válido');
+                return;
+            }
+
+            const dateValidation = validateAndFormatDate(birthDate);
+            if (!dateValidation.isValid) {
+                showNotification(dateValidation.message || 'Data de nascimento inválida');
+                return;
+            }
+
+            try {
+                const userSnapshot = await realtimeDB.ref('users')
+                    .orderByChild('whatsapp')
+                    .equalTo(whatsapp)
+                    .once('value');
+
+                if (userSnapshot.exists()) {
+                    showNotification('Este número de WhatsApp já está cadastrado');
+                    return;
+                }
+
+                const newUser = {
+                    fullName,
+                    whatsapp,
+                    birthDate: dateValidation.formattedDate,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP,
+                    preferences: {
+                        favoriteTopings: [],
+                        lastOrders: []
+                    }
+                };
+
+                await realtimeDB.ref('users').push(newUser);
+                localStorage.setItem('userData', JSON.stringify(newUser));
+                showNotification('Cadastro realizado com sucesso!');
+                showOrderHistory(whatsapp);
+
+            } catch (error) {
+                console.error('Erro ao cadastrar:', error);
+                showNotification('Erro ao cadastrar. Tente novamente.');
+            }
+        };
+    } else {
+        form.innerHTML = `
+            <div class="form-group">
+                <label>WhatsApp com DDD</label>
+                <input type="tel" id="loginWhatsapp" required placeholder="84 987673202"
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
+            <div class="form-group">
+                <label>Data de Nascimento</label>
+                <input type="text" id="loginBirthDate" required placeholder="DD/MM/AAAA" maxlength="10"
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
+            <button type="submit" style="
+                background: var(--gradient);
+                color: white;
+                padding: 1rem;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                margin-top: 1rem;
+                transition: transform 0.2s ease;
+            ">Entrar</button>
+            <p style="text-align: center; margin-top: 1rem; color: var(--text);">
+                Não tem conta? <a href="#" style="color: var(--accent);" onclick="showUserModal('register'); return false;">Criar conta</a>
+            </p>
+        `;
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const whatsapp = document.getElementById('loginWhatsapp').value.replace(/\D/g, '');
+            const birthDate = document.getElementById('loginBirthDate').value;
+
+            if (whatsapp.length !== 11) {
+                showNotification('Digite um número de WhatsApp válido');
+                return;
+            }
+
+            const dateValidation = validateAndFormatDate(birthDate);
+            if (!dateValidation.isValid) {
+                showNotification(dateValidation.message || 'Data de nascimento inválida');
+                return;
+            }
+
+            try {
+                const userSnapshot = await realtimeDB.ref('users')
+                    .orderByChild('whatsapp')
+                    .equalTo(whatsapp)
+                    .once('value');
+
+                if (!userSnapshot.exists()) {
+                    showNotification('Você ainda não tem uma conta. Clique em "Criar conta" para se cadastrar.');
+                    return;
+                }
+
+                const userData = Object.values(userSnapshot.val())[0];
+                if (userData.birthDate !== dateValidation.formattedDate) {
+                    showNotification('Data de nascimento incorreta');
+                    return;
+                }
+
+                localStorage.setItem('userData', JSON.stringify(userData));
+                showNotification('Login realizado com sucesso!');
+                showOrderHistory(whatsapp);
+
+            } catch (error) {
+                console.error('Erro ao fazer login:', error);
+                showNotification('Erro ao fazer login. Tente novamente.');
+            }
+        };
+    }
+
+    content.appendChild(closeBtn);
+    content.appendChild(title);
+    content.appendChild(form);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    // Configurar máscaras dos campos
+    const whatsappInput = document.getElementById(type === 'register' ? 'whatsapp' : 'loginWhatsapp');
+    if (whatsappInput) {
+        whatsappInput.addEventListener('input', (e) => {
             let value = e.target.value.replace(/\D/g, '');
-            
-            if (value.length > 8) value = value.slice(0, 8);
+            if (value.length > 11) value = value.slice(0, 11);
             
             if (value.length >= 2) {
-                value = value.replace(/^(\d{2})/, '$1/');
-            }
-            if (value.length >= 5) {
-                value = value.replace(/^(\d{2})\/(\d{2})/, '$1/$2/');
+                value = value.replace(/^(\d{2})/, '$1 ');
             }
             
             e.target.value = value;
         });
     }
+
+    const birthDateInput = document.getElementById(type === 'register' ? 'birthDate' : 'loginBirthDate');
+    if (birthDateInput) {
+        formatDate(birthDateInput);
+    }
+}
+
+// Registrar a função no escopo global
+window.showUserModal = showUserModal;
+
+    // Função para formatar a data
+function formatDate(input) {
+    input.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        
+        if (value.length > 8) value = value.slice(0, 8);
+        
+        if (value.length >= 2) {
+            value = value.replace(/^(\d{2})/, '$1/');
+        }
+        if (value.length >= 5) {
+            value = value.replace(/^(\d{2})\/(\d{2})/, '$1/$2/');
+        }
+        
+        e.target.value = value;
+    });
+}
 
     // Função para validar e converter data
 // Atualizar a função validateAndFormatDate
@@ -2492,7 +2682,6 @@ function validateAndFormatDate(dateString) {
 
     let [day, month, year] = parts.map(Number);
 
-    // Se alguma parte não for um número válido
     if (isNaN(day) || isNaN(month) || isNaN(year)) {
         return {
             isValid: false,
@@ -2500,7 +2689,6 @@ function validateAndFormatDate(dateString) {
         };
     }
 
-    // Se o ano tem 2 dígitos
     if (year < 100) {
         return {
             isValid: false,
@@ -2508,7 +2696,6 @@ function validateAndFormatDate(dateString) {
         };
     }
 
-    // Validar data
     const date = new Date(year, month - 1, day);
     const isValid = date.getDate() === day &&
                    date.getMonth() === month - 1 &&
@@ -2522,6 +2709,7 @@ function validateAndFormatDate(dateString) {
         message: isValid ? null : 'Data de nascimento inválida'
     };
 }
+    
     // Função para formatar a data
     function formatDate(input) {
         input.addEventListener('input', (e) => {
@@ -2541,140 +2729,147 @@ function validateAndFormatDate(dateString) {
     }
 
         // Função para mostrar histórico após login
-       function showOrderHistory(whatsapp) {
-        content.innerHTML = '';
-        content.style.maxWidth = '800px';
+ function showOrderHistory(whatsapp) {
+    const modal = document.querySelector('.modal');
+    const content = modal.querySelector('.modal-content');
+    content.innerHTML = '';
+    content.style.maxWidth = '800px';
 
-        const title = document.createElement('h2');
-        title.style.cssText = `
-            color: white;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            font-size: 1.5rem;
-        `;
-        title.textContent = 'Meus Pedidos';
+    const title = document.createElement('h2');
+    title.style.cssText = `
+        color: white;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        font-size: 1.5rem;
+    `;
+    title.textContent = 'Meus Pedidos';
 
-        const ordersList = document.createElement('div');
-        ordersList.style.cssText = `
-            max-height: 70vh;
-            overflow-y: auto;
-            padding-right: 1rem;
-        `;
+    const ordersList = document.createElement('div');
+    ordersList.style.cssText = `
+        max-height: 70vh;
+        overflow-y: auto;
+        padding-right: 1rem;
+    `;
 
-        // Buscar pedidos pelo WhatsApp
-        realtimeDB.ref('orders')
-            .orderByChild('customer/customerPhone')
-            .equalTo(whatsapp)
-            .once('value')
-            .then(snapshot => {
-                const orders = snapshot.val();
-                if (!orders) {
-                    ordersList.innerHTML = `
-                        <p style="text-align: center; color: var(--text);">
-                            Você ainda não fez nenhum pedido.
-                        </p>
-                    `;
-                    return;
-                }
+    // Buscar pedidos pelo WhatsApp
+    realtimeDB.ref('orders')
+        .orderByChild('customerInfo/whatsapp')
+        .equalTo(whatsapp)
+        .once('value')
+        .then(snapshot => {
+            const orders = snapshot.val();
+            if (!orders) {
+                ordersList.innerHTML = `
+                    <p style="text-align: center; color: var(--text);">
+                        Você ainda não fez nenhum pedido.
+                    </p>
+                `;
+                return;
+            }
 
-                const ordersArray = Object.entries(orders)
-                    .map(([key, value]) => ({...value, key}))
-                    .sort((a, b) => b.timestamp - a.timestamp);
+            const ordersArray = Object.entries(orders)
+                .map(([key, value]) => ({...value, key}))
+                .sort((a, b) => b.timestamp - a.timestamp);
 
-                ordersArray.forEach(order => {
-                    const orderDate = new Date(order.timestamp);
-                    const orderCard = document.createElement('div');
-                    orderCard.style.cssText = `
-                        background: var(--glass);
-                        border: 1px solid var(--glass-border);
-                        border-radius: 15px;
-                        padding: 1.5rem;
-                        margin-bottom: 1rem;
-                        color: var(--text);
-                    `;
+            ordersArray.forEach(order => {
+                const orderDate = new Date(order.timestamp);
+                const orderCard = document.createElement('div');
+                orderCard.style.cssText = `
+                    background: var(--glass);
+                    border: 1px solid var(--glass-border);
+                    border-radius: 15px;
+                    padding: 1.5rem;
+                    margin-bottom: 1rem;
+                    color: var(--text);
+                `;
 
-                    let itemsList = '';
-                    order.items.forEach(item => {
-                        itemsList += `
-                            <div style="margin-bottom: 0.5rem;">
-                                <strong style="color: white;">${item.name}</strong><br>
-                                ${item.selectedToppings && item.selectedToppings.length ? 
-                                    `Acompanhamentos: ${item.selectedToppings.join(', ')}<br>` : ''}
-                                ${item.selectedExtras && item.selectedExtras.length ? 
-                                    `Extras: ${item.selectedExtras.join(', ')}<br>` : ''}
-                                Preço: R$ ${item.price.toFixed(2)}
-                            </div>
-                        `;
-                    });
-
-                    orderCard.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <div>
-                                <strong style="color: white;">Data:</strong> 
-                                ${orderDate.toLocaleDateString()} ${orderDate.toLocaleTimeString()}
-                            </div>
-                            <div>
-                                <strong style="color: white;">Total:</strong> 
-                                R$ ${order.orderTotal.toFixed(2)}
-                            </div>
+                let itemsList = '';
+                order.items.forEach(item => {
+                    itemsList += `
+                        <div style="margin-bottom: 0.5rem;">
+                            <strong style="color: white;">${item.name}</strong><br>
+                            ${item.selectedToppings && item.selectedToppings.length ? 
+                                `Acompanhamentos: ${item.selectedToppings.join(', ')}<br>` : ''}
+                            ${item.selectedExtras && item.selectedExtras.length ? 
+                                `Extras: ${item.selectedExtras.join(', ')}<br>` : ''}
+                            Preço: R$ ${item.price.toFixed(2)}
                         </div>
-                        <div style="margin-bottom: 1rem;">
-                            ${itemsList}
-                        </div>
-                        <button class="repeat-order" style="
-                            background: var(--gradient);
-                            color: white;
-                            border: none;
-                            padding: 0.8rem 1.5rem;
-                            border-radius: 8px;
-                            cursor: pointer;
-                            font-weight: 600;
-                            width: 100%;
-                            transition: transform 0.2s ease;
-                        ">Repetir este pedido</button>
                     `;
-
-                    const repeatBtn = orderCard.querySelector('.repeat-order');
-                    repeatBtn.addEventListener('click', () => {
-                        cart = order.items.map(item => ({
-                            ...item,
-                            price: parseFloat(item.price),
-                            selectedToppings: item.selectedToppings || [],
-                            selectedExtras: item.selectedExtras || []
-                        }));
-                        updateCartCount();
-                        modal.remove();
-                        showCartModal();
-                    });
-
-                    ordersList.appendChild(orderCard);
                 });
+
+                orderCard.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div>
+                            <strong style="color: white;">Data:</strong> 
+                            ${orderDate.toLocaleDateString()} ${orderDate.toLocaleTimeString()}
+                        </div>
+                        <div>
+                            <strong style="color: white;">Total:</strong> 
+                            R$ ${order.total.toFixed(2)}
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        ${itemsList}
+                    </div>
+                    <button class="repeat-order" style="
+                        background: var(--gradient);
+                        color: white;
+                        border: none;
+                        padding: 0.8rem 1.5rem;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        width: 100%;
+                        transition: transform 0.2s ease;
+                    ">Repetir este pedido</button>
+                `;
+
+                const repeatBtn = orderCard.querySelector('.repeat-order');
+                repeatBtn.addEventListener('click', () => {
+                    cart = order.items.map(item => ({
+                        ...item,
+                        price: parseFloat(item.price),
+                        selectedToppings: item.selectedToppings || [],
+                        selectedExtras: item.selectedExtras || []
+                    }));
+                    updateCartCount();
+                    modal.style.display = 'none';
+                    showCartModal();
+                });
+
+                ordersList.appendChild(orderCard);
             });
+        });
 
-        const logoutButton = document.createElement('button');
-        logoutButton.style.cssText = `
-            background: var(--gradient);
-            color: white;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            width: 100%;
-            margin-top: 1rem;
-            transition: transform 0.2s ease;
-        `;
-        logoutButton.textContent = 'Sair da Conta';
-        logoutButton.onclick = () => {
-            localStorage.removeItem('userData');
-            window.location.reload();
-        };
+    const logoutButton = document.createElement('button');
+    logoutButton.style.cssText = `
+        background: var(--gradient);
+        color: white;
+        border: none;
+        padding: 0.8rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        width: 100%;
+        margin-top: 1rem;
+        transition: transform 0.2s ease;
+    `;
+    logoutButton.textContent = 'Sair da Conta';
+    logoutButton.onclick = () => {
+        localStorage.removeItem('userData');
+        window.location.reload();
+    };
 
-        content.appendChild(closeBtn);
-        content.appendChild(title);
-        content.appendChild(ordersList);
-        content.appendChild(logoutButton);
-    }
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'close-modal';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.onclick = () => modal.style.display = 'none';
+
+    content.appendChild(closeBtn);
+    content.appendChild(title);
+    content.appendChild(ordersList);
+    content.appendChild(logoutButton);
+}
 
     const form = document.createElement('form');
     form.style.cssText = `
