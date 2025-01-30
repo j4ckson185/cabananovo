@@ -3414,77 +3414,52 @@ function updateCartCount() {
 function formatOrderForWhatsApp() {
     const paymentMethodMap = {
         'money': 'Dinheiro',
-        'card': 'Cartão',
-        'pix': 'PIX'
+        'card': 'Cartão na Entrega',
+        'online': 'PIX'
     };
 
-    // Corrigindo os seletores para corresponder ao seu formulário
-    const customerName = document.querySelector('input[name="fullName"]')?.value;
-    const customerPhone = document.querySelector('input[name="whatsapp"]')?.value;
-    const street = document.querySelector('input[name="address"]')?.value;
-    const complement = document.querySelector('input[name="complement"]')?.value;
-    const neighborhood = document.querySelector('input[name="neighborhood"]')?.value;
-    const zipCode = document.querySelector('input[name="zipcode"]')?.value;
-    const paymentMethod = document.querySelector('input[name="payment"]:checked');
-    const notes = document.querySelector('textarea[name="notes"]')?.value;
+    // Capturar valores diretamente dos campos do formulário
+    const customerName = document.getElementById('customerName').value || 'Não informado';
+    const customerPhone = document.getElementById('customerPhone').value || 'Não informado';
+    const street = document.getElementById('street').value || 'Não informado';
+    const streetNumber = document.getElementById('streetNumber').value || 'S/N';
+    const neighborhood = document.getElementById('neighborhood').value || 'Não informado';
+    const complement = document.getElementById('complement').value || '';
+    const zipCode = document.getElementById('zipCode').value || 'Não informado';
+    const notes = document.getElementById('notes').value || '';
+    
+    // Capturar método de pagamento
+    const paymentMethodElement = document.querySelector('input[name="paymentMethod"]:checked');
+    const paymentMethod = paymentMethodElement ? paymentMethodElement.value : 'Não selecionado';
+    const paymentMethodDisplay = paymentMethodMap[paymentMethod] || paymentMethod;
 
     let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
     
-    message += `*Cliente:* ${customerName || 'Não informado'}\n`;
-    message += `*WhatsApp:* ${customerPhone || 'Não informado'}\n\n`;
-    message += `*📍 Endereço de Entrega:*\n`;
-    message += `${street || 'Não informado'}\n`;
-    if (complement) message += `Complemento: ${complement}\n`;
-    message += `Bairro: ${neighborhood || 'Não informado'}\n`;
-    message += `CEP: ${zipCode || 'Não informado'}\n\n`;
+    message += `*Cliente:* ${customerName}\n`;
+    message += `*WhatsApp:* ${customerPhone}\n\n`;
     
-    message += `*🍨 Itens do Pedido:*\n`;
-    cart.forEach(item => {
-        if (item.name.includes('Combo')) {
-            message += `*${item.name}*\n`;
-            if (item.description) {
-                message += item.description + '\n';
-            }
-        } else {
-            message += `*${item.name}*\n`;
-            if (item.selectedToppings && item.selectedToppings.length > 0) {
-                message += `Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
-            }
-            if (item.selectedExtras && item.selectedExtras.length > 0) {
-                message += `Extras: ${item.selectedExtras.join(', ')}\n`;
-            }
-        }
-        message += `Valor: R$ ${item.price.toFixed(2)}\n\n`;
-    });
+    message += `*📍 Endereço de Entrega:*\n`;
+    message += `${street}, ${streetNumber}\n`;
+    if (complement) message += `Complemento: ${complement}\n`;
+    message += `Bairro: ${neighborhood}\n`;
+    message += `CEP: ${zipCode}\n\n`;
+    
+    // Detalhes do pedido
+    const orderDetails = document.getElementById('orderDetails').value || 'Nenhum item no pedido';
+    message += `*🍨 Itens do Pedido:*\n${orderDetails}\n\n`;
 
-    const subtotal = cart.reduce((total, item) => total + item.price, 0);
-    const deliveryFee = 3.00;
-    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-    const total = subtotal - discount + deliveryFee;
+    // Total do pedido
+    const orderTotal = document.getElementById('orderTotal').value || '0.00';
     
     message += `*💰 Resumo do Pedido:*\n`;
-    message += `*Subtotal:* R$ ${subtotal.toFixed(2)}\n`;
-    message += `*Taxa de Entrega:* R$ ${deliveryFee.toFixed(2)}\n`;
+    message += `*Total:* R$ ${parseFloat(orderTotal).toFixed(2)}\n\n`;
     
-    if (appliedCoupon) {
-        message += `*Cupom Aplicado:* ${appliedCoupon.code}\n`;
-        message += `*Desconto:* -R$ ${discount.toFixed(2)}\n`;
-    }
+    // Forma de pagamento
+    message += `*💳 Forma de Pagamento:* ${paymentMethodDisplay}\n`;
     
-    message += `*Total:* R$ ${total.toFixed(2)}\n\n`;
-    
-    const paymentValue = paymentMethod ? paymentMethod.value : '';
-    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentValue] || 'Não selecionado'}\n`;
-    
-    if (paymentValue === 'money') {
-        const changeAmount = document.querySelector('input[name="change"]')?.value;
-        if (changeAmount) {
-            message += `Troco para: R$ ${parseFloat(changeAmount).toFixed(2)}\n`;
-        }
-    }
-    
+    // Observações
     if (notes) {
-        message += `\n*Observações:* ${notes}\n`;
+        message += `*Observações:* ${notes}\n`;
     }
     
     return message;
