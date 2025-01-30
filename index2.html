@@ -2414,6 +2414,199 @@ function checkStoreStatus() {
     const visitCount = parseInt(localStorage.getItem('visitCount') || '0');
     localStorage.setItem('visitCount', visitCount + 1);
 
+    // Configuração do Intersection Observer para o mascote
+    const mascotVideo = document.querySelector('.mascot-video');
+    if (mascotVideo) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    mascotVideo.play();
+                } else {
+                    mascotVideo.pause();
+                }
+            });
+        }, {
+            threshold: 0.5
+        });
+
+        observer.observe(mascotVideo);
+    }
+
+    const existingStatus = document.querySelector('.store-status');
+    if (existingStatus) existingStatus.remove();
+
+    const existingMascot = document.querySelector('.mascot-video-section');
+    if (existingMascot) existingMascot.remove();
+
+    const statusDiv = document.createElement('div');
+    statusDiv.className = 'store-status';
+    statusDiv.style.cssText = `
+        width: 100%;
+        max-width: 1400px;
+        margin: 100px auto 0;
+        text-align: center;
+        padding: 0.8rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        border-radius: 8px;
+        background: var(--surface);
+        border: 1px solid var(--glass-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    `;
+    
+    const mascotSection = document.createElement('div');
+    mascotSection.className = 'mascot-video-section';
+    mascotSection.style.cssText = `
+        max-width: 1400px;
+        margin: 1rem auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0 1rem;
+        position: relative;
+    `;
+
+    const videoContainer = document.createElement('div');
+    videoContainer.style.cssText = `
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 2px solid var(--accent);
+        position: relative;
+        cursor: pointer;
+    `;
+
+    const mascotVideo = document.createElement('video');
+    mascotVideo.className = 'mascot-video';
+    mascotVideo.loop = true;
+    mascotVideo.playsInline = true;
+    mascotVideo.muted = true;
+    mascotVideo.style.cssText = `
+        width: 100%;
+        height: 140%;
+        object-fit: cover;
+        object-position: center 30%;
+        transform: scale(1.2);
+    `;
+    mascotVideo.src = getMascotVideoUrl();
+
+    const mascotDialog = document.createElement('div');
+    mascotDialog.className = 'mascot-dialog';
+    mascotDialog.style.cssText = `
+        background: var(--surface);
+        border: 1px solid var(--glass-border);
+        border-radius: 15px;
+        padding: 1.2rem;
+        margin-top: 1rem;
+        max-width: 800px;
+        width: 100%;
+        text-align: center;
+        position: relative;
+        backdrop-filter: blur(10px);
+    `;
+    mascotDialog.innerHTML = `
+        <strong>E aí, campeão(a)! 🏋️‍♂️💪</strong> Eu sou o Açaizão, seu personal açaí! 
+        Clique em mim e descubra como o açaí pode turbinar seu treino e ajudar você a 
+        alcançar seus objetivos fitness. Vamos juntos nessa jornada de energia e saúde!
+    `;
+
+    const style = document.createElement('style');
+    style.textContent = `
+        .mascot-dialog::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 10px solid var(--glass-border);
+        }
+        .mascot-dialog::after {
+            content: '';
+            position: absolute;
+            top: -9px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 9px solid transparent;
+            border-right: 9px solid transparent;
+            border-bottom: 9px solid var(--surface);
+        }
+        @media (max-width: 768px) {
+            .mascot-video-section > div:first-child {
+                width: 150px;
+                height: 150px;
+            }
+            .mascot-dialog {
+                font-size: 0.9rem;
+                padding: 1rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .mascot-video-section > div:first-child {
+                width: 120px;
+                height: 120px;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    realtimeDB.ref('schedule').once('value')
+        .then(snapshot => {
+            const schedule = snapshot.val() || {};
+            const isOpen = isStoreOpenNow(schedule);
+            
+            statusDiv.innerHTML = `
+                <span style="font-size: 1.2rem; color: ${isOpen ? '#4CAF50' : '#FF5252'}">●</span>
+                <span>Loja ${isOpen ? 'Aberta' : 'Fechada'}</span>
+            `;
+            
+            videoContainer.appendChild(mascotVideo);
+            mascotSection.appendChild(videoContainer);
+            mascotSection.appendChild(mascotDialog);
+            
+            const categories = document.querySelector('.categories');
+            categories.parentNode.insertBefore(statusDiv, categories);
+            categories.parentNode.insertBefore(mascotSection, categories);
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        mascotVideo.play();
+                    } else {
+                        mascotVideo.pause();
+                    }
+                });
+            }, {
+                threshold: 0.5
+            });
+
+            observer.observe(mascotVideo);
+
+            let isMuted = true;
+            videoContainer.addEventListener('click', () => {
+                if (mascotVideo.paused) {
+                    mascotVideo.play();
+                } else {
+                    mascotVideo.pause();
+                }
+                mascotVideo.muted = !mascotVideo.muted;
+                isMuted = !isMuted;
+            });
+            
+            if (!isOpen) {
+                disableOrdering();
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao verificar status da loja:', error);
+        });
+}
+
 function showUserModal(type = 'login') {
     // Verificar se já está logado
     const userData = JSON.parse(localStorage.getItem('userData'));
