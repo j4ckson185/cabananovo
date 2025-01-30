@@ -1906,7 +1906,7 @@ let appliedCoupon = null;
 let customerInfo = {};
 let deliveryInfo = {};
 
-    class TimeMachine {
+class TimeMachine {
     constructor() {
         this.db = firebase.firestore();
         this.currentCustomer = null;
@@ -2014,8 +2014,8 @@ let deliveryInfo = {};
             return [];
         }
     }
-}
-        createOrderSummary(order) {
+
+    createOrderSummary(order) {
         const date = order.timestamp.toDate();
         const formattedDate = date.toLocaleDateString('pt-BR');
         const formattedTime = date.toLocaleTimeString('pt-BR');
