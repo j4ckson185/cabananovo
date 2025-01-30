@@ -1782,9 +1782,6 @@ function showCreateOrderModal() {
    const createOrderModal = document.getElementById('createOrderModal');
    const modalContent = createOrderModal.querySelector('.modal-content');
 
-   // Remover containers de vídeo existentes
-   modalContent.querySelectorAll('.video-container').forEach(el => el.remove());
-
    document.getElementById('orderId').value = '5555';
 
    // Limpar campos do formulário
@@ -1825,30 +1822,6 @@ function showCreateOrderModal() {
        orderDetails += `Valor: R$ ${item.price.toFixed(2)}\n\n`;
    });
    document.getElementById('orderDetails').value = orderDetails;
-
-   // Adicionar vídeo mascote
-   const mascotContainer = document.createElement('div');
-   mascotContainer.className = 'video-container';
-   mascotContainer.innerHTML = `
-       <video autoplay loop playsinline class="product-video">
-           <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Gisele%20Cabana.mp4?alt=media&token=0be9ff3c-4178-4e89-9a95-0a778bf38d24" type="video/mp4">
-       </video>
-   `;
-
-   const video = mascotContainer.querySelector('video');
-   const observer = new IntersectionObserver((entries) => {
-       entries.forEach(entry => {
-           if (entry.isIntersecting) {
-               video.muted = false;
-           } else {
-               video.muted = true;
-           }
-       });
-   }, { threshold: 0.5 });
-   
-   const submitButton = modalContent.querySelector('button[type="button"]');
-   submitButton.parentNode.appendChild(mascotContainer);
-   observer.observe(mascotContainer);
 
    if (createOrderModal) {
        createOrderModal.style.display = 'block';
@@ -2728,7 +2701,7 @@ function openProductModal(product) {
     modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
 
     // Objeto com os benefícios dos acompanhamentos
-    const toppingBenefits = {
+const toppingBenefits = {
         'Amendoim': 'Rico em proteínas e gorduras boas, ajuda na construção muscular e fornece energia duradoura.',
         'Granola': 'Fonte de fibras e carboidratos complexos, fornece energia sustentada para seus treinos.',
         'Chocoball': 'Fonte rápida de energia e carboidratos, perfeito para pré-treino.',
@@ -2739,7 +2712,8 @@ function openProductModal(product) {
         'Calda de Morango': 'Fonte de vitamina C e antioxidantes, fortalece o sistema imunológico.',
         'Calda de Chocolate': 'Rica em antioxidantes e magnésio, ajuda no humor e na disposição.',
         'Farinha Láctea': 'Rica em vitaminas e minerais, contribui para a saúde dos ossos.',
-        'Leite em pó': 'Excelente fonte de proteínas e cálcio, fundamental para recuperação muscular.'
+        'Leite em pó': 'Excelente fonte de proteínas e cálcio, fundamental para recuperação muscular.',
+        'Banana': 'Rica em potássio, ajuda a controlar a pressão arterial e reduz o risco de doenças cardíacas.'
     };
 
     // Criar seção de benefícios
