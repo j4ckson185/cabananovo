@@ -1782,9 +1782,6 @@ function showCreateOrderModal() {
    const createOrderModal = document.getElementById('createOrderModal');
    const modalContent = createOrderModal.querySelector('.modal-content');
 
-   // Remover containers de vídeo existentes
-   modalContent.querySelectorAll('.video-container').forEach(el => el.remove());
-
    document.getElementById('orderId').value = '5555';
 
    // Limpar campos do formulário
@@ -1825,30 +1822,6 @@ function showCreateOrderModal() {
        orderDetails += `Valor: R$ ${item.price.toFixed(2)}\n\n`;
    });
    document.getElementById('orderDetails').value = orderDetails;
-
-   // Adicionar vídeo mascote
-   const mascotContainer = document.createElement('div');
-   mascotContainer.className = 'video-container';
-   mascotContainer.innerHTML = `
-       <video autoplay loop playsinline class="product-video">
-           <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Gisele%20Cabana.mp4?alt=media&token=0be9ff3c-4178-4e89-9a95-0a778bf38d24" type="video/mp4">
-       </video>
-   `;
-
-   const video = mascotContainer.querySelector('video');
-   const observer = new IntersectionObserver((entries) => {
-       entries.forEach(entry => {
-           if (entry.isIntersecting) {
-               video.muted = false;
-           } else {
-               video.muted = true;
-           }
-       });
-   }, { threshold: 0.5 });
-   
-   const submitButton = modalContent.querySelector('button[type="button"]');
-   submitButton.parentNode.appendChild(mascotContainer);
-   observer.observe(mascotContainer);
 
    if (createOrderModal) {
        createOrderModal.style.display = 'block';
