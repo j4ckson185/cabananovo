@@ -2644,14 +2644,15 @@ function showOrderHistory(whatsapp) {
 
     const ordersList = document.createElement('div');
     ordersList.style.cssText = `
-        max-height: 500px;
+        max-height: 70vh;
         overflow-y: auto;
+        padding: 1rem;
     `;
 
     // Mostrar loading
-    ordersList.innerHTML = '<p style="text-align: center">Carregando pedidos...</p>';
+    ordersList.innerHTML = '<p style="text-align: center; color: var(--text);">Carregando pedidos...</p>';
 
-    // Buscar todos os pedidos e filtrar
+    // Buscar todos os pedidos
     realtimeDB.ref('orders')
         .once('value')
         .then(snapshot => {
@@ -2660,87 +2661,102 @@ function showOrderHistory(whatsapp) {
 
             if (!allOrders) {
                 ordersList.innerHTML = `
-                    <p style="text-align: center; color: var(--text)">
+                    <p style="text-align: center; color: var(--text);">
                         Nenhum pedido encontrado.
                     </p>
                 `;
                 return;
             }
 
-            // Filtrar pedidos pelo número do WhatsApp
+            // Filtrar e processar pedidos
             const userOrders = Object.entries(allOrders)
                 .filter(([_, order]) => {
-                    // Verificar em todas as possíveis localizações do número
-                    const phoneNumbers = [
-                        order.customerInfo?.whatsapp,
-                        order.customer?.customerPhone,
-                        order.customerPhone,
-                        order.whatsapp
-                    ].map(num => num?.replace(/\D/g, ''));
-
-                    return phoneNumbers.includes(cleanWhatsapp);
+                    const orderPhone = (order.customerInfo?.whatsapp || 
+                                     order.customer?.customerPhone || 
+                                     '').replace(/\D/g, '');
+                    return orderPhone === cleanWhatsapp;
                 })
                 .map(([key, order]) => ({...order, key}))
-                .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                .sort((a, b) => {
+                    const dateA = new Date(a.creationDate || a.timestamp || 0);
+                    const dateB = new Date(b.creationDate || b.timestamp || 0);
+                    return dateB - dateA;
+                });
 
-            console.log('Pedidos filtrados:', userOrders);
+            console.log('Pedidos do usuário:', userOrders);
 
             if (userOrders.length === 0) {
                 ordersList.innerHTML = `
-                    <p style="text-align: center; color: var(--text)">
+                    <p style="text-align: center; color: var(--text);">
                         Nenhum pedido encontrado para este número.
                     </p>
                 `;
                 return;
             }
 
-            // Limpar a lista
+            // Limpar e preencher a lista
             ordersList.innerHTML = '';
 
-            // Adicionar cada pedido à lista
             userOrders.forEach(order => {
                 const orderCard = document.createElement('div');
                 orderCard.style.cssText = `
                     background: var(--glass);
                     border: 1px solid var(--glass-border);
                     border-radius: 10px;
-                    padding: 1rem;
-                    margin-bottom: 1rem;
+                    padding: 1.5rem;
+                    margin-bottom: 1.5rem;
                 `;
 
-                const date = order.timestamp ? new Date(order.timestamp).toLocaleString() : 'Data não disponível';
-                const total = order.total || order.orderTotal || 0;
+                const orderDate = new Date(order.creationDate || order.timestamp).toLocaleString('pt-BR');
+                const orderStatus = order.status === 'open' ? 'Em aberto' : 
+                                  order.status === 'completed' ? 'Concluído' : 
+                                  order.status || 'Em processamento';
 
-                // Construir HTML dos itens
-                let itemsHtml = '';
+                // Processar itens do pedido
+                let itemsHtml = '<div style="margin: 1rem 0;">';
                 if (order.items && Array.isArray(order.items)) {
-                    itemsHtml = `
-                        <div style="margin: 1rem 0;">
-                            <strong style="color: white;">Itens:</strong>
-                            <ul style="list-style: none; padding: 0;">
-                                ${order.items.map(item => `
-                                    <li style="color: var(--text); margin: 0.5rem 0;">
-                                        ${item.name} - R$ ${parseFloat(item.price).toFixed(2)}
-                                        ${item.selectedToppings?.length ? 
-                                            `<br><small>Acompanhamentos: ${item.selectedToppings.join(', ')}</small>` 
-                                            : ''}
-                                        ${item.selectedExtras?.length ? 
-                                            `<br><small>Extras: ${item.selectedExtras.join(', ')}</small>` 
-                                            : ''}
-                                    </li>
-                                `).join('')}
-                            </ul>
-                        </div>
+                    itemsHtml += `
+                        <strong style="color: white; display: block; margin-bottom: 0.8rem;">
+                            Itens do Pedido:
+                        </strong>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
                     `;
+                    
+                    order.items.forEach(item => {
+                        itemsHtml += `
+                            <li style="color: var(--text); margin-bottom: 0.8rem; padding-left: 1rem; border-left: 2px solid var(--accent);">
+                                <div style="font-weight: 500;">${item.name}</div>
+                                ${item.selectedToppings?.length ? 
+                                    `<div style="font-size: 0.9rem; margin-top: 0.3rem;">
+                                        Acompanhamentos: ${item.selectedToppings.join(', ')}
+                                    </div>` : ''}
+                                ${item.selectedExtras?.length ? 
+                                    `<div style="font-size: 0.9rem; margin-top: 0.3rem;">
+                                        Extras: ${item.selectedExtras.join(', ')}
+                                    </div>` : ''}
+                                <div style="color: var(--accent); margin-top: 0.3rem;">
+                                    R$ ${parseFloat(item.price).toFixed(2)}
+                                </div>
+                            </li>
+                        `;
+                    });
+                    itemsHtml += '</ul>';
                 }
+                itemsHtml += '</div>';
+
+                // Calcular total
+                const total = order.total || order.orderTotal || 
+                            (order.items || []).reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
 
                 orderCard.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                         <div>
-                            <h3 style="color: white; margin-bottom: 0.5rem;">Pedido de ${date}</h3>
-                            <p style="color: var(--text)">Status: ${order.status || 'Em processamento'}</p>
+                            <h3 style="color: white; margin-bottom: 0.5rem;">Pedido de ${orderDate}</h3>
+                            <p style="color: var(--text); background: var(--glass); display: inline-block; padding: 0.3rem 0.8rem; border-radius: 15px;">
+                                Status: ${orderStatus}
+                            </p>
                         </div>
-                        <div style="color: var(--accent); font-weight: bold;">
+                        <div style="color: var(--accent); font-size: 1.2rem; font-weight: bold;">
                             R$ ${parseFloat(total).toFixed(2)}
                         </div>
                     </div>
@@ -2749,15 +2765,27 @@ function showOrderHistory(whatsapp) {
                         background: var(--gradient);
                         color: white;
                         border: none;
-                        padding: 0.5rem 1rem;
-                        border-radius: 5px;
+                        padding: 0.8rem;
+                        border-radius: 8px;
                         cursor: pointer;
-                        margin-top: 1rem;
                         width: 100%;
+                        font-weight: 500;
+                        margin-top: 1rem;
+                        transition: transform 0.2s ease;
                     ">
+                        <i class="fas fa-redo-alt" style="margin-right: 0.5rem;"></i>
                         Repetir este pedido
                     </button>
                 `;
+
+                // Adicionar hover effect no botão
+                const repeatBtn = orderCard.querySelector('.modal-btn');
+                repeatBtn.addEventListener('mouseover', () => {
+                    repeatBtn.style.transform = 'translateY(-2px)';
+                });
+                repeatBtn.addEventListener('mouseout', () => {
+                    repeatBtn.style.transform = 'translateY(0)';
+                });
 
                 ordersList.appendChild(orderCard);
             });
@@ -2765,7 +2793,7 @@ function showOrderHistory(whatsapp) {
         .catch(error => {
             console.error('Erro ao buscar pedidos:', error);
             ordersList.innerHTML = `
-                <p style="text-align: center; color: var(--error)">
+                <p style="text-align: center; color: var(--error);">
                     Erro ao carregar pedidos. Por favor, tente novamente.
                 </p>
             `;
@@ -2778,7 +2806,6 @@ function showOrderHistory(whatsapp) {
     document.body.appendChild(modal);
 }
 
-// Função atualizada para repetir pedido
 function repeatOrder(orderId) {
     realtimeDB.ref(`orders/${orderId}`).once('value')
         .then(snapshot => {
@@ -2797,13 +2824,19 @@ function repeatOrder(orderId) {
                     name: item.name,
                     price: parseFloat(item.price),
                     selectedToppings: item.selectedToppings || [],
-                    selectedExtras: item.selectedExtras || []
+                    selectedExtras: item.selectedExtras || [],
+                    originalPrice: item.originalPrice || item.price
                 });
             });
 
             // Atualizar interface
             updateCartCount();
             showCartModal();
+            
+            // Fechar modal de histórico
+            const historyModal = document.querySelector('.modal');
+            if (historyModal) historyModal.remove();
+            
             showNotification('Pedido adicionado ao carrinho!');
         })
         .catch(error => {
