@@ -1289,26 +1289,11 @@ header {
                 <i class="fas fa-shopping-cart"></i>
                 <span class="cart-count">0</span>
             </div>
+                <!-- Adicionar o novo botão de login aqui -->
+    <button class="login-btn">
+        <i class="fas fa-user"></i>
+    </button>
         </div>
-        // Adicionar no seu header existente
-const headerActions = document.querySelector('.header-content');
-const loginButton = document.createElement('button');
-loginButton.className = 'login-btn';
-loginButton.innerHTML = `<i class="fas fa-user"></i>`;
-loginButton.style.cssText = `
-    background: none;
-    border: none;
-    color: var(--text);
-    font-size: 1.5rem;
-    cursor: pointer;
-    margin-left: 1rem;
-    transition: color 0.3s ease;
-`;
-loginButton.onclick = () => showUserModal();
-loginButton.addEventListener('mouseover', () => loginButton.style.color = 'var(--accent)');
-loginButton.addEventListener('mouseout', () => loginButton.style.color = 'var(--text)');
-
-headerActions.appendChild(loginButton);
     </header>
     
     <nav class="categories">
