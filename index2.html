@@ -2651,16 +2651,41 @@ function showOrderHistory(whatsapp) {
     // Mostrar loading
     ordersList.innerHTML = '<p style="text-align: center">Carregando pedidos...</p>';
 
-    // Buscar pedidos no Firebase
+    // Buscar todos os pedidos e filtrar
     realtimeDB.ref('orders')
-        .orderByChild('customer/customerPhone')
-        .equalTo(cleanWhatsapp)
         .once('value')
         .then(snapshot => {
-            const orders = snapshot.val();
-            console.log('Pedidos encontrados:', orders);
+            const allOrders = snapshot.val();
+            console.log('Todos os pedidos:', allOrders);
 
-            if (!orders) {
+            if (!allOrders) {
+                ordersList.innerHTML = `
+                    <p style="text-align: center; color: var(--text)">
+                        Nenhum pedido encontrado.
+                    </p>
+                `;
+                return;
+            }
+
+            // Filtrar pedidos pelo número do WhatsApp
+            const userOrders = Object.entries(allOrders)
+                .filter(([_, order]) => {
+                    // Verificar em todas as possíveis localizações do número
+                    const phoneNumbers = [
+                        order.customerInfo?.whatsapp,
+                        order.customer?.customerPhone,
+                        order.customerPhone,
+                        order.whatsapp
+                    ].map(num => num?.replace(/\D/g, ''));
+
+                    return phoneNumbers.includes(cleanWhatsapp);
+                })
+                .map(([key, order]) => ({...order, key}))
+                .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+            console.log('Pedidos filtrados:', userOrders);
+
+            if (userOrders.length === 0) {
                 ordersList.innerHTML = `
                     <p style="text-align: center; color: var(--text)">
                         Nenhum pedido encontrado para este número.
@@ -2672,13 +2697,8 @@ function showOrderHistory(whatsapp) {
             // Limpar a lista
             ordersList.innerHTML = '';
 
-            // Converter objeto de pedidos em array e ordenar por data
-            const ordersArray = Object.entries(orders)
-                .map(([key, order]) => ({...order, key}))
-                .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
             // Adicionar cada pedido à lista
-            ordersArray.forEach(order => {
+            userOrders.forEach(order => {
                 const orderCard = document.createElement('div');
                 orderCard.style.cssText = `
                     background: var(--glass);
@@ -2691,6 +2711,7 @@ function showOrderHistory(whatsapp) {
                 const date = order.timestamp ? new Date(order.timestamp).toLocaleString() : 'Data não disponível';
                 const total = order.total || order.orderTotal || 0;
 
+                // Construir HTML dos itens
                 let itemsHtml = '';
                 if (order.items && Array.isArray(order.items)) {
                     itemsHtml = `
@@ -2699,7 +2720,13 @@ function showOrderHistory(whatsapp) {
                             <ul style="list-style: none; padding: 0;">
                                 ${order.items.map(item => `
                                     <li style="color: var(--text); margin: 0.5rem 0;">
-                                        ${item.name} - R$ ${item.price.toFixed(2)}
+                                        ${item.name} - R$ ${parseFloat(item.price).toFixed(2)}
+                                        ${item.selectedToppings?.length ? 
+                                            `<br><small>Acompanhamentos: ${item.selectedToppings.join(', ')}</small>` 
+                                            : ''}
+                                        ${item.selectedExtras?.length ? 
+                                            `<br><small>Extras: ${item.selectedExtras.join(', ')}</small>` 
+                                            : ''}
                                     </li>
                                 `).join('')}
                             </ul>
@@ -2714,7 +2741,7 @@ function showOrderHistory(whatsapp) {
                             <p style="color: var(--text)">Status: ${order.status || 'Em processamento'}</p>
                         </div>
                         <div style="color: var(--accent); font-weight: bold;">
-                            R$ ${total.toFixed(2)}
+                            R$ ${parseFloat(total).toFixed(2)}
                         </div>
                     </div>
                     ${itemsHtml}
@@ -2751,7 +2778,7 @@ function showOrderHistory(whatsapp) {
     document.body.appendChild(modal);
 }
 
-// Função simplificada para repetir pedido
+// Função atualizada para repetir pedido
 function repeatOrder(orderId) {
     realtimeDB.ref(`orders/${orderId}`).once('value')
         .then(snapshot => {
@@ -2768,7 +2795,7 @@ function repeatOrder(orderId) {
             order.items.forEach(item => {
                 cart.push({
                     name: item.name,
-                    price: item.price,
+                    price: parseFloat(item.price),
                     selectedToppings: item.selectedToppings || [],
                     selectedExtras: item.selectedExtras || []
                 });
