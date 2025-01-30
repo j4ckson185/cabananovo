@@ -1271,6 +1271,27 @@ header {
         height: 120px;
     }
 }
+
+    .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.history-btn {
+    transition: all 0.3s ease;
+}
+
+.history-btn:hover {
+    color: var(--accent);
+    transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+    .history-btn span {
+        display: none;
+    }
+}
     
 </style>
 </head>
@@ -1278,18 +1299,24 @@ header {
     <div class="background-animation"></div>
     
     <header>
-        <div class="header-content">
-            <div class="logo-container">
-                <div class="logo">
-                    <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Cabana Açaí Logo">
-                </div>
-                <h1 class="store-name">Cabana Açaí</h1>
-            </div>
-            <div class="cart-icon">
-                <i class="fas fa-shopping-cart"></i>
-                <span class="cart-count">0</span>
-            </div>
+<div class="header-content">
+    <div class="logo-container">
+        <div class="logo">
+            <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Cabana Açaí Logo">
         </div>
+        <h1 class="store-name">Cabana Açaí</h1>
+    </div>
+    <div class="header-actions" style="display: flex; align-items: center; gap: 1rem;">
+        <button class="history-btn" onclick="showOrderLookupModal()" style="background: none; border: none; color: var(--text); font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-history"></i>
+            <span style="font-size: 0.9rem;">Meus Pedidos</span>
+        </button>
+        <div class="cart-icon">
+            <i class="fas fa-shopping-cart"></i>
+            <span class="cart-count">0</span>
+        </div>
+    </div>
+</div>
     </header>
     
     <nav class="categories">
