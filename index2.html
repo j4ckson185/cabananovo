@@ -2337,24 +2337,27 @@ function checkStoreStatus() {
     localStorage.setItem('visitCount', visitCount + 1);
 
     // Função para determinar qual vídeo mostrar
-    function getMascotVideoUrl() {
-        const videos = [
-            "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness.mp4?alt=media&token=904bfced-6f04-459b-943a-50fa1a998aaf",
-            "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness2.mp4?alt=media&token=b66fcb5e-1dfb-467f-926d-dbeb92d03061",
-            "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/C%C3%B3pia%20de%20C%C3%B3pia%20de%20V%C3%ADdeo%20sem%20t%C3%ADtulo%202.mp4?alt=media&token=8c88b590-4f3f-4a52-b259-8b4b6e6c22b1"
-        ];
+function getMascotVideoUrl() {
+    const videos = [
+        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness.mp4?alt=media&token=904bfced-6f04-459b-943a-50fa1a998aaf",
+        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness2.mp4?alt=media&token=b66fcb5e-1dfb-467f-926d-dbeb92d03061",
+        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/C%C3%B3pia%20de%20C%C3%B3pia%20de%20V%C3%ADdeo%20sem%20t%C3%ADtulo%202.mp4?alt=media&token=8c88b590-4f3f-4a52-b259-8b4b6e6c22b1",
+        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness%204.mp4?alt=media&token=d01ee1d9-33d1-44c9-a4cd-e1e61ef59543"
+    ];
 
-        if (visitCount === 0) {
-            return videos[0]; // Primeira visita
-        } else if (visitCount === 1) {
-            return videos[1]; // Segunda visita
-        } else if (visitCount === 2) {
-            return videos[2]; // Terceira visita
-        } else {
-            // Quarta visita em diante - alterna entre os três
-            return videos[visitCount % 3];
-        }
+    if (visitCount === 0) {
+        return videos[0]; // Primeira visita
+    } else if (visitCount === 1) {
+        return videos[1]; // Segunda visita
+    } else if (visitCount === 2) {
+        return videos[2]; // Terceira visita
+    } else if (visitCount === 3) {
+        return videos[3]; // Quarta visita  
+    } else {
+        // Quinta visita em diante - alterna entre os quatro
+        return videos[visitCount % 4];
     }
+}
 
     const existingStatus = document.querySelector('.store-status');
     if (existingStatus) existingStatus.remove();
