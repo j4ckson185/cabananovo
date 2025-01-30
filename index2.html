@@ -3540,7 +3540,7 @@ function setupPaymentEvents() {
     
 async function submitOrder() {
     try {
-        // 1. Ler dados do formulário (já existente)
+        // 1. Ler dados do formulário
         const customerName = document.getElementById('customerName').value;
         const customerPhone = document.getElementById('customerPhone').value;
         const street = document.getElementById('street').value;
@@ -3552,13 +3552,13 @@ async function submitOrder() {
         const changeAmount = document.getElementById('changeAmount')?.value || null;
         const notes = document.getElementById('notes').value || '';
 
-        // 2. Calcular valores (já existente)
+        // 2. Calcular valores
         const subtotal = cart.reduce((total, item) => total + item.price, 0);
         const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
         const deliveryFee = 3.00;
         const total = subtotal - discount + deliveryFee;
 
-        // 3. Criar objeto do pedido para o Firebase (nova funcionalidade)
+        // 3. Criar objeto do pedido para o Firebase
         const orderData = {
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             status: 'new',
@@ -3592,11 +3592,11 @@ async function submitOrder() {
             notes
         };
 
-        // 4. Salvar o pedido no Firebase (nova funcionalidade)
+        // 4. Salvar o pedido no Firebase
         const newOrderRef = await firebase.database().ref('orders').push(orderData);
         console.log('Pedido salvo no Firebase com ID:', newOrderRef.key);
 
-        // 5. Construir a mensagem do WhatsApp (já existente)
+        // 5. Construir a mensagem do WhatsApp
         let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
         message += `*Cliente:* ${customerName}\n`;
         message += `*WhatsApp:* ${customerPhone}\n\n`;
@@ -3631,24 +3631,48 @@ async function submitOrder() {
             message += `\n*📝 Observações:* ${notes}\n`;
         }
 
-        // 6. Enviar o pedido para a API do Foody Delivery (já existente)
+        // 6. Enviar o pedido para a API do Foody Delivery
         const apiResponse = await fetch('https://us-central1-cabana-8d55e.cloudfunctions.net/foodyDeliveryApi/createOrder', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': '8d7c77946d534444a168bb7da794febf'
+                'Authorization': '8d7c77946d534444a168bb7da794febf' // Substitua pelo token real
             },
-            body: JSON.stringify(orderData)
+            body: JSON.stringify({
+                id: newOrderRef.key, // Usar o ID gerado pelo Firebase
+                status: "open",
+                paymentMethod: paymentMethod === 'pix' ? 'online' : paymentMethod,
+                orderTotal: total,
+                orderDetails: cart.map(item => `${item.name} - R$ ${item.price.toFixed(2)}`).join('\n'),
+                notes,
+                deliveryPoint: {
+                    address: `${street}, ${streetNumber}, ${neighborhood}`,
+                    street,
+                    houseNumber: streetNumber,
+                    complement: complement || '',
+                    postalCode: zipCode,
+                    city: "Natal",
+                    region: "RN",
+                    country: "BR"
+                },
+                customer: {
+                    customerPhone,
+                    customerName
+                }
+            })
         });
 
+        // Verificar se a resposta da API foi bem-sucedida
         if (!apiResponse.ok) {
-            throw new Error('Erro ao enviar pedido para a API do Foody Delivery');
+            const errorDetails = await apiResponse.text(); // Capturar detalhes do erro
+            console.error('Erro na API:', errorDetails);
+            throw new Error(`Erro ao enviar pedido para a API do Foody Delivery: ${errorDetails}`);
         }
 
         const apiResult = await apiResponse.json();
         console.log('Pedido enviado para a API:', apiResult);
 
-        // 7. Redirecionar para o WhatsApp (já existente)
+        // 7. Redirecionar para o WhatsApp
         window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
 
     } catch (error) {
