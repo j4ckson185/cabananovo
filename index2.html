@@ -2642,7 +2642,7 @@ function checkStoreStatus() {
 async function displayOrderHistory(whatsapp) {
     // Limpar o número do WhatsApp
     const cleanWhatsapp = whatsapp.replace(/\D/g, '');
-    console.log('Número limpo:', cleanWhatsapp);
+    console.log('Buscando pedidos para:', cleanWhatsapp);
 
     // Criar modal
     const modal = document.createElement('div');
@@ -2682,83 +2682,79 @@ async function displayOrderHistory(whatsapp) {
     ordersList.innerHTML = '<p style="text-align: center; color: var(--text);">Carregando pedidos...</p>';
 
     try {
-        // Buscar todos os pedidos
-        const snapshot = await realtimeDB.ref('orders').once('value');
-        const allOrders = snapshot.val();
+        // Buscar pedidos usando o número do WhatsApp como referência
+        const query = realtimeDB.ref('orders')
+            .orderByChild('customerInfo/whatsapp')
+            .equalTo(cleanWhatsapp);
+
+        const snapshot = await query.once('value');
+        const orders = snapshot.val();
         
-        if (!allOrders) {
-            console.log('Nenhum pedido encontrado no banco');
-            ordersList.innerHTML = '<p style="text-align: center; color: var(--text);">Nenhum pedido encontrado.</p>';
-            content.appendChild(closeBtn);
-            content.appendChild(title);
-            content.appendChild(ordersList);
-            modal.appendChild(content);
-            document.body.appendChild(modal);
-            return;
+        console.log('Resultado da busca primária:', orders);
+
+        // Se não encontrou na primeira busca, tenta em outros campos
+        if (!orders) {
+            // Tenta buscar por customer/customerPhone
+            const query2 = realtimeDB.ref('orders')
+                .orderByChild('customer/customerPhone')
+                .equalTo(cleanWhatsapp);
+            
+            const snapshot2 = await query2.once('value');
+            const orders2 = snapshot2.val();
+            console.log('Resultado da busca secundária:', orders2);
+
+            if (orders2) {
+                Object.assign(orders, orders2);
+            }
         }
 
-        console.log('Pedidos encontrados:', allOrders);
+        if (!orders) {
+            console.log('Nenhum pedido encontrado, tentando busca completa');
+            // Se ainda não encontrou, busca todos os pedidos e filtra
+            const allOrdersSnapshot = await realtimeDB.ref('orders').once('value');
+            const allOrders = allOrdersSnapshot.val();
+            
+            if (allOrders) {
+                const matchingOrders = Object.entries(allOrders)
+                    .filter(([_, order]) => {
+                        const phones = [
+                            order.customerInfo?.whatsapp,
+                            order.customer?.customerPhone,
+                            order.deliveryInfo?.whatsapp,
+                        ].map(phone => (phone || '').replace(/\D/g, ''));
+                        
+                        return phones.includes(cleanWhatsapp);
+                    })
+                    .reduce((acc, [key, value]) => {
+                        acc[key] = value;
+                        return acc;
+                    }, {});
 
-        // Converter objeto em array e filtrar
-        const orderEntries = Object.entries(allOrders);
-        console.log('Número de pedidos total:', orderEntries.length);
-
-        // Processar cada pedido
-        const userOrders = [];
-        for (const [key, order] of orderEntries) {
-            console.log('Processando pedido:', key);
-            console.log('Dados do pedido:', order);
-
-            // Verificar whatsapp em customerInfo
-            if (order.customerInfo?.whatsapp) {
-                const orderWhatsapp = order.customerInfo.whatsapp.replace(/\D/g, '');
-                console.log('Comparando customerInfo.whatsapp:', orderWhatsapp, 'com', cleanWhatsapp);
-                if (orderWhatsapp === cleanWhatsapp) {
-                    userOrders.push({...order, key});
-                    continue;
-                }
-            }
-
-            // Verificar customer.customerPhone
-            if (order.customer?.customerPhone) {
-                const customerPhone = order.customer.customerPhone.replace(/\D/g, '');
-                console.log('Comparando customer.customerPhone:', customerPhone, 'com', cleanWhatsapp);
-                if (customerPhone === cleanWhatsapp) {
-                    userOrders.push({...order, key});
-                    continue;
-                }
-            }
-
-            // Verificar deliveryInfo.whatsapp
-            if (order.deliveryInfo?.whatsapp) {
-                const deliveryWhatsapp = order.deliveryInfo.whatsapp.replace(/\D/g, '');
-                console.log('Comparando deliveryInfo.whatsapp:', deliveryWhatsapp, 'com', cleanWhatsapp);
-                if (deliveryWhatsapp === cleanWhatsapp) {
-                    userOrders.push({...order, key});
-                    continue;
+                if (Object.keys(matchingOrders).length > 0) {
+                    Object.assign(orders || {}, matchingOrders);
                 }
             }
         }
 
-        console.log('Pedidos encontrados para o usuário:', userOrders);
-
-        if (userOrders.length === 0) {
+        // Processar resultados
+        if (!orders || Object.keys(orders).length === 0) {
             ordersList.innerHTML = `
                 <p style="text-align: center; color: var(--text);">
-                    Nenhum pedido encontrado para o número ${whatsapp}.<br>
-                    Se você fez um pedido recentemente, ele pode ainda não estar registrado.
+                    Nenhum pedido encontrado para seu número.
                 </p>
             `;
         } else {
-            // Ordenar pedidos por data
-            userOrders.sort((a, b) => {
-                const dateA = new Date(a.timestamp || a.creationDate || 0);
-                const dateB = new Date(b.timestamp || b.creationDate || 0);
-                return dateB - dateA;
-            });
+            // Converter para array e ordenar por data
+            const ordersArray = Object.entries(orders)
+                .map(([key, order]) => ({...order, key}))
+                .sort((a, b) => {
+                    const dateA = new Date(a.timestamp || a.creationDate || 0);
+                    const dateB = new Date(b.timestamp || b.creationDate || 0);
+                    return dateB - dateA;
+                });
 
             ordersList.innerHTML = '';
-            userOrders.forEach(order => {
+            ordersArray.forEach(order => {
                 const orderCard = document.createElement('div');
                 orderCard.style.cssText = `
                     background: var(--glass);
@@ -2776,38 +2772,22 @@ async function displayOrderHistory(whatsapp) {
 
                 // Construir lista de itens
                 const itemsList = (order.items || [])
-                    .map(item => {
-                        let itemHtml = `
-                            <li style="color: var(--text); margin-bottom: 0.8rem; padding-left: 1rem;">
-                                <div style="font-weight: 500;">${item.name}</div>
-                        `;
-
-                        if (item.selectedToppings && item.selectedToppings.length) {
-                            itemHtml += `
-                                <div style="font-size: 0.9rem;">
+                    .map(item => `
+                        <li style="color: var(--text); margin-bottom: 0.8rem; padding-left: 1rem;">
+                            <div style="font-weight: 500;">${item.name}</div>
+                            ${item.selectedToppings?.length ? 
+                                `<div style="font-size: 0.9rem;">
                                     Acompanhamentos: ${item.selectedToppings.join(', ')}
-                                </div>
-                            `;
-                        }
-
-                        if (item.selectedExtras && item.selectedExtras.length) {
-                            itemHtml += `
-                                <div style="font-size: 0.9rem;">
+                                </div>` : ''}
+                            ${item.selectedExtras?.length ? 
+                                `<div style="font-size: 0.9rem;">
                                     Extras: ${item.selectedExtras.join(', ')}
-                                </div>
-                            `;
-                        }
-
-                        itemHtml += `
+                                </div>` : ''}
                             <div style="color: var(--accent);">
                                 R$ ${parseFloat(item.price || 0).toFixed(2)}
                             </div>
-                            </li>
-                        `;
-
-                        return itemHtml;
-                    })
-                    .join('');
+                        </li>
+                    `).join('');
 
                 orderCard.innerHTML = `
                     <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
@@ -2864,7 +2844,6 @@ async function displayOrderHistory(whatsapp) {
     document.body.appendChild(modal);
 }
 
-// Função auxiliar para mostrar o histórico
 function showOrderHistory() {
     const userData = JSON.parse(localStorage.getItem('userData'));
     if (!userData || !userData.whatsapp) {
@@ -2872,7 +2851,7 @@ function showOrderHistory() {
         return;
     }
     
-    console.log('Buscando histórico para:', userData);
+    console.log('Dados do usuário para busca:', userData);
     displayOrderHistory(userData.whatsapp);
 }
 
