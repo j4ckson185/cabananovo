@@ -1271,6 +1271,136 @@ header {
         height: 120px;
     }
 }
+
+    /* Time Machine Styles */
+.time-machine-content {
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.time-machine-stats {
+    display: flex;
+    justify-content: space-around;
+    margin: 1rem 0;
+    padding: 1rem;
+    background: var(--glass);
+    border-radius: 15px;
+    border: 1px solid var(--glass-border);
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--accent);
+    display: block;
+}
+
+.stat-label {
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.stat-text {
+    color: var(--accent);
+    font-weight: bold;
+    display: block;
+    font-size: 1.2rem;
+}
+
+.stat-subtext {
+    color: var(--text);
+    font-size: 0.8rem;
+    display: block;
+}
+
+.order-history-card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1rem;
+    margin: 1rem 0;
+    animation: fadeIn 0.3s ease;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.order-date {
+    color: var(--text);
+}
+
+.order-total {
+    color: var(--accent);
+    font-weight: bold;
+}
+
+.history-item {
+    margin: 0.5rem 0;
+}
+
+.item-name {
+    display: block;
+    color: white;
+    font-weight: 500;
+}
+
+.item-toppings {
+    display: block;
+    color: var(--text);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+}
+
+.repeat-order-btn {
+    background: var(--gradient);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    margin-top: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.repeat-order-btn:hover {
+    transform: translateY(-2px);
+}
+
+.history-icon {
+    font-size: 2rem;
+    color: var(--text);
+    cursor: pointer;
+    margin-right: 1rem;
+    transition: all 0.3s ease;
+}
+
+.history-icon:hover {
+    transform: scale(1.1);
+    color: var(--accent);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+    .time-machine-stats {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
     
 </style>
 </head>
@@ -1285,6 +1415,9 @@ header {
                 </div>
                 <h1 class="store-name">Cabana Açaí</h1>
             </div>
+            <div class="history-icon">
+    <i class="fas fa-history"></i>
+</div>
             <div class="cart-icon">
                 <i class="fas fa-shopping-cart"></i>
                 <span class="cart-count">0</span>
@@ -4258,6 +4391,251 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
            document.getElementById('productModal').style.display = 'none';
        }
    });
+    class TimeMachine {
+    constructor() {
+        this.db = firebase.firestore();
+        this.currentCustomer = null;
+        this.deviceFingerprint = null;
+        this.setupFingerprint();
+    }
+
+    async setupFingerprint() {
+        const components = [
+            navigator.userAgent,
+            navigator.language,
+            new Date().getTimezoneOffset(),
+            screen.width,
+            screen.height,
+            navigator.hardwareConcurrency
+        ];
+        const fingerprint = components.join('|');
+        const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(fingerprint));
+        this.deviceFingerprint = Array.from(new Uint8Array(hashBuffer))
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
+    }
+
+    async identifyCustomer(phone) {
+        try {
+            const customerRef = this.db.collection('customers').doc(phone);
+            const doc = await customerRef.get();
+            
+            if (!doc.exists) {
+                await customerRef.set({
+                    phone,
+                    devices: [this.deviceFingerprint],
+                    created: firebase.firestore.FieldValue.serverTimestamp(),
+                    orders: []
+                });
+            } else if (!doc.data().devices.includes(this.deviceFingerprint)) {
+                await customerRef.update({
+                    devices: firebase.firestore.FieldValue.arrayUnion(this.deviceFingerprint)
+                });
+            }
+            
+            this.currentCustomer = phone;
+            return true;
+        } catch (error) {
+            console.error('Erro ao identificar cliente:', error);
+            return false;
+        }
+    }
+
+    async saveOrder(orderData) {
+        if (!this.currentCustomer) return false;
+        
+        try {
+            const orderWithTimestamp = {
+                ...orderData,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                deviceFingerprint: this.deviceFingerprint
+            };
+
+            await this.db.collection('customers').doc(this.currentCustomer)
+                .update({
+                    orders: firebase.firestore.FieldValue.arrayUnion(orderWithTimestamp)
+                });
+
+            return true;
+        } catch (error) {
+            console.error('Erro ao salvar pedido:', error);
+            return false;
+        }
+    }
+
+    async getOrderHistory() {
+        if (!this.currentCustomer) return [];
+        
+        try {
+            const doc = await this.db.collection('customers').doc(this.currentCustomer).get();
+            if (!doc.exists) return [];
+            
+            return doc.data().orders.sort((a, b) => b.timestamp - a.timestamp);
+        } catch (error) {
+            console.error('Erro ao buscar histórico:', error);
+            return [];
+        }
+    }
+
+    async getMostOrderedItems() {
+        if (!this.currentCustomer) return [];
+        
+        try {
+            const history = await this.getOrderHistory();
+            const itemCount = {};
+            
+            history.forEach(order => {
+                order.items.forEach(item => {
+                    itemCount[item.name] = (itemCount[item.name] || 0) + 1;
+                });
+            });
+
+            return Object.entries(itemCount)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 5)
+                .map(([name, count]) => ({ name, count }));
+        } catch (error) {
+            console.error('Erro ao buscar itens mais pedidos:', error);
+            return [];
+        }
+    }
+}
+        createOrderSummary(order) {
+        const date = order.timestamp.toDate();
+        const formattedDate = date.toLocaleDateString('pt-BR');
+        const formattedTime = date.toLocaleTimeString('pt-BR');
+
+        return `
+            <div class="order-history-card">
+                <div class="order-header">
+                    <span class="order-date">${formattedDate} às ${formattedTime}</span>
+                    <span class="order-total">R$ ${order.total.toFixed(2)}</span>
+                </div>
+                <div class="order-items">
+                    ${order.items.map(item => `
+                        <div class="history-item">
+                            <span class="item-name">${item.name}</span>
+                            ${item.selectedToppings?.length ? 
+                                `<span class="item-toppings">Acompanhamentos: ${item.selectedToppings.join(', ')}</span>` 
+                                : ''
+                            }
+                        </div>
+                    `).join('')}
+                </div>
+                <button class="repeat-order-btn" onclick="timeMachine.repeatOrder(${JSON.stringify(order)})">
+                    Pedir Novamente
+                </button>
+            </div>
+        `;
+    }
+
+    async showOrderHistory() {
+        const history = await this.getOrderHistory();
+        if (history.length === 0) {
+            showNotification('Você ainda não fez nenhum pedido');
+            return;
+        }
+
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.id = 'timeModal';
+        
+        modal.innerHTML = `
+            <div class="modal-content time-machine-content">
+                <div class="modal-header">
+                    <h2>Sua História com a Cabana Açaí</h2>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="time-machine-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">${history.length}</span>
+                        <span class="stat-label">Pedidos Feitos</span>
+                    </div>
+                    <div class="stat-item favorite-item">
+                        <span class="stat-label">Carregando seu favorito...</span>
+                    </div>
+                </div>
+                <div class="order-history-container">
+                    ${history.map(order => this.createOrderSummary(order)).join('')}
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        modal.style.display = 'block';
+
+        // Atualizar item favorito
+        const mostOrdered = await this.getMostOrderedItems();
+        if (mostOrdered.length > 0) {
+            modal.querySelector('.favorite-item').innerHTML = `
+                <span class="stat-label">Seu Favorito</span>
+                <span class="stat-text">${mostOrdered[0].name}</span>
+                <span class="stat-subtext">Pedido ${mostOrdered[0].count} vezes</span>
+            `;
+        }
+
+        // Adicionar event listeners
+        modal.querySelector('.close-modal').onclick = () => {
+            modal.remove();
+        };
+    }
+
+    async repeatOrder(order) {
+        // Limpar carrinho atual
+        cart = [];
+        
+        // Adicionar itens do pedido anterior
+        order.items.forEach(item => {
+            addToCart(item, item.selectedToppings || []);
+        });
+
+        // Fechar modal do histórico
+        document.getElementById('timeModal')?.remove();
+        
+        // Mostrar carrinho
+        showCartModal();
+        showNotification('Pedido anterior adicionado ao carrinho!');
+    }
+}
+    // Instanciar o Time Machine
+const timeMachine = new TimeMachine();
+
+// Modificar a função handleDeliveryInfo existente
+const originalHandleDeliveryInfo = handleDeliveryInfo;
+handleDeliveryInfo = async function(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const deliveryInfo = Object.fromEntries(formData);
+
+    // Identificar cliente pelo WhatsApp
+    await timeMachine.identifyCustomer(customerInfo.whatsapp);
+
+    // Salvar pedido no histórico
+    const orderData = {
+        items: cart,
+        total: cart.reduce((total, item) => total + item.price, 0),
+        deliveryInfo,
+        customerInfo
+    };
+    await timeMachine.saveOrder(orderData);
+
+    // Continuar com o fluxo original
+    return originalHandleDeliveryInfo.call(this, e);
+};
+
+// Inicializar botão de histórico
+document.addEventListener('DOMContentLoaded', () => {
+    const headerContent = document.querySelector('.header-content');
+    const cartIcon = document.querySelector('.cart-icon');
+    
+    const historyButton = document.createElement('div');
+    historyButton.className = 'history-icon';
+    historyButton.innerHTML = '<i class="fas fa-history"></i>';
+    historyButton.onclick = () => timeMachine.showOrderHistory();
+    
+    headerContent.insertBefore(historyButton, cartIcon);
+});
+    
     (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="PpgNSIgeYN1FCucFGP4w3";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
 </script>
 <<!-- Modal para Criar Novo Pedido -->
