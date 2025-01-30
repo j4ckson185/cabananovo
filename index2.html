@@ -1272,134 +1272,39 @@ header {
     }
 }
 
-    /* Time Machine Styles */
-.time-machine-content {
-    max-width: 800px;
-    width: 90%;
-    max-height: 90vh;
+/* Estilos para o modal de histórico de pedidos */
+#orderHistoryModal .modal-content {
+    max-width: 600px;
+    padding: 2rem;
+}
+
+#orderHistoryModal .order-history-list {
+    margin-top: 1rem;
+    max-height: 400px;
     overflow-y: auto;
 }
 
-.time-machine-stats {
-    display: flex;
-    justify-content: space-around;
-    margin: 1rem 0;
-    padding: 1rem;
-    background: var(--glass);
-    border-radius: 15px;
-    border: 1px solid var(--glass-border);
-}
-
-.stat-item {
-    text-align: center;
-}
-
-.stat-number {
-    font-size: 2rem;
-    font-weight: bold;
-    color: var(--accent);
-    display: block;
-}
-
-.stat-label {
-    color: var(--text);
-    font-size: 0.9rem;
-}
-
-.stat-text {
-    color: var(--accent);
-    font-weight: bold;
-    display: block;
-    font-size: 1.2rem;
-}
-
-.stat-subtext {
-    color: var(--text);
-    font-size: 0.8rem;
-    display: block;
-}
-
-.order-history-card {
+#orderHistoryModal .order-item {
     background: var(--glass);
     border: 1px solid var(--glass-border);
-    border-radius: 15px;
+    border-radius: 10px;
     padding: 1rem;
-    margin: 1rem 0;
-    animation: fadeIn 0.3s ease;
-}
-
-.order-header {
-    display: flex;
-    justify-content: space-between;
     margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--glass-border);
 }
 
-.order-date {
-    color: var(--text);
-}
-
-.order-total {
+#orderHistoryModal .order-item h3 {
+    margin-bottom: 0.5rem;
     color: var(--accent);
-    font-weight: bold;
 }
 
-.history-item {
+#orderHistoryModal .order-item p {
     margin: 0.5rem 0;
-}
-
-.item-name {
-    display: block;
-    color: white;
-    font-weight: 500;
-}
-
-.item-toppings {
-    display: block;
     color: var(--text);
-    font-size: 0.9rem;
-    margin-top: 0.25rem;
 }
 
-.repeat-order-btn {
-    background: var(--gradient);
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 25px;
-    margin-top: 1rem;
-    cursor: pointer;
-    transition: transform 0.2s ease;
-}
-
-.repeat-order-btn:hover {
-    transform: translateY(-2px);
-}
-
-.history-icon {
-    font-size: 2rem;
-    color: var(--text);
-    cursor: pointer;
-    margin-right: 1rem;
-    transition: all 0.3s ease;
-}
-
-.history-icon:hover {
-    transform: scale(1.1);
-    color: var(--accent);
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@media (max-width: 768px) {
-    .time-machine-stats {
-        flex-direction: column;
-        gap: 1rem;
-    }
+#orderHistoryModal .order-item button {
+    margin-top: 0.5rem;
+    width: 100%;
 }
     
 </style>
@@ -1415,14 +1320,14 @@ header {
                 </div>
                 <h1 class="store-name">Cabana Açaí</h1>
             </div>
-            <div class="history-icon">
-    <i class="fas fa-history"></i>
-</div>
             <div class="cart-icon">
                 <i class="fas fa-shopping-cart"></i>
                 <span class="cart-count">0</span>
             </div>
         </div>
+        <button id="viewOrderHistory" class="modal-btn" style="margin-left: 1rem;">
+    <i class="fas fa-history"></i> Ver Histórico de Pedidos
+</button>
     </header>
     
     <nav class="categories">
@@ -1906,164 +1811,6 @@ let appliedCoupon = null;
 let customerInfo = {};
 let deliveryInfo = {};
 
-class TimeMachine {
-    constructor() {
-        this.db = firebase.firestore();
-        this.currentCustomer = null;
-        this.deviceFingerprint = null;
-    }
-
-    async identifyCustomer(phone) {
-        if (!phone) {
-            console.error('Número de telefone não fornecido');
-            return false;
-        }
-
-        try {
-            // Limpar o número de telefone (remover espaços, parênteses, etc)
-            const cleanPhone = phone.replace(/\D/g, '');
-            console.log('Identificando cliente:', cleanPhone);
-
-            const customerRef = this.db.collection('customers').doc(cleanPhone);
-            const doc = await customerRef.get();
-
-            if (!doc.exists) {
-                console.log('Criando novo cliente:', cleanPhone);
-                await customerRef.set({
-                    phone: cleanPhone,
-                    created: firebase.firestore.FieldValue.serverTimestamp(),
-                    orders: []
-                });
-            }
-
-            this.currentCustomer = cleanPhone;
-            console.log('Cliente identificado:', this.currentCustomer);
-            return true;
-        } catch (error) {
-            console.error('Erro ao identificar cliente:', error);
-            return false;
-        }
-    }
-
-    async saveOrder(orderData) {
-        if (!this.currentCustomer) {
-            console.error('Nenhum cliente identificado para salvar o pedido');
-            return false;
-        }
-
-        try {
-            console.log('Salvando pedido para cliente:', this.currentCustomer);
-            const customerRef = this.db.collection('customers').doc(this.currentCustomer);
-
-            // Adiciona o pedido ao array de pedidos do cliente
-            await customerRef.update({
-                orders: firebase.firestore.FieldValue.arrayUnion({
-                    ...orderData,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                })
-            });
-
-            console.log('Pedido salvo com sucesso');
-            return true;
-        } catch (error) {
-            console.error('Erro ao salvar pedido:', error);
-            return false;
-        }
-    }
-
-    async getOrderHistory() {
-        if (!this.currentCustomer) {
-            console.log('Nenhum cliente identificado para buscar histórico');
-            return [];
-        }
-
-        try {
-            console.log('Buscando histórico para cliente:', this.currentCustomer);
-            const customerDoc = await this.db.collection('customers').doc(this.currentCustomer).get();
-
-            if (!customerDoc.exists) {
-                console.log('Documento do cliente não encontrado');
-                return [];
-            }
-
-            const customerData = customerDoc.data();
-            const orders = customerData.orders || [];
-            console.log('Histórico encontrado:', orders);
-
-            return orders.sort((a, b) => {
-                const timestampA = a.timestamp?.seconds || 0;
-                const timestampB = b.timestamp?.seconds || 0;
-                return timestampB - timestampA;
-            });
-        } catch (error) {
-            console.error('Erro ao buscar histórico:', error);
-            return [];
-        }
-    }
-
-    async showOrderHistory() {
-        const history = await this.getOrderHistory();
-        
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.id = 'timeModal';
-        
-        modal.innerHTML = `
-            <div class="modal-content time-machine-content">
-                <div class="modal-header">
-                    <h2>Sua História com a Cabana Açaí</h2>
-                    <button class="close-modal">&times;</button>
-                </div>
-                <div class="time-machine-stats">
-                    <div class="stat-item">
-                        <span class="stat-number">${history.length}</span>
-                        <span class="stat-label">Pedidos Feitos</span>
-                    </div>
-                </div>
-                <div class="order-history-container">
-                    ${history.length === 0 
-                        ? '<div style="text-align: center; padding: 2rem; color: var(--text);">Você ainda não fez nenhum pedido.</div>'
-                        : history.map(order => this.createOrderSummary(order)).join('')}
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-        modal.style.display = 'block';
-
-        modal.querySelector('.close-modal').onclick = () => {
-            modal.remove();
-        };
-    }
-
-    createOrderSummary(order) {
-        const date = order.timestamp instanceof Date ? order.timestamp : new Date((order.timestamp?.seconds || 0) * 1000);
-        const formattedDate = date.toLocaleDateString('pt-BR');
-        const formattedTime = date.toLocaleTimeString('pt-BR');
-
-        return `
-            <div class="order-history-card">
-                <div class="order-header">
-                    <span class="order-date">${formattedDate} às ${formattedTime}</span>
-                    <span class="order-total">R$ ${order.total.toFixed(2)}</span>
-                </div>
-                <div class="order-items">
-                    ${order.items.map(item => `
-                        <div class="history-item">
-                            <span class="item-name">${item.name}</span>
-                            ${item.selectedToppings?.length ? 
-                                `<span class="item-toppings">Acompanhamentos: ${item.selectedToppings.join(', ')}</span>` 
-                                : ''}
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-    }
-}
-
-const timeMachine = new TimeMachine();
-
 function updateCustomerAndDeliveryInfo(customer, delivery) {
     customerInfo = customer;
     deliveryInfo = delivery;
@@ -2149,63 +1896,24 @@ async function handleDeliveryInfo(e) {
         }
 
         // Criar o pedido para o Firebase
-const orderData = {
-    timestamp: firebase.database.ServerValue.TIMESTAMP,
-    status: 'new',
-    customer: {
-        name: customerName,
-        phone: customerPhone
-    },
-    address: {
-        street,
-        number: streetNumber,
-        neighborhood,
-        complement: complement || '',
-        zipCode,
-        city: 'Natal',
-        state: 'RN'
-    },
-    payment: {
-        method: paymentMethod,
-        change: document.getElementById('changeAmount')?.value || null
-    },
-    items: cart,
-    subtotal,
-    deliveryFee,
-    total,
-    notes: notes || ''
-};
-const newOrderRef = await realtimeDB.ref('orders').push(orderData);
+        const orderData = {
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            customerInfo,
+            deliveryInfo,
+            items: cart,
+            status: 'new'
+        };
+
+        // Salvar no Firebase
+        const newOrderRef = await realtimeDB.ref('orders').push(orderData);
         
-if (!newOrderRef.key) {
-    throw new Error('Falha ao salvar o pedido');
-}
+        if (!newOrderRef.key) {
+            throw new Error('Falha ao salvar pedido');
+        }
 
-// Adicionar salvamento no Firestore
-try {
-    const firestoreOrderData = {
-        ...orderData,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    };
-
-    // Salvar pedido no Firestore para o cliente
-    const customerRef = db.collection('customers').doc(orderData.customer.phone);
-    
-    await customerRef.set({
-        phone: orderData.customer.phone,
-        lastOrder: firestoreOrderData
-    }, { merge: true });
-
-    await customerRef.update({
-        orders: firebase.firestore.FieldValue.arrayUnion(firestoreOrderData)
-    });
-} catch (error) {
-    console.error('Erro ao salvar pedido no Firestore:', error);
-    // Não interrompe o fluxo principal se falhar
-}
-
-// Redirecionar para WhatsApp
-window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
+        // Formatar e enviar para WhatsApp
+        const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
+        window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
 
     } catch (error) {
         console.error('Erro ao processar pedido:', error);
@@ -2766,7 +2474,7 @@ function getMascotVideoUrl() {
         backdrop-filter: blur(10px);
     `;
     mascotDialog.innerHTML = `
-        <strong>E aí, campeão(a)! 🏋️‍♂️💪</strong> Eu sou o Açaizão, seu personal açaí! 
+        <strong>E aí, campeão(a)! 🏋️‍♂️💪</strong> Eu sou o Açaizão, seu personal açaí, com a dica do dia! 
         Clique em mim e descubra como o açaí pode turbinar seu treino e ajudar você a 
         alcançar seus objetivos fitness. Vamos juntos nessa jornada de energia e saúde!
     `;
@@ -3832,13 +3540,21 @@ function setupPaymentEvents() {
     
 async function submitOrder() {
     try {
+        // Mapear métodos de pagamento
+        const paymentMethodMap = {
+            'money': 'Dinheiro',
+            'card': 'Cartão',
+            'online': 'PIX',
+            'pix': 'PIX'
+        };
+
         // Verificar se o carrinho está vazio
         if (!cart || cart.length === 0) {
             alert('Seu carrinho está vazio!');
             return;
         }
 
-        // Ler dados do formulário
+        // Ler dados diretamente do formulário
         const customerName = document.getElementById('customerName').value;
         const customerPhone = document.getElementById('customerPhone').value;
         const street = document.getElementById('street').value;
@@ -3861,44 +3577,70 @@ async function submitOrder() {
         const deliveryFee = 3.00;
         const total = subtotal - discount + deliveryFee;
 
-        // Primeiro, salvar no histórico
-        try {
-            await timeMachine.identifyCustomer(customerPhone);
-            
-            const historyOrderData = {
-                timestamp: new Date(),
-                items: cart.map(item => ({
-                    name: item.name,
-                    price: item.price,
-                    selectedToppings: item.selectedToppings || [],
-                    selectedExtras: item.selectedExtras || []
-                })),
-                total: total,
-                customer: {
-                    name: customerName,
-                    phone: customerPhone
-                },
-                status: 'pending',
-                deliveryInfo: {
-                    address: street,
-                    number: streetNumber,
-                    neighborhood: neighborhood,
-                    complement: complement || '',
-                    zipCode: zipCode
-                },
-                paymentMethod: paymentMethod
-            };
+        // Preparar objeto para a API no formato original
+        const order = {
+            id: "5555", // ou gerar um ID único se necessário
+            status: "open",
+            paymentMethod: paymentMethod === 'pix' ? 'online' : paymentMethod,
+            orderTotal: total,
+            orderDetails: cart.map(item => `${item.name} - R$ ${item.price.toFixed(2)}`).join('\n'),
+            notes: notes || '',
+            deliveryPoint: {
+                address: `${street}, ${streetNumber}, ${neighborhood}`,
+                street: street,
+                houseNumber: streetNumber,
+                complement: complement || '',
+                postalCode: zipCode,
+                city: "Natal",
+                region: "RN",
+                country: "BR"
+            },
+            customer: {
+                customerPhone: customerPhone,
+                customerName: customerName
+            }
+        };
 
-            await timeMachine.saveOrder(historyOrderData);
-            console.log('Pedido salvo no histórico com sucesso');
-        } catch (historyError) {
-            console.error('Erro ao salvar no histórico:', historyError);
+        // Enviar para API primeiro, mas com timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 segundos timeout
+
+        try {
+            const response = await fetch('https://us-central1-cabana-8d55e.cloudfunctions.net/foodyDeliveryApi/createOrder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': '8d7c77946d534444a168bb7da794febf'
+                },
+                body: JSON.stringify(order),
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error(`Erro HTTP! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            console.log('Pedido criado:', result);
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                console.log('Timeout na API, continuando com WhatsApp...');
+            } else {
+                console.error('Erro na API:', error);
+            }
+            // Continua o fluxo mesmo com erro na API
         }
 
         // Construir mensagem WhatsApp
         let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
+        
+        // Dados do cliente
         message += `*Cliente:* ${customerName}\n`;
         message += `*WhatsApp:* ${customerPhone}\n\n`;
+        
+        // Endereço
         message += `*📍 Endereço de Entrega:*\n`;
         message += `${street}, ${streetNumber}\n`;
         if (complement) {
@@ -3907,6 +3649,7 @@ async function submitOrder() {
         message += `Bairro: ${neighborhood}\n`;
         message += `CEP: ${zipCode}\n\n`;
         
+        // Itens do pedido
         message += `*🍨 Itens do Pedido:*\n`;
         cart.forEach((item, index) => {
             message += `${index + 1}. ${item.name}\n`;
@@ -3919,6 +3662,7 @@ async function submitOrder() {
             message += `   Valor: R$ ${item.price.toFixed(2)}\n\n`;
         });
         
+        // Resumo financeiro
         message += `*💰 Resumo do Pedido:*\n`;
         message += `Subtotal: R$ ${subtotal.toFixed(2)}\n`;
         if (discount > 0) {
@@ -3927,14 +3671,10 @@ async function submitOrder() {
         message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
         message += `*Total: R$ ${total.toFixed(2)}*\n\n`;
         
-        const paymentMethodMap = {
-            'money': 'Dinheiro',
-            'card': 'Cartão',
-            'online': 'PIX',
-            'pix': 'PIX'
-        };
+        // Pagamento
         message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod]}\n`;
         
+        // Se for dinheiro, verificar troco
         if (paymentMethod === 'money') {
             const changeAmount = document.getElementById('changeAmount')?.value;
             if (changeAmount) {
@@ -3942,16 +3682,44 @@ async function submitOrder() {
             }
         }
         
+        // Observações
         if (notes?.trim()) {
             message += `\n*📝 Observações:* ${notes}\n`;
         }
 
-        // Limpar o carrinho antes do redirecionamento
-        cart = [];
-        updateCartCount();
+        // Salvar no Firebase
+        const orderData = {
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            status: 'new',
+            customer: {
+                name: customerName,
+                phone: customerPhone
+            },
+            address: {
+                street,
+                number: streetNumber,
+                neighborhood,
+                complement: complement || '',
+                zipCode,
+                city: 'Natal',
+                state: 'RN'
+            },
+            payment: {
+                method: paymentMethod,
+                change: document.getElementById('changeAmount')?.value || null
+            },
+            items: cart,
+            subtotal,
+            deliveryFee,
+            total,
+            notes: notes || ''
+        };
+
+        const newOrderRef = await realtimeDB.ref('orders').push(orderData);
         
-        // Fechar o modal de checkout
-        document.getElementById('createOrderModal').style.display = 'none';
+        if (!newOrderRef.key) {
+            throw new Error('Falha ao salvar o pedido');
+        }
 
         // Redirecionar para WhatsApp
         window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
@@ -4405,12 +4173,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Ícone do carrinho não encontrado');
     }
 
-        // Adicionar event listener para o botão de histórico
-    const historyButton = document.querySelector('.history-icon');
-    if (historyButton) {
-        historyButton.addEventListener('click', () => timeMachine.showOrderHistory());
-    }
-
     // Evento para botão de checkout
     const checkoutButton = document.querySelector('.checkout');
     if (checkoutButton) {
@@ -4534,8 +4296,117 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
            document.getElementById('productModal').style.display = 'none';
        }
    });
-    
     (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="PpgNSIgeYN1FCucFGP4w3";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+// Função para buscar o histórico de pedidos
+async function fetchOrderHistory() {
+    const whatsappInput = document.getElementById('whatsappInput').value;
+    const orderHistoryList = document.querySelector('.order-history-list');
+
+    if (!whatsappInput) {
+        alert('Por favor, insira seu número de WhatsApp.');
+        return;
+    }
+
+    try {
+        // Limpa a lista de pedidos antes de buscar novos
+        orderHistoryList.innerHTML = '<p>Carregando...</p>';
+
+        // Busca os pedidos no Firebase
+        const ordersSnapshot = await firebase.database().ref('orders')
+            .orderByChild('customer/customerPhone')
+            .equalTo(whatsappInput)
+            .once('value');
+
+        const orders = ordersSnapshot.val();
+
+        if (!orders) {
+            orderHistoryList.innerHTML = '<p>Nenhum pedido encontrado para este número de WhatsApp.</p>';
+            return;
+        }
+
+        // Exibe os pedidos encontrados
+        orderHistoryList.innerHTML = '';
+        Object.entries(orders).forEach(([orderId, order]) => {
+            const orderDate = new Date(order.timestamp).toLocaleString();
+            const orderTotal = order.total.toFixed(2);
+
+            const orderItem = document.createElement('div');
+            orderItem.className = 'order-item';
+            orderItem.innerHTML = `
+                <h3>Pedido #${orderId}</h3>
+                <p><strong>Data:</strong> ${orderDate}</p>
+                <p><strong>Total:</strong> R$ ${orderTotal}</p>
+                <p><strong>Status:</strong> ${order.status}</p>
+                <button class="modal-btn" onclick="viewOrderDetails('${orderId}')">Ver Detalhes</button>
+            `;
+            orderHistoryList.appendChild(orderItem);
+        });
+    } catch (error) {
+        console.error('Erro ao buscar histórico de pedidos:', error);
+        orderHistoryList.innerHTML = '<p>Erro ao buscar histórico de pedidos. Tente novamente.</p>';
+    }
+}
+
+// Função para exibir os detalhes de um pedido específico
+function viewOrderDetails(orderId) {
+    firebase.database().ref(`orders/${orderId}`).once('value')
+        .then(snapshot => {
+            const order = snapshot.val();
+            if (!order) {
+                alert('Pedido não encontrado.');
+                return;
+            }
+
+            const orderDate = new Date(order.timestamp).toLocaleString();
+            const orderTotal = order.total.toFixed(2);
+
+            const orderDetails = document.createElement('div');
+            orderDetails.innerHTML = `
+                <h3>Detalhes do Pedido #${orderId}</h3>
+                <p><strong>Data:</strong> ${orderDate}</p>
+                <p><strong>Total:</strong> R$ ${orderTotal}</p>
+                <p><strong>Status:</strong> ${order.status}</p>
+                <h4>Itens do Pedido:</h4>
+                <ul>
+                    ${order.items.map(item => `
+                        <li>
+                            ${item.name} - R$ ${item.price.toFixed(2)}
+                            ${item.selectedToppings ? `<br>Acompanhamentos: ${item.selectedToppings.join(', ')}` : ''}
+                            ${item.selectedExtras ? `<br>Extras: ${item.selectedExtras.join(', ')}` : ''}
+                        </li>
+                    `).join('')}
+                </ul>
+                <p><strong>Endereço de Entrega:</strong> ${order.deliveryPoint.address}</p>
+                <p><strong>Forma de Pagamento:</strong> ${order.payment.method}</p>
+            `;
+
+            // Exibe os detalhes do pedido em um modal
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Detalhes do Pedido</h2>
+                        <button class="close-modal" onclick="this.parentElement.parentElement.style.display='none'">&times;</button>
+                    </div>
+                    <div class="order-details">
+                        ${orderDetails.innerHTML}
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Erro ao buscar detalhes do pedido:', error);
+            alert('Erro ao buscar detalhes do pedido. Tente novamente.');
+        });
+}
+
+// Adicionar evento para abrir o modal de histórico de pedidos
+document.getElementById('viewOrderHistory').addEventListener('click', () => {
+    document.getElementById('orderHistoryModal').style.display = 'block';
+});
 </script>
 <<!-- Modal para Criar Novo Pedido -->
 <!-- Modal para Criar Novo Pedido -->
@@ -4600,6 +4471,23 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
         </form>
     </div>
 </div>
+</div>
+<!-- Modal para Histórico de Pedidos -->
+<div class="modal" id="orderHistoryModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Histórico de Pedidos</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="order-history-content">
+            <div class="form-group">
+                <label>Digite seu WhatsApp:</label>
+                <input type="text" id="whatsappInput" placeholder="(84) 98888-8888" required>
+                <button class="modal-btn" onclick="fetchOrderHistory()">Buscar Pedidos</button>
+            </div>
+            <div class="order-history-list"></div>
+        </div>
+    </div>
 </div>
 </body>
 </html>
