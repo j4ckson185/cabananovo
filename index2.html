@@ -1978,19 +1978,36 @@ class TimeMachine {
         }
     }
 
-    async getOrderHistory() {
-        if (!this.currentCustomer) return [];
+async getOrderHistory() {
+    if (!this.currentCustomer) {
+        console.log('Nenhum cliente identificado');
+        return [];
+    }
+    
+    try {
+        const customerDoc = await this.db.collection('customers').doc(this.currentCustomer).get();
         
-        try {
-            const doc = await this.db.collection('customers').doc(this.currentCustomer).get();
-            if (!doc.exists) return [];
-            
-            return doc.data().orders.sort((a, b) => b.timestamp - a.timestamp);
-        } catch (error) {
-            console.error('Erro ao buscar histórico:', error);
+        if (!customerDoc.exists) {
+            console.log('Documento do cliente não encontrado');
             return [];
         }
+        
+        const customerData = customerDoc.data();
+        const orders = customerData.orders || [];
+        
+        console.log('Histórico de pedidos encontrado:', orders);
+        
+        return orders.sort((a, b) => {
+            // Se timestamp for um objeto Timestamp do Firestore, use .seconds
+            const timestampA = a.timestamp.seconds || new Date(a.timestamp).getTime();
+            const timestampB = b.timestamp.seconds || new Date(b.timestamp).getTime();
+            return timestampB - timestampA;
+        });
+    } catch (error) {
+        console.error('Erro ao buscar histórico:', error);
+        return [];
     }
+}
 
     async getMostOrderedItems() {
         if (!this.currentCustomer) return [];
@@ -4020,42 +4037,68 @@ async function submitOrder() {
             message += `\n*📝 Observações:* ${notes}\n`;
         }
 
+        // Identificar o cliente pelo número de WhatsApp
+        const customerPhone = document.getElementById('customerPhone').value;
+
         // Salvar no Firebase
-        const orderData = {
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            status: 'new',
-            customer: {
-                name: customerName,
-                phone: customerPhone
-            },
-            address: {
-                street,
-                number: streetNumber,
-                neighborhood,
-                complement: complement || '',
-                zipCode,
-                city: 'Natal',
-                state: 'RN'
-            },
-            payment: {
-                method: paymentMethod,
-                change: document.getElementById('changeAmount')?.value || null
-            },
-            items: cart,
-            subtotal,
-            deliveryFee,
-            total,
-            notes: notes || ''
-        };
-
-        const newOrderRef = await realtimeDB.ref('orders').push(orderData);
+// Salvar no Firebase Realtime Database (mantendo a funcionalidade original)
+const orderData = {
+    timestamp: firebase.database.ServerValue.TIMESTAMP,
+    status: 'new',
+    customer: {
+        name: customerName,
+        phone: customerPhone
+    },
+    address: {
+        street,
+        number: streetNumber,
+        neighborhood,
+        complement: complement || '',
+        zipCode,
+        city: 'Natal',
+        state: 'RN'
+    },
+    payment: {
+        method: paymentMethod,
+        change: document.getElementById('changeAmount')?.value || null
+    },
+    items: cart,
+    subtotal,
+    deliveryFee,
+    total,
+    notes: notes || ''
+};
+const newOrderRef = await realtimeDB.ref('orders').push(orderData);
         
-        if (!newOrderRef.key) {
-            throw new Error('Falha ao salvar o pedido');
-        }
+if (!newOrderRef.key) {
+    throw new Error('Falha ao salvar o pedido');
+}
 
-        // Redirecionar para WhatsApp
-        window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
+// Adicionar salvamento no Firestore
+try {
+    const firestoreOrderData = {
+        ...orderData,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    // Salvar pedido no Firestore para o cliente
+    const customerRef = db.collection('customers').doc(customerPhone);
+    
+    await customerRef.set({
+        phone: customerPhone,
+        lastOrder: firestoreOrderData
+    }, { merge: true });
+
+    await customerRef.update({
+        orders: firebase.firestore.FieldValue.arrayUnion(firestoreOrderData)
+    });
+} catch (error) {
+    console.error('Erro ao salvar pedido no Firestore:', error);
+    // Não interrompe o fluxo principal se falhar
+}
+
+// Redirecionar para WhatsApp
+window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
 
     } catch (error) {
         console.error('Erro ao processar pedido:', error);
