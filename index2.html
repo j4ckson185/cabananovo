@@ -1271,6 +1271,29 @@ header {
         height: 120px;
     }
 }
+
+    .header-icons {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.login-btn {
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 2rem;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-btn:hover {
+    color: var(--accent);
+}
     
 </style>
 </head>
@@ -1278,22 +1301,23 @@ header {
     <div class="background-animation"></div>
     
     <header>
-        <div class="header-content">
-            <div class="logo-container">
-                <div class="logo">
-                    <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Cabana Açaí Logo">
-                </div>
-                <h1 class="store-name">Cabana Açaí</h1>
-            </div>
-            <div class="cart-icon">
-                <i class="fas fa-shopping-cart"></i>
-                <span class="cart-count">0</span>
-            </div>
-                <!-- Adicionar o novo botão de login aqui -->
-    <button class="login-btn">
-        <i class="fas fa-user"></i>
-    </button>
+<div class="header-content">
+    <div class="logo-container">
+        <div class="logo">
+            <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Cabana Açaí Logo">
         </div>
+        <h1 class="store-name">Cabana Açaí</h1>
+    </div>
+    <div class="header-icons">
+        <div class="cart-icon">
+            <i class="fas fa-shopping-cart"></i>
+            <span class="cart-count">0</span>
+        </div>
+        <button class="login-btn">
+            <i class="fas fa-user"></i>
+        </button>
+    </div>
+</div>
     </header>
     
     <nav class="categories">
@@ -4244,6 +4268,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         console.error('Ícone do carrinho não encontrado');
     }
+
+        document.querySelector('.login-btn').addEventListener('click', () => showUserModal());
 
     // Evento para botão de checkout
     const checkoutButton = document.querySelector('.checkout');
