@@ -3389,91 +3389,102 @@ function updateCartCount() {
 }
 
 function formatOrderForWhatsApp() {
-    // Mapear métodos de pagamento
-    const paymentMethodMap = {
-        'money': 'Dinheiro',
-        'card': 'Cartão',
-        'online': 'PIX'
-    };
+    try {
+        const paymentMethodMap = {
+            'money': 'Dinheiro',
+            'card': 'Cartão',
+            'pix': 'PIX',
+            'online': 'PIX'
+        };
 
-    // Pegar dados diretamente do formulário
-    const customerName = document.getElementById('customerName').value;
-    const customerPhone = document.getElementById('customerPhone').value;
-    const street = document.getElementById('street').value;
-    const streetNumber = document.getElementById('streetNumber').value;
-    const neighborhood = document.getElementById('neighborhood').value;
-    const complement = document.getElementById('complement').value;
-    const zipCode = document.getElementById('zipCode').value;
-    const notes = document.getElementById('notes').value;
-    
-    // Pegar método de pagamento selecionado
-    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'money';
-    
-    // Começar a construir a mensagem
-    let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
-    
-    // Informações do cliente
-    message += `*Cliente:* ${customerName || 'Não informado'}\n`;
-    message += `*WhatsApp:* ${customerPhone || 'Não informado'}\n\n`;
-    
-    // Endereço
-    message += `*📍 Endereço de Entrega:*\n`;
-    message += `${street || 'Não informado'}, ${streetNumber || 'S/N'}\n`;
-    if (complement) {
-        message += `Complemento: ${complement}\n`;
-    }
-    message += `Bairro: ${neighborhood || 'Não informado'}\n`;
-    message += `CEP: ${zipCode || 'Não informado'}\n\n`;
-    
-    // Itens do pedido
-    message += `*🍨 Itens do Pedido:*\n`;
-    cart.forEach((item, index) => {
-        message += `${index + 1}. ${item.name}\n`;
-        if (item.selectedToppings && item.selectedToppings.length > 0) {
-            message += `   Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
+        // Verificar se o carrinho existe e tem itens
+        if (!cart || cart.length === 0) {
+            throw new Error('Carrinho vazio');
         }
-        if (item.selectedExtras && item.selectedExtras.length > 0) {
-            message += `   Extras: ${item.selectedExtras.join(', ')}\n`;
+
+        let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
+
+        // Informações do cliente - Leitura direta do formulário
+        const form = document.getElementById('createOrderForm');
+        if (!form) {
+            throw new Error('Formulário não encontrado');
         }
-        if (item.description) {
-            message += `   ${item.description}\n`;
+
+        const customerName = form.querySelector('#customerName')?.value || 'Não informado';
+        const customerPhone = form.querySelector('#customerPhone')?.value || 'Não informado';
+        const street = form.querySelector('#street')?.value || 'Não informado';
+        const streetNumber = form.querySelector('#streetNumber')?.value || 'S/N';
+        const neighborhood = form.querySelector('#neighborhood')?.value || 'Não informado';
+        const complement = form.querySelector('#complement')?.value || '';
+        const zipCode = form.querySelector('#zipCode')?.value || 'Não informado';
+        const paymentMethod = form.querySelector('input[name="paymentMethod"]:checked')?.value || 'money';
+
+        // Dados do cliente
+        message += `*Cliente:* ${customerName}\n`;
+        message += `*WhatsApp:* ${customerPhone}\n\n`;
+
+        // Endereço
+        message += `*📍 Endereço de Entrega:*\n`;
+        message += `${street}, ${streetNumber}\n`;
+        if (complement) {
+            message += `Complemento: ${complement}\n`;
         }
-        message += `   Valor: R$ ${item.price.toFixed(2)}\n\n`;
-    });
-    
-    // Cálculos
-    const subtotal = cart.reduce((total, item) => total + item.price, 0);
-    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-    const deliveryFee = 3.00;
-    const total = subtotal - discount + deliveryFee;
-    
-    // Resumo financeiro
-    message += `*💰 Resumo do Pedido:*\n`;
-    message += `Subtotal: R$ ${subtotal.toFixed(2)}\n`;
-    if (discount > 0) {
-        message += `Desconto: -R$ ${discount.toFixed(2)}\n`;
-    }
-    message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
-    message += `*Total: R$ ${total.toFixed(2)}*\n\n`;
-    
-    // Forma de pagamento
-    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod] || 'Não informado'}\n`;
-    
-    // Se for dinheiro, verificar se precisa de troco
-    const changeContainer = document.getElementById('changeContainer');
-    if (paymentMethod === 'money' && changeContainer && changeContainer.style.display !== 'none') {
-        const changeAmount = document.getElementById('changeAmount')?.value;
-        if (changeAmount) {
-            message += `Troco para: R$ ${changeAmount}\n`;
+        message += `Bairro: ${neighborhood}\n`;
+        message += `CEP: ${zipCode}\n\n`;
+
+        // Itens do pedido
+        message += `*🍨 Itens do Pedido:*\n`;
+        cart.forEach((item, index) => {
+            message += `${index + 1}. ${item.name}\n`;
+            if (item.selectedToppings?.length > 0) {
+                message += `   Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
+            }
+            if (item.selectedExtras?.length > 0) {
+                message += `   Extras: ${item.selectedExtras.join(', ')}\n`;
+            }
+            if (item.description) {
+                message += `   ${item.description}\n`;
+            }
+            message += `   Valor: R$ ${item.price.toFixed(2)}\n\n`;
+        });
+
+        // Cálculos
+        const subtotal = cart.reduce((total, item) => total + item.price, 0);
+        const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+        const deliveryFee = 3.00;
+        const total = subtotal - discount + deliveryFee;
+
+        // Resumo financeiro
+        message += `*💰 Resumo do Pedido:*\n`;
+        message += `Subtotal: R$ ${subtotal.toFixed(2)}\n`;
+        if (discount > 0) {
+            message += `Desconto: -R$ ${discount.toFixed(2)}\n`;
         }
+        message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
+        message += `*Total: R$ ${total.toFixed(2)}*\n\n`;
+
+        // Pagamento
+        message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod]}\n`;
+
+        // Troco
+        if (paymentMethod === 'money') {
+            const changeAmount = document.getElementById('changeAmount')?.value;
+            if (changeAmount) {
+                message += `Troco para: R$ ${changeAmount}\n`;
+            }
+        }
+
+        // Observações
+        const notes = document.getElementById('notes')?.value;
+        if (notes?.trim()) {
+            message += `\n*📝 Observações:* ${notes.trim()}\n`;
+        }
+
+        return message;
+    } catch (error) {
+        console.error('Erro ao formatar pedido:', error);
+        return 'Erro ao formatar pedido. Por favor, tente novamente.';
     }
-    
-    // Adicionar observações se houver
-    if (notes && notes.trim()) {
-        message += `\n*📝 Observações:* ${notes.trim()}\n`;
-    }
-    
-    return message;
 }
     
 function setupPaymentEvents() {
@@ -3514,56 +3525,76 @@ function setupPaymentEvents() {
     
 async function submitOrder() {
     try {
+        // Validar formulário
+        const form = document.getElementById('createOrderForm');
+        if (!form) {
+            throw new Error('Formulário não encontrado');
+        }
+
         // Validar campos obrigatórios
-        const requiredFields = ['customerName', 'customerPhone', 'street', 'streetNumber', 'neighborhood', 'zipCode'];
-        for (const fieldId of requiredFields) {
+        const requiredFields = {
+            customerName: 'Nome do cliente',
+            customerPhone: 'WhatsApp',
+            street: 'Logradouro',
+            streetNumber: 'Número',
+            neighborhood: 'Bairro',
+            zipCode: 'CEP'
+        };
+
+        for (const [fieldId, fieldName] of Object.entries(requiredFields)) {
             const field = document.getElementById(fieldId);
-            if (!field || !field.value.trim()) {
-                throw new Error(`Por favor, preencha o campo ${fieldId}`);
+            if (!field?.value?.trim()) {
+                throw new Error(`Por favor, preencha o campo ${fieldName}`);
             }
         }
 
         // Validar método de pagamento
-        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+        const paymentMethod = form.querySelector('input[name="paymentMethod"]:checked');
         if (!paymentMethod) {
             throw new Error('Por favor, selecione uma forma de pagamento');
         }
 
-        // Formatar mensagem para WhatsApp
-        const message = formatOrderForWhatsApp();
-
-        // Preparar dados do pedido para o Firebase
+        // Preparar dados do pedido
         const orderData = {
             timestamp: firebase.database.ServerValue.TIMESTAMP,
+            status: 'new',
             customer: {
-                customerName: document.getElementById('customerName').value,
-                customerPhone: document.getElementById('customerPhone').value
+                name: document.getElementById('customerName').value,
+                phone: document.getElementById('customerPhone').value
             },
-            deliveryPoint: {
+            address: {
                 street: document.getElementById('street').value,
-                houseNumber: document.getElementById('streetNumber').value,
+                number: document.getElementById('streetNumber').value,
                 neighborhood: document.getElementById('neighborhood').value,
                 complement: document.getElementById('complement').value || '',
-                postalCode: document.getElementById('zipCode').value,
-                city: "Natal",
-                region: "RN",
-                country: "BR"
+                zipCode: document.getElementById('zipCode').value,
+                city: 'Natal',
+                state: 'RN'
+            },
+            payment: {
+                method: paymentMethod.value,
+                change: document.getElementById('changeAmount')?.value || null
             },
             items: cart,
-            paymentMethod: paymentMethod.value,
-            status: 'new',
-            notes: document.getElementById('notes').value || '',
-            orderTotal: cart.reduce((total, item) => total + item.price, 0) + 3.00 // Subtotal + taxa de entrega
+            subtotal: cart.reduce((total, item) => total + item.price, 0),
+            deliveryFee: 3.00,
+            total: cart.reduce((total, item) => total + item.price, 0) + 3.00,
+            notes: document.getElementById('notes')?.value || ''
         };
 
         // Salvar no Firebase
         const newOrderRef = await realtimeDB.ref('orders').push(orderData);
         
         if (!newOrderRef.key) {
-            throw new Error('Falha ao salvar o pedido');
+            throw new Error('Falha ao salvar o pedido no Firebase');
         }
 
-        // Redirecionar para WhatsApp
+        // Formatar e enviar para WhatsApp
+        const message = formatOrderForWhatsApp();
+        if (message.startsWith('Erro')) {
+            throw new Error(message);
+        }
+
         window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
 
     } catch (error) {
@@ -3571,7 +3602,7 @@ async function submitOrder() {
         alert(error.message || 'Erro ao processar pedido. Por favor, tente novamente.');
     }
 }
-
+    
 function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     const paymentMethodMap = {
         'money': 'Dinheiro',
