@@ -1271,27 +1271,6 @@ header {
         height: 120px;
     }
 }
-
-    .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.history-btn {
-    transition: all 0.3s ease;
-}
-
-.history-btn:hover {
-    color: var(--accent);
-    transform: scale(1.1);
-}
-
-@media (max-width: 768px) {
-    .history-btn span {
-        display: none;
-    }
-}
     
 </style>
 </head>
@@ -1299,24 +1278,37 @@ header {
     <div class="background-animation"></div>
     
     <header>
-<div class="header-content">
-    <div class="logo-container">
-        <div class="logo">
-            <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Cabana Açaí Logo">
+        <div class="header-content">
+            <div class="logo-container">
+                <div class="logo">
+                    <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Cabana Açaí Logo">
+                </div>
+                <h1 class="store-name">Cabana Açaí</h1>
+            </div>
+            <div class="cart-icon">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count">0</span>
+            </div>
         </div>
-        <h1 class="store-name">Cabana Açaí</h1>
-    </div>
-    <div class="header-actions" style="display: flex; align-items: center; gap: 1rem;">
-        <button class="history-btn" onclick="showOrderLookupModal()" style="background: none; border: none; color: var(--text); font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
-            <i class="fas fa-history"></i>
-            <span style="font-size: 0.9rem;">Meus Pedidos</span>
-        </button>
-        <div class="cart-icon">
-            <i class="fas fa-shopping-cart"></i>
-            <span class="cart-count">0</span>
-        </div>
-    </div>
-</div>
+        // Adicionar no seu header existente
+const headerActions = document.querySelector('.header-content');
+const loginButton = document.createElement('button');
+loginButton.className = 'login-btn';
+loginButton.innerHTML = `<i class="fas fa-user"></i>`;
+loginButton.style.cssText = `
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 1.5rem;
+    cursor: pointer;
+    margin-left: 1rem;
+    transition: color 0.3s ease;
+`;
+loginButton.onclick = () => showUserModal();
+loginButton.addEventListener('mouseover', () => loginButton.style.color = 'var(--accent)');
+loginButton.addEventListener('mouseout', () => loginButton.style.color = 'var(--text)');
+
+headerActions.appendChild(loginButton);
     </header>
     
     <nav class="categories">
@@ -1898,189 +1890,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Botão de checkout não encontrado');
     }
 });
-
-    // Primeiro, vamos adicionar o botão de ver pedidos no header
-document.addEventListener('DOMContentLoaded', () => {
-    const headerIcons = document.querySelector('.header-icons');
-    if (headerIcons) {
-        const orderHistoryButton = document.createElement('button');
-        orderHistoryButton.className = 'login-btn';
-        orderHistoryButton.innerHTML = '<i class="fas fa-list"></i>';
-        orderHistoryButton.style.marginLeft = '1rem';
-        orderHistoryButton.title = 'Ver Meus Pedidos';
-        orderHistoryButton.onclick = showOrderLookupModal;
-        headerIcons.appendChild(orderHistoryButton);
-    }
-});
-
-// Função para mostrar modal de consulta de pedidos
-function showOrderLookupModal() {
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-
-    modal.innerHTML = `
-        <div class="modal-content" style="max-width: 500px;">
-            <button class="close-modal" onclick="this.closest('.modal').remove()">&times;</button>
-            <h2 style="color: white; text-align: center; margin-bottom: 2rem;">Consultar Meus Pedidos</h2>
-            
-            <form id="orderLookupForm" style="display: flex; flex-direction: column; gap: 1.5rem;">
-                <div class="form-group">
-                    <label>WhatsApp usado no pedido</label>
-                    <input type="tel" id="lookupWhatsapp" required 
-                           placeholder="(84) 98888-8888"
-                           style="width: 100%; padding: 0.8rem; background: var(--glass); 
-                                  border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-                </div>
-                
-                <button type="submit" class="modal-btn" 
-                        style="background: var(--gradient); color: white; border: none; 
-                               padding: 1rem; border-radius: 8px; cursor: pointer;">
-                    Buscar Pedidos
-                </button>
-            </form>
-        </div>
-    `;
-
-    document.body.appendChild(modal);
-
-    // Adicionar máscara ao campo de WhatsApp
-    const whatsappInput = modal.querySelector('#lookupWhatsapp');
-    whatsappInput.addEventListener('input', (e) => {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length > 11) value = value.slice(0, 11);
-        
-        // Formatar o número
-        if (value.length >= 2) {
-            value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
-            if (value.length >= 10) {
-                value = `${value.slice(0, 9)}${value.slice(9)}`;
-            }
-        }
-        
-        e.target.value = value;
-    });
-
-    // Adicionar handler do formulário
-    const form = modal.querySelector('#orderLookupForm');
-    form.onsubmit = async (e) => {
-        e.preventDefault();
-        const whatsapp = whatsappInput.value.replace(/\D/g, '');
-        await findOrders(whatsapp);
-    };
-}
-
-// Função para buscar e exibir os pedidos
-async function findOrders(whatsapp) {
-    console.log('Buscando pedidos para:', whatsapp);
-    
-    try {
-        const ordersRef = realtimeDB.ref('orders');
-        const snapshot = await ordersRef.once('value');
-        const allOrders = snapshot.val() || {};
-        
-        // Filtrar pedidos pelo WhatsApp
-        const userOrders = Object.entries(allOrders)
-            .filter(([_, order]) => {
-                const orderPhone = (
-                    order.customerInfo?.whatsapp ||
-                    order.customer?.customerPhone ||
-                    order.deliveryInfo?.whatsapp ||
-                    ''
-                ).replace(/\D/g, '');
-                
-                return orderPhone === whatsapp;
-            })
-            .map(([key, order]) => ({...order, key}))
-            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
-        console.log('Pedidos encontrados:', userOrders);
-        
-        // Criar modal com os pedidos
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.style.display = 'block';
-
-        let ordersHtml = '';
-        if (userOrders.length === 0) {
-            ordersHtml = `
-                <p style="text-align: center; color: var(--text); margin: 2rem 0;">
-                    Nenhum pedido encontrado para este número.<br>
-                    Verifique se digitou o mesmo número usado no pedido.
-                </p>
-            `;
-        } else {
-            ordersHtml = userOrders.map(order => {
-                const date = new Date(order.timestamp || order.creationDate).toLocaleString();
-                const items = order.items?.map(item => `
-                    <div style="margin: 0.5rem 0; padding-left: 1rem; border-left: 2px solid var(--accent);">
-                        <div style="font-weight: 500;">${item.name}</div>
-                        ${item.selectedToppings?.length ? 
-                            `<div style="font-size: 0.9rem;">Acompanhamentos: ${item.selectedToppings.join(', ')}</div>` : ''}
-                        ${item.selectedExtras?.length ? 
-                            `<div style="font-size: 0.9rem;">Extras: ${item.selectedExtras.join(', ')}</div>` : ''}
-                        <div style="color: var(--accent);">R$ ${parseFloat(item.price).toFixed(2)}</div>
-                    </div>
-                `).join('') || '';
-
-                return `
-                    <div style="background: var(--glass); border: 1px solid var(--glass-border); 
-                              border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
-                            <div>
-                                <h3 style="color: white; margin-bottom: 0.5rem;">Pedido de ${date}</h3>
-                                <p style="color: var(--text);">Status: ${order.status || 'Em processamento'}</p>
-                            </div>
-                            <div style="color: var(--accent); font-weight: bold; font-size: 1.2rem;">
-                                R$ ${parseFloat(order.total || order.orderTotal).toFixed(2)}
-                            </div>
-                        </div>
-                        <div style="margin-top: 1rem;">
-                            ${items}
-                        </div>
-                        <button onclick="repeatOrder('${order.key}')" class="modal-btn" style="
-                            background: var(--gradient);
-                            color: white;
-                            border: none;
-                            padding: 0.8rem;
-                            border-radius: 8px;
-                            cursor: pointer;
-                            width: 100%;
-                            margin-top: 1rem;
-                            font-weight: 500;
-                        ">
-                            <i class="fas fa-redo-alt" style="margin-right: 0.5rem;"></i>
-                            Repetir este pedido
-                        </button>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        modal.innerHTML = `
-            <div class="modal-content" style="max-width: 800px;">
-                <button class="close-modal" onclick="this.closest('.modal').remove()">&times;</button>
-                <h2 style="color: white; text-align: center; margin-bottom: 2rem;">
-                    Seus Pedidos
-                </h2>
-                <div style="max-height: 70vh; overflow-y: auto; padding: 1rem;">
-                    ${ordersHtml}
-                </div>
-            </div>
-        `;
-
-        // Remover modal anterior de busca
-        const oldModal = document.querySelector('.modal');
-        if (oldModal) oldModal.remove();
-
-        // Mostrar nova modal
-        document.body.appendChild(modal);
-
-    } catch (error) {
-        console.error('Erro ao buscar pedidos:', error);
-        showNotification('Erro ao buscar pedidos. Tente novamente.');
-    }
-}
 
 // Replace the handleDeliveryInfo function in your digital menu with this version:
 async function handleDeliveryInfo(e) {
@@ -4384,6 +4193,197 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
            document.getElementById('productModal').style.display = 'none';
        }
    });
+
+function showUserModal(type = 'login') {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+
+    const content = document.createElement('div');
+    content.className = 'modal-content';
+    content.style.cssText = `
+        max-width: 500px;
+        width: 90%;
+        padding: 2rem;
+    `;
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'close-modal';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.onclick = () => modal.remove();
+
+    const title = document.createElement('h2');
+    title.style.cssText = `
+        color: white;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        font-size: 1.5rem;
+    `;
+    title.textContent = type === 'login' ? 'Entrar na Conta' : 'Criar Conta';
+
+    const form = document.createElement('form');
+    form.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    `;
+
+    if (type === 'register') {
+        // Formulário de cadastro
+        form.innerHTML = `
+            <div class="form-group">
+                <label>Nome Completo</label>
+                <input type="text" id="fullName" required 
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
+            <div class="form-group">
+                <label>WhatsApp com DDD</label>
+                <input type="tel" id="whatsapp" required placeholder="84 9 8888-8888"
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
+            <div class="form-group">
+                <label>Data de Nascimento</label>
+                <input type="date" id="birthDate" required
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
+            <button type="submit" style="
+                background: var(--gradient);
+                color: white;
+                padding: 1rem;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                margin-top: 1rem;
+                transition: transform 0.2s ease;
+            ">Criar Conta</button>
+            <p style="text-align: center; margin-top: 1rem; color: var(--text);">
+                Já tem conta? <a href="#" style="color: var(--accent);" onclick="showUserModal('login'); return false;">Entrar</a>
+            </p>
+        `;
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const fullName = document.getElementById('fullName').value;
+            const whatsapp = document.getElementById('whatsapp').value.replace(/\D/g, '');
+            const birthDate = document.getElementById('birthDate').value;
+
+            try {
+                const userSnapshot = await realtimeDB.ref('users')
+                    .orderByChild('whatsapp')
+                    .equalTo(whatsapp)
+                    .once('value');
+
+                if (userSnapshot.exists()) {
+                    showNotification('Este número de WhatsApp já está cadastrado');
+                    return;
+                }
+
+                const newUser = {
+                    fullName,
+                    whatsapp,
+                    birthDate,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP,
+                    preferences: {
+                        favoriteTopings: [],
+                        lastOrders: []
+                    }
+                };
+
+                await realtimeDB.ref('users').push(newUser);
+                showNotification('Cadastro realizado com sucesso! Para acessar sua conta, use seu número de WhatsApp e data de nascimento.');
+                modal.remove();
+
+            } catch (error) {
+                console.error('Erro ao cadastrar:', error);
+                showNotification('Erro ao cadastrar. Tente novamente.');
+            }
+        };
+    } else {
+        // Formulário de login
+        form.innerHTML = `
+            <div class="form-group">
+                <label>WhatsApp com DDD</label>
+                <input type="tel" id="loginWhatsapp" required placeholder="84 9 8888-8888"
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
+            <div class="form-group">
+                <label>Data de Nascimento</label>
+                <input type="date" id="loginBirthDate" required
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
+            <button type="submit" style="
+                background: var(--gradient);
+                color: white;
+                padding: 1rem;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                margin-top: 1rem;
+                transition: transform 0.2s ease;
+            ">Entrar</button>
+            <p style="text-align: center; margin-top: 1rem; color: var(--text);">
+                Não tem conta? <a href="#" style="color: var(--accent);" onclick="showUserModal('register'); return false;">Criar conta</a>
+            </p>
+        `;
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const whatsapp = document.getElementById('loginWhatsapp').value.replace(/\D/g, '');
+            const birthDate = document.getElementById('loginBirthDate').value;
+
+            try {
+                const userSnapshot = await realtimeDB.ref('users')
+                    .orderByChild('whatsapp')
+                    .equalTo(whatsapp)
+                    .once('value');
+
+                if (!userSnapshot.exists()) {
+                    showNotification('Usuário não encontrado');
+                    return;
+                }
+
+                const userData = Object.values(userSnapshot.val())[0];
+                if (userData.birthDate !== birthDate) {
+                    showNotification('Data de nascimento incorreta');
+                    return;
+                }
+
+                localStorage.setItem('userData', JSON.stringify(userData));
+                showNotification('Login realizado com sucesso!');
+                modal.remove();
+
+            } catch (error) {
+                console.error('Erro ao fazer login:', error);
+                showNotification('Erro ao fazer login. Tente novamente.');
+            }
+        };
+    }
+
+    content.appendChild(closeBtn);
+    content.appendChild(title);
+    content.appendChild(form);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    // Máscaras para o campo de WhatsApp
+    const whatsappInput = document.getElementById(type === 'register' ? 'whatsapp' : 'loginWhatsapp');
+    if (whatsappInput) {
+        whatsappInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+            
+            if (value.length > 0) {
+                value = value.match(new RegExp('.{1,2}$|.{1,2}|.{1,5}', 'g'))
+                             .join(' ');
+            }
+            
+            e.target.value = value;
+        });
+    }
+}
+    
     (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="PpgNSIgeYN1FCucFGP4w3";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
 </script>
 <<!-- Modal para Criar Novo Pedido -->
