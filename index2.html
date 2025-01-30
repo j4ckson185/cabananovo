@@ -2044,42 +2044,47 @@ class TimeMachine {
         `;
     }
 
-    async showOrderHistory() {
-        const history = await this.getOrderHistory();
-        if (history.length === 0) {
-            showNotification('Você ainda não fez nenhum pedido');
-            return;
-        }
-
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.id = 'timeModal';
-        
-        modal.innerHTML = `
-            <div class="modal-content time-machine-content">
-                <div class="modal-header">
-                    <h2>Sua História com a Cabana Açaí</h2>
-                    <button class="close-modal">&times;</button>
+async showOrderHistory() {
+    const history = await this.getOrderHistory();
+    
+    // Se não houver histórico, adicione um aviso no modal
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.id = 'timeModal';
+    
+    modal.innerHTML = `
+        <div class="modal-content time-machine-content">
+            <div class="modal-header">
+                <h2>Sua História com a Cabana Açaí</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="time-machine-stats">
+                <div class="stat-item">
+                    <span class="stat-number">${history.length}</span>
+                    <span class="stat-label">Pedidos Feitos</span>
                 </div>
-                <div class="time-machine-stats">
-                    <div class="stat-item">
-                        <span class="stat-number">${history.length}</span>
-                        <span class="stat-label">Pedidos Feitos</span>
-                    </div>
-                    <div class="stat-item favorite-item">
-                        <span class="stat-label">Carregando seu favorito...</span>
-                    </div>
-                </div>
-                <div class="order-history-container">
-                    ${history.map(order => this.createOrderSummary(order)).join('')}
+                <div class="favorite-item">
+                    <span class="stat-label">
+                        ${history.length === 0 ? 'Nenhum pedido encontrado' : 'Carregando seu favorito...'}
+                    </span>
                 </div>
             </div>
-        `;
+            <div class="order-history-container">
+                ${history.length === 0 
+                    ? `<div style="text-align: center; padding: 2rem; color: var(--text);">
+                         Você ainda não fez nenhum pedido. Experimente nossos deliciosos açaís!
+                       </div>` 
+                    : history.map(order => this.createOrderSummary(order)).join('')
+                }
+            </div>
+        </div>
+    `;
 
-        document.body.appendChild(modal);
-        modal.style.display = 'block';
+    document.body.appendChild(modal);
+    modal.style.display = 'block';
 
-        // Atualizar item favorito
+    // Resto do código permanece o mesmo...
+    if (history.length > 0) {
         const mostOrdered = await this.getMostOrderedItems();
         if (mostOrdered.length > 0) {
             modal.querySelector('.favorite-item').innerHTML = `
@@ -2088,12 +2093,13 @@ class TimeMachine {
                 <span class="stat-subtext">Pedido ${mostOrdered[0].count} vezes</span>
             `;
         }
-
-        // Adicionar event listeners
-        modal.querySelector('.close-modal').onclick = () => {
-            modal.remove();
-        };
     }
+
+    // Adicionar event listeners
+    modal.querySelector('.close-modal').onclick = () => {
+        modal.remove();
+    };
+}
 
     async repeatOrder(order) {
         // Limpar carrinho atual
