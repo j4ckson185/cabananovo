@@ -3388,38 +3388,44 @@ function updateCartCount() {
     cartCount.style.display = cart.length ? 'flex' : 'none';
 }
 
-function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
+function formatOrderForWhatsApp() {
+    // Mapear métodos de pagamento
     const paymentMethodMap = {
         'money': 'Dinheiro',
         'card': 'Cartão',
         'online': 'PIX'
     };
 
-    // Garantir que temos dados do carrinho
-    if (!cart || cart.length === 0) {
-        console.error('Carrinho vazio ao tentar formatar pedido');
-        return 'Erro: Carrinho vazio';
-    }
-
+    // Pegar dados diretamente do formulário
+    const customerName = document.getElementById('customerName').value;
+    const customerPhone = document.getElementById('customerPhone').value;
+    const street = document.getElementById('street').value;
+    const streetNumber = document.getElementById('streetNumber').value;
+    const neighborhood = document.getElementById('neighborhood').value;
+    const complement = document.getElementById('complement').value;
+    const zipCode = document.getElementById('zipCode').value;
+    const notes = document.getElementById('notes').value;
+    
+    // Pegar método de pagamento selecionado
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'money';
+    
+    // Começar a construir a mensagem
     let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
     
     // Informações do cliente
-    message += `*Cliente:* ${customerInfo.fullName || deliveryInfo.customerName || 'Não informado'}\n`;
-    message += `*WhatsApp:* ${customerInfo.whatsapp || deliveryInfo.customerPhone || 'Não informado'}\n\n`;
+    message += `*Cliente:* ${customerName || 'Não informado'}\n`;
+    message += `*WhatsApp:* ${customerPhone || 'Não informado'}\n\n`;
     
     // Endereço
     message += `*📍 Endereço de Entrega:*\n`;
-    const address = [
-        deliveryInfo.street,
-        deliveryInfo.streetNumber,
-        deliveryInfo.complement ? `Complemento: ${deliveryInfo.complement}` : '',
-        `Bairro: ${deliveryInfo.neighborhood}`,
-        `CEP: ${deliveryInfo.zipCode}`
-    ].filter(Boolean).join('\n');
+    message += `${street || 'Não informado'}, ${streetNumber || 'S/N'}\n`;
+    if (complement) {
+        message += `Complemento: ${complement}\n`;
+    }
+    message += `Bairro: ${neighborhood || 'Não informado'}\n`;
+    message += `CEP: ${zipCode || 'Não informado'}\n\n`;
     
-    message += `${address}\n\n`;
-    
-    // Detalhes do pedido
+    // Itens do pedido
     message += `*🍨 Itens do Pedido:*\n`;
     cart.forEach((item, index) => {
         message += `${index + 1}. ${item.name}\n`;
@@ -3434,14 +3440,14 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
         }
         message += `   Valor: R$ ${item.price.toFixed(2)}\n\n`;
     });
-
-    // Cálculos dos valores
+    
+    // Cálculos
     const subtotal = cart.reduce((total, item) => total + item.price, 0);
     const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
     const deliveryFee = 3.00;
     const total = subtotal - discount + deliveryFee;
     
-    // Resumo do pedido
+    // Resumo financeiro
     message += `*💰 Resumo do Pedido:*\n`;
     message += `Subtotal: R$ ${subtotal.toFixed(2)}\n`;
     if (discount > 0) {
@@ -3450,16 +3456,19 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
     message += `*Total: R$ ${total.toFixed(2)}*\n\n`;
     
-    // Pagamento
-    const paymentMethod = deliveryInfo.payment || 'money';
-    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod] || paymentMethod}\n`;
+    // Forma de pagamento
+    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod] || 'Não informado'}\n`;
     
-    if (paymentMethod === 'money' && deliveryInfo.change) {
-        message += `Troco para: R$ ${deliveryInfo.change}\n`;
+    // Se for dinheiro, verificar se precisa de troco
+    const changeContainer = document.getElementById('changeContainer');
+    if (paymentMethod === 'money' && changeContainer && changeContainer.style.display !== 'none') {
+        const changeAmount = document.getElementById('changeAmount')?.value;
+        if (changeAmount) {
+            message += `Troco para: R$ ${changeAmount}\n`;
+        }
     }
     
-    // Observações
-    const notes = document.getElementById('notes')?.value;
+    // Adicionar observações se houver
     if (notes && notes.trim()) {
         message += `\n*📝 Observações:* ${notes.trim()}\n`;
     }
@@ -3505,108 +3514,61 @@ function setupPaymentEvents() {
     
 async function submitOrder() {
     try {
-        // Coleta de dados do formulário (mantida igual)
-        const orderId = document.getElementById('orderId').value;
-        const status = document.getElementById('status').value;
-        const paymentMethodElement = document.querySelector('input[name="paymentMethod"]:checked');
-        const orderTotal = document.getElementById('orderTotal').value;
-        const orderDetails = document.getElementById('orderDetails').value;
-        const customerName = document.getElementById('customerName').value;
-        const customerPhone = document.getElementById('customerPhone').value;
-        const street = document.getElementById('street').value;
-        const streetNumber = document.getElementById('streetNumber').value;
-        const neighborhood = document.getElementById('neighborhood').value;
-        const complement = document.getElementById('complement').value || '';
-        const zipCode = document.getElementById('zipCode').value;
-        const notes = document.getElementById('notes').value || '';
-
-        if (!paymentMethodElement) {
-            alert('Por favor, selecione um método de pagamento.');
-            return;
+        // Validar campos obrigatórios
+        const requiredFields = ['customerName', 'customerPhone', 'street', 'streetNumber', 'neighborhood', 'zipCode'];
+        for (const fieldId of requiredFields) {
+            const field = document.getElementById(fieldId);
+            if (!field || !field.value.trim()) {
+                throw new Error(`Por favor, preencha o campo ${fieldId}`);
+            }
         }
 
-        const deliveryInfo = {
-            customerName,
-            street,
-            streetNumber,
-            neighborhood,
-            complement,
-            zipCode,
-            payment: paymentMethodElement.value,
-            change: document.getElementById('changeAmount')?.value || ''
-        };
+        // Validar método de pagamento
+        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+        if (!paymentMethod) {
+            throw new Error('Por favor, selecione uma forma de pagamento');
+        }
 
-        const total = parseFloat(orderTotal);
+        // Formatar mensagem para WhatsApp
+        const message = formatOrderForWhatsApp();
 
-        // Preparar objeto do pedido
-        const order = {
-            id: orderId,
-            status: status,
-            paymentMethod: paymentMethodElement.value === 'pix' ? 'online' : paymentMethodElement.value,
-            orderTotal: total,
-            orderDetails: orderDetails,
-            notes: notes,
+        // Preparar dados do pedido para o Firebase
+        const orderData = {
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            customer: {
+                customerName: document.getElementById('customerName').value,
+                customerPhone: document.getElementById('customerPhone').value
+            },
             deliveryPoint: {
-                address: `${street}, ${streetNumber}, ${neighborhood}`,
-                street: street,
-                houseNumber: streetNumber,
-                complement: complement,
-                postalCode: zipCode,
+                street: document.getElementById('street').value,
+                houseNumber: document.getElementById('streetNumber').value,
+                neighborhood: document.getElementById('neighborhood').value,
+                complement: document.getElementById('complement').value || '',
+                postalCode: document.getElementById('zipCode').value,
                 city: "Natal",
                 region: "RN",
                 country: "BR"
             },
-            customer: {
-                customerName: customerName,
-                customerPhone: customerPhone
-            }
+            items: cart,
+            paymentMethod: paymentMethod.value,
+            status: 'new',
+            notes: document.getElementById('notes').value || '',
+            orderTotal: cart.reduce((total, item) => total + item.price, 0) + 3.00 // Subtotal + taxa de entrega
         };
 
-        // Enviar para API primeiro, mas com timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 segundos timeout
-
-        const response = await fetch('https://us-central1-cabana-8d55e.cloudfunctions.net/foodyDeliveryApi/createOrder', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': '8d7c77946d534444a168bb7da794febf'
-            },
-            body: JSON.stringify(order),
-            signal: controller.signal
-        });
+        // Salvar no Firebase
+        const newOrderRef = await realtimeDB.ref('orders').push(orderData);
         
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-            throw new Error(`Erro HTTP! status: ${response.status}`);
+        if (!newOrderRef.key) {
+            throw new Error('Falha ao salvar o pedido');
         }
-        
-        const result = await response.json();
-        console.log('Pedido criado:', result);
-        
-        // Preparar e enviar para WhatsApp
-        const fakeCustomerInfo = {
-            fullName: customerName,
-            whatsapp: customerPhone
-        };
-        
-        const message = formatOrderForWhatsApp(fakeCustomerInfo, deliveryInfo);
+
+        // Redirecionar para WhatsApp
         window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
-        
+
     } catch (error) {
-        if (error.name === 'AbortError') {
-            console.log('Timeout na API, redirecionando para WhatsApp...');
-            const fakeCustomerInfo = {
-                fullName: customerName,
-                whatsapp: customerPhone
-            };
-            const message = formatOrderForWhatsApp(fakeCustomerInfo, deliveryInfo);
-            window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
-        } else {
-            console.error('Erro ao criar pedido:', error);
-            alert('Erro ao criar pedido: ' + error.message);
-        }
+        console.error('Erro ao processar pedido:', error);
+        alert(error.message || 'Erro ao processar pedido. Por favor, tente novamente.');
     }
 }
 
