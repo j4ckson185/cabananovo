@@ -4500,6 +4500,12 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Ícone do carrinho não encontrado');
     }
 
+        // Adicionar event listener para o botão de histórico
+    const historyButton = document.querySelector('.history-icon');
+    if (historyButton) {
+        historyButton.addEventListener('click', () => timeMachine.showOrderHistory());
+    }
+
     // Evento para botão de checkout
     const checkoutButton = document.querySelector('.checkout');
     if (checkoutButton) {
@@ -4623,19 +4629,6 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
            document.getElementById('productModal').style.display = 'none';
        }
    });
-
-// Inicializar botão de histórico
-document.addEventListener('DOMContentLoaded', () => {
-    const headerContent = document.querySelector('.header-content');
-    const cartIcon = document.querySelector('.cart-icon');
-    
-    const historyButton = document.createElement('div');
-    historyButton.className = 'history-icon';
-    historyButton.innerHTML = '<i class="fas fa-history"></i>';
-    historyButton.onclick = () => timeMachine.showOrderHistory();
-    
-    headerContent.insertBefore(historyButton, cartIcon);
-});
     
     (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="PpgNSIgeYN1FCucFGP4w3";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
 </script>
