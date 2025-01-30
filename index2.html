@@ -2609,7 +2609,7 @@ function checkStoreStatus() {
         });
 }
 
-function showOrderHistory(whatsapp) {
+async function showOrderHistory(whatsapp) {
     // Remover todos os caracteres não numéricos do WhatsApp
     const cleanWhatsapp = whatsapp.replace(/\D/g, '');
 
@@ -2644,93 +2644,80 @@ function showOrderHistory(whatsapp) {
         overflow-y: auto;
     `;
 
-    // Função para buscar pedidos com diferentes formatos de número
-    function fetchOrders(searchNumber) {
-        return new Promise((resolve, reject) => {
-            let queries = [
-                realtimeDB.ref('orders').orderByChild('customer/customerPhone').equalTo(searchNumber),
-                realtimeDB.ref('orders').orderByChild('customerInfo/whatsapp').equalTo(searchNumber)
-            ];
+    try {
+        // Buscar pedidos usando o número do WhatsApp em diferentes formatos
+        const ordersRef = realtimeDB.ref('orders');
+        const snapshot = await ordersRef.once('value');
+        const allOrders = snapshot.val() || {};
 
-            // Promises para executar todas as consultas
-            Promise.all(queries.map(query => query.once('value')))
-                .then(snapshots => {
-                    let orders = {};
-                    snapshots.forEach(snapshot => {
-                        const snapshotVal = snapshot.val();
-                        if (snapshotVal) {
-                            orders = { ...orders, ...snapshotVal };
-                        }
-                    });
-                    resolve(orders);
-                })
-                .catch(reject);
-        });
-    }
+        // Filtrar pedidos pelo número do WhatsApp
+        const userOrders = Object.entries(allOrders)
+            .filter(([_, order]) => {
+                const orderWhatsapp = (order.customerInfo?.whatsapp || order.customer?.customerPhone || '').replace(/\D/g, '');
+                return orderWhatsapp === cleanWhatsapp;
+            })
+            .sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0));
 
-    // Tentar buscar pedidos com diferentes formatos
-    fetchOrders(cleanWhatsapp)
-        .then(orders => {
-            // Se não encontrar pedidos com o número limpo, tenta com o número original
-            if (Object.keys(orders).length === 0) {
-                return fetchOrders(whatsapp);
-            }
-            return orders;
-        })
-        .then(orders => {
-            if (Object.keys(orders).length === 0) {
-                ordersList.innerHTML = `
-                    <p style="color: var(--text); text-align: center;">
-                        Você ainda não possui pedidos.
-                    </p>
+        if (userOrders.length === 0) {
+            ordersList.innerHTML = `
+                <p style="color: var(--text); text-align: center;">
+                    Você ainda não possui pedidos.
+                </p>
+            `;
+        } else {
+            userOrders.forEach(([orderId, order]) => {
+                const orderDiv = document.createElement('div');
+                orderDiv.style.cssText = `
+                    background: var(--glass);
+                    border: 1px solid var(--glass-border);
+                    border-radius: 10px;
+                    padding: 1rem;
+                    margin-bottom: 1rem;
                 `;
-            } else {
-                Object.entries(orders).forEach(([orderId, order]) => {
-                    const orderDiv = document.createElement('div');
-                    orderDiv.style.cssText = `
-                        background: var(--glass);
-                        border: 1px solid var(--glass-border);
-                        border-radius: 10px;
-                        padding: 1rem;
-                        margin-bottom: 1rem;
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                    `;
 
-                    const orderDetails = document.createElement('div');
-                    orderDetails.innerHTML = `
-                        <h3 style="color: white; margin-bottom: 0.5rem;">Pedido em ${new Date(order.timestamp).toLocaleString()}</h3>
-                        <p style="color: var(--text)">Total: R$ ${order.total.toFixed(2)}</p>
-                        <p style="color: var(--text)">Status: ${order.status || 'Não informado'}</p>
-                    `;
+                const orderDate = order.timestamp ? new Date(order.timestamp) : new Date();
+                const formattedDate = orderDate.toLocaleString();
+                const orderStatus = order.status || 'Não informado';
+                const orderTotal = order.total || order.orderTotal || 0;
 
-                    const repeatButton = document.createElement('button');
-                    repeatButton.textContent = 'Repetir Pedido';
-                    repeatButton.style.cssText = `
+                let itemsList = '';
+                if (order.items) {
+                    itemsList = '<ul style="margin: 0.5rem 0; padding-left: 1.5rem;">';
+                    order.items.forEach(item => {
+                        itemsList += `<li style="color: var(--text)">${item.name} - R$ ${item.price.toFixed(2)}</li>`;
+                    });
+                    itemsList += '</ul>';
+                }
+
+                orderDiv.innerHTML = `
+                    <h3 style="color: white; margin-bottom: 0.5rem;">Pedido de ${formattedDate}</h3>
+                    <p style="color: var(--text)">Status: ${orderStatus}</p>
+                    ${itemsList}
+                    <p style="color: var(--text); margin-top: 0.5rem;">Total: R$ ${orderTotal.toFixed(2)}</p>
+                    <button onclick="repeatOrder('${orderId}')" style="
                         background: var(--gradient);
                         color: white;
                         border: none;
                         padding: 0.5rem 1rem;
                         border-radius: 5px;
+                        margin-top: 0.5rem;
                         cursor: pointer;
-                    `;
-                    repeatButton.onclick = () => repeatOrder(order);
+                    ">
+                        Repetir Pedido
+                    </button>
+                `;
 
-                    orderDiv.appendChild(orderDetails);
-                    orderDiv.appendChild(repeatButton);
-                    ordersList.appendChild(orderDiv);
-                });
-            }
-        })
-        .catch(error => {
-            console.error('Erro ao buscar histórico de pedidos:', error);
-            ordersList.innerHTML = `
-                <p style="color: var(--text); text-align: center;">
-                    Erro ao carregar histórico de pedidos.
-                </p>
-            `;
-        });
+                ordersList.appendChild(orderDiv);
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao buscar histórico de pedidos:', error);
+        ordersList.innerHTML = `
+            <p style="color: var(--error); text-align: center;">
+                Erro ao carregar histórico de pedidos. Tente novamente.
+            </p>
+        `;
+    }
 
     content.appendChild(closeBtn);
     content.appendChild(title);
@@ -2739,25 +2726,42 @@ function showOrderHistory(whatsapp) {
     document.body.appendChild(modal);
 }
 
-function repeatOrder(order) {
-    // Limpar carrinho atual
-    cart = [];
-    
-    // Adicionar itens do pedido anterior ao carrinho
-    order.items.forEach(item => {
-        cart.push({
-            ...item,
-            price: item.price,
-            selectedToppings: item.selectedToppings || [],
-            selectedExtras: item.selectedExtras || []
-        });
-    });
+async function repeatOrder(orderId) {
+    try {
+        const orderSnapshot = await realtimeDB.ref(`orders/${orderId}`).once('value');
+        const order = orderSnapshot.val();
 
-    // Atualizar contador do carrinho
-    updateCartCount();
-    
-    // Mostrar modal do carrinho
-    showCartModal();
+        if (!order) {
+            showNotification('Pedido não encontrado');
+            return;
+        }
+
+        // Limpar carrinho atual
+        cart = [];
+        
+        // Adicionar itens do pedido anterior ao carrinho
+        if (order.items) {
+            order.items.forEach(item => {
+                cart.push({
+                    name: item.name,
+                    price: item.price,
+                    selectedToppings: item.selectedToppings || [],
+                    selectedExtras: item.selectedExtras || []
+                });
+            });
+        }
+
+        // Atualizar contador do carrinho
+        updateCartCount();
+        
+        // Mostrar modal do carrinho
+        showCartModal();
+        showNotification('Pedido adicionado ao carrinho');
+
+    } catch (error) {
+        console.error('Erro ao repetir pedido:', error);
+        showNotification('Erro ao repetir pedido. Tente novamente.');
+    }
 }
     
     function showUserModal(type = 'login') {
