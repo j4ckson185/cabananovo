@@ -2644,26 +2644,40 @@ function showOrderHistory(whatsapp) {
         overflow-y: auto;
     `;
 
-    // Buscar pedidos com diferentes formatos de número de WhatsApp
-    realtimeDB.ref('orders')
-        .orderByChild('customer/customerPhone')
-        .equalTo(cleanWhatsapp)
-        .once('value')
-        .then(ordersSnapshot => {
-            const orders = ordersSnapshot.val() || {};
-            
+    // Função para buscar pedidos com diferentes formatos de número
+    function fetchOrders(searchNumber) {
+        return new Promise((resolve, reject) => {
+            let queries = [
+                realtimeDB.ref('orders').orderByChild('customer/customerPhone').equalTo(searchNumber),
+                realtimeDB.ref('orders').orderByChild('customerInfo/whatsapp').equalTo(searchNumber)
+            ];
+
+            // Promises para executar todas as consultas
+            Promise.all(queries.map(query => query.once('value')))
+                .then(snapshots => {
+                    let orders = {};
+                    snapshots.forEach(snapshot => {
+                        const snapshotVal = snapshot.val();
+                        if (snapshotVal) {
+                            orders = { ...orders, ...snapshotVal };
+                        }
+                    });
+                    resolve(orders);
+                })
+                .catch(reject);
+        });
+    }
+
+    // Tentar buscar pedidos com diferentes formatos
+    fetchOrders(cleanWhatsapp)
+        .then(orders => {
+            // Se não encontrar pedidos com o número limpo, tenta com o número original
             if (Object.keys(orders).length === 0) {
-                // Tentar buscar com o número original
-                return realtimeDB.ref('orders')
-                    .orderByChild('customer/customerPhone')
-                    .equalTo(whatsapp)
-                    .once('value');
+                return fetchOrders(whatsapp);
             }
-            return Promise.resolve(ordersSnapshot);
+            return orders;
         })
-        .then(ordersSnapshot => {
-            const orders = ordersSnapshot.val() || {};
-            
+        .then(orders => {
             if (Object.keys(orders).length === 0) {
                 ordersList.innerHTML = `
                     <p style="color: var(--text); text-align: center;">
