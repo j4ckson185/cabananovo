@@ -2609,7 +2609,136 @@ function checkStoreStatus() {
         });
 }
 
-function showUserModal(type = 'login') {
+function showOrderHistory(whatsapp) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+
+    const content = document.createElement('div');
+    content.className = 'modal-content';
+    content.style.cssText = `
+        max-width: 800px;
+        width: 90%;
+        padding: 2rem;
+    `;
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'close-modal';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.onclick = () => modal.remove();
+
+    const title = document.createElement('h2');
+    title.textContent = 'Histórico de Pedidos';
+    title.style.cssText = `
+        color: white;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    `;
+
+    const ordersList = document.createElement('div');
+    ordersList.style.cssText = `
+        max-height: 500px;
+        overflow-y: auto;
+    `;
+
+    try {
+        realtimeDB.ref('orders')
+            .orderByChild('customer/customerPhone')
+            .equalTo(whatsapp)
+            .once('value')
+            .then(ordersSnapshot => {
+                const orders = ordersSnapshot.val() || {};
+                
+                if (Object.keys(orders).length === 0) {
+                    ordersList.innerHTML = `
+                        <p style="color: var(--text); text-align: center;">
+                            Você ainda não possui pedidos.
+                        </p>
+                    `;
+                } else {
+                    Object.entries(orders).forEach(([orderId, order]) => {
+                        const orderDiv = document.createElement('div');
+                        orderDiv.style.cssText = `
+                            background: var(--glass);
+                            border: 1px solid var(--glass-border);
+                            border-radius: 10px;
+                            padding: 1rem;
+                            margin-bottom: 1rem;
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                        `;
+
+                        const orderDetails = document.createElement('div');
+                        orderDetails.innerHTML = `
+                            <h3 style="color: white; margin-bottom: 0.5rem;">Pedido em ${new Date(order.timestamp).toLocaleString()}</h3>
+                            <p style="color: var(--text)">Total: R$ ${order.total.toFixed(2)}</p>
+                        `;
+
+                        const repeatButton = document.createElement('button');
+                        repeatButton.textContent = 'Repetir Pedido';
+                        repeatButton.style.cssText = `
+                            background: var(--gradient);
+                            color: white;
+                            border: none;
+                            padding: 0.5rem 1rem;
+                            border-radius: 5px;
+                            cursor: pointer;
+                        `;
+                        repeatButton.onclick = () => repeatOrder(order);
+
+                        orderDiv.appendChild(orderDetails);
+                        orderDiv.appendChild(repeatButton);
+                        ordersList.appendChild(orderDiv);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao buscar histórico de pedidos:', error);
+                ordersList.innerHTML = `
+                    <p style="color: var(--text); text-align: center;">
+                        Erro ao carregar histórico de pedidos.
+                    </p>
+                `;
+            });
+    } catch (error) {
+        console.error('Erro ao buscar histórico de pedidos:', error);
+        ordersList.innerHTML = `
+            <p style="color: var(--text); text-align: center;">
+                Erro ao carregar histórico de pedidos.
+            </p>
+        `;
+    }
+
+    content.appendChild(closeBtn);
+    content.appendChild(title);
+    content.appendChild(ordersList);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+}
+
+function repeatOrder(order) {
+    // Limpar carrinho atual
+    cart = [];
+    
+    // Adicionar itens do pedido anterior ao carrinho
+    order.items.forEach(item => {
+        cart.push({
+            ...item,
+            price: item.price,
+            selectedToppings: item.selectedToppings || [],
+            selectedExtras: item.selectedExtras || []
+        });
+    });
+
+    // Atualizar contador do carrinho
+    updateCartCount();
+    
+    // Mostrar modal do carrinho
+    showCartModal();
+}
+    
+    function showUserModal(type = 'login') {
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'block';
@@ -2814,126 +2943,6 @@ function showUserModal(type = 'login') {
         }
     }
 
-async function showOrderHistory(whatsapp) {
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-
-    const content = document.createElement('div');
-    content.className = 'modal-content';
-    content.style.cssText = `
-        max-width: 800px;
-        width: 90%;
-        padding: 2rem;
-    `;
-
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'close-modal';
-    closeBtn.innerHTML = '&times;';
-    closeBtn.onclick = () => modal.remove();
-
-    const title = document.createElement('h2');
-    title.textContent = 'Histórico de Pedidos';
-    title.style.cssText = `
-        color: white;
-        margin-bottom: 1.5rem;
-        text-align: center;
-    `;
-
-    const ordersList = document.createElement('div');
-    ordersList.style.cssText = `
-        max-height: 500px;
-        overflow-y: auto;
-    `;
-
-    try {
-        const ordersSnapshot = await realtimeDB.ref('orders')
-            .orderByChild('customer/customerPhone')
-            .equalTo(whatsapp)
-            .once('value');
-
-        const orders = ordersSnapshot.val() || {};
-        
-        if (Object.keys(orders).length === 0) {
-            ordersList.innerHTML = `
-                <p style="color: var(--text); text-align: center;">
-                    Você ainda não possui pedidos.
-                </p>
-            `;
-        } else {
-            Object.entries(orders).forEach(([orderId, order]) => {
-                const orderDiv = document.createElement('div');
-                orderDiv.style.cssText = `
-                    background: var(--glass);
-                    border: 1px solid var(--glass-border);
-                    border-radius: 10px;
-                    padding: 1rem;
-                    margin-bottom: 1rem;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                `;
-
-                const orderDetails = document.createElement('div');
-                orderDetails.innerHTML = `
-                    <h3 style="color: white; margin-bottom: 0.5rem;">Pedido em ${new Date(order.timestamp).toLocaleString()}</h3>
-                    <p style="color: var(--text)">Total: R$ ${order.total.toFixed(2)}</p>
-                `;
-
-                const repeatButton = document.createElement('button');
-                repeatButton.textContent = 'Repetir Pedido';
-                repeatButton.style.cssText = `
-                    background: var(--gradient);
-                    color: white;
-                    border: none;
-                    padding: 0.5rem 1rem;
-                    border-radius: 5px;
-                    cursor: pointer;
-                `;
-                repeatButton.onclick = () => repeatOrder(order);
-
-                orderDiv.appendChild(orderDetails);
-                orderDiv.appendChild(repeatButton);
-                ordersList.appendChild(orderDiv);
-            });
-        }
-    } catch (error) {
-        console.error('Erro ao buscar histórico de pedidos:', error);
-        ordersList.innerHTML = `
-            <p style="color: var(--text); text-align: center;">
-                Erro ao carregar histórico de pedidos.
-            </p>
-        `;
-    }
-
-    content.appendChild(closeBtn);
-    content.appendChild(title);
-    content.appendChild(ordersList);
-    modal.appendChild(content);
-    document.body.appendChild(modal);
-}
-
-function repeatOrder(order) {
-    // Limpar carrinho atual
-    cart = [];
-    
-    // Adicionar itens do pedido anterior ao carrinho
-    order.items.forEach(item => {
-        cart.push({
-            ...item,
-            price: item.price,
-            selectedToppings: item.selectedToppings || [],
-            selectedExtras: item.selectedExtras || []
-        });
-    });
-
-    // Atualizar contador do carrinho
-    updateCartCount();
-    
-    // Mostrar modal do carrinho
-    showCartModal();
-}
-
        // Função para mostrar perfil do usuário
     function showUserProfile() {
         const userData = JSON.parse(localStorage.getItem('userData'));
@@ -2959,7 +2968,7 @@ function repeatOrder(order) {
             <h2 style="color: white; margin-bottom: 1rem;">Perfil do Usuário</h2>
             <p style="color: var(--text)">Nome: ${userData.fullName}</p>
             <p style="color: var(--text)">WhatsApp: ${userData.whatsapp}</p>
-            <button onclick="showOrderHistory('${userData.whatsapp}')" style="
+            <button onclick="window.showOrderHistory('${userData.whatsapp}')" style="
                 background: var(--gradient);
                 color: white;
                 border: none;
