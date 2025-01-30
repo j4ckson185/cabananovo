@@ -2610,6 +2610,9 @@ function checkStoreStatus() {
 }
 
 function showOrderHistory(whatsapp) {
+    // Remover todos os caracteres não numéricos do WhatsApp
+    const cleanWhatsapp = whatsapp.replace(/\D/g, '');
+
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'block';
@@ -2641,74 +2644,79 @@ function showOrderHistory(whatsapp) {
         overflow-y: auto;
     `;
 
-    try {
-        realtimeDB.ref('orders')
-            .orderByChild('customer/customerPhone')
-            .equalTo(whatsapp)
-            .once('value')
-            .then(ordersSnapshot => {
-                const orders = ordersSnapshot.val() || {};
-                
-                if (Object.keys(orders).length === 0) {
-                    ordersList.innerHTML = `
-                        <p style="color: var(--text); text-align: center;">
-                            Você ainda não possui pedidos.
-                        </p>
-                    `;
-                } else {
-                    Object.entries(orders).forEach(([orderId, order]) => {
-                        const orderDiv = document.createElement('div');
-                        orderDiv.style.cssText = `
-                            background: var(--glass);
-                            border: 1px solid var(--glass-border);
-                            border-radius: 10px;
-                            padding: 1rem;
-                            margin-bottom: 1rem;
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                        `;
-
-                        const orderDetails = document.createElement('div');
-                        orderDetails.innerHTML = `
-                            <h3 style="color: white; margin-bottom: 0.5rem;">Pedido em ${new Date(order.timestamp).toLocaleString()}</h3>
-                            <p style="color: var(--text)">Total: R$ ${order.total.toFixed(2)}</p>
-                        `;
-
-                        const repeatButton = document.createElement('button');
-                        repeatButton.textContent = 'Repetir Pedido';
-                        repeatButton.style.cssText = `
-                            background: var(--gradient);
-                            color: white;
-                            border: none;
-                            padding: 0.5rem 1rem;
-                            border-radius: 5px;
-                            cursor: pointer;
-                        `;
-                        repeatButton.onclick = () => repeatOrder(order);
-
-                        orderDiv.appendChild(orderDetails);
-                        orderDiv.appendChild(repeatButton);
-                        ordersList.appendChild(orderDiv);
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Erro ao buscar histórico de pedidos:', error);
+    // Buscar pedidos com diferentes formatos de número de WhatsApp
+    realtimeDB.ref('orders')
+        .orderByChild('customer/customerPhone')
+        .equalTo(cleanWhatsapp)
+        .once('value')
+        .then(ordersSnapshot => {
+            const orders = ordersSnapshot.val() || {};
+            
+            if (Object.keys(orders).length === 0) {
+                // Tentar buscar com o número original
+                return realtimeDB.ref('orders')
+                    .orderByChild('customer/customerPhone')
+                    .equalTo(whatsapp)
+                    .once('value');
+            }
+            return Promise.resolve(ordersSnapshot);
+        })
+        .then(ordersSnapshot => {
+            const orders = ordersSnapshot.val() || {};
+            
+            if (Object.keys(orders).length === 0) {
                 ordersList.innerHTML = `
                     <p style="color: var(--text); text-align: center;">
-                        Erro ao carregar histórico de pedidos.
+                        Você ainda não possui pedidos.
                     </p>
                 `;
-            });
-    } catch (error) {
-        console.error('Erro ao buscar histórico de pedidos:', error);
-        ordersList.innerHTML = `
-            <p style="color: var(--text); text-align: center;">
-                Erro ao carregar histórico de pedidos.
-            </p>
-        `;
-    }
+            } else {
+                Object.entries(orders).forEach(([orderId, order]) => {
+                    const orderDiv = document.createElement('div');
+                    orderDiv.style.cssText = `
+                        background: var(--glass);
+                        border: 1px solid var(--glass-border);
+                        border-radius: 10px;
+                        padding: 1rem;
+                        margin-bottom: 1rem;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    `;
+
+                    const orderDetails = document.createElement('div');
+                    orderDetails.innerHTML = `
+                        <h3 style="color: white; margin-bottom: 0.5rem;">Pedido em ${new Date(order.timestamp).toLocaleString()}</h3>
+                        <p style="color: var(--text)">Total: R$ ${order.total.toFixed(2)}</p>
+                        <p style="color: var(--text)">Status: ${order.status || 'Não informado'}</p>
+                    `;
+
+                    const repeatButton = document.createElement('button');
+                    repeatButton.textContent = 'Repetir Pedido';
+                    repeatButton.style.cssText = `
+                        background: var(--gradient);
+                        color: white;
+                        border: none;
+                        padding: 0.5rem 1rem;
+                        border-radius: 5px;
+                        cursor: pointer;
+                    `;
+                    repeatButton.onclick = () => repeatOrder(order);
+
+                    orderDiv.appendChild(orderDetails);
+                    orderDiv.appendChild(repeatButton);
+                    ordersList.appendChild(orderDiv);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao buscar histórico de pedidos:', error);
+            ordersList.innerHTML = `
+                <p style="color: var(--text); text-align: center;">
+                    Erro ao carregar histórico de pedidos.
+                </p>
+            `;
+        });
 
     content.appendChild(closeBtn);
     content.appendChild(title);
