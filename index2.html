@@ -3966,9 +3966,46 @@ async function submitOrder() {
         const deliveryFee = 3.00;
         const total = subtotal - discount + deliveryFee;
 
+        // Identificar cliente e salvar no histórico
+        try {
+            await timeMachine.identifyCustomer(customerPhone);
+            
+            const historyOrderData = {
+                timestamp: new Date(),
+                items: cart.map(item => ({
+                    name: item.name,
+                    price: item.price,
+                    selectedToppings: item.selectedToppings || [],
+                    selectedExtras: item.selectedExtras || []
+                })),
+                total: total,
+                customer: {
+                    name: customerName,
+                    phone: customerPhone
+                },
+                status: 'pending',
+                deliveryInfo: {
+                    address: street,
+                    number: streetNumber,
+                    neighborhood: neighborhood,
+                    complement: complement || '',
+                    zipCode: zipCode
+                },
+                paymentMethod: paymentMethod
+            };
+
+            const saved = await timeMachine.saveOrder(historyOrderData);
+            if (!saved) {
+                console.error('Falha ao salvar no histórico');
+            }
+        } catch (historyError) {
+            console.error('Erro ao salvar no histórico:', historyError);
+            // Continua o fluxo mesmo se falhar o salvamento no histórico
+        }
+
         // Preparar objeto para a API no formato original
         const order = {
-            id: "5555", // ou gerar um ID único se necessário
+            id: "5555",
             status: "open",
             paymentMethod: paymentMethod === 'pix' ? 'online' : paymentMethod,
             orderTotal: total,
@@ -3990,9 +4027,9 @@ async function submitOrder() {
             }
         };
 
-        // Enviar para API primeiro, mas com timeout
+        // Enviar para API com timeout
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 segundos timeout
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
 
         try {
             const response = await fetch('https://us-central1-cabana-8d55e.cloudfunctions.net/foodyDeliveryApi/createOrder', {
@@ -4077,64 +4114,64 @@ async function submitOrder() {
         }
 
         // Salvar no Firebase
-// Salvar no Firebase Realtime Database (mantendo a funcionalidade original)
-const orderData = {
-    timestamp: firebase.database.ServerValue.TIMESTAMP,
-    status: 'new',
-    customer: {
-        name: customerName,
-        phone: customerPhone
-    },
-    address: {
-        street,
-        number: streetNumber,
-        neighborhood,
-        complement: complement || '',
-        zipCode,
-        city: 'Natal',
-        state: 'RN'
-    },
-    payment: {
-        method: paymentMethod,
-        change: document.getElementById('changeAmount')?.value || null
-    },
-    items: cart,
-    subtotal,
-    deliveryFee,
-    total,
-    notes: notes || ''
-};
-const newOrderRef = await realtimeDB.ref('orders').push(orderData);
+        const orderData = {
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            status: 'new',
+            customer: {
+                name: customerName,
+                phone: customerPhone
+            },
+            address: {
+                street,
+                number: streetNumber,
+                neighborhood,
+                complement: complement || '',
+                zipCode,
+                city: 'Natal',
+                state: 'RN'
+            },
+            payment: {
+                method: paymentMethod,
+                change: document.getElementById('changeAmount')?.value || null
+            },
+            items: cart,
+            subtotal,
+            deliveryFee,
+            total,
+            notes: notes || ''
+        };
+
+        const newOrderRef = await realtimeDB.ref('orders').push(orderData);
         
-if (!newOrderRef.key) {
-    throw new Error('Falha ao salvar o pedido');
-}
+        if (!newOrderRef.key) {
+            throw new Error('Falha ao salvar o pedido');
+        }
 
-// Adicionar salvamento no Firestore
-try {
-    const firestoreOrderData = {
-        ...orderData,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    };
+        // Adicionar salvamento no Firestore
+        try {
+            const firestoreOrderData = {
+                ...orderData,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
 
-    // Salvar pedido no Firestore para o cliente
-    const customerRef = db.collection('customers').doc(customerPhone);
-    
-    await customerRef.set({
-        phone: customerPhone,
-        lastOrder: firestoreOrderData
-    }, { merge: true });
+            // Salvar pedido no Firestore para o cliente
+            const customerRef = db.collection('customers').doc(customerPhone);
+            
+            await customerRef.set({
+                phone: customerPhone,
+                lastOrder: firestoreOrderData
+            }, { merge: true });
 
-    await customerRef.update({
-        orders: firebase.firestore.FieldValue.arrayUnion(firestoreOrderData)
-    });
-} catch (error) {
-    console.error('Erro ao salvar pedido no Firestore:', error);
-    // Não interrompe o fluxo principal se falhar
-}
+            await customerRef.update({
+                orders: firebase.firestore.FieldValue.arrayUnion(firestoreOrderData)
+            });
+        } catch (error) {
+            console.error('Erro ao salvar pedido no Firestore:', error);
+            // Não interrompe o fluxo principal se falhar
+        }
 
-// Redirecionar para WhatsApp
-window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
+        // Redirecionar para WhatsApp
+        window.location.href = `https://wa.me/5584987673202?text=${encodeURIComponent(message)}`;
 
     } catch (error) {
         console.error('Erro ao processar pedido:', error);
