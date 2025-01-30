@@ -2610,13 +2610,6 @@ function checkStoreStatus() {
 }
 
 function showUserModal(type = 'login') {
-    // Verificar se já está logado
-    const userData = JSON.parse(localStorage.getItem('userData'));
-    if (userData && type === 'login') {
-        showOrderHistory(userData.whatsapp);
-        return;
-    }
-
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'block';
@@ -2643,259 +2636,6 @@ function showUserModal(type = 'login') {
     `;
     title.textContent = type === 'login' ? 'Entrar na Conta' : 'Criar Conta';
 
-    // Função para formatar a data
-function formatDate(input) {
-    input.addEventListener('input', (e) => {
-        let value = e.target.value.replace(/\D/g, '');
-        
-        if (value.length >= 2 && value.length <= 8) {
-            if (value.length >= 2) value = value.replace(/^(\d{2})/, '$1/');
-            if (value.length >= 4) value = value.replace(/^(\d{2})\/(\d{2})/, '$1/$2/');
-        }
-        
-        e.target.value = value;
-    });
-
-    // Adicionar validação ao sair do campo
-    input.addEventListener('blur', (e) => {
-        const value = e.target.value;
-        const parts = value.split('/');
-        if (parts.length === 3 && parts[2].length !== 4) {
-            showNotification('Digite o ano com 4 dígitos (exemplo: 1990)');
-            e.target.value = ''; // Limpa o campo se o ano não tiver 4 dígitos
-        }
-    });
-}
-
-    const whatsappInput = document.getElementById(type === 'register' ? 'whatsapp' : 'loginWhatsapp');
-    if (whatsappInput) {
-        function formatWhatsApp(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 11) value = value.slice(0, 11);
-            
-            // Formata como: 84 987673202
-            if (value.length >= 2) {
-                value = value.replace(/^(\d{2})/, '$1 ');
-            }
-            
-            e.target.value = value;
-        }
-
-        whatsappInput.addEventListener('input', formatWhatsApp);
-        whatsappInput.addEventListener('blur', (e) => {
-            const value = e.target.value.replace(/\D/g, '');
-            if (value.length !== 11) {
-                showNotification('Digite um número de WhatsApp válido (exemplo: 84 987673202)');
-                e.target.value = '';
-            }
-        });
-    }
-
-    const birthDateInput = document.getElementById(type === 'register' ? 'birthDate' : 'loginBirthDate');
-    if (birthDateInput) {
-        // Remove validação padrão do HTML
-        birthDateInput.removeAttribute('required');
-        
-        function formatDate(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            
-            if (value.length >= 2 && value.length <= 8) {
-                if (value.length >= 2) value = value.replace(/^(\d{2})/, '$1/');
-                if (value.length >= 4) value = value.replace(/^(\d{2})\/(\d{2})/, '$1/$2/');
-            }
-            
-            e.target.value = value;
-        }
-
-        birthDateInput.addEventListener('input', formatDate);
-        birthDateInput.addEventListener('blur', (e) => {
-            const value = e.target.value;
-            const parts = value.split('/');
-            if (!value || parts.length !== 3 || parts[2].length !== 4) {
-                showNotification('Digite o ano com 4 dígitos, exemplo: 1988');
-                e.target.value = '';
-            }
-        });
-    }
-
- // Atualizar a função validateAndFormatDate
-function validateAndFormatDate(dateString, isRegistration = false) {
-    if (!dateString) {
-        return {
-            isValid: false,
-            message: 'Por favor, digite uma data de nascimento'
-        };
-    }
-
-    const parts = dateString.split('/');
-    if (parts.length !== 3) {
-        return {
-            isValid: false,
-            message: 'Data inválida. Use o formato DD/MM/AAAA'
-        };
-    }
-
-    let [day, month, year] = parts.map(Number);
-
-    // Sempre exigir 4 dígitos no ano
-    if (year < 1000) {
-        return {
-            isValid: false,
-            message: 'Digite o ano com 4 dígitos (exemplo: 1990)'
-        };
-    }
-
-    const date = new Date(year, month - 1, day);
-    const isValid = date.getDate() === day &&
-                   date.getMonth() === month - 1 &&
-                   date.getFullYear() === year &&
-                   year >= 1900 &&
-                   year <= new Date().getFullYear();
-
-    return {
-        isValid,
-        formattedDate: isValid ? `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}` : null,
-        message: isValid ? null : 'Data de nascimento inválida'
-    };
-}
-
-    // Função para mostrar histórico após login
-    function showOrderHistory(whatsapp) {
-        content.innerHTML = '';
-        content.style.maxWidth = '800px';
-
-        const title = document.createElement('h2');
-        title.style.cssText = `
-            color: white;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            font-size: 1.5rem;
-        `;
-        title.textContent = 'Meus Pedidos';
-
-        const ordersList = document.createElement('div');
-        ordersList.style.cssText = `
-            max-height: 70vh;
-            overflow-y: auto;
-            padding-right: 1rem;
-        `;
-
-        // Buscar pedidos
-        realtimeDB.ref('orders')
-            .orderByChild('customer/customerPhone')
-            .equalTo(whatsapp)
-            .once('value')
-            .then(snapshot => {
-                const orders = snapshot.val();
-                if (!orders) {
-                    ordersList.innerHTML = `
-                        <p style="text-align: center; color: var(--text);">
-                            Você ainda não fez nenhum pedido.
-                        </p>
-                    `;
-                    return;
-                }
-
-                const ordersArray = Object.entries(orders)
-                    .map(([key, value]) => ({...value, key}))
-                    .sort((a, b) => b.timestamp - a.timestamp);
-
-                ordersArray.forEach(order => {
-                    const orderDate = new Date(order.timestamp);
-                    const orderCard = document.createElement('div');
-                    orderCard.style.cssText = `
-                        background: var(--glass);
-                        border: 1px solid var(--glass-border);
-                        border-radius: 15px;
-                        padding: 1.5rem;
-                        margin-bottom: 1rem;
-                        color: var(--text);
-                    `;
-
-                    let itemsList = '';
-                    order.items.forEach(item => {
-                        itemsList += `
-                            <div style="margin-bottom: 0.5rem;">
-                                <strong style="color: white;">${item.name}</strong><br>
-                                ${item.selectedToppings && item.selectedToppings.length ? 
-                                    `Acompanhamentos: ${item.selectedToppings.join(', ')}<br>` : ''}
-                                ${item.selectedExtras && item.selectedExtras.length ? 
-                                    `Extras: ${item.selectedExtras.join(', ')}<br>` : ''}
-                                Preço: R$ ${item.price.toFixed(2)}
-                            </div>
-                        `;
-                    });
-
-                    orderCard.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <div>
-                                <strong style="color: white;">Data:</strong> 
-                                ${orderDate.toLocaleDateString()} ${orderDate.toLocaleTimeString()}
-                            </div>
-                            <div>
-                                <strong style="color: white;">Total:</strong> 
-                                R$ ${order.orderTotal.toFixed(2)}
-                            </div>
-                        </div>
-                        <div style="margin-bottom: 1rem;">
-                            ${itemsList}
-                        </div>
-                        <button class="repeat-order" style="
-                            background: var(--gradient);
-                            color: white;
-                            border: none;
-                            padding: 0.8rem 1.5rem;
-                            border-radius: 8px;
-                            cursor: pointer;
-                            font-weight: 600;
-                            width: 100%;
-                            transition: transform 0.2s ease;
-                        ">Repetir este pedido</button>
-                    `;
-
-                    const repeatBtn = orderCard.querySelector('.repeat-order');
-                    repeatBtn.addEventListener('click', () => {
-                        cart = order.items.map(item => ({
-                            ...item,
-                            price: parseFloat(item.price),
-                            selectedToppings: item.selectedToppings || [],
-                            selectedExtras: item.selectedExtras || []
-                        }));
-                        updateCartCount();
-                        modal.remove();
-                        showCartModal();
-                    });
-
-                    ordersList.appendChild(orderCard);
-                });
-            });
-
-        const logoutButton = document.createElement('button');
-        logoutButton.style.cssText = `
-            background: var(--gradient);
-            color: white;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            width: 100%;
-            margin-top: 1rem;
-            transition: transform 0.2s ease;
-        `;
-        logoutButton.textContent = 'Sair da Conta';
-        logoutButton.onclick = () => {
-            localStorage.removeItem('userData');
-            modal.remove();
-            showUserModal('login');
-        };
-
-        content.appendChild(closeBtn);
-        content.appendChild(title);
-        content.appendChild(ordersList);
-        content.appendChild(logoutButton);
-    }
-
     const form = document.createElement('form');
     form.style.cssText = `
         display: flex;
@@ -2903,7 +2643,7 @@ function validateAndFormatDate(dateString, isRegistration = false) {
         gap: 1rem;
     `;
 
-if (type === 'register') {
+    if (type === 'register') {
         form.innerHTML = `
             <div class="form-group">
                 <label>Nome Completo</label>
@@ -2915,11 +2655,11 @@ if (type === 'register') {
                 <input type="tel" id="whatsapp" required placeholder="84 987673202"
                     style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
             </div>
-            <div class="form-group">
-                <label>Data de Nascimento</label>
-                <input type="text" id="birthDate" placeholder="DD/MM/AAAA" maxlength="10" novalidate
-                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-            </div>
+<div class="form-group">
+    <label>Data de Nascimento</label>
+    <input type="text" id="birthDate" required placeholder="DD/MM/AAAA" maxlength="10"
+        style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+</div>
             <button type="submit" style="
                 background: var(--gradient);
                 color: white;
@@ -2942,24 +2682,6 @@ if (type === 'register') {
             const whatsapp = document.getElementById('whatsapp').value.replace(/\D/g, '');
             const birthDate = document.getElementById('birthDate').value;
 
-            // Validar nome
-            if (fullName.trim().length < 3) {
-                showNotification('Digite seu nome completo');
-                return;
-            }
-
-            // Validar WhatsApp
-            if (whatsapp.length !== 11) {
-                showNotification('Digite um número de WhatsApp válido');
-                return;
-            }
-
-            const dateValidation = validateAndFormatDate(birthDate, true);
-            if (!dateValidation.isValid) {
-                showNotification(dateValidation.message);
-                return;
-            }
-
             try {
                 const userSnapshot = await realtimeDB.ref('users')
                     .orderByChild('whatsapp')
@@ -2974,7 +2696,7 @@ if (type === 'register') {
                 const newUser = {
                     fullName,
                     whatsapp,
-                    birthDate: dateValidation.formattedDate,
+                    birthDate,
                     createdAt: firebase.database.ServerValue.TIMESTAMP,
                     preferences: {
                         favoriteTopings: [],
@@ -2983,28 +2705,26 @@ if (type === 'register') {
                 };
 
                 await realtimeDB.ref('users').push(newUser);
-                localStorage.setItem('userData', JSON.stringify(newUser));
-                showNotification('Cadastro realizado com sucesso!');
-                showOrderHistory(whatsapp);
+                showNotification('Cadastro realizado com sucesso! Para acessar sua conta, use seu número de WhatsApp e data de nascimento.');
+                modal.remove();
 
             } catch (error) {
                 console.error('Erro ao cadastrar:', error);
                 showNotification('Erro ao cadastrar. Tente novamente.');
             }
         };
-    }
-else {
+    } else {
         form.innerHTML = `
             <div class="form-group">
                 <label>WhatsApp com DDD</label>
                 <input type="tel" id="loginWhatsapp" required placeholder="84 987673202"
                     style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
             </div>
-            <div class="form-group">
-                <label>Data de Nascimento</label>
-                <input type="text" id="loginBirthDate" placeholder="DD/MM/AAAA" maxlength="10" novalidate
-                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-            </div>
+<div class="form-group">
+    <label>Data de Nascimento</label>
+    <input type="text" id="loginBirthDate" required placeholder="DD/MM/AAAA" maxlength="10"
+        style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+</div>
             <button type="submit" style="
                 background: var(--gradient);
                 color: white;
@@ -3021,43 +2741,31 @@ else {
             </p>
         `;
 
-        form.onsubmit = async (e) => {
-            e.preventDefault();
-            const whatsapp = document.getElementById('loginWhatsapp').value.replace(/\D/g, '');
-            const birthDate = document.getElementById('loginBirthDate').value;
+form.onsubmit = async (e) => {
+    e.preventDefault();
+    const whatsapp = document.getElementById('loginWhatsapp').value.replace(/\D/g, '');
+    const birthDate = document.getElementById('loginBirthDate').value;
 
-            // Validar WhatsApp
-            if (whatsapp.length !== 11) {
-                showNotification('Digite um número de WhatsApp válido');
-                return;
-            }
+    try {
+        const userSnapshot = await realtimeDB.ref('users')
+            .orderByChild('whatsapp')
+            .equalTo(whatsapp)
+            .once('value');
 
-            const dateValidation = validateAndFormatDate(birthDate, false);
-            if (!dateValidation.isValid) {
-                showNotification(dateValidation.message);
-                return;
-            }
-
-            try {
-                const userSnapshot = await realtimeDB.ref('users')
-                    .orderByChild('whatsapp')
-                    .equalTo(whatsapp)
-                    .once('value');
-
-                if (!userSnapshot.exists()) {
-                    showNotification('Você ainda não tem uma conta. Clique em "Criar conta" para se cadastrar.');
-                    return;
-                }
+        if (!userSnapshot.exists()) {
+            showNotification('Você ainda não tem uma conta. Clique em "Criar conta" para se cadastrar.');
+            return;
+        }
 
                 const userData = Object.values(userSnapshot.val())[0];
-                if (userData.birthDate !== dateValidation.formattedDate) {
+                if (userData.birthDate !== birthDate) {
                     showNotification('Data de nascimento incorreta');
                     return;
                 }
 
                 localStorage.setItem('userData', JSON.stringify(userData));
                 showNotification('Login realizado com sucesso!');
-                showOrderHistory(whatsapp);
+                modal.remove();
 
             } catch (error) {
                 console.error('Erro ao fazer login:', error);
@@ -3072,20 +2780,26 @@ else {
     modal.appendChild(content);
     document.body.appendChild(modal);
 
-        whatsappInput.addEventListener('input', formatWhatsApp);
-        whatsappInput.addEventListener('blur', (e) => {
-            const value = e.target.value.replace(/\D/g, '');
-            if (value.length !== 11) {
-                showNotification('Digite um número de WhatsApp válido (exemplo: 84 987673202)');
-                e.target.value = '';
+    // Máscaras para o campo de WhatsApp
+    const whatsappInput = document.getElementById(type === 'register' ? 'whatsapp' : 'loginWhatsapp');
+    if (whatsappInput) {
+        whatsappInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+            
+            // Formata como: 84 987673202
+            if (value.length >= 2) {
+                value = value.replace(/^(\d{2})/, '$1 ');
             }
+            
+            e.target.value = value;
         });
     }
-
-    const birthDateInput = document.getElementById(type === 'register' ? 'birthDate' : 'loginBirthDate');
+        const birthDateInput = document.getElementById(type === 'register' ? 'birthDate' : 'loginBirthDate');
     if (birthDateInput) {
         formatDate(birthDateInput);
     }
+}
     
 document.addEventListener('DOMContentLoaded', function() {
   const mascot = document.getElementById('mascot');
@@ -4707,10 +4421,27 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
            document.getElementById('productModal').style.display = 'none';
        }
    });
+
+function formatDate(input) {
+    input.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        
+        if (value.length > 8) value = value.slice(0, 8);
+        
+        if (value.length >= 2) {
+            value = value.replace(/^(\d{2})/, '$1/');
+        }
+        if (value.length >= 5) {
+            value = value.replace(/^(\d{2})\/(\d{2})/, '$1/$2/');
+        }
+        
+        e.target.value = value;
+    });
+}
     
     (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="PpgNSIgeYN1FCucFGP4w3";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
 </script>
-    
+<<!-- Modal para Criar Novo Pedido -->
 <!-- Modal para Criar Novo Pedido -->
 <div id="createOrderModal" class="modal">
     <div class="modal-content">
