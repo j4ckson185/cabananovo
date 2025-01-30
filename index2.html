@@ -2655,11 +2655,11 @@ function showUserModal(type = 'login') {
                 <input type="tel" id="whatsapp" required placeholder="84 987673202"
                     style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
             </div>
-<div class="form-group">
-    <label>Data de Nascimento</label>
-    <input type="text" id="birthDate" required placeholder="DD/MM/AAAA" maxlength="10"
-        style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-</div>
+            <div class="form-group">
+                <label>Ano de Nascimento</label>
+                <input type="text" id="birthYear" required placeholder="AAAA"
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
             <button type="submit" style="
                 background: var(--gradient);
                 color: white;
@@ -2680,7 +2680,13 @@ function showUserModal(type = 'login') {
             e.preventDefault();
             const fullName = document.getElementById('fullName').value;
             const whatsapp = document.getElementById('whatsapp').value.replace(/\D/g, '');
-            const birthDate = document.getElementById('birthDate').value;
+            const birthYear = document.getElementById('birthYear').value;
+
+            // Validação do ano de nascimento
+            if (birthYear.length !== 4 || !/^\d{4}$/.test(birthYear)) {
+                showNotification('O ano de nascimento deve ser informado com 4 dígitos (ex: 1990)');
+                return;
+            }
 
             try {
                 const userSnapshot = await realtimeDB.ref('users')
@@ -2696,7 +2702,7 @@ function showUserModal(type = 'login') {
                 const newUser = {
                     fullName,
                     whatsapp,
-                    birthDate,
+                    birthYear,
                     createdAt: firebase.database.ServerValue.TIMESTAMP,
                     preferences: {
                         favoriteTopings: [],
@@ -2705,8 +2711,15 @@ function showUserModal(type = 'login') {
                 };
 
                 await realtimeDB.ref('users').push(newUser);
-                showNotification('Cadastro realizado com sucesso! Para acessar sua conta, use seu número de WhatsApp e data de nascimento.');
+                showNotification('Cadastro realizado com sucesso!');
                 modal.remove();
+
+                // Após o cadastro, fazer o login automaticamente
+                localStorage.setItem('userData', JSON.stringify({
+                    ...newUser,
+                    id: newUser.key
+                }));
+                updateLoginStatus();
 
             } catch (error) {
                 console.error('Erro ao cadastrar:', error);
@@ -2720,11 +2733,11 @@ function showUserModal(type = 'login') {
                 <input type="tel" id="loginWhatsapp" required placeholder="84 987673202"
                     style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
             </div>
-<div class="form-group">
-    <label>Data de Nascimento</label>
-    <input type="text" id="loginBirthDate" required placeholder="DD/MM/AAAA" maxlength="10"
-        style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-</div>
+            <div class="form-group">
+                <label>Ano de Nascimento</label>
+                <input type="text" id="loginBirthYear" required placeholder="AAAA"
+                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+            </div>
             <button type="submit" style="
                 background: var(--gradient);
                 color: white;
@@ -2741,31 +2754,44 @@ function showUserModal(type = 'login') {
             </p>
         `;
 
-form.onsubmit = async (e) => {
-    e.preventDefault();
-    const whatsapp = document.getElementById('loginWhatsapp').value.replace(/\D/g, '');
-    const birthDate = document.getElementById('loginBirthDate').value;
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const whatsapp = document.getElementById('loginWhatsapp').value.replace(/\D/g, '');
+            const birthYear = document.getElementById('loginBirthYear').value;
 
-    try {
-        const userSnapshot = await realtimeDB.ref('users')
-            .orderByChild('whatsapp')
-            .equalTo(whatsapp)
-            .once('value');
+            // Validação do ano de nascimento
+            if (birthYear.length !== 4 || !/^\d{4}$/.test(birthYear)) {
+                showNotification('O ano de nascimento deve ser informado com 4 dígitos (ex: 1990)');
+                return;
+            }
 
-        if (!userSnapshot.exists()) {
-            showNotification('Você ainda não tem uma conta. Clique em "Criar conta" para se cadastrar.');
-            return;
-        }
+            try {
+                const userSnapshot = await realtimeDB.ref('users')
+                    .orderByChild('whatsapp')
+                    .equalTo(whatsapp)
+                    .once('value');
 
-                const userData = Object.values(userSnapshot.val())[0];
-                if (userData.birthDate !== birthDate) {
-                    showNotification('Data de nascimento incorreta');
+                const users = userSnapshot.val();
+                if (!users) {
+                    showNotification('Usuário não encontrado');
                     return;
                 }
 
+                const userData = Object.values(users)[0];
+                if (userData.birthYear !== birthYear) {
+                    showNotification('Ano de nascimento incorreto');
+                    return;
+                }
+
+                // Armazenar dados do usuário no localStorage para manter logado
                 localStorage.setItem('userData', JSON.stringify(userData));
+                updateLoginStatus();
+
                 showNotification('Login realizado com sucesso!');
                 modal.remove();
+
+                // Após login, mostrar histórico de pedidos
+                showOrderHistory(whatsapp);
 
             } catch (error) {
                 console.error('Erro ao fazer login:', error);
@@ -2774,20 +2800,203 @@ form.onsubmit = async (e) => {
         };
     }
 
+     // Função para atualizar status de login
+    function updateLoginStatus() {
+        const userData = JSON.parse(localStorage.getItem('userData'));
+        const loginButton = document.querySelector('.login-btn');
+        
+        if (userData) {
+            loginButton.innerHTML = `<i class="fas fa-user"></i> ${userData.fullName.split(' ')[0]}`;
+            loginButton.onclick = showUserProfile;
+        } else {
+            loginButton.innerHTML = `<i class="fas fa-user"></i>`;
+            loginButton.onclick = () => showUserModal();
+        }
+    }
+
+        async function showOrderHistory(whatsapp) {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'block';
+
+        const content = document.createElement('div');
+        content.className = 'modal-content';
+        content.style.cssText = `
+            max-width: 800px;
+            width: 90%;
+            padding: 2rem;
+        `;
+
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'close-modal';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.onclick = () => modal.remove();
+
+        const title = document.createElement('h2');
+        title.textContent = 'Histórico de Pedidos';
+        title.style.cssText = `
+            color: white;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        `;
+
+        const ordersList = document.createElement('div');
+        ordersList.style.cssText = `
+            max-height: 500px;
+            overflow-y: auto;
+        `;
+
+        try {
+            const ordersSnapshot = await realtimeDB.ref('orders')
+                .orderByChild('customer/customerPhone')
+                .equalTo(whatsapp)
+                .once('value');
+
+            const orders = ordersSnapshot.val() || {};
+            
+            if (Object.keys(orders).length === 0) {
+                ordersList.innerHTML = `
+                    <p style="color: var(--text); text-align: center;">
+                        Você ainda não possui pedidos.
+                    </p>
+                `;
+            } else {
+                Object.entries(orders).forEach(([orderId, order]) => {
+                    const orderDiv = document.createElement('div');
+                    orderDiv.style.cssText = `
+                        background: var(--glass);
+                        border: 1px solid var(--glass-border);
+                        border-radius: 10px;
+                        padding: 1rem;
+                        margin-bottom: 1rem;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    `;
+
+                    const orderDetails = document.createElement('div');
+                    orderDetails.innerHTML = `
+                        <h3 style="color: white; margin-bottom: 0.5rem;">Pedido em ${new Date(order.timestamp).toLocaleString()}</h3>
+                        <p style="color: var(--text)">Total: R$ ${order.total.toFixed(2)}</p>
+                    `;
+
+                    const repeatButton = document.createElement('button');
+                    repeatButton.textContent = 'Repetir Pedido';
+                    repeatButton.style.cssText = `
+                        background: var(--gradient);
+                        color: white;
+                        border: none;
+                        padding: 0.5rem 1rem;
+                        border-radius: 5px;
+                        cursor: pointer;
+                    `;
+                    repeatButton.onclick = () => repeatOrder(order);
+
+                    orderDiv.appendChild(orderDetails);
+                    orderDiv.appendChild(repeatButton);
+                    ordersList.appendChild(orderDiv);
+                });
+            }
+        } catch (error) {
+            console.error('Erro ao buscar histórico de pedidos:', error);
+            ordersList.innerHTML = `
+                <p style="color: var(--text); text-align: center;">
+                    Erro ao carregar histórico de pedidos.
+                </p>
+            `;
+        }
+
+        content.appendChild(closeBtn);
+        content.appendChild(title);
+        content.appendChild(ordersList);
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+    }
+
+        function repeatOrder(order) {
+        // Implementação de repetir pedido
+        cart = order.items.map(item => ({
+            ...item,
+            price: item.price,
+            selectedToppings: item.selectedToppings || [],
+            selectedExtras: item.selectedExtras || []
+        }));
+        updateCartCount();
+        showCartModal();
+    }
+
+       // Função para mostrar perfil do usuário
+    function showUserProfile() {
+        const userData = JSON.parse(localStorage.getItem('userData'));
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'block';
+
+        const content = document.createElement('div');
+        content.className = 'modal-content';
+        content.style.cssText = `
+            max-width: 500px;
+            width: 90%;
+            padding: 2rem;
+            text-align: center;
+        `;
+
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'close-modal';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.onclick = () => modal.remove();
+
+        content.innerHTML = `
+            <h2 style="color: white; margin-bottom: 1rem;">Perfil do Usuário</h2>
+            <p style="color: var(--text)">Nome: ${userData.fullName}</p>
+            <p style="color: var(--text)">WhatsApp: ${userData.whatsapp}</p>
+            <button onclick="showOrderHistory('${userData.whatsapp}')" style="
+                background: var(--gradient);
+                color: white;
+                border: none;
+                padding: 0.5rem 1rem;
+                border-radius: 5px;
+                margin: 1rem 0;
+                cursor: pointer;
+            ">Ver Histórico de Pedidos</button>
+            <button onclick="logout()" style="
+                background: var(--error);
+                color: white;
+                border: none;
+                padding: 0.5rem 1rem;
+                border-radius: 5px;
+                cursor: pointer;
+            ">Sair da Conta</button>
+        `;
+
+        function logout() {
+            localStorage.removeItem('userData');
+            updateLoginStatus();
+            modal.remove();
+            showNotification('Você saiu da sua conta.');
+        }
+
+        content.appendChild(closeBtn);
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+    }
+
+        // Adicionar evento para atualizar status de login ao carregar a página
+    document.addEventListener('DOMContentLoaded', updateLoginStatus);
+
     content.appendChild(closeBtn);
     content.appendChild(title);
     content.appendChild(form);
     modal.appendChild(content);
     document.body.appendChild(modal);
 
-    // Máscaras para o campo de WhatsApp
+    // Máscaras para os campos
     const whatsappInput = document.getElementById(type === 'register' ? 'whatsapp' : 'loginWhatsapp');
     if (whatsappInput) {
         whatsappInput.addEventListener('input', (e) => {
             let value = e.target.value.replace(/\D/g, '');
             if (value.length > 11) value = value.slice(0, 11);
             
-            // Formata como: 84 987673202
             if (value.length >= 2) {
                 value = value.replace(/^(\d{2})/, '$1 ');
             }
@@ -2795,9 +3004,15 @@ form.onsubmit = async (e) => {
             e.target.value = value;
         });
     }
-        const birthDateInput = document.getElementById(type === 'register' ? 'birthDate' : 'loginBirthDate');
-    if (birthDateInput) {
-        formatDate(birthDateInput);
+
+    // Validação de ano de nascimento
+    const birthYearInput = document.getElementById(type === 'register' ? 'birthYear' : 'loginBirthYear');
+    if (birthYearInput) {
+        birthYearInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 4) value = value.slice(0, 4);
+            e.target.value = value;
+        });
     }
 }
     
