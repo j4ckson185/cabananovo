@@ -1906,6 +1906,238 @@ let appliedCoupon = null;
 let customerInfo = {};
 let deliveryInfo = {};
 
+    class TimeMachine {
+    constructor() {
+        this.db = firebase.firestore();
+        this.currentCustomer = null;
+        this.deviceFingerprint = null;
+        this.setupFingerprint();
+    }
+
+    async setupFingerprint() {
+        const components = [
+            navigator.userAgent,
+            navigator.language,
+            new Date().getTimezoneOffset(),
+            screen.width,
+            screen.height,
+            navigator.hardwareConcurrency
+        ];
+        const fingerprint = components.join('|');
+        const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(fingerprint));
+        this.deviceFingerprint = Array.from(new Uint8Array(hashBuffer))
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
+    }
+
+    async identifyCustomer(phone) {
+        try {
+            const customerRef = this.db.collection('customers').doc(phone);
+            const doc = await customerRef.get();
+            
+            if (!doc.exists) {
+                await customerRef.set({
+                    phone,
+                    devices: [this.deviceFingerprint],
+                    created: firebase.firestore.FieldValue.serverTimestamp(),
+                    orders: []
+                });
+            } else if (!doc.data().devices.includes(this.deviceFingerprint)) {
+                await customerRef.update({
+                    devices: firebase.firestore.FieldValue.arrayUnion(this.deviceFingerprint)
+                });
+            }
+            
+            this.currentCustomer = phone;
+            return true;
+        } catch (error) {
+            console.error('Erro ao identificar cliente:', error);
+            return false;
+        }
+    }
+
+    async saveOrder(orderData) {
+        if (!this.currentCustomer) return false;
+        
+        try {
+            const orderWithTimestamp = {
+                ...orderData,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                deviceFingerprint: this.deviceFingerprint
+            };
+
+            await this.db.collection('customers').doc(this.currentCustomer)
+                .update({
+                    orders: firebase.firestore.FieldValue.arrayUnion(orderWithTimestamp)
+                });
+
+            return true;
+        } catch (error) {
+            console.error('Erro ao salvar pedido:', error);
+            return false;
+        }
+    }
+
+    async getOrderHistory() {
+        if (!this.currentCustomer) return [];
+        
+        try {
+            const doc = await this.db.collection('customers').doc(this.currentCustomer).get();
+            if (!doc.exists) return [];
+            
+            return doc.data().orders.sort((a, b) => b.timestamp - a.timestamp);
+        } catch (error) {
+            console.error('Erro ao buscar histórico:', error);
+            return [];
+        }
+    }
+
+    async getMostOrderedItems() {
+        if (!this.currentCustomer) return [];
+        
+        try {
+            const history = await this.getOrderHistory();
+            const itemCount = {};
+            
+            history.forEach(order => {
+                order.items.forEach(item => {
+                    itemCount[item.name] = (itemCount[item.name] || 0) + 1;
+                });
+            });
+
+            return Object.entries(itemCount)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 5)
+                .map(([name, count]) => ({ name, count }));
+        } catch (error) {
+            console.error('Erro ao buscar itens mais pedidos:', error);
+            return [];
+        }
+    }
+}
+        createOrderSummary(order) {
+        const date = order.timestamp.toDate();
+        const formattedDate = date.toLocaleDateString('pt-BR');
+        const formattedTime = date.toLocaleTimeString('pt-BR');
+
+        return `
+            <div class="order-history-card">
+                <div class="order-header">
+                    <span class="order-date">${formattedDate} às ${formattedTime}</span>
+                    <span class="order-total">R$ ${order.total.toFixed(2)}</span>
+                </div>
+                <div class="order-items">
+                    ${order.items.map(item => `
+                        <div class="history-item">
+                            <span class="item-name">${item.name}</span>
+                            ${item.selectedToppings?.length ? 
+                                `<span class="item-toppings">Acompanhamentos: ${item.selectedToppings.join(', ')}</span>` 
+                                : ''
+                            }
+                        </div>
+                    `).join('')}
+                </div>
+                <button class="repeat-order-btn" onclick="timeMachine.repeatOrder(${JSON.stringify(order)})">
+                    Pedir Novamente
+                </button>
+            </div>
+        `;
+    }
+
+    async showOrderHistory() {
+        const history = await this.getOrderHistory();
+        if (history.length === 0) {
+            showNotification('Você ainda não fez nenhum pedido');
+            return;
+        }
+
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.id = 'timeModal';
+        
+        modal.innerHTML = `
+            <div class="modal-content time-machine-content">
+                <div class="modal-header">
+                    <h2>Sua História com a Cabana Açaí</h2>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="time-machine-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">${history.length}</span>
+                        <span class="stat-label">Pedidos Feitos</span>
+                    </div>
+                    <div class="stat-item favorite-item">
+                        <span class="stat-label">Carregando seu favorito...</span>
+                    </div>
+                </div>
+                <div class="order-history-container">
+                    ${history.map(order => this.createOrderSummary(order)).join('')}
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        modal.style.display = 'block';
+
+        // Atualizar item favorito
+        const mostOrdered = await this.getMostOrderedItems();
+        if (mostOrdered.length > 0) {
+            modal.querySelector('.favorite-item').innerHTML = `
+                <span class="stat-label">Seu Favorito</span>
+                <span class="stat-text">${mostOrdered[0].name}</span>
+                <span class="stat-subtext">Pedido ${mostOrdered[0].count} vezes</span>
+            `;
+        }
+
+        // Adicionar event listeners
+        modal.querySelector('.close-modal').onclick = () => {
+            modal.remove();
+        };
+    }
+
+    async repeatOrder(order) {
+        // Limpar carrinho atual
+        cart = [];
+        
+        // Adicionar itens do pedido anterior
+        order.items.forEach(item => {
+            addToCart(item, item.selectedToppings || []);
+        });
+
+        // Fechar modal do histórico
+        document.getElementById('timeModal')?.remove();
+        
+        // Mostrar carrinho
+        showCartModal();
+        showNotification('Pedido anterior adicionado ao carrinho!');
+    }
+}
+    // Instanciar o Time Machine
+const timeMachine = new TimeMachine();
+
+// Modificar a função handleDeliveryInfo existente
+const originalHandleDeliveryInfo = handleDeliveryInfo;
+handleDeliveryInfo = async function(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const deliveryInfo = Object.fromEntries(formData);
+
+    // Identificar cliente pelo WhatsApp
+    await timeMachine.identifyCustomer(customerInfo.whatsapp);
+
+    // Salvar pedido no histórico
+    const orderData = {
+        items: cart,
+        total: cart.reduce((total, item) => total + item.price, 0),
+        deliveryInfo,
+        customerInfo
+    };
+    await timeMachine.saveOrder(orderData);
+
+    // Continuar com o fluxo original
+    return originalHandleDeliveryInfo.call(this, e);
+};
+
 function updateCustomerAndDeliveryInfo(customer, delivery) {
     customerInfo = customer;
     deliveryInfo = delivery;
@@ -4391,237 +4623,6 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
            document.getElementById('productModal').style.display = 'none';
        }
    });
-    class TimeMachine {
-    constructor() {
-        this.db = firebase.firestore();
-        this.currentCustomer = null;
-        this.deviceFingerprint = null;
-        this.setupFingerprint();
-    }
-
-    async setupFingerprint() {
-        const components = [
-            navigator.userAgent,
-            navigator.language,
-            new Date().getTimezoneOffset(),
-            screen.width,
-            screen.height,
-            navigator.hardwareConcurrency
-        ];
-        const fingerprint = components.join('|');
-        const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(fingerprint));
-        this.deviceFingerprint = Array.from(new Uint8Array(hashBuffer))
-            .map(b => b.toString(16).padStart(2, '0'))
-            .join('');
-    }
-
-    async identifyCustomer(phone) {
-        try {
-            const customerRef = this.db.collection('customers').doc(phone);
-            const doc = await customerRef.get();
-            
-            if (!doc.exists) {
-                await customerRef.set({
-                    phone,
-                    devices: [this.deviceFingerprint],
-                    created: firebase.firestore.FieldValue.serverTimestamp(),
-                    orders: []
-                });
-            } else if (!doc.data().devices.includes(this.deviceFingerprint)) {
-                await customerRef.update({
-                    devices: firebase.firestore.FieldValue.arrayUnion(this.deviceFingerprint)
-                });
-            }
-            
-            this.currentCustomer = phone;
-            return true;
-        } catch (error) {
-            console.error('Erro ao identificar cliente:', error);
-            return false;
-        }
-    }
-
-    async saveOrder(orderData) {
-        if (!this.currentCustomer) return false;
-        
-        try {
-            const orderWithTimestamp = {
-                ...orderData,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                deviceFingerprint: this.deviceFingerprint
-            };
-
-            await this.db.collection('customers').doc(this.currentCustomer)
-                .update({
-                    orders: firebase.firestore.FieldValue.arrayUnion(orderWithTimestamp)
-                });
-
-            return true;
-        } catch (error) {
-            console.error('Erro ao salvar pedido:', error);
-            return false;
-        }
-    }
-
-    async getOrderHistory() {
-        if (!this.currentCustomer) return [];
-        
-        try {
-            const doc = await this.db.collection('customers').doc(this.currentCustomer).get();
-            if (!doc.exists) return [];
-            
-            return doc.data().orders.sort((a, b) => b.timestamp - a.timestamp);
-        } catch (error) {
-            console.error('Erro ao buscar histórico:', error);
-            return [];
-        }
-    }
-
-    async getMostOrderedItems() {
-        if (!this.currentCustomer) return [];
-        
-        try {
-            const history = await this.getOrderHistory();
-            const itemCount = {};
-            
-            history.forEach(order => {
-                order.items.forEach(item => {
-                    itemCount[item.name] = (itemCount[item.name] || 0) + 1;
-                });
-            });
-
-            return Object.entries(itemCount)
-                .sort(([,a], [,b]) => b - a)
-                .slice(0, 5)
-                .map(([name, count]) => ({ name, count }));
-        } catch (error) {
-            console.error('Erro ao buscar itens mais pedidos:', error);
-            return [];
-        }
-    }
-}
-        createOrderSummary(order) {
-        const date = order.timestamp.toDate();
-        const formattedDate = date.toLocaleDateString('pt-BR');
-        const formattedTime = date.toLocaleTimeString('pt-BR');
-
-        return `
-            <div class="order-history-card">
-                <div class="order-header">
-                    <span class="order-date">${formattedDate} às ${formattedTime}</span>
-                    <span class="order-total">R$ ${order.total.toFixed(2)}</span>
-                </div>
-                <div class="order-items">
-                    ${order.items.map(item => `
-                        <div class="history-item">
-                            <span class="item-name">${item.name}</span>
-                            ${item.selectedToppings?.length ? 
-                                `<span class="item-toppings">Acompanhamentos: ${item.selectedToppings.join(', ')}</span>` 
-                                : ''
-                            }
-                        </div>
-                    `).join('')}
-                </div>
-                <button class="repeat-order-btn" onclick="timeMachine.repeatOrder(${JSON.stringify(order)})">
-                    Pedir Novamente
-                </button>
-            </div>
-        `;
-    }
-
-    async showOrderHistory() {
-        const history = await this.getOrderHistory();
-        if (history.length === 0) {
-            showNotification('Você ainda não fez nenhum pedido');
-            return;
-        }
-
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.id = 'timeModal';
-        
-        modal.innerHTML = `
-            <div class="modal-content time-machine-content">
-                <div class="modal-header">
-                    <h2>Sua História com a Cabana Açaí</h2>
-                    <button class="close-modal">&times;</button>
-                </div>
-                <div class="time-machine-stats">
-                    <div class="stat-item">
-                        <span class="stat-number">${history.length}</span>
-                        <span class="stat-label">Pedidos Feitos</span>
-                    </div>
-                    <div class="stat-item favorite-item">
-                        <span class="stat-label">Carregando seu favorito...</span>
-                    </div>
-                </div>
-                <div class="order-history-container">
-                    ${history.map(order => this.createOrderSummary(order)).join('')}
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-        modal.style.display = 'block';
-
-        // Atualizar item favorito
-        const mostOrdered = await this.getMostOrderedItems();
-        if (mostOrdered.length > 0) {
-            modal.querySelector('.favorite-item').innerHTML = `
-                <span class="stat-label">Seu Favorito</span>
-                <span class="stat-text">${mostOrdered[0].name}</span>
-                <span class="stat-subtext">Pedido ${mostOrdered[0].count} vezes</span>
-            `;
-        }
-
-        // Adicionar event listeners
-        modal.querySelector('.close-modal').onclick = () => {
-            modal.remove();
-        };
-    }
-
-    async repeatOrder(order) {
-        // Limpar carrinho atual
-        cart = [];
-        
-        // Adicionar itens do pedido anterior
-        order.items.forEach(item => {
-            addToCart(item, item.selectedToppings || []);
-        });
-
-        // Fechar modal do histórico
-        document.getElementById('timeModal')?.remove();
-        
-        // Mostrar carrinho
-        showCartModal();
-        showNotification('Pedido anterior adicionado ao carrinho!');
-    }
-}
-    // Instanciar o Time Machine
-const timeMachine = new TimeMachine();
-
-// Modificar a função handleDeliveryInfo existente
-const originalHandleDeliveryInfo = handleDeliveryInfo;
-handleDeliveryInfo = async function(e) {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const deliveryInfo = Object.fromEntries(formData);
-
-    // Identificar cliente pelo WhatsApp
-    await timeMachine.identifyCustomer(customerInfo.whatsapp);
-
-    // Salvar pedido no histórico
-    const orderData = {
-        items: cart,
-        total: cart.reduce((total, item) => total + item.price, 0),
-        deliveryInfo,
-        customerInfo
-    };
-    await timeMachine.saveOrder(orderData);
-
-    // Continuar com o fluxo original
-    return originalHandleDeliveryInfo.call(this, e);
-};
 
 // Inicializar botão de histórico
 document.addEventListener('DOMContentLoaded', () => {
