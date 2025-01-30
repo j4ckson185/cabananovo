@@ -1900,6 +1900,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+    // Adicionar botão de histórico ao carregar a página
+document.addEventListener('DOMContentLoaded', () => {
+    const historyButton = document.createElement('button');
+    historyButton.innerHTML = '<i class="fas fa-history"></i>';
+    historyButton.className = 'login-btn history-btn';
+    historyButton.style.cssText = `
+        background: none;
+        border: none;
+        color: var(--text);
+        font-size: 2rem;
+        cursor: pointer;
+        transition: color 0.3s ease;
+        padding: 0.5rem;
+        display: none; /* Inicialmente escondido */
+    `;
+    historyButton.addEventListener('click', showOrderHistory);
+    
+    // Adicionar ao header
+    const headerIcons = document.querySelector('.header-icons');
+    if (headerIcons) {
+        headerIcons.insertBefore(historyButton, headerIcons.firstChild);
+    }
+
+    // Verificar se já existe um usuário logado
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    if (userData && userData.whatsapp) {
+        historyButton.style.display = 'block';
+    }
+});
+
 // Replace the handleDeliveryInfo function in your digital menu with this version:
 async function handleDeliveryInfo(e) {
     e.preventDefault();
@@ -2609,7 +2639,19 @@ function checkStoreStatus() {
         });
 }
 
-function showOrderHistory(whatsapp) {
+async function showOrderHistory() {
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    if (!userData || !userData.whatsapp) {
+        showNotification('Faça login para ver seu histórico');
+        return;
+    }
+
+    console.log('Dados do usuário encontrados:', userData);
+    await displayOrderHistory(userData.whatsapp);
+}
+
+// Função que exibe o histórico
+async function displayOrderHistory(whatsapp) {
     // Limpar o número do WhatsApp
     const cleanWhatsapp = whatsapp.replace(/\D/g, '');
     console.log('Buscando pedidos para:', cleanWhatsapp);
@@ -2649,69 +2691,45 @@ function showOrderHistory(whatsapp) {
         padding: 1rem;
     `;
 
-    // Mostrar loading
-    ordersList.innerHTML = '<p style="text-align: center; color: var(--text);">Carregando pedidos...</p>';
+    try {
+        const snapshot = await realtimeDB.ref('orders').once('value');
+        const allOrders = snapshot.val();
+        console.log('Todos os pedidos:', allOrders);
 
-    // Buscar todos os pedidos
-    realtimeDB.ref('orders')
-        .once('value')
-        .then(snapshot => {
-            const allOrders = snapshot.val();
-            console.log('Todos os pedidos:', allOrders);
+        if (!allOrders) {
+            ordersList.innerHTML = `
+                <p style="text-align: center; color: var(--text);">
+                    Nenhum pedido encontrado.
+                </p>
+            `;
+            return;
+        }
 
-            if (!allOrders) {
-                ordersList.innerHTML = `
-                    <p style="text-align: center; color: var(--text);">
-                        Nenhum pedido encontrado.
-                    </p>
-                `;
-                return;
-            }
+        // Filtrar pedidos do usuário
+        const userOrders = Object.entries(allOrders)
+            .filter(([_, order]) => {
+                const orderPhone = (
+                    order.customerInfo?.whatsapp ||
+                    order.customer?.customerPhone ||
+                    ''
+                ).replace(/\D/g, '');
+                console.log('Comparando telefones:', orderPhone, cleanWhatsapp);
+                return orderPhone === cleanWhatsapp;
+            })
+            .map(([key, order]) => ({...order, key}))
+            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-            // Filtrar e processar pedidos
-            const userOrders = Object.entries(allOrders)
-                .filter(([_, order]) => {
-                    // Verificar todos os possíveis lugares onde o número pode estar
-                    const phones = [
-                        order.customerInfo?.whatsapp,
-                        order.customer?.customerPhone,
-                        order.customerPhone,
-                        order.deliveryInfo?.whatsapp,
-                        order.phone
-                    ].map(phone => phone?.replace(/\D/g, '')).filter(Boolean);
+        console.log('Pedidos do usuário:', userOrders);
 
-                    console.log('Números encontrados no pedido:', phones);
-                    console.log('Comparando com:', cleanWhatsapp);
-                    
-                    return phones.some(phone => phone === cleanWhatsapp);
-                })
-                .map(([key, order]) => ({...order, key}))
-                .sort((a, b) => {
-                    const dateA = new Date(a.creationDate || a.timestamp || 0);
-                    const dateB = new Date(b.creationDate || b.timestamp || 0);
-                    return dateB - dateA;
-                });
-
-            console.log('Pedidos filtrados do usuário:', userOrders);
-
-            if (userOrders.length === 0) {
-                ordersList.innerHTML = `
-                    <p style="text-align: center; color: var(--text);">
-                        Nenhum pedido encontrado para este número (${cleanWhatsapp}).
-                        <br><br>
-                        Se você fez pedidos recentemente, tente fazer login com o número
-                        que você usou para fazer o pedido.
-                    </p>
-                `;
-                return;
-            }
-
-            // Limpar e preencher a lista
+        if (userOrders.length === 0) {
+            ordersList.innerHTML = `
+                <p style="text-align: center; color: var(--text);">
+                    Nenhum pedido encontrado para seu número.
+                </p>
+            `;
+        } else {
             ordersList.innerHTML = '';
-
             userOrders.forEach(order => {
-                console.log('Processando pedido:', order);
-                
                 const orderCard = document.createElement('div');
                 orderCard.style.cssText = `
                     background: var(--glass);
@@ -2721,60 +2739,37 @@ function showOrderHistory(whatsapp) {
                     margin-bottom: 1.5rem;
                 `;
 
-                const orderDate = new Date(order.creationDate || order.timestamp || 0).toLocaleString('pt-BR');
-                const orderStatus = order.status === 'open' ? 'Em aberto' : 
-                                  order.status === 'completed' ? 'Concluído' : 
-                                  order.status || 'Em processamento';
-
-                // Processar itens do pedido
-                let itemsHtml = '<div style="margin: 1rem 0;">';
-                if (order.items && Array.isArray(order.items)) {
-                    itemsHtml += `
-                        <strong style="color: white; display: block; margin-bottom: 0.8rem;">
-                            Itens do Pedido:
-                        </strong>
-                        <ul style="list-style: none; padding: 0; margin: 0;">
-                    `;
-                    
-                    order.items.forEach(item => {
-                        console.log('Processando item:', item);
-                        itemsHtml += `
-                            <li style="color: var(--text); margin-bottom: 0.8rem; padding-left: 1rem; border-left: 2px solid var(--accent);">
-                                <div style="font-weight: 500;">${item.name}</div>
-                                ${item.selectedToppings?.length ? 
-                                    `<div style="font-size: 0.9rem; margin-top: 0.3rem;">
-                                        Acompanhamentos: ${item.selectedToppings.join(', ')}
-                                    </div>` : ''}
-                                ${item.selectedExtras?.length ? 
-                                    `<div style="font-size: 0.9rem; margin-top: 0.3rem;">
-                                        Extras: ${item.selectedExtras.join(', ')}
-                                    </div>` : ''}
-                                <div style="color: var(--accent); margin-top: 0.3rem;">
-                                    R$ ${parseFloat(item.price).toFixed(2)}
-                                </div>
-                            </li>
-                        `;
-                    });
-                    itemsHtml += '</ul>';
-                }
-                itemsHtml += '</div>';
-
-                const total = order.total || order.orderTotal || 
-                            (order.items || []).reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
+                const orderDate = new Date(order.timestamp).toLocaleString();
+                const itemsList = order.items?.map(item => `
+                    <li style="color: var(--text); margin-bottom: 0.8rem; padding-left: 1rem;">
+                        <div style="font-weight: 500;">${item.name}</div>
+                        ${item.selectedToppings?.length ? 
+                            `<div style="font-size: 0.9rem;">
+                                Acompanhamentos: ${item.selectedToppings.join(', ')}
+                            </div>` : ''}
+                        ${item.selectedExtras?.length ? 
+                            `<div style="font-size: 0.9rem;">
+                                Extras: ${item.selectedExtras.join(', ')}
+                            </div>` : ''}
+                        <div style="color: var(--accent);">
+                            R$ ${parseFloat(item.price).toFixed(2)}
+                        </div>
+                    </li>
+                `).join('') || '';
 
                 orderCard.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                        <div>
-                            <h3 style="color: white; margin-bottom: 0.5rem;">Pedido de ${orderDate}</h3>
-                            <p style="color: var(--text); background: var(--glass); display: inline-block; padding: 0.3rem 0.8rem; border-radius: 15px;">
-                                Status: ${orderStatus}
-                            </p>
-                        </div>
-                        <div style="color: var(--accent); font-size: 1.2rem; font-weight: bold;">
-                            R$ ${parseFloat(total).toFixed(2)}
+                    <div style="display: flex; justify-content: space-between;">
+                        <h3 style="color: white;">${orderDate}</h3>
+                        <div style="color: var(--accent); font-weight: bold;">
+                            R$ ${parseFloat(order.total || order.orderTotal).toFixed(2)}
                         </div>
                     </div>
-                    ${itemsHtml}
+                    <p style="color: var(--text); margin: 0.5rem 0;">
+                        Status: ${order.status || 'Em processamento'}
+                    </p>
+                    <ul style="list-style: none; padding: 0; margin: 1rem 0;">
+                        ${itemsList}
+                    </ul>
                     <button onclick="repeatOrder('${order.key}')" class="modal-btn" style="
                         background: var(--gradient);
                         color: white;
@@ -2784,7 +2779,6 @@ function showOrderHistory(whatsapp) {
                         cursor: pointer;
                         width: 100%;
                         font-weight: 500;
-                        margin-top: 1rem;
                         transition: transform 0.2s ease;
                     ">
                         <i class="fas fa-redo-alt" style="margin-right: 0.5rem;"></i>
@@ -2794,15 +2788,15 @@ function showOrderHistory(whatsapp) {
 
                 ordersList.appendChild(orderCard);
             });
-        })
-        .catch(error => {
-            console.error('Erro ao buscar pedidos:', error);
-            ordersList.innerHTML = `
-                <p style="text-align: center; color: var(--error);">
-                    Erro ao carregar pedidos. Por favor, tente novamente.
-                </p>
-            `;
-        });
+        }
+    } catch (error) {
+        console.error('Erro ao buscar pedidos:', error);
+        ordersList.innerHTML = `
+            <p style="text-align: center; color: var(--error);">
+                Erro ao carregar pedidos. Por favor, tente novamente.
+            </p>
+        `;
+    }
 
     content.appendChild(closeBtn);
     content.appendChild(title);
@@ -3042,18 +3036,13 @@ function repeatOrder(orderId) {
     }
 
      // Função para atualizar status de login
-    function updateLoginStatus() {
-        const userData = JSON.parse(localStorage.getItem('userData'));
-        const loginButton = document.querySelector('.login-btn');
-        
-        if (userData) {
-            loginButton.innerHTML = `<i class="fas fa-user"></i> ${userData.fullName.split(' ')[0]}`;
-            loginButton.onclick = showUserProfile;
-        } else {
-            loginButton.innerHTML = `<i class="fas fa-user"></i>`;
-            loginButton.onclick = () => showUserModal();
-        }
+   function updateLoginStatus() {
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    const historyBtn = document.querySelector('.history-btn');
+    if (historyBtn) {
+        historyBtn.style.display = userData && userData.whatsapp ? 'block' : 'none';
     }
+}
 
        // Função para mostrar perfil do usuário
     function showUserProfile() {
