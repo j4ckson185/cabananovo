@@ -2671,10 +2671,19 @@ function showOrderHistory(whatsapp) {
             // Filtrar e processar pedidos
             const userOrders = Object.entries(allOrders)
                 .filter(([_, order]) => {
-                    const orderPhone = (order.customerInfo?.whatsapp || 
-                                     order.customer?.customerPhone || 
-                                     '').replace(/\D/g, '');
-                    return orderPhone === cleanWhatsapp;
+                    // Verificar todos os possíveis lugares onde o número pode estar
+                    const phones = [
+                        order.customerInfo?.whatsapp,
+                        order.customer?.customerPhone,
+                        order.customerPhone,
+                        order.deliveryInfo?.whatsapp,
+                        order.phone
+                    ].map(phone => phone?.replace(/\D/g, '')).filter(Boolean);
+
+                    console.log('Números encontrados no pedido:', phones);
+                    console.log('Comparando com:', cleanWhatsapp);
+                    
+                    return phones.some(phone => phone === cleanWhatsapp);
                 })
                 .map(([key, order]) => ({...order, key}))
                 .sort((a, b) => {
@@ -2683,12 +2692,15 @@ function showOrderHistory(whatsapp) {
                     return dateB - dateA;
                 });
 
-            console.log('Pedidos do usuário:', userOrders);
+            console.log('Pedidos filtrados do usuário:', userOrders);
 
             if (userOrders.length === 0) {
                 ordersList.innerHTML = `
                     <p style="text-align: center; color: var(--text);">
-                        Nenhum pedido encontrado para este número.
+                        Nenhum pedido encontrado para este número (${cleanWhatsapp}).
+                        <br><br>
+                        Se você fez pedidos recentemente, tente fazer login com o número
+                        que você usou para fazer o pedido.
                     </p>
                 `;
                 return;
@@ -2698,6 +2710,8 @@ function showOrderHistory(whatsapp) {
             ordersList.innerHTML = '';
 
             userOrders.forEach(order => {
+                console.log('Processando pedido:', order);
+                
                 const orderCard = document.createElement('div');
                 orderCard.style.cssText = `
                     background: var(--glass);
@@ -2707,7 +2721,7 @@ function showOrderHistory(whatsapp) {
                     margin-bottom: 1.5rem;
                 `;
 
-                const orderDate = new Date(order.creationDate || order.timestamp).toLocaleString('pt-BR');
+                const orderDate = new Date(order.creationDate || order.timestamp || 0).toLocaleString('pt-BR');
                 const orderStatus = order.status === 'open' ? 'Em aberto' : 
                                   order.status === 'completed' ? 'Concluído' : 
                                   order.status || 'Em processamento';
@@ -2723,6 +2737,7 @@ function showOrderHistory(whatsapp) {
                     `;
                     
                     order.items.forEach(item => {
+                        console.log('Processando item:', item);
                         itemsHtml += `
                             <li style="color: var(--text); margin-bottom: 0.8rem; padding-left: 1rem; border-left: 2px solid var(--accent);">
                                 <div style="font-weight: 500;">${item.name}</div>
@@ -2744,7 +2759,6 @@ function showOrderHistory(whatsapp) {
                 }
                 itemsHtml += '</div>';
 
-                // Calcular total
                 const total = order.total || order.orderTotal || 
                             (order.items || []).reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
 
@@ -2777,15 +2791,6 @@ function showOrderHistory(whatsapp) {
                         Repetir este pedido
                     </button>
                 `;
-
-                // Adicionar hover effect no botão
-                const repeatBtn = orderCard.querySelector('.modal-btn');
-                repeatBtn.addEventListener('mouseover', () => {
-                    repeatBtn.style.transform = 'translateY(-2px)';
-                });
-                repeatBtn.addEventListener('mouseout', () => {
-                    repeatBtn.style.transform = 'translateY(0)';
-                });
 
                 ordersList.appendChild(orderCard);
             });
