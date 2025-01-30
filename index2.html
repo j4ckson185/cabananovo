@@ -1271,29 +1271,6 @@ header {
         height: 120px;
     }
 }
-
-.header-icons {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-}
-
-.login-btn {
-    background: none;
-    border: none;
-    color: var(--text);
-    font-size: 2rem;
-    cursor: pointer;
-    transition: color 0.3s ease;
-    padding: 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.login-btn:hover {
-    color: var(--accent);
-}
     
 </style>
 </head>
@@ -1301,23 +1278,18 @@ header {
     <div class="background-animation"></div>
     
     <header>
-<div class="header-content">
-    <div class="logo-container">
-        <div class="logo">
-            <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Cabana Açaí Logo">
+        <div class="header-content">
+            <div class="logo-container">
+                <div class="logo">
+                    <img src="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg" alt="Cabana Açaí Logo">
+                </div>
+                <h1 class="store-name">Cabana Açaí</h1>
+            </div>
+            <div class="cart-icon">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count">0</span>
+            </div>
         </div>
-        <h1 class="store-name">Cabana Açaí</h1>
-    </div>
-    <div class="header-icons">
-        <div class="cart-icon">
-            <i class="fas fa-shopping-cart"></i>
-            <span class="cart-count">0</span>
-        </div>
-        <button class="login-btn">
-            <i class="fas fa-user"></i>
-        </button>
-    </div>
-</div>
     </header>
     
     <nav class="categories">
@@ -1900,35 +1872,188 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-    // Adicionar botão de histórico ao carregar a página
+    // Primeiro, vamos adicionar o botão de ver pedidos no header
 document.addEventListener('DOMContentLoaded', () => {
-    const historyButton = document.createElement('button');
-    historyButton.innerHTML = '<i class="fas fa-history"></i>';
-    historyButton.className = 'login-btn history-btn';
-    historyButton.style.cssText = `
-        background: none;
-        border: none;
-        color: var(--text);
-        font-size: 2rem;
-        cursor: pointer;
-        transition: color 0.3s ease;
-        padding: 0.5rem;
-        display: none; /* Inicialmente escondido */
-    `;
-    historyButton.addEventListener('click', showOrderHistory);
-    
-    // Adicionar ao header
     const headerIcons = document.querySelector('.header-icons');
     if (headerIcons) {
-        headerIcons.insertBefore(historyButton, headerIcons.firstChild);
-    }
-
-    // Verificar se já existe um usuário logado
-    const userData = JSON.parse(localStorage.getItem('userData'));
-    if (userData && userData.whatsapp) {
-        historyButton.style.display = 'block';
+        const orderHistoryButton = document.createElement('button');
+        orderHistoryButton.className = 'login-btn';
+        orderHistoryButton.innerHTML = '<i class="fas fa-list"></i>';
+        orderHistoryButton.style.marginLeft = '1rem';
+        orderHistoryButton.title = 'Ver Meus Pedidos';
+        orderHistoryButton.onclick = showOrderLookupModal;
+        headerIcons.appendChild(orderHistoryButton);
     }
 });
+
+// Função para mostrar modal de consulta de pedidos
+function showOrderLookupModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <button class="close-modal" onclick="this.closest('.modal').remove()">&times;</button>
+            <h2 style="color: white; text-align: center; margin-bottom: 2rem;">Consultar Meus Pedidos</h2>
+            
+            <form id="orderLookupForm" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <div class="form-group">
+                    <label>WhatsApp usado no pedido</label>
+                    <input type="tel" id="lookupWhatsapp" required 
+                           placeholder="(84) 98888-8888"
+                           style="width: 100%; padding: 0.8rem; background: var(--glass); 
+                                  border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+                </div>
+                
+                <button type="submit" class="modal-btn" 
+                        style="background: var(--gradient); color: white; border: none; 
+                               padding: 1rem; border-radius: 8px; cursor: pointer;">
+                    Buscar Pedidos
+                </button>
+            </form>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Adicionar máscara ao campo de WhatsApp
+    const whatsappInput = modal.querySelector('#lookupWhatsapp');
+    whatsappInput.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+        
+        // Formatar o número
+        if (value.length >= 2) {
+            value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+            if (value.length >= 10) {
+                value = `${value.slice(0, 9)}${value.slice(9)}`;
+            }
+        }
+        
+        e.target.value = value;
+    });
+
+    // Adicionar handler do formulário
+    const form = modal.querySelector('#orderLookupForm');
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const whatsapp = whatsappInput.value.replace(/\D/g, '');
+        await findOrders(whatsapp);
+    };
+}
+
+// Função para buscar e exibir os pedidos
+async function findOrders(whatsapp) {
+    console.log('Buscando pedidos para:', whatsapp);
+    
+    try {
+        const ordersRef = realtimeDB.ref('orders');
+        const snapshot = await ordersRef.once('value');
+        const allOrders = snapshot.val() || {};
+        
+        // Filtrar pedidos pelo WhatsApp
+        const userOrders = Object.entries(allOrders)
+            .filter(([_, order]) => {
+                const orderPhone = (
+                    order.customerInfo?.whatsapp ||
+                    order.customer?.customerPhone ||
+                    order.deliveryInfo?.whatsapp ||
+                    ''
+                ).replace(/\D/g, '');
+                
+                return orderPhone === whatsapp;
+            })
+            .map(([key, order]) => ({...order, key}))
+            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+        console.log('Pedidos encontrados:', userOrders);
+        
+        // Criar modal com os pedidos
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'block';
+
+        let ordersHtml = '';
+        if (userOrders.length === 0) {
+            ordersHtml = `
+                <p style="text-align: center; color: var(--text); margin: 2rem 0;">
+                    Nenhum pedido encontrado para este número.<br>
+                    Verifique se digitou o mesmo número usado no pedido.
+                </p>
+            `;
+        } else {
+            ordersHtml = userOrders.map(order => {
+                const date = new Date(order.timestamp || order.creationDate).toLocaleString();
+                const items = order.items?.map(item => `
+                    <div style="margin: 0.5rem 0; padding-left: 1rem; border-left: 2px solid var(--accent);">
+                        <div style="font-weight: 500;">${item.name}</div>
+                        ${item.selectedToppings?.length ? 
+                            `<div style="font-size: 0.9rem;">Acompanhamentos: ${item.selectedToppings.join(', ')}</div>` : ''}
+                        ${item.selectedExtras?.length ? 
+                            `<div style="font-size: 0.9rem;">Extras: ${item.selectedExtras.join(', ')}</div>` : ''}
+                        <div style="color: var(--accent);">R$ ${parseFloat(item.price).toFixed(2)}</div>
+                    </div>
+                `).join('') || '';
+
+                return `
+                    <div style="background: var(--glass); border: 1px solid var(--glass-border); 
+                              border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="color: white; margin-bottom: 0.5rem;">Pedido de ${date}</h3>
+                                <p style="color: var(--text);">Status: ${order.status || 'Em processamento'}</p>
+                            </div>
+                            <div style="color: var(--accent); font-weight: bold; font-size: 1.2rem;">
+                                R$ ${parseFloat(order.total || order.orderTotal).toFixed(2)}
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            ${items}
+                        </div>
+                        <button onclick="repeatOrder('${order.key}')" class="modal-btn" style="
+                            background: var(--gradient);
+                            color: white;
+                            border: none;
+                            padding: 0.8rem;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            width: 100%;
+                            margin-top: 1rem;
+                            font-weight: 500;
+                        ">
+                            <i class="fas fa-redo-alt" style="margin-right: 0.5rem;"></i>
+                            Repetir este pedido
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 800px;">
+                <button class="close-modal" onclick="this.closest('.modal').remove()">&times;</button>
+                <h2 style="color: white; text-align: center; margin-bottom: 2rem;">
+                    Seus Pedidos
+                </h2>
+                <div style="max-height: 70vh; overflow-y: auto; padding: 1rem;">
+                    ${ordersHtml}
+                </div>
+            </div>
+        `;
+
+        // Remover modal anterior de busca
+        const oldModal = document.querySelector('.modal');
+        if (oldModal) oldModal.remove();
+
+        // Mostrar nova modal
+        document.body.appendChild(modal);
+
+    } catch (error) {
+        console.error('Erro ao buscar pedidos:', error);
+        showNotification('Erro ao buscar pedidos. Tente novamente.');
+    }
+}
 
 // Replace the handleDeliveryInfo function in your digital menu with this version:
 async function handleDeliveryInfo(e) {
@@ -2637,552 +2762,6 @@ function checkStoreStatus() {
         .catch(error => {
             console.error('Erro ao verificar status da loja:', error);
         });
-}
-
-async function displayOrderHistory(whatsapp) {
-    // Limpar o número do WhatsApp
-    const cleanWhatsapp = whatsapp.replace(/\D/g, '');
-    console.log('Buscando pedidos para:', cleanWhatsapp);
-
-    // Criar modal
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-
-    const content = document.createElement('div');
-    content.className = 'modal-content';
-    content.style.cssText = `
-        max-width: 800px;
-        width: 90%;
-        padding: 2rem;
-        background: var(--surface);
-        border-radius: 15px;
-    `;
-
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'close-modal';
-    closeBtn.innerHTML = '&times;';
-    closeBtn.onclick = () => modal.remove();
-
-    const title = document.createElement('h2');
-    title.textContent = 'Seus Pedidos';
-    title.style.cssText = `
-        color: white;
-        margin-bottom: 1.5rem;
-        text-align: center;
-    `;
-
-    const ordersList = document.createElement('div');
-    ordersList.style.cssText = `
-        max-height: 70vh;
-        overflow-y: auto;
-        padding: 1rem;
-    `;
-
-    ordersList.innerHTML = '<p style="text-align: center; color: var(--text);">Carregando pedidos...</p>';
-
-    try {
-        // Buscar pedidos usando o número do WhatsApp como referência
-        const query = realtimeDB.ref('orders')
-            .orderByChild('customerInfo/whatsapp')
-            .equalTo(cleanWhatsapp);
-
-        const snapshot = await query.once('value');
-        const orders = snapshot.val();
-        
-        console.log('Resultado da busca primária:', orders);
-
-        // Se não encontrou na primeira busca, tenta em outros campos
-        if (!orders) {
-            // Tenta buscar por customer/customerPhone
-            const query2 = realtimeDB.ref('orders')
-                .orderByChild('customer/customerPhone')
-                .equalTo(cleanWhatsapp);
-            
-            const snapshot2 = await query2.once('value');
-            const orders2 = snapshot2.val();
-            console.log('Resultado da busca secundária:', orders2);
-
-            if (orders2) {
-                Object.assign(orders, orders2);
-            }
-        }
-
-        if (!orders) {
-            console.log('Nenhum pedido encontrado, tentando busca completa');
-            // Se ainda não encontrou, busca todos os pedidos e filtra
-            const allOrdersSnapshot = await realtimeDB.ref('orders').once('value');
-            const allOrders = allOrdersSnapshot.val();
-            
-            if (allOrders) {
-                const matchingOrders = Object.entries(allOrders)
-                    .filter(([_, order]) => {
-                        const phones = [
-                            order.customerInfo?.whatsapp,
-                            order.customer?.customerPhone,
-                            order.deliveryInfo?.whatsapp,
-                        ].map(phone => (phone || '').replace(/\D/g, ''));
-                        
-                        return phones.includes(cleanWhatsapp);
-                    })
-                    .reduce((acc, [key, value]) => {
-                        acc[key] = value;
-                        return acc;
-                    }, {});
-
-                if (Object.keys(matchingOrders).length > 0) {
-                    Object.assign(orders || {}, matchingOrders);
-                }
-            }
-        }
-
-        // Processar resultados
-        if (!orders || Object.keys(orders).length === 0) {
-            ordersList.innerHTML = `
-                <p style="text-align: center; color: var(--text);">
-                    Nenhum pedido encontrado para seu número.
-                </p>
-            `;
-        } else {
-            // Converter para array e ordenar por data
-            const ordersArray = Object.entries(orders)
-                .map(([key, order]) => ({...order, key}))
-                .sort((a, b) => {
-                    const dateA = new Date(a.timestamp || a.creationDate || 0);
-                    const dateB = new Date(b.timestamp || b.creationDate || 0);
-                    return dateB - dateA;
-                });
-
-            ordersList.innerHTML = '';
-            ordersArray.forEach(order => {
-                const orderCard = document.createElement('div');
-                orderCard.style.cssText = `
-                    background: var(--glass);
-                    border: 1px solid var(--glass-border);
-                    border-radius: 10px;
-                    padding: 1.5rem;
-                    margin-bottom: 1.5rem;
-                `;
-
-                const orderDate = order.timestamp || order.creationDate ? 
-                    new Date(order.timestamp || order.creationDate).toLocaleString() :
-                    'Data não disponível';
-
-                const total = order.total || order.orderTotal || 0;
-
-                // Construir lista de itens
-                const itemsList = (order.items || [])
-                    .map(item => `
-                        <li style="color: var(--text); margin-bottom: 0.8rem; padding-left: 1rem;">
-                            <div style="font-weight: 500;">${item.name}</div>
-                            ${item.selectedToppings?.length ? 
-                                `<div style="font-size: 0.9rem;">
-                                    Acompanhamentos: ${item.selectedToppings.join(', ')}
-                                </div>` : ''}
-                            ${item.selectedExtras?.length ? 
-                                `<div style="font-size: 0.9rem;">
-                                    Extras: ${item.selectedExtras.join(', ')}
-                                </div>` : ''}
-                            <div style="color: var(--accent);">
-                                R$ ${parseFloat(item.price || 0).toFixed(2)}
-                            </div>
-                        </li>
-                    `).join('');
-
-                orderCard.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
-                        <div>
-                            <h3 style="color: white; margin-bottom: 0.5rem;">Pedido de ${orderDate}</h3>
-                            <p style="color: var(--text);">Status: ${order.status || 'Em processamento'}</p>
-                        </div>
-                        <div style="color: var(--accent); font-weight: bold; font-size: 1.2rem;">
-                            R$ ${parseFloat(total).toFixed(2)}
-                        </div>
-                    </div>
-                    ${order.items ? `
-                        <div style="margin: 1rem 0;">
-                            <h4 style="color: white; margin-bottom: 0.8rem;">Itens do Pedido:</h4>
-                            <ul style="list-style: none; padding: 0;">
-                                ${itemsList}
-                            </ul>
-                        </div>
-                    ` : ''}
-                    <button onclick="repeatOrder('${order.key}')" class="modal-btn" style="
-                        background: var(--gradient);
-                        color: white;
-                        border: none;
-                        padding: 0.8rem;
-                        border-radius: 8px;
-                        cursor: pointer;
-                        width: 100%;
-                        font-weight: 500;
-                        transition: transform 0.2s ease;
-                        margin-top: 1rem;
-                    ">
-                        <i class="fas fa-redo-alt" style="margin-right: 0.5rem;"></i>
-                        Repetir este pedido
-                    </button>
-                `;
-
-                ordersList.appendChild(orderCard);
-            });
-        }
-
-    } catch (error) {
-        console.error('Erro ao buscar pedidos:', error);
-        ordersList.innerHTML = `
-            <p style="text-align: center; color: var(--error);">
-                Erro ao carregar pedidos. Por favor, tente novamente.
-            </p>
-        `;
-    }
-
-    content.appendChild(closeBtn);
-    content.appendChild(title);
-    content.appendChild(ordersList);
-    modal.appendChild(content);
-    document.body.appendChild(modal);
-}
-
-function showOrderHistory() {
-    const userData = JSON.parse(localStorage.getItem('userData'));
-    if (!userData || !userData.whatsapp) {
-        showNotification('Faça login para ver seu histórico');
-        return;
-    }
-    
-    console.log('Dados do usuário para busca:', userData);
-    displayOrderHistory(userData.whatsapp);
-}
-
-function repeatOrder(orderId) {
-    realtimeDB.ref(`orders/${orderId}`).once('value')
-        .then(snapshot => {
-            const order = snapshot.val();
-            if (!order || !order.items) {
-                showNotification('Não foi possível recuperar os itens do pedido');
-                return;
-            }
-
-            // Limpar carrinho atual
-            cart = [];
-
-            // Adicionar itens ao carrinho
-            order.items.forEach(item => {
-                cart.push({
-                    name: item.name,
-                    price: parseFloat(item.price),
-                    selectedToppings: item.selectedToppings || [],
-                    selectedExtras: item.selectedExtras || [],
-                    originalPrice: item.originalPrice || item.price
-                });
-            });
-
-            // Atualizar interface
-            updateCartCount();
-            showCartModal();
-            
-            // Fechar modal de histórico
-            const historyModal = document.querySelector('.modal');
-            if (historyModal) historyModal.remove();
-            
-            showNotification('Pedido adicionado ao carrinho!');
-        })
-        .catch(error => {
-            console.error('Erro ao repetir pedido:', error);
-            showNotification('Erro ao repetir pedido');
-        });
-}
-    
-    function showUserModal(type = 'login') {
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-
-    const content = document.createElement('div');
-    content.className = 'modal-content';
-    content.style.cssText = `
-        max-width: 500px;
-        width: 90%;
-        padding: 2rem;
-    `;
-
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'close-modal';
-    closeBtn.innerHTML = '&times;';
-    closeBtn.onclick = () => modal.remove();
-
-    const title = document.createElement('h2');
-    title.style.cssText = `
-        color: white;
-        margin-bottom: 1.5rem;
-        text-align: center;
-        font-size: 1.5rem;
-    `;
-    title.textContent = type === 'login' ? 'Entrar na Conta' : 'Criar Conta';
-
-    const form = document.createElement('form');
-    form.style.cssText = `
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    `;
-
-    if (type === 'register') {
-        form.innerHTML = `
-            <div class="form-group">
-                <label>Nome Completo</label>
-                <input type="text" id="fullName" required 
-                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-            </div>
-            <div class="form-group">
-                <label>WhatsApp com DDD</label>
-                <input type="tel" id="whatsapp" required placeholder="84 987673202"
-                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-            </div>
-            <div class="form-group">
-                <label>Ano de Nascimento</label>
-                <input type="text" id="birthYear" required placeholder="AAAA"
-                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-            </div>
-            <button type="submit" style="
-                background: var(--gradient);
-                color: white;
-                padding: 1rem;
-                border: none;
-                border-radius: 8px;
-                font-weight: 600;
-                cursor: pointer;
-                margin-top: 1rem;
-                transition: transform 0.2s ease;
-            ">Criar Conta</button>
-            <p style="text-align: center; margin-top: 1rem; color: var(--text);">
-                Já tem conta? <a href="#" style="color: var(--accent);" onclick="showUserModal('login'); return false;">Entrar</a>
-            </p>
-        `;
-
-        form.onsubmit = async (e) => {
-            e.preventDefault();
-            const fullName = document.getElementById('fullName').value;
-            const whatsapp = document.getElementById('whatsapp').value.replace(/\D/g, '');
-            const birthYear = document.getElementById('birthYear').value;
-
-            // Validação do ano de nascimento
-            if (birthYear.length !== 4 || !/^\d{4}$/.test(birthYear)) {
-                showNotification('O ano de nascimento deve ser informado com 4 dígitos (ex: 1990)');
-                return;
-            }
-
-            try {
-                const userSnapshot = await realtimeDB.ref('users')
-                    .orderByChild('whatsapp')
-                    .equalTo(whatsapp)
-                    .once('value');
-
-                if (userSnapshot.exists()) {
-                    showNotification('Este número de WhatsApp já está cadastrado');
-                    return;
-                }
-
-                const newUser = {
-                    fullName,
-                    whatsapp,
-                    birthYear,
-                    createdAt: firebase.database.ServerValue.TIMESTAMP,
-                    preferences: {
-                        favoriteTopings: [],
-                        lastOrders: []
-                    }
-                };
-
-                await realtimeDB.ref('users').push(newUser);
-                showNotification('Cadastro realizado com sucesso!');
-                modal.remove();
-
-                // Após o cadastro, fazer o login automaticamente
-                localStorage.setItem('userData', JSON.stringify({
-                    ...newUser,
-                    id: newUser.key
-                }));
-                updateLoginStatus();
-
-            } catch (error) {
-                console.error('Erro ao cadastrar:', error);
-                showNotification('Erro ao cadastrar. Tente novamente.');
-            }
-        };
-    } else {
-        form.innerHTML = `
-            <div class="form-group">
-                <label>WhatsApp com DDD</label>
-                <input type="tel" id="loginWhatsapp" required placeholder="84 987673202"
-                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-            </div>
-            <div class="form-group">
-                <label>Ano de Nascimento</label>
-                <input type="text" id="loginBirthYear" required placeholder="AAAA"
-                    style="width: 100%; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-            </div>
-            <button type="submit" style="
-                background: var(--gradient);
-                color: white;
-                padding: 1rem;
-                border: none;
-                border-radius: 8px;
-                font-weight: 600;
-                cursor: pointer;
-                margin-top: 1rem;
-                transition: transform 0.2s ease;
-            ">Entrar</button>
-            <p style="text-align: center; margin-top: 1rem; color: var(--text);">
-                Não tem conta? <a href="#" style="color: var(--accent);" onclick="showUserModal('register'); return false;">Criar conta</a>
-            </p>
-        `;
-
-        form.onsubmit = async (e) => {
-            e.preventDefault();
-            const whatsapp = document.getElementById('loginWhatsapp').value.replace(/\D/g, '');
-            const birthYear = document.getElementById('loginBirthYear').value;
-
-            // Validação do ano de nascimento
-            if (birthYear.length !== 4 || !/^\d{4}$/.test(birthYear)) {
-                showNotification('O ano de nascimento deve ser informado com 4 dígitos (ex: 1990)');
-                return;
-            }
-
-            try {
-                const userSnapshot = await realtimeDB.ref('users')
-                    .orderByChild('whatsapp')
-                    .equalTo(whatsapp)
-                    .once('value');
-
-                const users = userSnapshot.val();
-                if (!users) {
-                    showNotification('Usuário não encontrado');
-                    return;
-                }
-
-                const userData = Object.values(users)[0];
-                if (userData.birthYear !== birthYear) {
-                    showNotification('Ano de nascimento incorreto');
-                    return;
-                }
-
-                // Armazenar dados do usuário no localStorage para manter logado
-                localStorage.setItem('userData', JSON.stringify(userData));
-                updateLoginStatus();
-
-                showNotification('Login realizado com sucesso!');
-                modal.remove();
-
-                // Após login, mostrar histórico de pedidos
-                showOrderHistory(whatsapp);
-
-            } catch (error) {
-                console.error('Erro ao fazer login:', error);
-                showNotification('Erro ao fazer login. Tente novamente.');
-            }
-        };
-    }
-
-     // Função para atualizar status de login
-   function updateLoginStatus() {
-    const userData = JSON.parse(localStorage.getItem('userData'));
-    const historyBtn = document.querySelector('.history-btn');
-    if (historyBtn) {
-        historyBtn.style.display = userData && userData.whatsapp ? 'block' : 'none';
-    }
-}
-
-       // Função para mostrar perfil do usuário
-    function showUserProfile() {
-        const userData = JSON.parse(localStorage.getItem('userData'));
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.style.display = 'block';
-
-        const content = document.createElement('div');
-        content.className = 'modal-content';
-        content.style.cssText = `
-            max-width: 500px;
-            width: 90%;
-            padding: 2rem;
-            text-align: center;
-        `;
-
-        const closeBtn = document.createElement('button');
-        closeBtn.className = 'close-modal';
-        closeBtn.innerHTML = '&times;';
-        closeBtn.onclick = () => modal.remove();
-
-        content.innerHTML = `
-            <h2 style="color: white; margin-bottom: 1rem;">Perfil do Usuário</h2>
-            <p style="color: var(--text)">Nome: ${userData.fullName}</p>
-            <p style="color: var(--text)">WhatsApp: ${userData.whatsapp}</p>
-            <button onclick="window.showOrderHistory('${userData.whatsapp}')" style="
-                background: var(--gradient);
-                color: white;
-                border: none;
-                padding: 0.5rem 1rem;
-                border-radius: 5px;
-                margin: 1rem 0;
-                cursor: pointer;
-            ">Ver Histórico de Pedidos</button>
-            <button onclick="logout()" style="
-                background: var(--error);
-                color: white;
-                border: none;
-                padding: 0.5rem 1rem;
-                border-radius: 5px;
-                cursor: pointer;
-            ">Sair da Conta</button>
-        `;
-
-        function logout() {
-            localStorage.removeItem('userData');
-            updateLoginStatus();
-            modal.remove();
-            showNotification('Você saiu da sua conta.');
-        }
-
-        content.appendChild(closeBtn);
-        modal.appendChild(content);
-        document.body.appendChild(modal);
-    }
-
-        // Adicionar evento para atualizar status de login ao carregar a página
-    document.addEventListener('DOMContentLoaded', updateLoginStatus);
-
-    content.appendChild(closeBtn);
-    content.appendChild(title);
-    content.appendChild(form);
-    modal.appendChild(content);
-    document.body.appendChild(modal);
-
-    // Máscaras para os campos
-    const whatsappInput = document.getElementById(type === 'register' ? 'whatsapp' : 'loginWhatsapp');
-    if (whatsappInput) {
-        whatsappInput.addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 11) value = value.slice(0, 11);
-            
-            if (value.length >= 2) {
-                value = value.replace(/^(\d{2})/, '$1 ');
-            }
-            
-            e.target.value = value;
-        });
-    }
-
-    // Validação de ano de nascimento
-    const birthYearInput = document.getElementById(type === 'register' ? 'birthYear' : 'loginBirthYear');
-    if (birthYearInput) {
-        birthYearInput.addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 4) value = value.slice(0, 4);
-            e.target.value = value;
-        });
-    }
 }
     
 document.addEventListener('DOMContentLoaded', function() {
@@ -4655,8 +4234,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Ícone do carrinho não encontrado');
     }
 
-    document.querySelector('.login-btn').addEventListener('click', () => showUserModal());
-
     // Evento para botão de checkout
     const checkoutButton = document.querySelector('.checkout');
     if (checkoutButton) {
@@ -4780,24 +4357,6 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
            document.getElementById('productModal').style.display = 'none';
        }
    });
-
-function formatDate(input) {
-    input.addEventListener('input', (e) => {
-        let value = e.target.value.replace(/\D/g, '');
-        
-        if (value.length > 8) value = value.slice(0, 8);
-        
-        if (value.length >= 2) {
-            value = value.replace(/^(\d{2})/, '$1/');
-        }
-        if (value.length >= 5) {
-            value = value.replace(/^(\d{2})\/(\d{2})/, '$1/$2/');
-        }
-        
-        e.target.value = value;
-    });
-}
-    
     (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="PpgNSIgeYN1FCucFGP4w3";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
 </script>
 <<!-- Modal para Criar Novo Pedido -->
