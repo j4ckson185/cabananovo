@@ -1271,6 +1271,152 @@ header {
         height: 120px;
     }
 }
+
+/* Adicionar antes do último } da tag <style> */
+/* Adicionar antes do último } da tag <style> */
+.time-machine-btn {
+    cursor: pointer;
+    margin-right: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text);
+    transition: all 0.3s ease;
+}
+
+.time-machine-btn:hover {
+    color: var(--accent);
+    transform: scale(1.1);
+}
+
+.time-machine-btn i {
+    font-size: 1.5rem;
+}
+
+.time-machine-content {
+    padding: 1rem;
+}
+
+.favorites-section {
+    margin-bottom: 2rem;
+}
+
+.previous-orders-section {
+    margin-top: 1rem;
+}
+
+.order-card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.order-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.order-date {
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.order-items {
+    margin: 1rem 0;
+}
+
+.order-item {
+    margin-bottom: 0.5rem;
+    padding-left: 1rem;
+    border-left: 2px solid var(--accent);
+}
+
+.order-total {
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 1.1rem;
+}
+
+.reorder-btn {
+    background: var(--gradient);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.reorder-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
+}
+
+.favorite-btn {
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.favorite-btn i {
+    color: var(--text);
+    transition: all 0.3s ease;
+}
+
+.favorite-btn.active i {
+    color: #FFD700;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text);
+}
+
+.phone-input-section {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: var(--glass);
+    border-radius: 15px;
+    text-align: center;
+}
+
+.phone-input-container {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.phone-input-container input {
+    flex: 1;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass);
+    color: var(--text);
+}
     
 </style>
 </head>
@@ -1773,6 +1919,225 @@ let appliedCoupon = null;
 let customerInfo = {};
 let deliveryInfo = {};
 
+async function searchOrderHistory() {
+    const phoneInput = document.getElementById('historyPhoneInput');
+    const phone = phoneInput.value.replace(/\D/g, '');
+    
+    if (!phone) {
+        showNotification('Por favor, digite seu WhatsApp');
+        return;
+    }
+
+    const favoritesSection = document.querySelector('.favorites-section');
+    const previousOrdersSection = document.querySelector('.previous-orders-section');
+
+    try {
+        const ordersRef = firebase.database().ref('orders');
+        const query = ordersRef.orderByChild('customer/phone').equalTo(phone);
+        
+        const snapshot = await query.once('value');
+        const orders = [];
+        
+        snapshot.forEach((childSnapshot) => {
+            const order = childSnapshot.val();
+            orders.push({
+                id: childSnapshot.key,
+                ...order,
+                timestamp: order.timestamp || Date.now()
+            });
+        });
+
+        if (orders.length === 0) {
+            previousOrdersSection.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
+                    <p>Nenhum pedido encontrado para este número.</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Ordenar por data mais recente
+        orders.sort((a, b) => b.timestamp - a.timestamp);
+
+        // Renderizar favoritos
+        const favorites = orders.filter(order => order.isFavorite);
+        favoritesSection.innerHTML = `
+            <div class="section-title">
+                <i class="fas fa-star" style="color: #FFD700;"></i>
+                Seus Favoritos
+            </div>
+            ${favorites.length ? renderOrders(favorites) : '<p class="empty-state">Nenhum pedido favorito ainda</p>'}
+        `;
+
+        // Renderizar histórico completo
+        previousOrdersSection.innerHTML = `
+            <div class="section-title">
+                <i class="fas fa-history"></i>
+                Histórico de Pedidos
+            </div>
+            ${renderOrders(orders)}
+        `;
+
+        // ADICIONAR AQUI - Event listeners para os botões de "Pedir Novamente"
+    const reorderButtons = document.querySelectorAll('.reorder-btn');
+    reorderButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            try {
+                const items = JSON.parse(this.getAttribute('data-items'));
+                cart = []; // Limpa o carrinho antes
+                // Garante que todos os itens tenham as propriedades necessárias
+                cart.push(...items.map(item => ({
+                    name: item.name || 'Item sem nome',
+                    price: item.price || 0,
+                    description: item.description || '',
+                    selectedToppings: item.selectedToppings || [],
+                    selectedExtras: item.selectedExtras || []
+                })));
+                
+                updateCartCount();
+                document.getElementById('timeMachineModal').style.display = 'none';
+                showCartModal(); // Abre o carrinho automaticamente
+                showNotification('Itens adicionados ao carrinho');
+            } catch (error) {
+                console.error('Erro ao reordenar itens:', error);
+                showNotification('Erro ao adicionar itens ao carrinho');
+            }
+        });
+    });
+
+    } catch (error) {
+        console.error('Erro ao carregar pedidos:', error);
+        showNotification('Erro ao carregar seu histórico de pedidos');
+    }
+}
+
+// Adicionar botão do Time Machine ao header
+function addTimeMachineButton() {
+    const headerContent = document.querySelector('.header-content');
+    const cartIcon = document.querySelector('.cart-icon');
+    
+    const timeMachineBtn = document.createElement('div');
+    timeMachineBtn.className = 'time-machine-btn';
+    timeMachineBtn.innerHTML = `
+        <i class="fas fa-clock"></i>
+        <span>Meus Pedidos</span>
+    `;
+    
+    timeMachineBtn.addEventListener('click', showTimeMachine);
+    headerContent.insertBefore(timeMachineBtn, cartIcon);
+}
+
+// Função para mostrar o Time Machine
+// Função para mostrar o Time Machine
+// Função para mostrar o Time Machine
+function showTimeMachine() {
+    const modal = document.getElementById('timeMachineModal');
+    const favoritesSection = modal.querySelector('.favorites-section');
+    const previousOrdersSection = modal.querySelector('.previous-orders-section');
+    
+    // Limpa seções anteriores
+    favoritesSection.innerHTML = '';
+    previousOrdersSection.innerHTML = '';
+    
+    // Adiciona event listener para o botão de fechar
+    const closeButton = modal.querySelector('.close-modal');
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+    }
+    
+    modal.style.display = 'block';
+}
+// Função para renderizar os pedidos
+// Modifique a função renderOrders para usar um data-attribute em vez de passar diretamente no onclick
+function renderOrders(orders) {
+    return orders.map(order => {
+        // Escape do JSON para evitar problemas com aspas
+        const itemsJson = order.items ? JSON.stringify(order.items).replace(/'/g, '&#39;') : '[]';
+        
+        return `
+            <div class="order-card" data-order-id="${order.id}">
+                <div class="order-header">
+                    <div class="order-date">
+                        ${new Date(order.timestamp).toLocaleDateString('pt-BR')} 
+                        às ${new Date(order.timestamp).toLocaleTimeString('pt-BR')}
+                    </div>
+                    <button class="favorite-btn ${order.isFavorite ? 'active' : ''}" onclick="toggleFavorite('${order.id}')">
+                        <i class="fas fa-star"></i>
+                    </button>
+                </div>
+                <div class="order-items">
+                    ${order.items.map(item => `
+                        <div class="order-item">
+                            <div style="font-weight: bold;">${item.name}</div>
+                            ${item.selectedToppings && item.selectedToppings.length ? `
+                                <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.5rem;">
+                                    <i class="fas fa-check-circle"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
+                                </div>
+                            ` : ''}
+                            ${item.selectedExtras && item.selectedExtras.length ? `
+                                <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
+                                    <i class="fas fa-plus-circle"></i> Extras: ${item.selectedExtras.join(', ')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                    <div class="order-total">R$ ${order.total ? order.total.toFixed(2) : '0.00'}</div>
+                    <button class="reorder-btn" data-items='${itemsJson}'>
+                        <i class="fas fa-redo-alt"></i> Pedir Novamente
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+    
+// Função para marcar/desmarcar favorito
+async function toggleFavorite(orderId) {
+    try {
+        const orderRef = firebase.database().ref(`orders/${orderId}`);
+        const snapshot = await orderRef.once('value');
+        const order = snapshot.val();
+        
+        await orderRef.update({
+            isFavorite: !order.isFavorite
+        });
+        
+        // Atualizar UI
+        const btn = document.querySelector(`[data-order-id="${orderId}"] .favorite-btn`);
+        btn.classList.toggle('active');
+        
+        showNotification(order.isFavorite ? 'Removido dos favoritos' : 'Adicionado aos favoritos');
+    } catch (error) {
+        console.error('Erro ao atualizar favorito:', error);
+        showNotification('Erro ao atualizar favorito');
+    }
+}
+
+// Função para repedir itens
+function reorderItems(items) {
+    // Limpar carrinho atual
+    cart = [];
+    
+    // Adicionar itens ao carrinho
+    cart.push(...items);
+    
+    // Atualizar UI
+    updateCartCount();
+    
+    // Fechar modal do Time Machine
+    document.getElementById('timeMachineModal').style.display = 'none';
+    
+    // Mostrar carrinho
+    showCartModal();
+    
+    showNotification('Itens adicionados ao carrinho');
+}
+
 function updateCustomerAndDeliveryInfo(customer, delivery) {
     customerInfo = customer;
     deliveryInfo = delivery;
@@ -1850,6 +2215,11 @@ async function handleDeliveryInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
     const deliveryInfo = Object.fromEntries(formData);
+
+    // ADICIONAR ESTA LINHA AQUI, logo após obter o formData
+    if (customerInfo && customerInfo.whatsapp) {
+        localStorage.setItem('lastCustomerPhone', customerInfo.whatsapp);
+    }
 
     try {
         // Garantir que temos as informações necessárias
@@ -2549,6 +2919,10 @@ document.addEventListener('DOMContentLoaded', function() {
     messageIndex = (messageIndex + 1) % messages.length;
     bubble.textContent = messages[messageIndex];
   });
+        const existingListeners = document.querySelector('.time-machine-btn');
+    if (!existingListeners) {
+        addTimeMachineButton();
+    }
 });
 
 function isStoreOpenNow(schedule) {
@@ -3154,19 +3528,28 @@ function showCartModal() {
     
     let subtotal = 0;
     cart.forEach((item, index) => {
-        subtotal += item.price;
-        const isCombo = item.name.includes('Combo');
+        subtotal += item.price || 0;
+        const isCombo = (item.name || '').includes('Combo');
         
         cartItems.innerHTML += `
             <div class="cart-item">
                 <div class="cart-item-details">
-                    <h3 class="cart-item-title">${item.name}</h3>
-                    <p class="cart-item-description" style="white-space: pre-line;">${item.description}</p>
-                    ${item.selectedExtras.length > 0 && !isCombo ? 
-                        `<p class="cart-item-extras">Extras: ${item.selectedExtras.join(', ')}</p>` : 
-                        ''}
+                    <h3 class="cart-item-title">${item.name || 'Item sem nome'}</h3>
+                    ${item.description ? `<p class="cart-item-description" style="white-space: pre-line;">${item.description}</p>` : ''}
+                    
+                    ${item.selectedToppings && item.selectedToppings.length ? `
+                        <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.5rem;">
+                            <i class="fas fa-check-circle"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
+                        </div>
+                    ` : ''}
+                    
+                    ${item.selectedExtras && item.selectedExtras.length ? `
+                        <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
+                            <i class="fas fa-plus-circle"></i> Extras: ${item.selectedExtras.join(', ')}
+                        </div>
+                    ` : ''}
                 </div>
-                <div class="cart-item-price">R$ ${item.price.toFixed(2)}</div>
+                <div class="cart-item-price">R$ ${(item.price || 0).toFixed(2)}</div>
                 <button class="remove-item" onclick="removeFromCart(${index})">
                     <i class="fas fa-trash"></i>
                 </button>
@@ -4142,9 +4525,16 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Botão de checkout clicado');
             showCreateOrderModal();
         });
-    } else {
-        console.error('Botão de checkout não encontrado');
-    }
+    } 
+        // ADICIONAR AQUI - Event listeners para fechar modais
+    document.querySelectorAll('.close-modal').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const modal = e.target.closest('.modal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        });
+    });
 
     // Firebase listeners
     loadMenuProducts();
@@ -4207,13 +4597,14 @@ document.addEventListener('DOMContentLoaded', () => {
    });
 
    // Modal closes
-   document.querySelectorAll('.close-modal').forEach(button => {
-       button.addEventListener('click', () => {
-           document.querySelectorAll('.modal').forEach(modal => {
-               modal.style.display = 'none';
-           });
-       });
-   });
+document.querySelectorAll('.close-modal').forEach(button => {
+    button.addEventListener('click', (e) => {
+        const modal = e.target.closest('.modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    });
+});
 
 // Continue shopping buttons
 document.querySelectorAll('.continue-shopping').forEach(button => {
@@ -4321,6 +4712,25 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
             
             <button type="button" onclick="submitOrder()">Finalizar Pedido</button>
         </form>
+    </div>
+</div>
+<div class="modal" id="timeMachineModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Seus Pedidos</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="time-machine-content">
+            <div class="phone-input-section">
+                <p>Digite seu WhatsApp com DDD para ver seu histórico:</p>
+                <div class="phone-input-container">
+                    <input type="tel" id="historyPhoneInput" placeholder="Ex: 84988500756" class="form-input">
+                    <button onclick="searchOrderHistory()" class="modal-btn">Buscar</button>
+                </div>
+            </div>
+            <div class="favorites-section"></div>
+            <div class="previous-orders-section"></div>
+        </div>
     </div>
 </div>
 </div>
