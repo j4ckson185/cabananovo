@@ -2016,6 +2016,7 @@ async function searchOrderHistory() {
 }
 
 // Função para renderizar os pedidos
+// Modifique a função renderOrders para usar um data-attribute em vez de passar diretamente no onclick
 function renderOrders(orders) {
     return orders.map(order => `
         <div class="order-card" data-order-id="${order.id}">
@@ -2047,7 +2048,7 @@ function renderOrders(orders) {
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div class="order-total">R$ ${order.total.toFixed(2)}</div>
-                <button class="reorder-btn" onclick="reorderItems(${JSON.stringify(order.items)})">
+                <button class="reorder-btn" data-items='${JSON.stringify(order.items)}'>
                     <i class="fas fa-redo-alt"></i> Pedir Novamente
                 </button>
             </div>
