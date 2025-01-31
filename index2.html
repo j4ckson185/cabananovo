@@ -1935,6 +1935,7 @@ function addTimeMachineButton() {
 }
 
 // Função para mostrar o Time Machine
+// Função para mostrar o Time Machine
 function showTimeMachine() {
     const modal = document.getElementById('timeMachineModal');
     const favoritesSection = modal.querySelector('.favorites-section');
@@ -1943,6 +1944,14 @@ function showTimeMachine() {
     // Limpa seções anteriores
     favoritesSection.innerHTML = '';
     previousOrdersSection.innerHTML = '';
+    
+    // Adiciona event listener para o botão de fechar
+    const closeButton = modal.querySelector('.close-modal');
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+    }
     
     modal.style.display = 'block';
 }
@@ -2014,10 +2023,6 @@ async function searchOrderHistory() {
         showNotification('Erro ao carregar seu histórico de pedidos');
     }
 }
-    // Adicionar event listener específico para o botão de fechar do Time Machine Modal
-document.querySelector('#timeMachineModal .close-modal').addEventListener('click', () => {
-    document.getElementById('timeMachineModal').style.display = 'none';
-});
 
 // Função para renderizar os pedidos
 // Modifique a função renderOrders para usar um data-attribute em vez de passar diretamente no onclick
