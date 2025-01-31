@@ -3327,6 +3327,7 @@ async function handleDeliveryInfo(e) {
         });
 
         // Criar o pedido para o Firebase
+        
         const orderData = {
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             customerInfo,
@@ -3557,6 +3558,7 @@ async function submitOrder() {
         const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
         const deliveryFee = 3.00;
         const total = subtotal - discount + deliveryFee;
+        const formattedWhatsapp = customerPhone.replace(/\D/g, ''); // Remove caracteres especiais
 
         // 3. Criar objeto do pedido para o Firebase
         const orderData = {
@@ -3564,8 +3566,8 @@ async function submitOrder() {
             status: 'new',
             customer: {
                 name: customerName,
-                phone: customerPhone
-            },
+                phone: formattedWhatsapp // Salva o número formatado no campo "phone"
+    },
             address: {
                 street,
                 number: streetNumber,
@@ -4253,8 +4255,11 @@ async function fetchOrderHistory() {
     const whatsappInput = document.getElementById('whatsappInput').value;
     const orderHistoryList = document.querySelector('.order-history-list');
 
-    if (!whatsappInput) {
-        alert('Por favor, insira seu número de WhatsApp.');
+    // 1. Padronizar o número de WhatsApp (remover caracteres especiais)
+    const formattedWhatsapp = whatsappInput.replace(/\D/g, ''); // Remove tudo que não é número
+
+    if (!formattedWhatsapp) {
+        alert('Por favor, insira um número de WhatsApp válido.');
         return;
     }
 
@@ -4262,10 +4267,10 @@ async function fetchOrderHistory() {
         // Limpa a lista de pedidos antes de buscar novos
         orderHistoryList.innerHTML = '<p>Carregando...</p>';
 
-        // Busca os pedidos no Firebase
+        // 2. Buscar os pedidos no Firebase
         const ordersSnapshot = await firebase.database().ref('orders')
-            .orderByChild('customer/customerPhone')
-            .equalTo(whatsappInput)
+            .orderByChild('phone') // Agora buscamos pelo campo "phone"
+            .equalTo(formattedWhatsapp) // Busca exata pelo número formatado
             .once('value');
 
         const orders = ordersSnapshot.val();
@@ -4275,7 +4280,7 @@ async function fetchOrderHistory() {
             return;
         }
 
-        // Exibe os pedidos encontrados
+        // 3. Exibir os pedidos encontrados
         orderHistoryList.innerHTML = '';
         Object.entries(orders).forEach(([orderId, order]) => {
             const orderDate = new Date(order.timestamp).toLocaleString();
