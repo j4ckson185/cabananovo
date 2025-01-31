@@ -1417,6 +1417,79 @@ header {
     background: var(--glass);
     color: var(--text);
 }
+
+/* Estilo do popup de loja fechada */
+.store-closed-popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+}
+
+.store-closed-popup.active {
+    display: flex;
+}
+
+.popup-content {
+    background: var(--surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 400px;
+    text-align: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.popup-content h2 {
+    color: var(--accent);
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+
+.popup-content p {
+    color: var(--text);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.popup-content ul {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 1.5rem;
+}
+
+.popup-content ul li {
+    color: var(--text);
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.popup-content button {
+    background: var(--gradient);
+    color: white;
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: 50px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.popup-content button:hover {
+    transform: translateY(-2px);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
     
 </style>
 </head>
@@ -3109,6 +3182,20 @@ const toppingBenefits = {
         <div class="benefits-list" style="color: var(--text); line-height: 1.5;"></div>
     `;
 
+    // Verificar status da loja e mostrar popup quando estiver fechada
+realtimeDB.ref('schedule').once('value')
+    .then(snapshot => {
+        const schedule = snapshot.val() || {};
+        const isOpen = isStoreOpenNow(schedule);
+        
+        if (!isOpen) {
+            const popup = document.getElementById('storeClosedPopup');
+            if (popup) {
+                popup.classList.add('active');
+            }
+        }
+    });
+
     Promise.all([
         realtimeDB.ref('menu/toppings').once('value'),
         realtimeDB.ref('extras').once('value')
@@ -4573,6 +4660,12 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
            document.getElementById('productModal').style.display = 'none';
        }
    });
+    function closeStoreClosedPopup() {
+    const popup = document.getElementById('storeClosedPopup');
+    if (popup) {
+        popup.classList.remove('active');
+    }
+}
     (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="PpgNSIgeYN1FCucFGP4w3";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
 </script>
 <<!-- Modal para Criar Novo Pedido -->
@@ -4657,6 +4750,18 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
         </div>
     </div>
 </div>
+</div>
+    <!-- Popup de loja fechada -->
+<div id="storeClosedPopup" class="store-closed-popup">
+    <div class="popup-content">
+        <h2>Loja Fechada</h2>
+        <p>No momento, a loja está fechada. Confira nossos horários de funcionamento:</p>
+        <ul>
+            <li><strong>Quarta à Sexta:</strong> 12:30h às 22:30h</li>
+            <li><strong>Sábado e Domingo:</strong> 12:30h às 17:30h</li>
+        </ul>
+        <button onclick="closeStoreClosedPopup()">Fechar</button>
+    </div>
 </div>
 </body>
 </html>
