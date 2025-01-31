@@ -1980,23 +1980,31 @@ async function searchOrderHistory() {
         `;
 
         // ADICIONAR AQUI - Event listeners para os botões de "Pedir Novamente"
-        const reorderButtons = document.querySelectorAll('.reorder-btn');
-        reorderButtons.forEach(btn => {
-            btn.addEventListener('click', function() {
-                try {
-                    const items = JSON.parse(this.getAttribute('data-items'));
-                    cart = []; // Limpa o carrinho antes de adicionar os itens
-                    cart.push(...items);
-                    updateCartCount();
-                    document.getElementById('timeMachineModal').style.display = 'none';
-                    showCartModal();
-                    showNotification('Itens adicionados ao carrinho');
-                } catch (error) {
-                    console.error('Erro ao reordenar itens:', error);
-                    showNotification('Erro ao adicionar itens ao carrinho');
-                }
-            });
+    const reorderButtons = document.querySelectorAll('.reorder-btn');
+    reorderButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            try {
+                const items = JSON.parse(this.getAttribute('data-items'));
+                cart = []; // Limpa o carrinho antes
+                // Garante que todos os itens tenham as propriedades necessárias
+                cart.push(...items.map(item => ({
+                    name: item.name || 'Item sem nome',
+                    price: item.price || 0,
+                    description: item.description || '',
+                    selectedToppings: item.selectedToppings || [],
+                    selectedExtras: item.selectedExtras || []
+                })));
+                
+                updateCartCount();
+                document.getElementById('timeMachineModal').style.display = 'none';
+                showCartModal(); // Abre o carrinho automaticamente
+                showNotification('Itens adicionados ao carrinho');
+            } catch (error) {
+                console.error('Erro ao reordenar itens:', error);
+                showNotification('Erro ao adicionar itens ao carrinho');
+            }
         });
+    });
 
     } catch (error) {
         console.error('Erro ao carregar pedidos:', error);
@@ -3522,19 +3530,10 @@ function showCartModal() {
             <div class="cart-item">
                 <div class="cart-item-details">
                     <h3 class="cart-item-title">${item.name || 'Item sem nome'}</h3>
-                    ${item.description ? `<p class="cart-item-description" style="white-space: pre-line;">${item.description}</p>` : ''}
-                    
-                    ${item.selectedToppings && item.selectedToppings.length ? `
-                        <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.5rem;">
-                            <i class="fas fa-check-circle"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
-                        </div>
-                    ` : ''}
-                    
-                    ${item.selectedExtras && item.selectedExtras.length ? `
-                        <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
-                            <i class="fas fa-plus-circle"></i> Extras: ${item.selectedExtras.join(', ')}
-                        </div>
-                    ` : ''}
+                    <p class="cart-item-description" style="white-space: pre-line;">${item.description || ''}</p>
+                    ${(item.selectedExtras && item.selectedExtras.length > 0 && !isCombo) ? 
+                        `<p class="cart-item-extras">Extras: ${item.selectedExtras.join(', ')}</p>` : 
+                        ''}
                 </div>
                 <div class="cart-item-price">R$ ${(item.price || 0).toFixed(2)}</div>
                 <button class="remove-item" onclick="removeFromCart(${index})">
