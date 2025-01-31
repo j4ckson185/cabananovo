@@ -2014,6 +2014,10 @@ async function searchOrderHistory() {
         showNotification('Erro ao carregar seu histórico de pedidos');
     }
 }
+    // Adicionar event listener específico para o botão de fechar do Time Machine Modal
+document.querySelector('#timeMachineModal .close-modal').addEventListener('click', () => {
+    document.getElementById('timeMachineModal').style.display = 'none';
+});
 
 // Função para renderizar os pedidos
 // Modifique a função renderOrders para usar um data-attribute em vez de passar diretamente no onclick
@@ -4541,13 +4545,14 @@ document.addEventListener('DOMContentLoaded', () => {
    });
 
    // Modal closes
-   document.querySelectorAll('.close-modal').forEach(button => {
-       button.addEventListener('click', () => {
-           document.querySelectorAll('.modal').forEach(modal => {
-               modal.style.display = 'none';
-           });
-       });
-   });
+document.querySelectorAll('.close-modal').forEach(button => {
+    button.addEventListener('click', (e) => {
+        const modal = e.target.closest('.modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    });
+});
 
 // Continue shopping buttons
 document.querySelectorAll('.continue-shopping').forEach(button => {
