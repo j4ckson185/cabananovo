@@ -4463,14 +4463,12 @@ openProductModal = function(product) {
     
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM Carregado'); // Log para diagnóstico
+    console.log('DOM Carregado');
 
     // Evento para o ícone do carrinho
     const cartIcon = document.querySelector('.cart-icon');
     if (cartIcon) {
         cartIcon.addEventListener('click', showCartModal);
-    } else {
-        console.error('Ícone do carrinho não encontrado');
     }
 
     // Evento para botão de checkout
@@ -4480,8 +4478,24 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Botão de checkout clicado');
             showCreateOrderModal();
         });
-    } else {
-        console.error('Botão de checkout não encontrado');
+    }
+
+    // ADICIONAR AQUI - Event listeners para fechar modais
+    document.querySelectorAll('.close-modal').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const modal = e.target.closest('.modal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        });
+    });
+
+    // Configuração específica do Time Machine Modal
+    const timeMachineCloseBtn = document.querySelector('#timeMachineModal .close-modal');
+    if (timeMachineCloseBtn) {
+        timeMachineCloseBtn.addEventListener('click', () => {
+            document.getElementById('timeMachineModal').style.display = 'none';
+        });
     }
 
     // Firebase listeners
@@ -4491,7 +4505,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(checkStoreStatus, 60000);
     setupPaymentEvents();
 
-        // Configuração do Intersection Observer para o mascote
+    // Configuração do Observer para o mascote
     const mascotVideo = document.querySelector('.mascot-video');
     if (mascotVideo) {
         const observer = new IntersectionObserver((entries) => {
@@ -4507,7 +4521,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         observer.observe(mascotVideo);
-
         mascotVideo.addEventListener('click', () => {
             if (mascotVideo.paused) {
                 mascotVideo.play();
@@ -4516,7 +4529,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
 });
    
    // Categories
