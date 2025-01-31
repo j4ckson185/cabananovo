@@ -1273,236 +1273,105 @@ header {
 }
 
 /* Adicionar antes do último } da tag <style> */
-/* Time Machine Styles */
-/* NOVO estilo para o container e botão */
-.time-machine-container {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    padding: 1rem;
-    margin-top: 90px;
-}
-
 .time-machine-btn {
-    background: var(--gradient);
-    color: white;
-    border: none;
-    padding: 0.8rem 2rem;
-    border-radius: 50px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 500;
+    margin-right: 1rem;
     display: flex;
     align-items: center;
-    gap: 0.8rem;
-    font-size: 1rem;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    gap: 0.5rem;
+    color: var(--text);
+    transition: all 0.3s ease;
 }
 
 .time-machine-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(247, 37, 133, 0.2);
+    color: var(--accent);
+    transform: scale(1.1);
 }
 
 .time-machine-btn i {
-    font-size: 1.1rem;
+    font-size: 1.5rem;
 }
 
-/* Ajuste o margin-top do store-status */
-.store-status {
-    margin-top: 1rem !important;
+.time-machine-content {
+    padding: 1rem;
 }
 
-/* Responsividade */
-@media (max-width: 768px) {
-    .time-machine-container {
-        margin-top: 80px;
-        padding: 0.8rem;
-    }
-
-    .time-machine-btn {
-        padding: 0.7rem 1.8rem;
-        font-size: 0.95rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .time-machine-container {
-        margin-top: 70px;
-        padding: 0.6rem;
-    }
-
-    .time-machine-btn {
-        padding: 0.6rem 1.5rem;
-        font-size: 0.9rem;
-    }
-}
-
-.phone-input-section {
+.favorites-section {
     margin-bottom: 2rem;
-    padding: 1.5rem;
-    background: var(--glass);
-    border-radius: 15px;
-    text-align: center;
-    border: 1px solid var(--glass-border);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.phone-input-section p {
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
-    color: white;
-}
-
-.phone-input-container {
-    display: flex;
-    gap: 1rem;
+.previous-orders-section {
     margin-top: 1rem;
-}
-
-.phone-input-container input {
-    flex: 1;
-    padding: 1rem 1.5rem;
-    border-radius: 12px;
-    border: 1px solid var(--glass-border);
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text);
-    font-size: 1rem;
-    transition: all 0.3s ease;
-}
-
-.phone-input-container input:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 15px rgba(247, 37, 133, 0.2);
-}
-
-.phone-input-container .modal-btn {
-    padding: 0.8rem 2rem;
-    border-radius: 12px;
-    font-weight: 600;
-    background: var(--gradient);
-    color: white;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    min-width: 120px;
-}
-
-.phone-input-container .modal-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
 }
 
 .order-card {
     background: var(--glass);
     border: 1px solid var(--glass-border);
     border-radius: 15px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .order-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 .order-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--glass-border);
+    margin-bottom: 1rem;
 }
 
 .order-date {
     color: var(--text);
-    font-size: 0.95rem;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
+    font-size: 0.9rem;
 }
 
 .order-items {
-    margin: 1.2rem 0;
+    margin: 1rem 0;
 }
 
 .order-item {
-    margin-bottom: 1rem;
-    padding: 1rem;
-    border-left: 3px solid var(--accent);
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 0 8px 8px 0;
-}
-
-.order-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+    margin-bottom: 0.5rem;
+    padding-left: 1rem;
+    border-left: 2px solid var(--accent);
 }
 
 .order-total {
     font-weight: 600;
     color: var(--accent);
-    font-size: 1.2rem;
-    background: rgba(247, 37, 133, 0.1);
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
+    font-size: 1.1rem;
 }
 
 .reorder-btn {
     background: var(--gradient);
     color: white;
     border: none;
-    padding: 0.8rem 1.5rem;
-    border-radius: 12px;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
 }
 
 .reorder-btn:hover {
-    transform: translateY(-2px) scale(1.02);
+    transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
-}
-
-.reorder-btn i {
-    font-size: 1.1rem;
-    transition: transform 0.3s ease;
-}
-
-.reorder-btn:hover i {
-    transform: rotate(180deg);
 }
 
 .favorite-btn {
     background: none;
     border: none;
-    padding: 0.8rem;
+    padding: 0.5rem;
     cursor: pointer;
     transition: all 0.3s ease;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
 }
 
 .favorite-btn i {
     color: var(--text);
     transition: all 0.3s ease;
-    font-size: 1.2rem;
-}
-
-.favorite-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: scale(1.1);
-}
-
-.favorite-btn:hover i {
-    color: #FFD700;
 }
 
 .favorite-btn.active i {
@@ -1512,57 +1381,17 @@ header {
 .section-title {
     display: flex;
     align-items: center;
-    gap: 0.8rem;
-    margin-bottom: 1.5rem;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
     color: white;
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     font-weight: 600;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--glass-border);
-}
-
-.section-title i {
-    font-size: 1.4rem;
 }
 
 .empty-state {
     text-align: center;
-    padding: 3rem 2rem;
+    padding: 2rem;
     color: var(--text);
-    background: var(--glass);
-    border-radius: 15px;
-    border: 1px solid var(--glass-border);
-}
-
-.empty-state i {
-    margin-bottom: 1rem;
-    font-size: 2.5rem;
-    color: var(--accent);
-    opacity: 0.8;
-}
-
-/* Responsividade */
-@media (max-width: 768px) {
-    .phone-input-container {
-        flex-direction: column;
-    }
-    
-    .phone-input-container .modal-btn {
-        width: 100%;
-    }
-    
-    .order-card {
-        padding: 1rem;
-    }
-    
-    .order-header {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    
-    .favorite-btn {
-        align-self: flex-end;
-    }
 }
     
 </style>
@@ -2068,134 +1897,79 @@ let deliveryInfo = {};
 
 // Adicionar botão do Time Machine ao header
 function addTimeMachineButton() {
-    const storeStatus = document.querySelector('.store-status');
+    const headerContent = document.querySelector('.header-content');
+    const cartIcon = document.querySelector('.cart-icon');
     
-    const timeMachineContainer = document.createElement('div');
-    timeMachineContainer.className = 'time-machine-container';
-    timeMachineContainer.innerHTML = `
-        <button class="time-machine-btn">
-            <i class="fas fa-history"></i>
-            Meus Pedidos
-        </button>
+    const timeMachineBtn = document.createElement('div');
+    timeMachineBtn.className = 'time-machine-btn';
+    timeMachineBtn.innerHTML = `
+        <i class="fas fa-clock"></i>
+        <span>Time Machine</span>
     `;
     
-    timeMachineContainer.querySelector('.time-machine-btn').addEventListener('click', showTimeMachine);
-    
-    // Inserir antes do store-status
-    if (storeStatus && storeStatus.parentNode) {
-        storeStatus.parentNode.insertBefore(timeMachineContainer, storeStatus);
-    }
+    timeMachineBtn.addEventListener('click', showTimeMachine);
+    headerContent.insertBefore(timeMachineBtn, cartIcon);
 }
 
 // Função para mostrar o Time Machine
-function showTimeMachine() {
+async function showTimeMachine() {
     const modal = document.getElementById('timeMachineModal');
     const favoritesSection = modal.querySelector('.favorites-section');
     const previousOrdersSection = modal.querySelector('.previous-orders-section');
     
-    // Limpa seções anteriores
-    favoritesSection.innerHTML = '';
-    previousOrdersSection.innerHTML = '';
+    const customerPhone = localStorage.getItem('lastCustomerPhone');
     
-    // Adiciona event listener para o botão de fechar
-    const closeButton = modal.querySelector('.close-modal');
-    if (closeButton) {
-        closeButton.addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
-    }
-    
-    modal.style.display = 'block';
-}
-
-// Nova função para buscar histórico
-async function searchOrderHistory() {
-    const phoneInput = document.getElementById('historyPhoneInput');
-    const phone = phoneInput.value.replace(/\D/g, '');
-    
-    if (!phone) {
-        showNotification('Por favor, digite seu WhatsApp');
+    if (!customerPhone) {
+        modal.querySelector('.time-machine-content').innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-clock fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
+                <p>Para ver seu histórico de pedidos, faça seu primeiro pedido!</p>
+            </div>
+        `;
+        modal.style.display = 'block';
         return;
     }
 
-    const favoritesSection = document.querySelector('.favorites-section');
-    const previousOrdersSection = document.querySelector('.previous-orders-section');
-
     try {
+        // Buscar pedidos no Firebase
         const ordersRef = firebase.database().ref('orders');
-        const query = ordersRef.orderByChild('customer/phone').equalTo(phone);
+        const query = ordersRef.orderByChild('customer/phone').equalTo(customerPhone);
         
-        const snapshot = await query.once('value');
-        const orders = [];
-        
-        snapshot.forEach((childSnapshot) => {
-            const order = childSnapshot.val();
-            orders.push({
-                id: childSnapshot.key,
-                ...order,
-                timestamp: order.timestamp || Date.now()
+        query.once('value', (snapshot) => {
+            const orders = [];
+            snapshot.forEach((childSnapshot) => {
+                const order = childSnapshot.val();
+                orders.push({
+                    id: childSnapshot.key,
+                    ...order,
+                    timestamp: order.timestamp || Date.now()
+                });
             });
-        });
 
-        if (orders.length === 0) {
-            previousOrdersSection.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
-                    <p>Nenhum pedido encontrado para este número.</p>
+            // Ordenar por data mais recente
+            orders.sort((a, b) => b.timestamp - a.timestamp);
+
+            // Renderizar favoritos
+            const favorites = orders.filter(order => order.isFavorite);
+            favoritesSection.innerHTML = `
+                <div class="section-title">
+                    <i class="fas fa-star" style="color: #FFD700;"></i>
+                    Seus Favoritos
                 </div>
+                ${favorites.length ? renderOrders(favorites) : '<p class="empty-state">Nenhum pedido favorito ainda</p>'}
             `;
-            return;
-        }
 
-        // Ordenar por data mais recente
-        orders.sort((a, b) => b.timestamp - a.timestamp);
-
-        // Renderizar favoritos
-        const favorites = orders.filter(order => order.isFavorite);
-        favoritesSection.innerHTML = `
-            <div class="section-title">
-                <i class="fas fa-star" style="color: #FFD700;"></i>
-                Seus Favoritos
-            </div>
-            ${favorites.length ? renderOrders(favorites) : '<p class="empty-state">Nenhum pedido favorito ainda</p>'}
-        `;
-
-        // Renderizar histórico completo
-        previousOrdersSection.innerHTML = `
-            <div class="section-title">
-                <i class="fas fa-history"></i>
-                Histórico de Pedidos
-            </div>
-            ${renderOrders(orders)}
-        `;
-
-        // ADICIONAR AQUI - Event listeners para os botões de "Pedir Novamente"
-    const reorderButtons = document.querySelectorAll('.reorder-btn');
-    reorderButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            try {
-                const items = JSON.parse(this.getAttribute('data-items'));
-                cart = []; // Limpa o carrinho antes
-                // Garante que todos os itens tenham as propriedades necessárias
-                cart.push(...items.map(item => ({
-                    name: item.name || 'Item sem nome',
-                    price: item.price || 0,
-                    description: item.description || '',
-                    selectedToppings: item.selectedToppings || [],
-                    selectedExtras: item.selectedExtras || []
-                })));
-                
-                updateCartCount();
-                document.getElementById('timeMachineModal').style.display = 'none';
-                showCartModal(); // Abre o carrinho automaticamente
-                showNotification('Itens adicionados ao carrinho');
-            } catch (error) {
-                console.error('Erro ao reordenar itens:', error);
-                showNotification('Erro ao adicionar itens ao carrinho');
-            }
+            // Renderizar histórico completo
+            previousOrdersSection.innerHTML = `
+                <div class="section-title">
+                    <i class="fas fa-history"></i>
+                    Histórico de Pedidos
+                </div>
+                ${renderOrders(orders)}
+            `;
         });
-    });
-        
+
+        modal.style.display = 'block';
     } catch (error) {
         console.error('Erro ao carregar pedidos:', error);
         showNotification('Erro ao carregar seu histórico de pedidos');
@@ -2203,49 +1977,43 @@ async function searchOrderHistory() {
 }
 
 // Função para renderizar os pedidos
-// Modifique a função renderOrders para usar um data-attribute em vez de passar diretamente no onclick
 function renderOrders(orders) {
-    return orders.map(order => {
-        // Escape do JSON para evitar problemas com aspas
-        const itemsJson = order.items ? JSON.stringify(order.items).replace(/'/g, '&#39;') : '[]';
-        
-        return `
-            <div class="order-card" data-order-id="${order.id}">
-                <div class="order-header">
-                    <div class="order-date">
-                        ${new Date(order.timestamp).toLocaleDateString('pt-BR')} 
-                        às ${new Date(order.timestamp).toLocaleTimeString('pt-BR')}
-                    </div>
-                    <button class="favorite-btn ${order.isFavorite ? 'active' : ''}" onclick="toggleFavorite('${order.id}')">
-                        <i class="fas fa-star"></i>
-                    </button>
+    return orders.map(order => `
+        <div class="order-card" data-order-id="${order.id}">
+            <div class="order-header">
+                <div class="order-date">
+                    ${new Date(order.timestamp).toLocaleDateString('pt-BR')} 
+                    às ${new Date(order.timestamp).toLocaleTimeString('pt-BR')}
                 </div>
-                <div class="order-items">
-                    ${order.items.map(item => `
-                        <div class="order-item">
-                            <div style="font-weight: bold;">${item.name}</div>
-                            ${item.selectedToppings && item.selectedToppings.length ? `
-                                <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.5rem;">
-                                    <i class="fas fa-check-circle"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
-                                </div>
-                            ` : ''}
-                            ${item.selectedExtras && item.selectedExtras.length ? `
-                                <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
-                                    <i class="fas fa-plus-circle"></i> Extras: ${item.selectedExtras.join(', ')}
-                                </div>
-                            ` : ''}
-                        </div>
-                    `).join('')}
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
-                    <div class="order-total">R$ ${order.total ? order.total.toFixed(2) : '0.00'}</div>
-                    <button class="reorder-btn" data-items='${itemsJson}'>
-                        <i class="fas fa-redo-alt"></i> Pedir Novamente
-                    </button>
-                </div>
+                <button class="favorite-btn ${order.isFavorite ? 'active' : ''}" onclick="toggleFavorite('${order.id}')">
+                    <i class="fas fa-star"></i>
+                </button>
             </div>
-        `;
-    }).join('');
+            <div class="order-items">
+                ${order.items.map(item => `
+                    <div class="order-item">
+                        <div>${item.name}</div>
+                        ${item.selectedToppings?.length ? `
+                            <div style="font-size: 0.9rem; color: var(--text)">
+                                Acompanhamentos: ${item.selectedToppings.join(', ')}
+                            </div>
+                        ` : ''}
+                        ${item.selectedExtras?.length ? `
+                            <div style="font-size: 0.9rem; color: var(--text)">
+                                Extras: ${item.selectedExtras.join(', ')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="order-total">R$ ${order.total.toFixed(2)}</div>
+                <button class="reorder-btn" onclick="reorderItems(${JSON.stringify(order.items)})">
+                    <i class="fas fa-redo-alt"></i> Pedir Novamente
+                </button>
+            </div>
+        </div>
+    `).join('');
 }
 
 // Função para marcar/desmarcar favorito
@@ -3071,10 +2839,6 @@ document.addEventListener('DOMContentLoaded', function() {
     messageIndex = (messageIndex + 1) % messages.length;
     bubble.textContent = messages[messageIndex];
   });
-        const existingListeners = document.querySelector('.time-machine-btn');
-    if (!existingListeners) {
-        addTimeMachineButton();
-    }
 });
 
 function isStoreOpenNow(schedule) {
@@ -3680,28 +3444,19 @@ function showCartModal() {
     
     let subtotal = 0;
     cart.forEach((item, index) => {
-        subtotal += item.price || 0;
-        const isCombo = (item.name || '').includes('Combo');
+        subtotal += item.price;
+        const isCombo = item.name.includes('Combo');
         
         cartItems.innerHTML += `
             <div class="cart-item">
                 <div class="cart-item-details">
-                    <h3 class="cart-item-title">${item.name || 'Item sem nome'}</h3>
-                    ${item.description ? `<p class="cart-item-description" style="white-space: pre-line;">${item.description}</p>` : ''}
-                    
-                    ${item.selectedToppings && item.selectedToppings.length ? `
-                        <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.5rem;">
-                            <i class="fas fa-check-circle"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
-                        </div>
-                    ` : ''}
-                    
-                    ${item.selectedExtras && item.selectedExtras.length ? `
-                        <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
-                            <i class="fas fa-plus-circle"></i> Extras: ${item.selectedExtras.join(', ')}
-                        </div>
-                    ` : ''}
+                    <h3 class="cart-item-title">${item.name}</h3>
+                    <p class="cart-item-description" style="white-space: pre-line;">${item.description}</p>
+                    ${item.selectedExtras.length > 0 && !isCombo ? 
+                        `<p class="cart-item-extras">Extras: ${item.selectedExtras.join(', ')}</p>` : 
+                        ''}
                 </div>
-                <div class="cart-item-price">R$ ${(item.price || 0).toFixed(2)}</div>
+                <div class="cart-item-price">R$ ${item.price.toFixed(2)}</div>
                 <button class="remove-item" onclick="removeFromCart(${index})">
                     <i class="fas fa-trash"></i>
                 </button>
@@ -4660,12 +4415,14 @@ openProductModal = function(product) {
     
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM Carregado');
+    console.log('DOM Carregado'); // Log para diagnóstico
 
     // Evento para o ícone do carrinho
     const cartIcon = document.querySelector('.cart-icon');
     if (cartIcon) {
         cartIcon.addEventListener('click', showCartModal);
+    } else {
+        console.error('Ícone do carrinho não encontrado');
     }
 
     // Evento para botão de checkout
@@ -4675,24 +4432,8 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Botão de checkout clicado');
             showCreateOrderModal();
         });
-    }
-
-    // ADICIONAR AQUI - Event listeners para fechar modais
-    document.querySelectorAll('.close-modal').forEach(button => {
-        button.addEventListener('click', (e) => {
-            const modal = e.target.closest('.modal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
-        });
-    });
-
-    // Configuração específica do Time Machine Modal
-    const timeMachineCloseBtn = document.querySelector('#timeMachineModal .close-modal');
-    if (timeMachineCloseBtn) {
-        timeMachineCloseBtn.addEventListener('click', () => {
-            document.getElementById('timeMachineModal').style.display = 'none';
-        });
+    } else {
+        console.error('Botão de checkout não encontrado');
     }
 
     // Firebase listeners
@@ -4702,7 +4443,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(checkStoreStatus, 60000);
     setupPaymentEvents();
 
-    // Configuração do Observer para o mascote
+        // Configuração do Intersection Observer para o mascote
     const mascotVideo = document.querySelector('.mascot-video');
     if (mascotVideo) {
         const observer = new IntersectionObserver((entries) => {
@@ -4718,6 +4459,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         observer.observe(mascotVideo);
+
         mascotVideo.addEventListener('click', () => {
             if (mascotVideo.paused) {
                 mascotVideo.play();
@@ -4726,6 +4468,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
 });
    
    // Categories
@@ -4754,14 +4497,13 @@ document.addEventListener('DOMContentLoaded', () => {
    });
 
    // Modal closes
-document.querySelectorAll('.close-modal').forEach(button => {
-    button.addEventListener('click', (e) => {
-        const modal = e.target.closest('.modal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
-    });
-});
+   document.querySelectorAll('.close-modal').forEach(button => {
+       button.addEventListener('click', () => {
+           document.querySelectorAll('.modal').forEach(modal => {
+               modal.style.display = 'none';
+           });
+       });
+   });
 
 // Continue shopping buttons
 document.querySelectorAll('.continue-shopping').forEach(button => {
@@ -4878,13 +4620,6 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
             <button class="close-modal">&times;</button>
         </div>
         <div class="time-machine-content">
-            <div class="phone-input-section">
-                <p>Digite seu WhatsApp para ver seu histórico:</p>
-                <div class="phone-input-container">
-                    <input type="tel" id="historyPhoneInput" placeholder="Ex: 84988500756" class="form-input">
-                    <button onclick="searchOrderHistory()" class="modal-btn">Buscar</button>
-                </div>
-            </div>
             <div class="favorites-section"></div>
             <div class="previous-orders-section"></div>
         </div>
