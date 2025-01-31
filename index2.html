@@ -2053,44 +2053,49 @@ function showTimeMachine() {
 // Função para renderizar os pedidos
 // Modifique a função renderOrders para usar um data-attribute em vez de passar diretamente no onclick
 function renderOrders(orders) {
-    return orders.map(order => `
-        <div class="order-card" data-order-id="${order.id}">
-            <div class="order-header">
-                <div class="order-date">
-                    ${new Date(order.timestamp).toLocaleDateString('pt-BR')} 
-                    às ${new Date(order.timestamp).toLocaleTimeString('pt-BR')}
-                </div>
-                <button class="favorite-btn ${order.isFavorite ? 'active' : ''}" onclick="toggleFavorite('${order.id}')">
-                    <i class="fas fa-star"></i>
-                </button>
-            </div>
-            <div class="order-items">
-                ${order.items.map(item => `
-                    <div class="order-item">
-                        <div>${item.name}</div>
-                        ${item.selectedToppings?.length ? `
-                            <div style="font-size: 0.9rem; color: var(--text)">
-                                Acompanhamentos: ${item.selectedToppings.join(', ')}
-                            </div>
-                        ` : ''}
-                        ${item.selectedExtras?.length ? `
-                            <div style="font-size: 0.9rem; color: var(--text)">
-                                Extras: ${item.selectedExtras.join(', ')}
-                            </div>
-                        ` : ''}
+    return orders.map(order => {
+        // Escape do JSON para evitar problemas com aspas
+        const itemsJson = order.items ? JSON.stringify(order.items).replace(/'/g, '&#39;') : '[]';
+        
+        return `
+            <div class="order-card" data-order-id="${order.id}">
+                <div class="order-header">
+                    <div class="order-date">
+                        ${new Date(order.timestamp).toLocaleDateString('pt-BR')} 
+                        às ${new Date(order.timestamp).toLocaleTimeString('pt-BR')}
                     </div>
-                `).join('')}
+                    <button class="favorite-btn ${order.isFavorite ? 'active' : ''}" onclick="toggleFavorite('${order.id}')">
+                        <i class="fas fa-star"></i>
+                    </button>
+                </div>
+                <div class="order-items">
+                    ${order.items.map(item => `
+                        <div class="order-item">
+                            <div style="font-weight: bold;">${item.name}</div>
+                            ${item.selectedToppings && item.selectedToppings.length ? `
+                                <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.5rem;">
+                                    <i class="fas fa-check-circle"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
+                                </div>
+                            ` : ''}
+                            ${item.selectedExtras && item.selectedExtras.length ? `
+                                <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
+                                    <i class="fas fa-plus-circle"></i> Extras: ${item.selectedExtras.join(', ')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                    <div class="order-total">R$ ${order.total ? order.total.toFixed(2) : '0.00'}</div>
+                    <button class="reorder-btn" data-items='${itemsJson}'>
+                        <i class="fas fa-redo-alt"></i> Pedir Novamente
+                    </button>
+                </div>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div class="order-total">R$ ${order.total.toFixed(2)}</div>
-                <button class="reorder-btn" data-items='${JSON.stringify(order.items)}'>
-                    <i class="fas fa-redo-alt"></i> Pedir Novamente
-                </button>
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
-
+    
 // Função para marcar/desmarcar favorito
 async function toggleFavorite(orderId) {
     try {
@@ -3530,10 +3535,19 @@ function showCartModal() {
             <div class="cart-item">
                 <div class="cart-item-details">
                     <h3 class="cart-item-title">${item.name || 'Item sem nome'}</h3>
-                    <p class="cart-item-description" style="white-space: pre-line;">${item.description || ''}</p>
-                    ${(item.selectedExtras && item.selectedExtras.length > 0 && !isCombo) ? 
-                        `<p class="cart-item-extras">Extras: ${item.selectedExtras.join(', ')}</p>` : 
-                        ''}
+                    ${item.description ? `<p class="cart-item-description" style="white-space: pre-line;">${item.description}</p>` : ''}
+                    
+                    ${item.selectedToppings && item.selectedToppings.length ? `
+                        <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.5rem;">
+                            <i class="fas fa-check-circle"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
+                        </div>
+                    ` : ''}
+                    
+                    ${item.selectedExtras && item.selectedExtras.length ? `
+                        <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
+                            <i class="fas fa-plus-circle"></i> Extras: ${item.selectedExtras.join(', ')}
+                        </div>
+                    ` : ''}
                 </div>
                 <div class="cart-item-price">R$ ${(item.price || 0).toFixed(2)}</div>
                 <button class="remove-item" onclick="removeFromCart(${index})">
