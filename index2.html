@@ -1417,6 +1417,108 @@ header {
     background: var(--glass);
     color: var(--text);
 }
+
+        .store-closed-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(16, 0, 43, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .popup-content {
+            background: var(--surface);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            animation: popupSlide 0.3s ease;
+        }
+
+        @keyframes popupSlide {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .close-popup {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .close-popup:hover {
+            color: var(--accent);
+            transform: rotate(90deg);
+        }
+
+        .icon-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .popup-content h2 {
+            color: var(--accent);
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .popup-content p {
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+
+        .schedule-container {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .schedule-item {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .schedule-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .days {
+            color: white;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .hours {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .return-message {
+            color: var(--text);
+            margin-top: 1.5rem;
+            font-style: italic;
+        }
     
 </style>
 </head>
@@ -3078,7 +3180,7 @@ function openProductModal(product) {
     modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
 
     // Objeto com os benefícios dos acompanhamentos
-const toppingBenefits = {
+    const toppingBenefits = {
         'Amendoim': 'Rico em proteínas e gorduras boas, ajuda na construção muscular e fornece energia duradoura.',
         'Granola': 'Fonte de fibras e carboidratos complexos, fornece energia sustentada para seus treinos.',
         'Chocoball': 'Fonte rápida de energia e carboidratos, perfeito para pré-treino.',
@@ -3109,99 +3211,35 @@ const toppingBenefits = {
         <div class="benefits-list" style="color: var(--text); line-height: 1.5;"></div>
     `;
 
-    // Verificar status da loja e mostrar vídeo quando estiver fechada
+    // Verificar status da loja
     realtimeDB.ref('schedule').once('value')
         .then(snapshot => {
             const schedule = snapshot.val() || {};
             const isOpen = isStoreOpenNow(schedule);
             
             if (!isOpen) {
-                const showVideo = () => {
-                    const existingVideo = document.querySelector('.video-modal');
-                    if (existingVideo) return;
-
-                    const videoModal = document.createElement('div');
-                    videoModal.className = 'video-modal';
-                    videoModal.style.cssText = `
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100vh;
-                        background: rgba(0, 0, 0, 0.9);
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        z-index: 9999;
-                    `;
-
-                    const videoContainer = document.createElement('div');
-                    videoContainer.style.cssText = `
-                        width: 90%;
-                        max-width: 400px;
-                        height: 280px;
-                        position: relative;
-                        border-radius: 10px;
-                        overflow: hidden;
-                    `;
-
-                    videoContainer.innerHTML = `
-                        <video autoplay loop playsinline class="product-video" style="width: 100%; height: 120%; object-fit: cover; position: absolute; top: -10%;">
-                            <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Work%20(1).mp4?alt=media&token=9d7b640d-ef3d-4df4-a835-90f02f9740d1" type="video/mp4">
-                        </video>
-                        <button class="close-video" style="
-                            position: absolute;
-                            top: 10px;
-                            right: 10px;
-                            background: none;
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            z-index: 1000;
-                        ">&times;</button>
-                    `;
-
-                    const video = videoContainer.querySelector('video');
-                    video.muted = false;
-
-                    const closeBtn = videoContainer.querySelector('.close-video');
-                    closeBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        videoModal.remove();
-                    });
-
-                    videoModal.appendChild(videoContainer);
-                    document.body.appendChild(videoModal);
-
-                    videoModal.addEventListener('click', (e) => {
-                        if (e.target === videoModal) {
-                            videoModal.remove();
-                        }
-                    });
-                };
-
-                showVideo();
+                showStoreClosedMessage();
+                modal.style.display = 'none';
+                return;
             }
-        });
 
-    Promise.all([
-        realtimeDB.ref('menu/toppings').once('value'),
-        realtimeDB.ref('extras').once('value')
-    ]).then(([toppingsSnapshot, extrasSnapshot]) => {
-        const toppings = toppingsSnapshot.val() || {};
-        const extras = extrasSnapshot.val() || {};
+            Promise.all([
+                realtimeDB.ref('menu/toppings').once('value'),
+                realtimeDB.ref('extras').once('value')
+            ]).then(([toppingsSnapshot, extrasSnapshot]) => {
+                const toppings = toppingsSnapshot.val() || {};
+                const extras = extrasSnapshot.val() || {};
 
-        const toppingsGrid = modal.querySelector('.toppings-grid');
-        toppingsGrid.innerHTML = Object.values(toppings)
-            .filter(topping => topping.available)
-            .map(topping => `
-                <div class="topping-item" data-topping="${topping.name}">
-                    ${topping.name}
-                    ${topping.price > 0 ? `<span class="topping-price">+R$ ${topping.price.toFixed(2)}</span>` : ''}
-                </div>
-            `).join('');
-
+                const toppingsGrid = modal.querySelector('.toppings-grid');
+                toppingsGrid.innerHTML = Object.values(toppings)
+                    .filter(topping => topping.available)
+                    .map(topping => `
+                        <div class="topping-item" data-topping="${topping.name}">
+                            ${topping.name}
+                            ${topping.price > 0 ? `<span class="topping-price">+R$ ${topping.price.toFixed(2)}</span>` : ''}
+                        </div>
+                    `).join('');
+                
         // Função para atualizar benefícios
         function updateBenefits() {
             const selectedToppings = Array.from(document.querySelectorAll('.topping-item.selected'))
@@ -4649,9 +4687,9 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
            document.getElementById('productModal').style.display = 'none';
        }
    });
-    function showStoreClosedPopup() {
+function showStoreClosedMessage() {
     const existingPopup = document.querySelector('.store-closed-popup');
-    if (existingPopup) existingPopup.remove();
+    if (existingPopup) return;
 
     const popup = document.createElement('div');
     popup.className = 'store-closed-popup';
@@ -4678,118 +4716,6 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
     `;
 
     document.body.appendChild(popup);
-
-    const closeBtn = popup.querySelector('.close-popup');
-    closeBtn.addEventListener('click', () => popup.remove());
-
-    // Add styles
-    const style = document.createElement('style');
-    style.textContent = `
-        .store-closed-popup {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(16, 0, 43, 0.95);
-            backdrop-filter: blur(10px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-
-        .popup-content {
-            background: var(--surface);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 2rem;
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-            position: relative;
-            animation: popupSlide 0.3s ease;
-        }
-
-        @keyframes popupSlide {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .close-popup {
-            position: absolute;
-            right: 1rem;
-            top: 1rem;
-            background: none;
-            border: none;
-            color: var(--text);
-            font-size: 1.5rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .close-popup:hover {
-            color: var(--accent);
-            transform: rotate(90deg);
-        }
-
-        .icon-container {
-            margin-bottom: 1.5rem;
-        }
-
-        .popup-content h2 {
-            color: var(--accent);
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-        }
-
-        .popup-content p {
-            color: var(--text);
-            margin-bottom: 1rem;
-        }
-
-        .schedule-container {
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            border-radius: 15px;
-            padding: 1.5rem;
-            margin: 1rem 0;
-        }
-
-        .schedule-item {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 1rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        .schedule-item:last-child {
-            margin-bottom: 0;
-            padding-bottom: 0;
-            border-bottom: none;
-        }
-
-        .days {
-            color: white;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .hours {
-            color: var(--accent);
-            font-weight: 500;
-        }
-
-        .return-message {
-            color: var(--text);
-            margin-top: 1.5rem;
-            font-style: italic;
-        }
-    `;
-    document.head.appendChild(style);
-
-    return popup;
 }
 
 // Modify the checkStoreStatus function
