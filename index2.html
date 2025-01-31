@@ -1274,38 +1274,68 @@ header {
 
 /* Adicionar antes do último } da tag <style> */
 /* Time Machine Styles */
+/* NOVO estilo para o container e botão */
+.time-machine-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 1rem;
+    margin-top: 90px;
+}
+
 .time-machine-btn {
+    background: var(--gradient);
+    color: white;
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: 50px;
     cursor: pointer;
-    margin-right: 1rem;
+    transition: all 0.3s ease;
+    font-weight: 500;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    color: var(--text);
-    padding: 0.5rem 1rem;
-    border-radius: 50px;
-    transition: all 0.3s ease;
-    border: 1px solid var(--glass-border);
-    background: var(--glass);
+    gap: 0.8rem;
+    font-size: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .time-machine-btn:hover {
-    color: var(--accent);
-    transform: scale(1.05);
-    background: var(--gradient);
-    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(247, 37, 133, 0.2);
 }
 
 .time-machine-btn i {
-    font-size: 1.3rem;
-    transition: transform 0.3s ease;
+    font-size: 1.1rem;
 }
 
-.time-machine-btn:hover i {
-    transform: rotate(180deg);
+/* Ajuste o margin-top do store-status */
+.store-status {
+    margin-top: 1rem !important;
 }
 
-.time-machine-content {
-    padding: 1.5rem;
+/* Responsividade */
+@media (max-width: 768px) {
+    .time-machine-container {
+        margin-top: 80px;
+        padding: 0.8rem;
+    }
+
+    .time-machine-btn {
+        padding: 0.7rem 1.8rem;
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .time-machine-container {
+        margin-top: 70px;
+        padding: 0.6rem;
+    }
+
+    .time-machine-btn {
+        padding: 0.6rem 1.5rem;
+        font-size: 0.9rem;
+    }
 }
 
 .phone-input-section {
@@ -2038,21 +2068,25 @@ let deliveryInfo = {};
 
 // Adicionar botão do Time Machine ao header
 function addTimeMachineButton() {
-    const headerContent = document.querySelector('.header-content');
-    const cartIcon = document.querySelector('.cart-icon');
+    const storeStatus = document.querySelector('.store-status');
     
-    const timeMachineBtn = document.createElement('div');
-    timeMachineBtn.className = 'time-machine-btn';
-    timeMachineBtn.innerHTML = `
-        <i class="fas fa-clock"></i>
-        <span>Time Machine</span>
+    const timeMachineContainer = document.createElement('div');
+    timeMachineContainer.className = 'time-machine-container';
+    timeMachineContainer.innerHTML = `
+        <button class="time-machine-btn">
+            <i class="fas fa-history"></i>
+            Meus Pedidos
+        </button>
     `;
     
-    timeMachineBtn.addEventListener('click', showTimeMachine);
-    headerContent.insertBefore(timeMachineBtn, cartIcon);
+    timeMachineContainer.querySelector('.time-machine-btn').addEventListener('click', showTimeMachine);
+    
+    // Inserir antes do store-status
+    if (storeStatus && storeStatus.parentNode) {
+        storeStatus.parentNode.insertBefore(timeMachineContainer, storeStatus);
+    }
 }
 
-// Função para mostrar o Time Machine
 // Função para mostrar o Time Machine
 function showTimeMachine() {
     const modal = document.getElementById('timeMachineModal');
