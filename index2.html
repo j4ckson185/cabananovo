@@ -3212,68 +3212,38 @@ function openProductModal(product) {
    `;
 
    // Verificar status da loja
-   realtimeDB.ref('schedule').once('value')
-       .then(snapshot => {
-           const schedule = snapshot.val() || {};
-           const isOpen = isStoreOpenNow(schedule);
-           
-        if (!isOpen) {
-            showStoreClosedMessage();
-            modal.style.display = 'none';
-            return;
-        }
+realtimeDB.ref('schedule').once('value')
+   .then(snapshot => {
+       const schedule = snapshot.val() || {};
+       const isOpen = isStoreOpenNow(schedule);
+       
+       if (!isOpen) {
+           showStoreClosedMessage();
+           modal.style.display = 'none';
+           return;
+       }
 
-                   const popup = document.createElement('div');
-                   popup.className = 'store-closed-popup';
-                   popup.innerHTML = `
-                       <div class="popup-content">
-                           <button class="close-popup">&times;</button>
-                           <div class="icon-container">
-                               <i class="fas fa-clock" style="font-size: 2.5rem; color: var(--accent);"></i>
-                           </div>
-                           <h2>Estamos Fechados</h2>
-                           <p>Horário de Funcionamento:</p>
-                           <div class="schedule-container">
-                               <div class="schedule-item">
-                                   <span class="days">Quarta a Sexta</span>
-                                   <span class="hours">12:30h às 22:30h</span>
-                               </div>
-                               <div class="schedule-item">
-                                   <span class="days">Sábado e Domingo</span>
-                                   <span class="hours">12:30h às 17:30h</span>
-                               </div>
-                           </div>
-                           <p class="return-message">Volte em nosso horário de funcionamento para fazer seu pedido!</p>
-                       </div>
-                   `;
+       modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
+       modal.querySelector('.modal-product-title').textContent = product.name;
+       modal.querySelector('.modal-product-description').textContent = product.description;
+       modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
 
-                   document.body.appendChild(popup);
+       Promise.all([
+           realtimeDB.ref('menu/toppings').once('value'),
+           realtimeDB.ref('extras').once('value')
+       ]).then(([toppingsSnapshot, extrasSnapshot]) => {
+           const toppings = toppingsSnapshot.val() || {};
+           const extras = extrasSnapshot.val() || {};
 
-                   const closeBtn = popup.querySelector('.close-popup');
-                   closeBtn.addEventListener('click', () => popup.remove());
-               };
-
-               showStoreClosedMessage();
-               modal.style.display = 'none';
-               return;
-           }
-
-           Promise.all([
-               realtimeDB.ref('menu/toppings').once('value'),
-               realtimeDB.ref('extras').once('value')
-           ]).then(([toppingsSnapshot, extrasSnapshot]) => {
-               const toppings = toppingsSnapshot.val() || {};
-               const extras = extrasSnapshot.val() || {};
-
-               const toppingsGrid = modal.querySelector('.toppings-grid');
-               toppingsGrid.innerHTML = Object.values(toppings)
-                   .filter(topping => topping.available)
-                   .map(topping => `
-                       <div class="topping-item" data-topping="${topping.name}">
-                           ${topping.name}
-                           ${topping.price > 0 ? `<span class="topping-price">+R$ ${topping.price.toFixed(2)}</span>` : ''}
-                       </div>
-                   `).join('');
+           const toppingsGrid = modal.querySelector('.toppings-grid');
+           toppingsGrid.innerHTML = Object.values(toppings)
+               .filter(topping => topping.available)
+               .map(topping => `
+                   <div class="topping-item" data-topping="${topping.name}">
+                       ${topping.name}
+                       ${topping.price > 0 ? `<span class="topping-price">+R$ ${topping.price.toFixed(2)}</span>` : ''}
+                   </div>
+               `).join('');
 
                const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
                toppingItems.forEach(item => {
@@ -3383,8 +3353,10 @@ function openProductModal(product) {
            });
 
            modal.style.display = 'block';
-       });
-}
+       })
+  .catch(error => {
+       console.error('Erro ao verificar status da loja:', error);
+   });
                 
         // Função para atualizar benefícios
         function updateBenefits() {
