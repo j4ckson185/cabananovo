@@ -1417,108 +1417,6 @@ header {
     background: var(--glass);
     color: var(--text);
 }
-
-        .store-closed-popup {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(16, 0, 43, 0.95);
-            backdrop-filter: blur(10px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-
-        .popup-content {
-            background: var(--surface);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 2rem;
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-            position: relative;
-            animation: popupSlide 0.3s ease;
-        }
-
-        @keyframes popupSlide {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .close-popup {
-            position: absolute;
-            right: 1rem;
-            top: 1rem;
-            background: none;
-            border: none;
-            color: var(--text);
-            font-size: 1.5rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .close-popup:hover {
-            color: var(--accent);
-            transform: rotate(90deg);
-        }
-
-        .icon-container {
-            margin-bottom: 1.5rem;
-        }
-
-        .popup-content h2 {
-            color: var(--accent);
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-        }
-
-        .popup-content p {
-            color: var(--text);
-            margin-bottom: 1rem;
-        }
-
-        .schedule-container {
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            border-radius: 15px;
-            padding: 1.5rem;
-            margin: 1rem 0;
-        }
-
-        .schedule-item {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 1rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        .schedule-item:last-child {
-            margin-bottom: 0;
-            padding-bottom: 0;
-            border-bottom: none;
-        }
-
-        .days {
-            color: white;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .hours {
-            color: var(--accent);
-            font-weight: 500;
-        }
-
-        .return-message {
-            color: var(--text);
-            margin-top: 1.5rem;
-            font-style: italic;
-        }
     
 </style>
 </head>
@@ -3169,193 +3067,141 @@ function hideMascot() {
 }
 
 function openProductModal(product) {
-   currentProduct = product;
-   const modal = document.getElementById('productModal');
-   
-   modal.querySelectorAll('.video-container, .upgrade-button, .mascot-container, .upgrade-section, .benefits-section').forEach(el => el.remove());
-   
-   modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
-   modal.querySelector('.modal-product-title').textContent = product.name;
-   modal.querySelector('.modal-product-description').textContent = product.description;
-   modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
+    currentProduct = product;
+    const modal = document.getElementById('productModal');
+    
+    modal.querySelectorAll('.video-container, .upgrade-button, .mascot-container, .upgrade-section, .benefits-section').forEach(el => el.remove());
+    
+    modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
+    modal.querySelector('.modal-product-title').textContent = product.name;
+    modal.querySelector('.modal-product-description').textContent = product.description;
+    modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
 
-   // Objeto com os benefícios dos acompanhamentos
-   const toppingBenefits = {
-       'Amendoim': 'Rico em proteínas e gorduras boas, ajuda na construção muscular e fornece energia duradoura.',
-       'Granola': 'Fonte de fibras e carboidratos complexos, fornece energia sustentada para seus treinos.',
-       'Chocoball': 'Fonte rápida de energia e carboidratos, perfeito para pré-treino.',
-       'Côco Ralado': 'Rico em fibras e gorduras boas, ajuda no funcionamento intestinal e fornece energia.',
-       'Ovomaltine': 'Fonte de vitaminas e minerais, contribui para a recuperação muscular.',
-       'M&M': 'Fonte rápida de energia e açúcares, ideal para reposição de glicose.',
-       'Leite condensado': 'Rico em cálcio e carboidratos, fornece energia imediata.',
-       'Calda de Morango': 'Fonte de vitamina C e antioxidantes, fortalece o sistema imunológico.',
-       'Calda de Chocolate': 'Rica em antioxidantes e magnésio, ajuda no humor e na disposição.',
-       'Farinha Láctea': 'Rica em vitaminas e minerais, contribui para a saúde dos ossos.',
-       'Leite em pó': 'Excelente fonte de proteínas e cálcio, fundamental para recuperação muscular.',
-       'Banana': 'Rica em potássio, ajuda a controlar a pressão arterial e reduz o risco de doenças cardíacas.'
-   };
+    // Objeto com os benefícios dos acompanhamentos
+const toppingBenefits = {
+        'Amendoim': 'Rico em proteínas e gorduras boas, ajuda na construção muscular e fornece energia duradoura.',
+        'Granola': 'Fonte de fibras e carboidratos complexos, fornece energia sustentada para seus treinos.',
+        'Chocoball': 'Fonte rápida de energia e carboidratos, perfeito para pré-treino.',
+        'Côco Ralado': 'Rico em fibras e gorduras boas, ajuda no funcionamento intestinal e fornece energia.',
+        'Ovomaltine': 'Fonte de vitaminas e minerais, contribui para a recuperação muscular.',
+        'M&M': 'Fonte rápida de energia e açúcares, ideal para reposição de glicose.',
+        'Leite condensado': 'Rico em cálcio e carboidratos, fornece energia imediata.',
+        'Calda de Morango': 'Fonte de vitamina C e antioxidantes, fortalece o sistema imunológico.',
+        'Calda de Chocolate': 'Rica em antioxidantes e magnésio, ajuda no humor e na disposição.',
+        'Farinha Láctea': 'Rica em vitaminas e minerais, contribui para a saúde dos ossos.',
+        'Leite em pó': 'Excelente fonte de proteínas e cálcio, fundamental para recuperação muscular.',
+        'Banana': 'Rica em potássio, ajuda a controlar a pressão arterial e reduz o risco de doenças cardíacas.'
+    };
 
-   // Criar seção de benefícios
-   const benefitsSection = document.createElement('div');
-   benefitsSection.className = 'benefits-section';
-   benefitsSection.style.cssText = `
-       margin: 1.5rem 0;
-       padding: 1.5rem;
-       background: var(--glass);
-       border: 1px solid var(--glass-border);
-       border-radius: 15px;
-       display: none;
-   `;
-   benefitsSection.innerHTML = `
-       <h3 style="color: white; margin-bottom: 1rem; font-size: 1.2rem;">Benefícios dos itens escolhidos:</h3>
-       <div class="benefits-list" style="color: var(--text); line-height: 1.5;"></div>
-   `;
+    // Criar seção de benefícios
+    const benefitsSection = document.createElement('div');
+    benefitsSection.className = 'benefits-section';
+    benefitsSection.style.cssText = `
+        margin: 1.5rem 0;
+        padding: 1.5rem;
+        background: var(--glass);
+        border: 1px solid var(--glass-border);
+        border-radius: 15px;
+        display: none;
+    `;
+    benefitsSection.innerHTML = `
+        <h3 style="color: white; margin-bottom: 1rem; font-size: 1.2rem;">Benefícios dos itens escolhidos:</h3>
+        <div class="benefits-list" style="color: var(--text); line-height: 1.5;"></div>
+    `;
 
-   // Verificar status da loja
-realtimeDB.ref('schedule').once('value')
-   .then(snapshot => {
-       const schedule = snapshot.val() || {};
-       const isOpen = isStoreOpenNow(schedule);
-       
-       if (!isOpen) {
-           showStoreClosedMessage();
-           modal.style.display = 'none';
-           return;
-       }
+    // Verificar status da loja e mostrar vídeo quando estiver fechada
+    realtimeDB.ref('schedule').once('value')
+        .then(snapshot => {
+            const schedule = snapshot.val() || {};
+            const isOpen = isStoreOpenNow(schedule);
+            
+            if (!isOpen) {
+                const showVideo = () => {
+                    const existingVideo = document.querySelector('.video-modal');
+                    if (existingVideo) return;
 
-       modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
-       modal.querySelector('.modal-product-title').textContent = product.name;
-       modal.querySelector('.modal-product-description').textContent = product.description;
-       modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
+                    const videoModal = document.createElement('div');
+                    videoModal.className = 'video-modal';
+                    videoModal.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100vh;
+                        background: rgba(0, 0, 0, 0.9);
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        z-index: 9999;
+                    `;
 
-       Promise.all([
-           realtimeDB.ref('menu/toppings').once('value'),
-           realtimeDB.ref('extras').once('value')
-       ]).then(([toppingsSnapshot, extrasSnapshot]) => {
-           const toppings = toppingsSnapshot.val() || {};
-           const extras = extrasSnapshot.val() || {};
+                    const videoContainer = document.createElement('div');
+                    videoContainer.style.cssText = `
+                        width: 90%;
+                        max-width: 400px;
+                        height: 280px;
+                        position: relative;
+                        border-radius: 10px;
+                        overflow: hidden;
+                    `;
 
-           const toppingsGrid = modal.querySelector('.toppings-grid');
-           toppingsGrid.innerHTML = Object.values(toppings)
-               .filter(topping => topping.available)
-               .map(topping => `
-                   <div class="topping-item" data-topping="${topping.name}">
-                       ${topping.name}
-                       ${topping.price > 0 ? `<span class="topping-price">+R$ ${topping.price.toFixed(2)}</span>` : ''}
-                   </div>
-               `).join('');
+                    videoContainer.innerHTML = `
+                        <video autoplay loop playsinline class="product-video" style="width: 100%; height: 120%; object-fit: cover; position: absolute; top: -10%;">
+                            <source src="https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Work%20(1).mp4?alt=media&token=9d7b640d-ef3d-4df4-a835-90f02f9740d1" type="video/mp4">
+                        </video>
+                        <button class="close-video" style="
+                            position: absolute;
+                            top: 10px;
+                            right: 10px;
+                            background: none;
+                            border: none;
+                            color: white;
+                            font-size: 24px;
+                            cursor: pointer;
+                            z-index: 1000;
+                        ">&times;</button>
+                    `;
 
-               const toppingItems = toppingsGrid.querySelectorAll('.topping-item');
-               toppingItems.forEach(item => {
-                   item.addEventListener('click', () => {
-                       const isCurrentlySelected = item.classList.contains('selected');
-                       const selectedToppings = document.querySelectorAll('.topping-item.selected');
-                       
-                       if (isCurrentlySelected) {
-                           item.classList.remove('selected');
-                       } else {
-                           if (selectedToppings.length < product.toppings.max) {
-                               item.classList.add('selected');
-                           } else {
-                               showNotification(`Você pode selecionar no máximo ${product.toppings.max} acompanhamento${product.toppings.max > 1 ? 's' : ''}!`);
-                           }
-                       }
-                       validateToppingsSelection(product.toppings.min, product.toppings.max);
-                       updateTotalPrice(product);
-                       
-                       // Atualizar benefícios
-                       const selectedItems = Array.from(document.querySelectorAll('.topping-item.selected'))
-                           .map(item => item.textContent.trim().replace(/\+R\$.*$/, '').trim());
-                       
-                       const benefitsList = benefitsSection.querySelector('.benefits-list');
-                       benefitsList.innerHTML = '';
-                       
-                       if (selectedItems.length > 0) {
-                           benefitsSection.style.display = 'block';
-                           selectedItems.forEach(topping => {
-                               if (toppingBenefits[topping]) {
-                                   benefitsList.innerHTML += `
-                                       <p style="margin-bottom: 0.8rem;">
-                                           <strong style="color: white;">${topping}:</strong> 
-                                           ${toppingBenefits[topping]}
-                                       </p>
-                                   `;
-                               }
-                           });
-                       } else {
-                           benefitsSection.style.display = 'none';
-                       }
-                   });
-               });
+                    const video = videoContainer.querySelector('video');
+                    video.muted = false;
 
-               const extrasGrid = modal.querySelector('.extras-grid');
-               extrasGrid.innerHTML = Object.values(extras)
-                   .filter(extra => extra.available)
-                   .map(extra => `
-                       <div class="extra-item" data-extra="${extra.name}">
-                           ${extra.name}
-                           ${extra.price > 0 ? `<span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>` : ''}
-                       </div>
-                   `).join('');
+                    const closeBtn = videoContainer.querySelector('.close-video');
+                    closeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        videoModal.remove();
+                    });
 
-               const extraItems = extrasGrid.querySelectorAll('.extra-item');
-               extraItems.forEach(item => {
-                   item.addEventListener('click', () => {
-                       item.classList.toggle('selected');
-                       updateTotalPrice(product);
-                   });
-               });
+                    videoModal.appendChild(videoContainer);
+                    document.body.appendChild(videoModal);
 
-               // Inserir seção de benefícios antes da seção de extras
-               const extrasSection = modal.querySelector('.extras-section');
-               if (extrasSection) {
-                   extrasSection.parentNode.insertBefore(benefitsSection, extrasSection);
-               }
+                    videoModal.addEventListener('click', (e) => {
+                        if (e.target === videoModal) {
+                            videoModal.remove();
+                        }
+                    });
+                };
 
-               if (product.name.includes('500ml') && !product.name.includes('1 Litro')) {
-                   const upgradeSection = document.createElement('div');
-                   upgradeSection.className = 'upgrade-section';
-                   upgradeSection.style.cssText = `
-                       margin: 1.5rem 0;
-                       padding: 1.5rem;
-                       background: var(--glass);
-                       border: 1px solid var(--glass-border);
-                       border-radius: 15px;
-                       text-align: center;
-                       color: var(--text);
-                       font-size: 1.1rem;
-                       line-height: 1.5;
-                   `;
-                   upgradeSection.innerHTML = `
-                       <p>Sabia que por apenas R$10 a mais você leva o dobro de açai, o dobro de creme e o dobro de Acompanhamentos? Só clicar no botão abaixo:</p>
-                   `;
+                showVideo();
+            }
+        });
 
-                   const upgradeButton = document.createElement('button');
-                   upgradeButton.className = 'modal-btn upgrade-button';
-                   upgradeButton.innerHTML = 'Ver opção de 1 Litro';
-                   upgradeButton.onclick = () => switchToSize('1 Litro', product.name);
-                   upgradeButton.style.cssText = `
-                       background: var(--gradient);
-                       color: white;
-                       border: none;
-                       padding: 10px 20px;
-                       border-radius: 5px;
-                       margin-top: 1rem;
-                       cursor: pointer;
-                       width: 100%;
-                       transition: transform 0.2s ease;
-                   `;
+    Promise.all([
+        realtimeDB.ref('menu/toppings').once('value'),
+        realtimeDB.ref('extras').once('value')
+    ]).then(([toppingsSnapshot, extrasSnapshot]) => {
+        const toppings = toppingsSnapshot.val() || {};
+        const extras = extrasSnapshot.val() || {};
 
-                   upgradeSection.appendChild(upgradeButton);
-                   const modalButtons = modal.querySelector('.modal-buttons');
-                   modalButtons.insertAdjacentElement('beforebegin', upgradeSection);
-               }
-           });
+        const toppingsGrid = modal.querySelector('.toppings-grid');
+        toppingsGrid.innerHTML = Object.values(toppings)
+            .filter(topping => topping.available)
+            .map(topping => `
+                <div class="topping-item" data-topping="${topping.name}">
+                    ${topping.name}
+                    ${topping.price > 0 ? `<span class="topping-price">+R$ ${topping.price.toFixed(2)}</span>` : ''}
+                </div>
+            `).join('');
 
-           modal.style.display = 'block';
-       });
-}
-                
         // Função para atualizar benefícios
         function updateBenefits() {
             const selectedToppings = Array.from(document.querySelectorAll('.topping-item.selected'))
@@ -3469,11 +3315,11 @@ realtimeDB.ref('schedule').once('value')
 
             const modalButtons = modal.querySelector('.modal-buttons');
             modalButtons.insertAdjacentElement('beforebegin', upgradeSection);
-               }
-           });
-
-           modal.style.display = 'block';
+            upgradeSection.appendChild(upgradeButton);
+        }
     });
+
+    modal.style.display = 'block';
 }
     
 function switchToSize(newSize, currentName) {
@@ -4803,47 +4649,6 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
            document.getElementById('productModal').style.display = 'none';
        }
    });
-function showStoreClosedMessage() {
-    const existingPopup = document.querySelector('.store-closed-popup');
-    if (existingPopup) return;
-
-    const popup = document.createElement('div');
-    popup.className = 'store-closed-popup';
-    popup.innerHTML = `
-        <div class="popup-content">
-            <button class="close-popup">&times;</button>
-            <div class="icon-container">
-                <i class="fas fa-clock" style="font-size: 2.5rem; color: var(--accent);"></i>
-            </div>
-            <h2>Estamos Fechados</h2>
-            <p>Horário de Funcionamento:</p>
-            <div class="schedule-container">
-                <div class="schedule-item">
-                    <span class="days">Quarta a Sexta</span>
-                    <span class="hours">12:30h às 22:30h</span>
-                </div>
-                <div class="schedule-item">
-                    <span class="days">Sábado e Domingo</span>
-                    <span class="hours">12:30h às 17:30h</span>
-                </div>
-            </div>
-            <p class="return-message">Volte em nosso horário de funcionamento para fazer seu pedido!</p>
-        </div>
-    `;
-
-    document.body.appendChild(popup);
-
-    const closeBtn = popup.querySelector('.close-popup');
-    closeBtn.addEventListener('click', () => popup.remove());
-}
-
-// Modify the checkStoreStatus function
-function showClosedStatus() {
-    const isOpen = isStoreOpenNow(schedule);
-    if (!isOpen) {
-        showStoreClosedPopup();
-    }
-}
     (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="PpgNSIgeYN1FCucFGP4w3";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
 </script>
 <<!-- Modal para Criar Novo Pedido -->
