@@ -3217,10 +3217,11 @@ function openProductModal(product) {
            const schedule = snapshot.val() || {};
            const isOpen = isStoreOpenNow(schedule);
            
-           if (!isOpen) {
-               const showStoreClosedMessage = () => {
-                   const existingPopup = document.querySelector('.store-closed-popup');
-                   if (existingPopup) return;
+        if (!isOpen) {
+            showStoreClosedMessage();
+            modal.style.display = 'none';
+            return;
+        }
 
                    const popup = document.createElement('div');
                    popup.className = 'store-closed-popup';
@@ -4861,6 +4862,9 @@ function showStoreClosedMessage() {
     `;
 
     document.body.appendChild(popup);
+
+    const closeBtn = popup.querySelector('.close-popup');
+    closeBtn.addEventListener('click', () => popup.remove());
 }
 
 // Modify the checkStoreStatus function
