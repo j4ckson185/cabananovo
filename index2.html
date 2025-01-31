@@ -3212,33 +3212,51 @@ function openProductModal(product) {
     `;
 
     // Verificar status da loja
-    realtimeDB.ref('schedule').once('value')
-        .then(snapshot => {
-            const schedule = snapshot.val() || {};
-            const isOpen = isStoreOpenNow(schedule);
-            
-            if (!isOpen) {
-                showStoreClosedMessage();
-                modal.style.display = 'none';
-                return;
-            }
+// Verificar status da loja e mostrar popup quando estiver fechada
+realtimeDB.ref('schedule').once('value')
+    .then(snapshot => {
+        const schedule = snapshot.val() || {};
+        const isOpen = isStoreOpenNow(schedule);
+        
+        if (!isOpen) {
+            const showStoreClosedMessage = () => {
+                const existingPopup = document.querySelector('.store-closed-popup');
+                if (existingPopup) return;
 
-            Promise.all([
-                realtimeDB.ref('menu/toppings').once('value'),
-                realtimeDB.ref('extras').once('value')
-            ]).then(([toppingsSnapshot, extrasSnapshot]) => {
-                const toppings = toppingsSnapshot.val() || {};
-                const extras = extrasSnapshot.val() || {};
-
-                const toppingsGrid = modal.querySelector('.toppings-grid');
-                toppingsGrid.innerHTML = Object.values(toppings)
-                    .filter(topping => topping.available)
-                    .map(topping => `
-                        <div class="topping-item" data-topping="${topping.name}">
-                            ${topping.name}
-                            ${topping.price > 0 ? `<span class="topping-price">+R$ ${topping.price.toFixed(2)}</span>` : ''}
+                const popup = document.createElement('div');
+                popup.className = 'store-closed-popup';
+                popup.innerHTML = `
+                    <div class="popup-content">
+                        <button class="close-popup">&times;</button>
+                        <div class="icon-container">
+                            <i class="fas fa-clock" style="font-size: 2.5rem; color: var(--accent);"></i>
                         </div>
-                    `).join('');
+                        <h2>Estamos Fechados</h2>
+                        <p>Horário de Funcionamento:</p>
+                        <div class="schedule-container">
+                            <div class="schedule-item">
+                                <span class="days">Quarta a Sexta</span>
+                                <span class="hours">12:30h às 22:30h</span>
+                            </div>
+                            <div class="schedule-item">
+                                <span class="days">Sábado e Domingo</span>
+                                <span class="hours">12:30h às 17:30h</span>
+                            </div>
+                        </div>
+                        <p class="return-message">Volte em nosso horário de funcionamento para fazer seu pedido!</p>
+                    </div>
+                `;
+
+                document.body.appendChild(popup);
+
+                const closeBtn = popup.querySelector('.close-popup');
+                closeBtn.addEventListener('click', () => popup.remove());
+            };
+
+            showStoreClosedMessage();
+            modal.style.display = 'none';
+            return;
+        }
                 
         // Função para atualizar benefícios
         function updateBenefits() {
