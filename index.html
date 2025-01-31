@@ -1417,6 +1417,212 @@ header {
     background: var(--glass);
     color: var(--text);
 }
+
+/* Estilo do popup de loja fechada */
+.store-closed-popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+}
+
+.store-closed-popup.active {
+    display: flex;
+}
+
+.popup-content {
+    background: var(--surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 400px;
+    text-align: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.popup-content h2 {
+    color: var(--accent);
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+
+.popup-content p {
+    color: var(--text);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.popup-content ul {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 1.5rem;
+}
+
+.popup-content ul li {
+    color: var(--text);
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.popup-content button {
+    background: var(--gradient);
+    color: white;
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: 50px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.popup-content button:hover {
+    transform: translateY(-2px);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Estilo do Assistente de Ocasiões */
+.occasion-assistant {
+    background: var(--surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    margin: 1rem;
+    padding: 1rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.assistant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.assistant-header h3 {
+    font-size: 1.1rem;
+    color: var(--text);
+    margin: 0;
+}
+
+.assistant-header button {
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.assistant-header button:hover {
+    transform: rotate(180deg);
+}
+
+.assistant-options {
+    display: none;
+    margin-top: 1rem;
+}
+
+.assistant-options.active {
+    display: block;
+}
+
+.option {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.8rem;
+    margin-bottom: 0.5rem;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.option:hover {
+    background: var(--gradient);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
+}
+
+.option i {
+    font-size: 1.2rem;
+    color: var(--accent);
+}
+
+.option span {
+    font-size: 0.95rem;
+    color: var(--text);
+}
+
+/* Estilo da notificação de recomendação */
+.recommendation-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1.5rem;
+    max-width: 300px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.5s ease;
+    z-index: 10000;
+}
+
+.notification-content h3 {
+    font-size: 1.1rem;
+    color: var(--text);
+    margin-bottom: 1rem;
+}
+
+.notification-content ul {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 1rem;
+}
+
+.notification-content ul li {
+    font-size: 0.95rem;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+
+.notification-content p {
+    font-size: 0.9rem;
+    color: var(--text);
+    margin-bottom: 1rem;
+}
+
+.notification-content button {
+    background: var(--gradient);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: transform 0.2s ease;
+}
+
+.notification-content button:hover {
+    transform: translateY(-2px);
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
     
 </style>
 </head>
@@ -1479,6 +1685,42 @@ header {
             <input type="text" class="search-input" placeholder="O que você quer comer hoje?" id="searchInput">
         </div>
     </div>
+
+    <!-- Assistente de Ocasiões -->
+<div class="occasion-assistant">
+    <div class="assistant-header">
+        <h3>Para qual ocasião você está pedindo hoje?</h3>
+        <button onclick="toggleOccasionAssistant()">
+            <i class="fas fa-chevron-down"></i>
+        </button>
+    </div>
+<div class="assistant-options" id="assistantOptions">
+    <div class="option" onclick="selectOccasion('romantic')">
+        <i class="fas fa-heart"></i>
+        <span>Encontro Romântico</span>
+    </div>
+    <div class="option" onclick="selectOccasion('party')">
+        <i class="fas fa-glass-cheers"></i>
+        <span>Festa com Amigos</span>
+    </div>
+    <div class="option" onclick="selectOccasion('pre-workout')">
+        <i class="fas fa-dumbbell"></i>
+        <span>Pré-treino</span>
+    </div>
+    <div class="option" onclick="selectOccasion('post-workout')">
+        <i class="fas fa-running"></i>
+        <span>Pós-treino</span>
+    </div>
+    <div class="option" onclick="selectOccasion('dessert')">
+        <i class="fas fa-ice-cream"></i>
+        <span>Sobremesa</span>
+    </div>
+    <div class="option" onclick="selectOccasion('gift')">
+        <i class="fas fa-gift"></i>
+        <span>Presentear Alguém</span>
+    </div>
+</div>
+</div>
 
     <div class="products-grid" id="productsGrid">
         <!-- Sample Product Card -->
@@ -3109,6 +3351,20 @@ const toppingBenefits = {
         <div class="benefits-list" style="color: var(--text); line-height: 1.5;"></div>
     `;
 
+    // Verificar status da loja e mostrar popup quando estiver fechada
+realtimeDB.ref('schedule').once('value')
+    .then(snapshot => {
+        const schedule = snapshot.val() || {};
+        const isOpen = isStoreOpenNow(schedule);
+        
+        if (!isOpen) {
+            const popup = document.getElementById('storeClosedPopup');
+            if (popup) {
+                popup.classList.add('active');
+            }
+        }
+    });
+
     Promise.all([
         realtimeDB.ref('menu/toppings').once('value'),
         realtimeDB.ref('extras').once('value')
@@ -4573,6 +4829,94 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
            document.getElementById('productModal').style.display = 'none';
        }
    });
+    function closeStoreClosedPopup() {
+    const popup = document.getElementById('storeClosedPopup');
+    if (popup) {
+        popup.classList.remove('active');
+    }
+}
+    // Função para alternar a exibição das opções
+function toggleOccasionAssistant() {
+    const options = document.getElementById('assistantOptions');
+    options.classList.toggle('active');
+}
+
+// Função para selecionar uma ocasião
+function selectOccasion(occasion) {
+    let message = '';
+    let products = [];
+    let toppings = [];
+
+    switch (occasion) {
+        case 'romantic':
+            message = 'Para um encontro romântico, recomendamos combinações doces e cremosas. Experimente:';
+            products = ['Açaí + Creme de Ninho (1 Litro)', 'Açaí + Creme de Morango (500ml)', 'Creme de Ninho + Creme de Ovomaltine (500ml)'];
+            toppings = ['Morango', 'Banana', 'Calda de Chocolate', 'Leite Condensado'];
+            break;
+        case 'party':
+            message = 'Para festas com amigos, sugerimos combinações energéticas e divertidas. Experimente:';
+            products = ['Açaí + Creme de Ovomaltine (1 Litro)', 'Açaí + Creme de Cupuaçu (500ml)', 'Creme de Amendoim + Creme de Ovomaltine (500ml)'];
+            toppings = ['Granola', 'Chocoball', 'M&M', 'Calda de Morango'];
+            break;
+        case 'pre-workout':
+            message = 'Para o pré-treino, recomendamos combinações ricas em energia. Experimente:';
+            products = ['Açaí + Creme de Amendoim (500ml)', 'Açaí + Creme de Ninho (500ml)', 'Creme de Amendoim + Creme de Ovomaltine (500ml)'];
+            toppings = ['Banana', 'Granola', 'Farinha Láctea', 'Barra de Proteína'];
+            break;
+        case 'post-workout':
+            message = 'Para o pós-treino, sugerimos combinações que ajudam na recuperação. Experimente:';
+            products = ['Açaí + Creme de Ninho (1 Litro)', 'Açaí + Creme de Morango (500ml)', 'Creme de Ninho + Creme de Ovomaltine (500ml)'];
+            toppings = ['Banana', 'Amendoim', 'Farinha Láctea', 'Calda de Morango'];
+            break;
+        case 'dessert':
+            message = 'Para uma sobremesa incrível, recomendamos combinações doces e especiais. Experimente:';
+            products = ['Açaí + Creme de Ovomaltine (500ml)', 'Açaí + Creme de Cupuaçu (500ml)', 'Creme de Morango + Creme de Ninho (500ml)'];
+            toppings = ['Leite Condensado', 'Calda de Chocolate', 'M&M', 'Côco Ralado'];
+            break;
+        case 'gift':
+            message = 'Para presentear alguém especial, sugerimos combinações sofisticadas. Experimente:';
+            products = ['Açaí + Creme de Ninho (1 Litro)', 'Açaí + Creme de Ovomaltine (1 Litro)', 'Creme de Morango + Creme de Cupuaçu (500ml)'];
+            toppings = ['Granola', 'Calda de Chocolate', 'M&M', 'Leite Condensado'];
+            break;
+    }
+
+    // Exibir notificação com detalhes
+    showRecommendation(message, products, toppings);
+}
+
+function showRecommendation(message, products, toppings) {
+    const notification = document.createElement('div');
+    notification.className = 'recommendation-notification';
+    notification.innerHTML = `
+        <div class="notification-content">
+            <h3>${message}</h3>
+            <ul>
+                ${products.map(product => `<li>${product}</li>`).join('')}
+            </ul>
+            <p><strong>Acompanhamentos recomendados:</strong> ${toppings.join(', ')}</p>
+            <button onclick="this.parentElement.parentElement.remove()">Fechar</button>
+        </div>
+    `;
+    document.body.appendChild(notification);
+
+    // Remover a notificação após 12 segundos
+    setTimeout(() => {
+        notification.remove();
+    }, 12000);
+}
+
+// Função para filtrar produtos pela ocasião
+function filterProductsByOccasion(products) {
+    const productCards = document.querySelectorAll('.product-card');
+    productCards.forEach(card => {
+        const productName = card.querySelector('.product-title').textContent;
+        if (products.includes(productName)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
     (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="PpgNSIgeYN1FCucFGP4w3";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
 </script>
 <<!-- Modal para Criar Novo Pedido -->
@@ -4657,6 +5001,18 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
         </div>
     </div>
 </div>
+</div>
+    <!-- Popup de loja fechada -->
+<div id="storeClosedPopup" class="store-closed-popup">
+    <div class="popup-content">
+        <h2>Loja Fechada</h2>
+        <p>No momento, a loja está fechada. Confira nossos horários de funcionamento:</p>
+        <ul>
+            <li><strong>Quarta à Sexta:</strong> 12:30h às 22:30h</li>
+            <li><strong>Sábado e Domingo:</strong> 12:30h às 17:30h</li>
+        </ul>
+        <button onclick="closeStoreClosedPopup()">Fechar</button>
+    </div>
 </div>
 </body>
 </html>
