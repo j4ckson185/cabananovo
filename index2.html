@@ -1564,6 +1564,65 @@ header {
     font-size: 0.95rem;
     color: var(--text);
 }
+
+/* Estilo da notificação de recomendação */
+.recommendation-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1.5rem;
+    max-width: 300px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.5s ease;
+    z-index: 10000;
+}
+
+.notification-content h3 {
+    font-size: 1.1rem;
+    color: var(--text);
+    margin-bottom: 1rem;
+}
+
+.notification-content ul {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 1rem;
+}
+
+.notification-content ul li {
+    font-size: 0.95rem;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+
+.notification-content p {
+    font-size: 0.9rem;
+    color: var(--text);
+    margin-bottom: 1rem;
+}
+
+.notification-content button {
+    background: var(--gradient);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: transform 0.2s ease;
+}
+
+.notification-content button:hover {
+    transform: translateY(-2px);
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
     
 </style>
 </head>
@@ -4774,25 +4833,64 @@ function toggleOccasionAssistant() {
 function selectOccasion(occasion) {
     let message = '';
     let products = [];
+    let toppings = [];
 
     switch (occasion) {
         case 'romantic':
-            message = 'Para um encontro romântico, recomendamos nossos açaís especiais com frutas frescas e calda de chocolate.';
-            products = ['Açaí com Morango', 'Açaí com Ninho', 'Açaí com Ovomaltine'];
+            message = 'Para um encontro romântico, recomendamos combinações doces e cremosas. Experimente:';
+            products = ['Açaí + Creme de Ninho (1 Litro)', 'Açaí + Creme de Morango (500ml)', 'Creme de Ninho + Creme de Ovomaltine (500ml)'];
+            toppings = ['Morango', 'Banana', 'Calda de Chocolate', 'Leite Condensado'];
             break;
         case 'party':
-            message = 'Para festas com amigos, sugerimos nossos combos grandes e açaís com toppings variados.';
-            products = ['Combo 1 Litro', 'Açaí com Granola', 'Açaí com Paçoca'];
+            message = 'Para festas com amigos, sugerimos combinações energéticas e divertidas. Experimente:';
+            products = ['Açaí + Creme de Ovomaltine (1 Litro)', 'Açaí + Creme de Cupuaçu (500ml)', 'Creme de Amendoim + Creme de Ovomaltine (500ml)'];
+            toppings = ['Granola', 'Chocoball', 'M&M', 'Calda de Morango'];
             break;
-        case 'gym':
-            message = 'Para o pós-academia, recomendamos açaís energéticos com proteínas e frutas.';
-            products = ['Açaí com Banana', 'Açaí com Amendoim', 'Açaí com Whey Protein'];
+        case 'pre-workout':
+            message = 'Para o pré-treino, recomendamos combinações ricas em energia. Experimente:';
+            products = ['Açaí + Creme de Amendoim (500ml)', 'Açaí + Creme de Ninho (500ml)', 'Creme de Amendoim + Creme de Ovomaltine (500ml)'];
+            toppings = ['Banana', 'Granola', 'Farinha Láctea', 'Calda de Chocolate'];
+            break;
+        case 'post-workout':
+            message = 'Para o pós-treino, sugerimos combinações que ajudam na recuperação. Experimente:';
+            products = ['Açaí + Creme de Ninho (1 Litro)', 'Açaí + Creme de Morango (500ml)', 'Creme de Ninho + Creme de Ovomaltine (500ml)'];
+            toppings = ['Banana', 'Amendoim', 'Farinha Láctea', 'Calda de Morango'];
+            break;
+        case 'dessert':
+            message = 'Para uma sobremesa incrível, recomendamos combinações doces e especiais. Experimente:';
+            products = ['Açaí + Creme de Ovomaltine (500ml)', 'Açaí + Creme de Cupuaçu (500ml)', 'Creme de Morango + Creme de Ninho (500ml)'];
+            toppings = ['Leite Condensado', 'Calda de Chocolate', 'M&M', 'Côco Ralado'];
+            break;
+        case 'gift':
+            message = 'Para presentear alguém especial, sugerimos combinações sofisticadas. Experimente:';
+            products = ['Açaí + Creme de Ninho (1 Litro)', 'Açaí + Creme de Ovomaltine (1 Litro)', 'Creme de Morango + Creme de Cupuaçu (500ml)'];
+            toppings = ['Granola', 'Calda de Chocolate', 'M&M', 'Leite Condensado'];
             break;
     }
 
-    // Exibir mensagem e sugerir produtos
-    showNotification(message);
-    filterProductsByOccasion(products);
+    // Exibir notificação com detalhes
+    showRecommendation(message, products, toppings);
+}
+
+function showRecommendation(message, products, toppings) {
+    const notification = document.createElement('div');
+    notification.className = 'recommendation-notification';
+    notification.innerHTML = `
+        <div class="notification-content">
+            <h3>${message}</h3>
+            <ul>
+                ${products.map(product => `<li>${product}</li>`).join('')}
+            </ul>
+            <p><strong>Acompanhamentos recomendados:</strong> ${toppings.join(', ')}</p>
+            <button onclick="this.parentElement.parentElement.remove()">Fechar</button>
+        </div>
+    `;
+    document.body.appendChild(notification);
+
+    // Remover a notificação após 12 segundos
+    setTimeout(() => {
+        notification.remove();
+    }, 12000);
 }
 
 // Função para filtrar produtos pela ocasião
