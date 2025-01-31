@@ -1273,6 +1273,7 @@ header {
 }
 
 /* Adicionar antes do último } da tag <style> */
+/* Adicionar antes do último } da tag <style> */
 .time-machine-btn {
     cursor: pointer;
     margin-right: 1rem;
@@ -1391,6 +1392,29 @@ header {
 .empty-state {
     text-align: center;
     padding: 2rem;
+    color: var(--text);
+}
+
+.phone-input-section {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: var(--glass);
+    border-radius: 15px;
+    text-align: center;
+}
+
+.phone-input-container {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.phone-input-container input {
+    flex: 1;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass);
     color: var(--text);
 }
     
@@ -1998,6 +2022,7 @@ function addTimeMachineButton() {
 
 // Função para mostrar o Time Machine
 // Função para mostrar o Time Machine
+// Função para mostrar o Time Machine
 function showTimeMachine() {
     const modal = document.getElementById('timeMachineModal');
     const favoritesSection = modal.querySelector('.favorites-section');
@@ -2017,50 +2042,45 @@ function showTimeMachine() {
     
     modal.style.display = 'block';
 }
-
 // Função para renderizar os pedidos
+// Modifique a função renderOrders para usar um data-attribute em vez de passar diretamente no onclick
 function renderOrders(orders) {
-    return orders.map(order => {
-        // Escape do JSON para evitar problemas com aspas
-        const itemsJson = order.items ? JSON.stringify(order.items).replace(/'/g, '&#39;') : '[]';
-        
-        return `
-            <div class="order-card" data-order-id="${order.id}">
-                <div class="order-header">
-                    <div class="order-date">
-                        ${new Date(order.timestamp).toLocaleDateString('pt-BR')} 
-                        às ${new Date(order.timestamp).toLocaleTimeString('pt-BR')}
-                    </div>
-                    <button class="favorite-btn ${order.isFavorite ? 'active' : ''}" onclick="toggleFavorite('${order.id}')">
-                        <i class="fas fa-star"></i>
-                    </button>
+    return orders.map(order => `
+        <div class="order-card" data-order-id="${order.id}">
+            <div class="order-header">
+                <div class="order-date">
+                    ${new Date(order.timestamp).toLocaleDateString('pt-BR')} 
+                    às ${new Date(order.timestamp).toLocaleTimeString('pt-BR')}
                 </div>
-                <div class="order-items">
-                    ${order.items.map(item => `
-                        <div class="order-item">
-                            <div style="font-weight: bold;">${item.name}</div>
-                            ${item.selectedToppings && item.selectedToppings.length ? `
-                                <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.5rem;">
-                                    <i class="fas fa-check-circle"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
-                                </div>
-                            ` : ''}
-                            ${item.selectedExtras && item.selectedExtras.length ? `
-                                <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
-                                    <i class="fas fa-plus-circle"></i> Extras: ${item.selectedExtras.join(', ')}
-                                </div>
-                            ` : ''}
-                        </div>
-                    `).join('')}
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
-                    <div class="order-total">R$ ${order.total ? order.total.toFixed(2) : '0.00'}</div>
-                    <button class="reorder-btn" data-items='${itemsJson}'>
-                        <i class="fas fa-redo-alt"></i> Pedir Novamente
-                    </button>
-                </div>
+                <button class="favorite-btn ${order.isFavorite ? 'active' : ''}" onclick="toggleFavorite('${order.id}')">
+                    <i class="fas fa-star"></i>
+                </button>
             </div>
-        `;
-    }).join('');
+            <div class="order-items">
+                ${order.items.map(item => `
+                    <div class="order-item">
+                        <div>${item.name}</div>
+                        ${item.selectedToppings?.length ? `
+                            <div style="font-size: 0.9rem; color: var(--text)">
+                                Acompanhamentos: ${item.selectedToppings.join(', ')}
+                            </div>
+                        ` : ''}
+                        ${item.selectedExtras?.length ? `
+                            <div style="font-size: 0.9rem; color: var(--text)">
+                                Extras: ${item.selectedExtras.join(', ')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="order-total">R$ ${order.total.toFixed(2)}</div>
+                <button class="reorder-btn" data-items='${JSON.stringify(order.items)}'>
+                    <i class="fas fa-redo-alt"></i> Pedir Novamente
+                </button>
+            </div>
+        </div>
+    `).join('');
 }
 
 // Função para marcar/desmarcar favorito
@@ -2886,6 +2906,10 @@ document.addEventListener('DOMContentLoaded', function() {
     messageIndex = (messageIndex + 1) % messages.length;
     bubble.textContent = messages[messageIndex];
   });
+        const existingListeners = document.querySelector('.time-machine-btn');
+    if (!existingListeners) {
+        addTimeMachineButton();
+    }
 });
 
 function isStoreOpenNow(schedule) {
@@ -4560,13 +4584,14 @@ document.addEventListener('DOMContentLoaded', () => {
    });
 
    // Modal closes
-   document.querySelectorAll('.close-modal').forEach(button => {
-       button.addEventListener('click', () => {
-           document.querySelectorAll('.modal').forEach(modal => {
-               modal.style.display = 'none';
-           });
-       });
-   });
+document.querySelectorAll('.close-modal').forEach(button => {
+    button.addEventListener('click', (e) => {
+        const modal = e.target.closest('.modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    });
+});
 
 // Continue shopping buttons
 document.querySelectorAll('.continue-shopping').forEach(button => {
@@ -4683,6 +4708,13 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
             <button class="close-modal">&times;</button>
         </div>
         <div class="time-machine-content">
+            <div class="phone-input-section">
+                <p>Digite seu WhatsApp para ver seu histórico:</p>
+                <div class="phone-input-container">
+                    <input type="tel" id="historyPhoneInput" placeholder="Ex: 84988500756" class="form-input">
+                    <button onclick="searchOrderHistory()" class="modal-btn">Buscar</button>
+                </div>
+            </div>
             <div class="favorites-section"></div>
             <div class="previous-orders-section"></div>
         </div>
