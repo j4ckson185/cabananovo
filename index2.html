@@ -1393,6 +1393,29 @@ header {
     padding: 2rem;
     color: var(--text);
 }
+
+.phone-input-section {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: var(--glass);
+    border-radius: 15px;
+    text-align: center;
+}
+
+.phone-input-container {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.phone-input-container input {
+    flex: 1;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass);
+    color: var(--text);
+}
     
 </style>
 </head>
@@ -1912,64 +1935,80 @@ function addTimeMachineButton() {
 }
 
 // Função para mostrar o Time Machine
-async function showTimeMachine() {
+function showTimeMachine() {
     const modal = document.getElementById('timeMachineModal');
     const favoritesSection = modal.querySelector('.favorites-section');
     const previousOrdersSection = modal.querySelector('.previous-orders-section');
     
-    const customerPhone = localStorage.getItem('lastCustomerPhone');
+    // Limpa seções anteriores
+    favoritesSection.innerHTML = '';
+    previousOrdersSection.innerHTML = '';
     
-    if (!customerPhone) {
-        modal.querySelector('.time-machine-content').innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-clock fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
-                <p>Para ver seu histórico de pedidos, faça seu primeiro pedido!</p>
-            </div>
-        `;
-        modal.style.display = 'block';
+    modal.style.display = 'block';
+}
+
+// Nova função para buscar histórico
+async function searchOrderHistory() {
+    const phoneInput = document.getElementById('historyPhoneInput');
+    const phone = phoneInput.value.replace(/\D/g, ''); // Remove não-números
+    
+    if (!phone) {
+        showNotification('Por favor, digite seu WhatsApp');
         return;
     }
+
+    const favoritesSection = document.querySelector('.favorites-section');
+    const previousOrdersSection = document.querySelector('.previous-orders-section');
 
     try {
         // Buscar pedidos no Firebase
         const ordersRef = firebase.database().ref('orders');
-        const query = ordersRef.orderByChild('customer/phone').equalTo(customerPhone);
+        const query = ordersRef.orderByChild('customer/phone').equalTo(phone);
         
-        query.once('value', (snapshot) => {
-            const orders = [];
-            snapshot.forEach((childSnapshot) => {
-                const order = childSnapshot.val();
-                orders.push({
-                    id: childSnapshot.key,
-                    ...order,
-                    timestamp: order.timestamp || Date.now()
-                });
+        const snapshot = await query.once('value');
+        const orders = [];
+        
+        snapshot.forEach((childSnapshot) => {
+            const order = childSnapshot.val();
+            orders.push({
+                id: childSnapshot.key,
+                ...order,
+                timestamp: order.timestamp || Date.now()
             });
-
-            // Ordenar por data mais recente
-            orders.sort((a, b) => b.timestamp - a.timestamp);
-
-            // Renderizar favoritos
-            const favorites = orders.filter(order => order.isFavorite);
-            favoritesSection.innerHTML = `
-                <div class="section-title">
-                    <i class="fas fa-star" style="color: #FFD700;"></i>
-                    Seus Favoritos
-                </div>
-                ${favorites.length ? renderOrders(favorites) : '<p class="empty-state">Nenhum pedido favorito ainda</p>'}
-            `;
-
-            // Renderizar histórico completo
-            previousOrdersSection.innerHTML = `
-                <div class="section-title">
-                    <i class="fas fa-history"></i>
-                    Histórico de Pedidos
-                </div>
-                ${renderOrders(orders)}
-            `;
         });
 
-        modal.style.display = 'block';
+        if (orders.length === 0) {
+            previousOrdersSection.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
+                    <p>Nenhum pedido encontrado para este número.</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Ordenar por data mais recente
+        orders.sort((a, b) => b.timestamp - a.timestamp);
+
+        // Renderizar favoritos
+        const favorites = orders.filter(order => order.isFavorite);
+        favoritesSection.innerHTML = `
+            <div class="section-title">
+                <i class="fas fa-star" style="color: #FFD700;"></i>
+                Seus Favoritos
+            </div>
+            ${favorites.length ? renderOrders(favorites) : '<p class="empty-state">Nenhum pedido favorito ainda</p>'}
+        `;
+
+        // Renderizar histórico completo
+        previousOrdersSection.innerHTML = `
+            <div class="section-title">
+                <i class="fas fa-history"></i>
+                Histórico de Pedidos
+            </div>
+            ${renderOrders(orders)}
+        `;
+
     } catch (error) {
         console.error('Erro ao carregar pedidos:', error);
         showNotification('Erro ao carregar seu histórico de pedidos');
@@ -4624,6 +4663,13 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
             <button class="close-modal">&times;</button>
         </div>
         <div class="time-machine-content">
+            <div class="phone-input-section">
+                <p>Digite seu WhatsApp para ver seu histórico:</p>
+                <div class="phone-input-container">
+                    <input type="tel" id="historyPhoneInput" placeholder="Ex: 84988500756" class="form-input">
+                    <button onclick="searchOrderHistory()" class="modal-btn">Buscar</button>
+                </div>
+            </div>
             <div class="favorites-section"></div>
             <div class="previous-orders-section"></div>
         </div>
