@@ -3330,6 +3330,9 @@ function checkStoreStatus() {
             const categories = document.querySelector('.categories');
             categories.parentNode.insertBefore(statusDiv, categories);
 
+            // Inicializa o Açaí do Dia após inserir o status
+            initAcaiDoDia();
+
             if (!isOpen) {
                 disableOrdering();
             }
@@ -4863,7 +4866,6 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Carregado'); // Log para diagnóstico
 
     createFloatingMascot(); // Adicionamos aqui a criação do mascote flutuante
-    initAcaiDoDia();
 
 
     // Evento para o ícone do carrinho
