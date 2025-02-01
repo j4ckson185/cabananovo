@@ -1623,6 +1623,124 @@ header {
     from { transform: translateX(100%); }
     to { transform: translateX(0); }
 }
+
+.floating-mascot {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.floating-mascot-container {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--accent);
+    cursor: pointer;
+    position: relative;
+    background: var(--surface);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.floating-mascot-video {
+    width: 100%;
+    height: 140%;
+    object-fit: cover;
+    object-position: center 30%;
+    transform: scale(1.2);
+}
+
+.floating-mascot-dialog {
+    position: absolute;
+    bottom: calc(100% + 15px);
+    left: 0;
+    background: var(--surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1rem;
+    width: 250px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+}
+
+.floating-mascot-dialog.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.floating-mascot-dialog::before {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 30px;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid var(--glass-border);
+}
+
+.floating-mascot-dialog::after {
+    content: '';
+    position: absolute;
+    bottom: -9px;
+    left: 30px;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-top: 9px solid var(--surface);
+}
+
+.minimize-mascot {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 5px;
+    transition: all 0.3s ease;
+    z-index: 1;
+}
+
+.minimize-mascot:hover {
+    color: var(--accent);
+    transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+    .floating-mascot-container {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .floating-mascot-dialog {
+        width: 220px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .floating-mascot-container {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .floating-mascot-dialog {
+        width: 200px;
+        font-size: 0.85rem;
+        left: -20px;
+    }
+}
     
 </style>
 </head>
@@ -2948,34 +3066,8 @@ function checkStoreStatus() {
     const visitCount = parseInt(localStorage.getItem('visitCount') || '0');
     localStorage.setItem('visitCount', visitCount + 1);
 
-    // Função para determinar qual vídeo mostrar
-function getMascotVideoUrl() {
-    const videos = [
-        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness.mp4?alt=media&token=904bfced-6f04-459b-943a-50fa1a998aaf",
-        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness2.mp4?alt=media&token=b66fcb5e-1dfb-467f-926d-dbeb92d03061",
-        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/C%C3%B3pia%20de%20C%C3%B3pia%20de%20V%C3%ADdeo%20sem%20t%C3%ADtulo%202.mp4?alt=media&token=8c88b590-4f3f-4a52-b259-8b4b6e6c22b1",
-        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness%204.mp4?alt=media&token=d01ee1d9-33d1-44c9-a4cd-e1e61ef59543"
-    ];
-
-    if (visitCount === 0) {
-        return videos[0]; // Primeira visita
-    } else if (visitCount === 1) {
-        return videos[1]; // Segunda visita
-    } else if (visitCount === 2) {
-        return videos[2]; // Terceira visita
-    } else if (visitCount === 3) {
-        return videos[3]; // Quarta visita  
-    } else {
-        // Quinta visita em diante - alterna entre os quatro
-        return videos[visitCount % 4];
-    }
-}
-
     const existingStatus = document.querySelector('.store-status');
     if (existingStatus) existingStatus.remove();
-
-    const existingMascot = document.querySelector('.mascot-video-section');
-    if (existingMascot) existingMascot.remove();
 
     const statusDiv = document.createElement('div');
     statusDiv.className = 'store-status';
@@ -2996,104 +3088,6 @@ function getMascotVideoUrl() {
         gap: 0.5rem;
     `;
     
-    const mascotSection = document.createElement('div');
-    mascotSection.className = 'mascot-video-section';
-    mascotSection.style.cssText = `
-        max-width: 1400px;
-        margin: 1rem auto;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 0 1rem;
-        position: relative;
-    `;
-
-    const videoContainer = document.createElement('div');
-    videoContainer.style.cssText = `
-        width: 200px;
-        height: 200px;
-        border-radius: 50%;
-        overflow: hidden;
-        border: 2px solid var(--accent);
-        position: relative;
-        cursor: pointer;
-    `;
-
-    const mascotVideo = document.createElement('video');
-    mascotVideo.className = 'mascot-video';
-    mascotVideo.loop = true;
-    mascotVideo.playsInline = true;
-    mascotVideo.muted = true;
-    mascotVideo.style.cssText = `
-        width: 100%;
-        height: 140%;
-        object-fit: cover;
-        object-position: center 30%;
-        transform: scale(1.2);
-    `;
-    mascotVideo.src = getMascotVideoUrl();
-
-    const mascotDialog = document.createElement('div');
-    mascotDialog.className = 'mascot-dialog';
-    mascotDialog.style.cssText = `
-        background: var(--surface);
-        border: 1px solid var(--glass-border);
-        border-radius: 15px;
-        padding: 1.2rem;
-        margin-top: 1rem;
-        max-width: 800px;
-        width: 100%;
-        text-align: center;
-        position: relative;
-        backdrop-filter: blur(10px);
-    `;
-    mascotDialog.innerHTML = `
-        <strong>E aí, campeão(a)! 🏋️‍♂️💪</strong> Eu sou o Açaizão, seu personal açaí, com a dica do dia! 
-        Clique em mim e descubra como o açaí pode turbinar seu treino e ajudar você a 
-        alcançar seus objetivos fitness. Vamos juntos nessa jornada de energia e saúde!
-    `;
-
-    const style = document.createElement('style');
-    style.textContent = `
-        .mascot-dialog::before {
-            content: '';
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-bottom: 10px solid var(--glass-border);
-        }
-        .mascot-dialog::after {
-            content: '';
-            position: absolute;
-            top: -9px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-left: 9px solid transparent;
-            border-right: 9px solid transparent;
-            border-bottom: 9px solid var(--surface);
-        }
-        @media (max-width: 768px) {
-            .mascot-video-section > div:first-child {
-                width: 150px;
-                height: 150px;
-            }
-            .mascot-dialog {
-                font-size: 0.9rem;
-                padding: 1rem;
-            }
-        }
-        @media (max-width: 480px) {
-            .mascot-video-section > div:first-child {
-                width: 120px;
-                height: 120px;
-            }
-        }
-    `;
-    document.head.appendChild(style);
-    
     realtimeDB.ref('schedule').once('value')
         .then(snapshot => {
             const schedule = snapshot.val() || {};
@@ -3104,39 +3098,9 @@ function getMascotVideoUrl() {
                 <span>Loja ${isOpen ? 'Aberta' : 'Fechada'}</span>
             `;
             
-            videoContainer.appendChild(mascotVideo);
-            mascotSection.appendChild(videoContainer);
-            mascotSection.appendChild(mascotDialog);
-            
             const categories = document.querySelector('.categories');
             categories.parentNode.insertBefore(statusDiv, categories);
-            categories.parentNode.insertBefore(mascotSection, categories);
 
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        mascotVideo.play();
-                    } else {
-                        mascotVideo.pause();
-                    }
-                });
-            }, {
-                threshold: 0.5
-            });
-
-            observer.observe(mascotVideo);
-
-            let isMuted = true;
-            videoContainer.addEventListener('click', () => {
-                if (mascotVideo.paused) {
-                    mascotVideo.play();
-                } else {
-                    mascotVideo.pause();
-                }
-                mascotVideo.muted = !mascotVideo.muted;
-                isMuted = !isMuted;
-            });
-            
             if (!isOpen) {
                 disableOrdering();
             }
@@ -3145,27 +3109,6 @@ function getMascotVideoUrl() {
             console.error('Erro ao verificar status da loja:', error);
         });
 }
-    
-document.addEventListener('DOMContentLoaded', function() {
-  const mascot = document.getElementById('mascot');
-  const messages = [
-    "Olá! Bem-vindo à Cabana Açaí! 😊",
-    "Que tal um açaí delicioso hoje? 🍇",
-    "Experimente nossos combos! 🥄",
-    "Posso ajudar você a escolher? 😃"
-  ];
-  let messageIndex = 0;
-  
-  mascot.addEventListener('click', function() {
-    const bubble = mascot.querySelector('.speech-bubble p');
-    messageIndex = (messageIndex + 1) % messages.length;
-    bubble.textContent = messages[messageIndex];
-  });
-        const existingListeners = document.querySelector('.time-machine-btn');
-    if (!existingListeners) {
-        addTimeMachineButton();
-    }
-});
 
 function isStoreOpenNow(schedule) {
     const now = new Date();
@@ -4690,6 +4633,8 @@ openProductModal = function(product) {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Carregado'); // Log para diagnóstico
 
+    createFloatingMascot(); // Adicionamos aqui a criação do mascote flutuante
+
     // Evento para o ícone do carrinho
     const cartIcon = document.querySelector('.cart-icon');
     if (cartIcon) {
@@ -4916,6 +4861,103 @@ function filterProductsByOccasion(products) {
             card.style.display = 'none';
         }
     });
+}
+    function createFloatingMascot() {
+    const visitCount = parseInt(localStorage.getItem('visitCount') || '0');
+    
+    const mascotHTML = `
+        <div class="floating-mascot">
+            <div class="floating-mascot-dialog">
+                <button class="minimize-mascot">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <p class="mascot-message">Olá! Bem-vindo à Cabana Açaí! 😊</p>
+            </div>
+            <div class="floating-mascot-container">
+                <video class="floating-mascot-video" loop playsinline muted></video>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', mascotHTML);
+    
+    const mascot = document.querySelector('.floating-mascot');
+    const video = mascot.querySelector('.floating-mascot-video');
+    const dialog = mascot.querySelector('.floating-mascot-dialog');
+    const minimizeBtn = mascot.querySelector('.minimize-mascot');
+    let isDialogVisible = true;
+    
+    // Definir URL do vídeo baseado no número de visitas
+    const videos = [
+        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness.mp4?alt=media&token=904bfced-6f04-459b-943a-50fa1a998aaf",
+        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness2.mp4?alt=media&token=b66fcb5e-1dfb-467f-926d-dbeb92d03061",
+        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/C%C3%B3pia%20de%20C%C3%B3pia%20de%20V%C3%ADdeo%20sem%20t%C3%ADtulo%202.mp4?alt=media&token=8c88b590-4f3f-4a52-b259-8b4b6e6c22b1",
+        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness%204.mp4?alt=media&token=d01ee1d9-33d1-44c9-a4cd-e1e61ef59543"
+    ];
+    
+    video.src = videos[visitCount % videos.length];
+    
+    // Iniciar vídeo quando estiver visível
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                video.play();
+            } else {
+                video.pause();
+            }
+        });
+    }, {
+        threshold: 0.5
+    });
+    
+    observer.observe(video);
+    
+    // Alternar áudio ao clicar
+    let isMuted = true;
+    mascot.querySelector('.floating-mascot-container').addEventListener('click', () => {
+        if (video.paused) {
+            video.play();
+        } else {
+            video.pause();
+        }
+        video.muted = !video.muted;
+        isMuted = !isMuted;
+        
+        // Mostrar diálogo se estiver minimizado
+        if (!isDialogVisible) {
+            dialog.classList.add('active');
+            isDialogVisible = true;
+            minimizeBtn.innerHTML = '<i class="fas fa-minus"></i>';
+        }
+    });
+    
+    // Botão minimizar
+    minimizeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        isDialogVisible = !isDialogVisible;
+        dialog.classList.toggle('active');
+        minimizeBtn.innerHTML = isDialogVisible ? 
+            '<i class="fas fa-minus"></i>' : 
+            '<i class="fas fa-plus"></i>';
+    });
+    
+    // Mensagens rotativas
+    const messages = [
+        "Olá! Bem-vindo à Cabana Açaí! 😊",
+        "Que tal um açaí delicioso hoje? 🍇",
+        "Experimente nossos combos! 🥄",
+        "Posso ajudar você a escolher? 😃"
+    ];
+    
+    let messageIndex = 0;
+    const messageElement = mascot.querySelector('.mascot-message');
+    
+    setInterval(() => {
+        if (isDialogVisible) {
+            messageIndex = (messageIndex + 1) % messages.length;
+            messageElement.textContent = messages[messageIndex];
+        }
+    }, 5000);
 }
     (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="PpgNSIgeYN1FCucFGP4w3";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
 </script>
