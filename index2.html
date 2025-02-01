@@ -1795,6 +1795,180 @@ header {
     color: var(--accent);
     transform: scale(1.1);
 }
+
+/* Adicione estes estilos na sua tag <style> existente */
+
+.acai-do-dia {
+    max-width: 1400px;
+    margin: 1rem auto;
+    padding: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.acai-do-dia::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gradient);
+    opacity: 0.1;
+    z-index: 0;
+}
+
+.acai-deal-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: var(--accent);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-weight: 600;
+    animation: pulse 2s infinite;
+}
+
+.acai-content {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.acai-image {
+    width: 200px;
+    height: 200px;
+    border-radius: 15px;
+    object-fit: cover;
+}
+
+.acai-info {
+    flex: 1;
+}
+
+.acai-title {
+    font-size: 1.8rem;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.acai-description {
+    color: var(--text);
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.price-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.original-price {
+    color: var(--text);
+    text-decoration: line-through;
+    font-size: 1.2rem;
+}
+
+.deal-price {
+    color: var(--accent);
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.stats-container {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text);
+}
+
+.countdown {
+    color: var(--text);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.countdown span {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.add-deal-btn {
+    background: var(--gradient);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.add-deal-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@media (max-width: 768px) {
+    .acai-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .acai-image {
+        width: 150px;
+        height: 150px;
+    }
+
+    .stats-container {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .countdown {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .acai-do-dia {
+        padding: 1rem;
+    }
+
+    .acai-deal-badge {
+        top: 0.5rem;
+        right: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .acai-title {
+        font-size: 1.5rem;
+    }
+
+    .deal-price {
+        font-size: 1.6rem;
+    }
+}
     
 </style>
 </head>
@@ -2332,6 +2506,7 @@ let currentProducts = [];
 let appliedCoupon = null;
 let customerInfo = {};
 let deliveryInfo = {};
+let acaiDoDiaQuantityInCart = 0;
 
 async function searchOrderHistory() {
     const phoneInput = document.getElementById('historyPhoneInput');
@@ -4688,6 +4863,8 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Carregado'); // Log para diagnóstico
 
     createFloatingMascot(); // Adicionamos aqui a criação do mascote flutuante
+    initAcaiDoDia();
+
 
     // Evento para o ícone do carrinho
     const cartIcon = document.querySelector('.cart-icon');
@@ -5026,6 +5203,127 @@ function filterProductsByOccasion(products) {
             messageElement.textContent = messages[messageIndex];
         }
     }, 5000);
+}
+
+function initAcaiDoDia() {
+    // Selecionar produto aleatório uma vez por dia
+    const today = new Date().toLocaleDateString();
+    let selectedProduct = JSON.parse(localStorage.getItem('acaiDoDia'));
+    
+    if (!selectedProduct || selectedProduct.date !== today) {
+        realtimeDB.ref('menu/products').once('value')
+            .then(snapshot => {
+                const products = Object.values(snapshot.val() || {})
+                    .filter(p => p.status && 
+                             (p.name.includes('500ml') || p.name.includes('1 Litro')) &&
+                             !p.name.includes('300ml'));
+                
+                const randomProduct = products[Math.floor(Math.random() * products.length)];
+                selectedProduct = {
+                    ...randomProduct,
+                    date: today,
+                    originalPrice: randomProduct.price,
+                    price: randomProduct.price * 0.85 // 15% de desconto
+                };
+                
+                localStorage.setItem('acaiDoDia', JSON.stringify(selectedProduct));
+                createAcaiDoDiaElement(selectedProduct);
+            });
+    } else {
+        createAcaiDoDiaElement(selectedProduct);
+    }
+}
+
+function createAcaiDoDiaElement(product) {
+    const acaiHTML = `
+        <div class="acai-do-dia">
+            <div class="acai-deal-badge">Açaí do Dia</div>
+            <div class="acai-content">
+                <img src="${product.imageUrl || '/api/placeholder/400/400'}" alt="${product.name}" class="acai-image">
+                <div class="acai-info">
+                    <h2 class="acai-title">${product.name}</h2>
+                    <p class="acai-description">${product.description}</p>
+                    <div class="price-container">
+                        <span class="original-price">R$ ${product.originalPrice.toFixed(2)}</span>
+                        <span class="deal-price">R$ ${product.price.toFixed(2)}</span>
+                    </div>
+                    <div class="stats-container">
+                        <div class="stat-item">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span class="units-sold">7 unidades vendidas hoje</span>
+                        </div>
+                        <div class="countdown">
+                            <i class="fas fa-clock"></i>
+                            <span>Oferta expira em: <span class="time-left"></span></span>
+                        </div>
+                    </div>
+                    <button class="add-deal-btn" onclick="addAcaiDoDiaToCart(${JSON.stringify(product).replace(/"/g, '&quot;')})">
+                        Adicionar à Sacola
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const storeStatus = document.querySelector('.store-status');
+    storeStatus.insertAdjacentHTML('afterend', acaiHTML);
+    
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+    simulateUnitsSold();
+}
+
+function updateCountdown() {
+    const now = new Date();
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    const timeLeft = endOfDay - now;
+    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+    
+    const timeLeftElement = document.querySelector('.time-left');
+    if (timeLeftElement) {
+        timeLeftElement.textContent = `${hours}h ${minutes}m ${seconds}s`;
+    }
+}
+
+function simulateUnitsSold() {
+    const startTime = new Date();
+    startTime.setHours(12, 30, 0);
+    
+    const now = new Date();
+    const elapsedMinutes = (now - startTime) / (1000 * 60);
+    
+    // Calcula unidades vendidas com base no tempo decorrido
+    let unitsSold = Math.max(7, Math.min(75, Math.floor(7 + (elapsedMinutes / 15))));
+    
+    const unitsElement = document.querySelector('.units-sold');
+    if (unitsElement) {
+        unitsElement.textContent = `${unitsSold} unidades vendidas hoje`;
+    }
+    
+    // Atualiza a cada 3 minutos
+    setTimeout(simulateUnitsSold, 180000);
+}
+
+function addAcaiDoDiaToCart(product) {
+    if (acaiDoDiaQuantityInCart >= 2) {
+        showNotification('Limite de 2 unidades do Açaí do Dia por pedido');
+        return;
+    }
+    
+    // Adiciona ao carrinho existente
+    cart.push({
+        ...product,
+        selectedToppings: [],
+        selectedExtras: []
+    });
+    
+    acaiDoDiaQuantityInCart++;
+    updateCartCount();
+    showNotification('Açaí do Dia adicionado ao carrinho!');
 }
 </script>
 <<!-- Modal para Criar Novo Pedido -->
