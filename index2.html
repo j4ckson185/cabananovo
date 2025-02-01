@@ -8,8 +8,6 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"></script>
     <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
@@ -1971,47 +1969,6 @@ header {
         font-size: 1.6rem;
     }
 }
-
-    .dream-builder-content {
-    padding: 1rem;
-    text-align: center;
-}
-
-.canvas-container {
-    margin: 1rem auto;
-    border: 2px solid var(--glass-border);
-    border-radius: 10px;
-    overflow: hidden;
-    background: white;
-}
-
-.drawing-tools {
-    display: flex;
-    gap: 0.5rem;
-    justify-content: center;
-    margin: 1rem 0;
-    flex-wrap: wrap;
-}
-
-.tool-btn {
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    background: var(--glass);
-    color: var(--text);
-    transition: all 0.3s ease;
-}
-
-.tool-btn:hover {
-    transform: translateY(-2px);
-    background: var(--gradient);
-}
-
-.tool-btn.active {
-    background: var(--gradient);
-    transform: translateY(-2px);
-}
     
 </style>
 </head>
@@ -2526,33 +2483,6 @@ header {
         </div>
     </div>
 </div>
-    <div class="modal" id="dreamBuilderModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Açaí Dream Builder</h2>
-            <button class="close-modal">&times;</button>
-        </div>
-        <div class="dream-builder-content">
-            <p>Desenhe seu açaí dos sonhos!</p>
-            <div class="canvas-container">
-                <canvas id="dreamCanvas" width="400" height="400"></canvas>
-            </div>
-            <div class="drawing-tools">
-                <button class="tool-btn" data-color="#4B0082">Açaí</button>
-                <button class="tool-btn" data-color="#FFFFFF">Leite Ninho</button>
-                <button class="tool-btn" data-color="#8B4513">Chocolate</button>
-                <button class="tool-btn" data-color="#FF0000">Morango</button>
-                <button class="tool-btn" data-color="#FFD700">Banana</button>
-                <button class="tool-btn clear-canvas">Limpar</button>
-            </div>
-            <button class="modal-btn analyze-drawing">Analisar Desenho</button>
-        </div>
-        <div class="dream-result" style="display: none;">
-            <h3>Sua Combinação Ideal:</h3>
-            <div class="result-content"></div>
-        </div>
-    </div>
-</div>
 
 <script>
 // Firebase initialization
@@ -2854,146 +2784,6 @@ function showCreateOrderModal() {
    }
 
    setupPaymentEvents();
-}
-
-let canvas;
-let currentTool = '#4B0082';
-let dreamBuilderAnalysis = {
-    colors: {},
-    patterns: [],
-    proportions: {}
-};
-
-function initDreamBuilder() {
-    canvas = new fabric.Canvas('dreamCanvas');
-    canvas.isDrawingMode = true;
-    canvas.freeDrawingBrush.width = 10;
-    canvas.freeDrawingBrush.color = currentTool;
-    
-    // Configuração do canvas
-    canvas.setBackgroundColor('#FFFFFF', canvas.renderAll.bind(canvas));
-    
-    setupDreamBuilderEvents();
-}
-
-function setupDreamBuilderEvents() {
-    document.querySelectorAll('.tool-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (this.classList.contains('clear-canvas')) {
-                canvas.clear();
-                canvas.setBackgroundColor('#FFFFFF', canvas.renderAll.bind(canvas));
-                return;
-            }
-            
-            currentTool = this.dataset.color;
-            canvas.freeDrawingBrush.color = currentTool;
-            
-            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
-
-    document.querySelector('.analyze-drawing').addEventListener('click', analyzeDreamDrawing);
-}
-
-function analyzeDreamDrawing() {
-    const context = canvas.getContext('2d');
-    const imageData = context.getImageData(0, 0, canvas.width, canvas.height).data;
-    
-    // Reset da análise
-    dreamBuilderAnalysis = {
-        colors: {},
-        patterns: [],
-        proportions: {}
-    };
-    
-    // Análise de cores
-    for (let i = 0; i < imageData.length; i += 4) {
-        const r = imageData[i];
-        const g = imageData[i + 1];
-        const b = imageData[i + 2];
-        const color = `rgb(${r},${g},${b})`;
-        
-        if (r !== 255 || g !== 255 || b !== 255) { // Ignora branco
-            dreamBuilderAnalysis.colors[color] = (dreamBuilderAnalysis.colors[color] || 0) + 1;
-        }
-    }
-    
-    suggestCombination();
-}
-
-function suggestCombination() {
-    const colors = Object.keys(dreamBuilderAnalysis.colors).sort((a, b) => 
-        dreamBuilderAnalysis.colors[b] - dreamBuilderAnalysis.colors[a]
-    );
-    
-    // Mapear cores para ingredientes
-    const suggestion = {
-        base: [],
-        toppings: []
-    };
-    
-    colors.forEach(color => {
-        const rgb = color.match(/\d+/g).map(Number);
-        
-        // Identificar ingredientes baseado nas cores
-        if (isColorClose(rgb, [75, 0, 130])) { // Roxo (açaí)
-            suggestion.base.push('Açaí Tradicional');
-        } else if (isColorClose(rgb, [255, 255, 255])) { // Branco
-            suggestion.toppings.push('Leite em pó');
-        } else if (isColorClose(rgb, [139, 69, 19])) { // Marrom
-            suggestion.toppings.push('Chocoball');
-        } else if (isColorClose(rgb, [255, 0, 0])) { // Vermelho
-            suggestion.toppings.push('Calda de Morango');
-        } else if (isColorClose(rgb, [255, 215, 0])) { // Amarelo
-            suggestion.toppings.push('Banana');
-        }
-    });
-    
-    displaySuggestion(suggestion);
-}
-
-function isColorClose(rgb1, rgb2, threshold = 50) {
-    return Math.sqrt(
-        Math.pow(rgb1[0] - rgb2[0], 2) +
-        Math.pow(rgb1[1] - rgb2[1], 2) +
-        Math.pow(rgb1[2] - rgb2[2], 2)
-    ) < threshold;
-}
-
-function displaySuggestion(suggestion) {
-    const resultDiv = document.querySelector('.dream-result');
-    const resultContent = resultDiv.querySelector('.result-content');
-    
-    // Encontrar produto mais próximo no seu catálogo atual
-    const matchingProduct = currentProducts.find(product => 
-        suggestion.base.some(base => product.name.toLowerCase().includes(base.toLowerCase()))
-    );
-    
-    if (matchingProduct) {
-        resultContent.innerHTML = `
-            <div class="product-card">
-                <img src="${matchingProduct.imageUrl || '/api/placeholder/300/200'}" 
-                     alt="${matchingProduct.name}" class="product-image">
-                <div class="product-info">
-                    <h3 class="product-title">${matchingProduct.name}</h3>
-                    <p class="product-description">
-                        Sugerido com: ${suggestion.toppings.join(', ')}
-                    </p>
-                    <div class="product-footer">
-                        <div class="product-price">R$ ${matchingProduct.price.toFixed(2)}</div>
-                        <button class="add-to-cart-btn" onclick="addToCart(${JSON.stringify(matchingProduct)})">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    } else {
-        resultContent.innerHTML = '<p>Desculpe, não encontramos uma combinação exata. Tente outro desenho!</p>';
-    }
-    
-    resultDiv.style.display = 'block';
 }
 
 // Adicionar event listener para o botão de checkout
@@ -3468,13 +3258,8 @@ function updateCategoryButtons(categories) {
             <i class="fas fa-magic"></i>
             Monte seu Combo
         </button>
-        <button class="category-btn" data-category="dreamBuilder">
-            <i class="fas fa-paint-brush"></i>
-            Monte seu Açaí
-        </button>
     `;
     
-    // Adiciona as categorias do Firebase após os botões fixos
     Object.entries(categories).forEach(([id, category]) => {
         categoriesNav.innerHTML += `
             <button class="category-btn" data-category="${id}">
@@ -3491,14 +3276,10 @@ function updateCategoryButtons(categories) {
             button.classList.add('active');
             
             const categoryId = button.dataset.category;
-            
             if (categoryId === 'combo') {
                 document.getElementById('comboModal').style.display = 'block';
                 resetComboBuilder();
                 initComboBuilder();
-            } else if (categoryId === 'dreamBuilder') {
-                document.getElementById('dreamBuilderModal').style.display = 'block';
-                initDreamBuilder();
             } else {
                 const filteredProducts = categoryId === 'all' 
                     ? currentProducts 
@@ -5115,17 +4896,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showCreateOrderModal();
         });
     } 
-
-    document.querySelectorAll('.category-btn').forEach(button => {
-    button.addEventListener('click', () => {
-        if (button.textContent.trim() === 'Dream Builder') {
-            document.getElementById('dreamBuilderModal').style.display = 'block';
-            initDreamBuilder();
-            return;
-        }
-            });
-});
-        
         // ADICIONAR AQUI - Event listeners para fechar modais
     document.querySelectorAll('.close-modal').forEach(button => {
         button.addEventListener('click', (e) => {
