@@ -8,6 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
     <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
@@ -1969,6 +1970,176 @@ header {
         font-size: 1.6rem;
     }
 }
+
+/* Emotion Reader Styles */
+.emotion-content {
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.camera-container {
+    position: relative;
+    width: 400px;
+    height: 300px;
+    margin: 1.5rem auto;
+    border-radius: 15px;
+    overflow: hidden;
+    background: var(--surface);
+    border: 2px solid var(--accent);
+}
+
+#emotionVideo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1); /* Espelhar vídeo */
+}
+
+#emotionCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.emotion-status {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: var(--glass);
+    border-radius: 10px;
+    border: 1px solid var(--glass-border);
+}
+
+.emotion-loading {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.emotion-loading.active {
+    display: flex;
+}
+
+.emotion-result {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: var(--glass);
+    border-radius: 15px;
+    border: 1px solid var(--glass-border);
+}
+
+.result-content {
+    margin-top: 1rem;
+}
+
+.emotion-product {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1rem;
+    margin: 1rem 0;
+    background: var(--surface);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.emotion-product:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.emotion-product img {
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.emotion-product-info {
+    flex: 1;
+    text-align: left;
+}
+
+.emotion-product-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.emotion-product-description {
+    color: var(--text);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.emotion-product-price {
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-top: 0.5rem;
+}
+
+/* Animação de pulso para feedback visual */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.emotion-capture-active {
+    animation: pulse 2s infinite;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .camera-container {
+        width: 300px;
+        height: 225px;
+    }
+
+    .emotion-product {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .emotion-product-info {
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .camera-container {
+        width: 240px;
+        height: 180px;
+    }
+
+    .emotion-content {
+        padding: 1rem;
+    }
+
+    .emotion-product img {
+        width: 80px;
+        height: 80px;
+    }
+}
+
+/* Estado de carregamento */
+.emotion-loading .spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--glass-border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
     
 </style>
 </head>
@@ -1998,6 +2169,10 @@ header {
         <button class="category-btn">
         <i class="fas fa-magic"></i>
          Monte seu Combo
+        </button>
+                <button class="category-btn" data-category="emotion">
+            <i class="fas fa-smile"></i>
+            Emotion Reader
         </button>
         <button class="category-btn">
             <i class="fas fa-ice-cream"></i>
@@ -2480,6 +2655,33 @@ header {
         <div class="modal-buttons">
             <button class="modal-btn continue-shopping">Continuar Comprando</button>
             <button class="modal-btn checkout">Finalizar Pedido</button>
+        </div>
+    </div>
+</div>
+
+    <div class="modal" id="emotionReaderModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Açaí Emotion Reader</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="emotion-content">
+            <p>Vamos descobrir o açaí perfeito para seu humor!</p>
+            <div class="camera-container">
+                <video id="emotionVideo" autoplay muted playsinline></video>
+                <canvas id="emotionCanvas"></canvas>
+            </div>
+            <div class="emotion-status">
+                <p>Sorria para a câmera! 😊</p>
+                <div class="emotion-loading">
+                    <div class="spinner"></div>
+                    <span>Analisando seu humor...</span>
+                </div>
+            </div>
+            <div class="emotion-result" style="display: none;">
+                <h3>Sua Recomendação:</h3>
+                <div class="result-content"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -4870,6 +5072,126 @@ openProductModal = function(product) {
         addMascotToProduct(modalContent, '1L');
     }
 };
+
+const emotionRecommendations = {
+    happy: {
+        title: "Você está feliz! 😊",
+        products: [
+            {
+                name: "Açaí + Creme de Ninho",
+                description: "A combinação mais pedida com granola, leite em pó e calda de morango!",
+                price: 15.99,
+                size: "500ml",
+                acompanhamentos: ["Granola", "Leite em pó", "Calda de Morango"]
+            },
+            {
+                name: "Açaí + Creme de Ovomaltine",
+                description: "Mix delicioso com Ovomaltine, M&M e leite condensado!",
+                price: 25.99,
+                size: "1 Litro",
+                acompanhamentos: ["Ovomaltine", "M&M", "Leite condensado"]
+            }
+        ]
+    },
+    sad: {
+        title: "Vamos melhorar seu dia! 🌟",
+        products: [
+            {
+                name: "Açaí + Creme de Morango",
+                description: "Com calda de chocolate, leite condensado e chocoball!",
+                price: 15.99,
+                size: "500ml",
+                acompanhamentos: ["Calda de Chocolate", "Leite condensado", "Chocoball"]
+            },
+            {
+                name: "Açaí Puro",
+                description: "O tradicional com granola, amendoim e côco ralado.",
+                price: 10.99,
+                size: "300ml",
+                acompanhamentos: ["Granola", "Amendoim", "Côco ralado"]
+            }
+        ]
+    },
+    neutral: {
+        title: "Que tal experimentar algo especial? ✨",
+        products: [
+            {
+                name: "Açaí + Creme de Cupuaçu",
+                description: "Com granola, leite em pó e calda de chocolate!",
+                price: 15.99,
+                size: "500ml",
+                acompanhamentos: ["Granola", "Leite em pó", "Calda de Chocolate"]
+            },
+            {
+                name: "Açaí + Creme de Amendoim",
+                description: "Mix proteico com amendoim, granola e leite condensado.",
+                price: 25.99,
+                size: "1 Litro",
+                acompanhamentos: ["Amendoim", "Granola", "Leite condensado"]
+            }
+        ]
+    },
+    surprised: {
+        title: "Hora de uma surpresa deliciosa! 🎉",
+        products: [
+            {
+                name: "Açaí + Creme de Ovomaltine",
+                description: "Com ovomaltine, M&M e calda de chocolate!",
+                price: 15.99,
+                size: "500ml",
+                acompanhamentos: ["Ovomaltine", "M&M", "Calda de Chocolate"]
+            },
+            {
+                name: "Açaí + Creme de Ninho",
+                description: "Tamanho família com leite em pó, chocoball e leite condensado!",
+                price: 25.99,
+                size: "1 Litro",
+                acompanhamentos: ["Leite em pó", "Chocoball", "Leite condensado"]
+            }
+        ]
+    }
+};
+
+    function showRecommendations(emotion) {
+    const resultDiv = document.querySelector('.emotion-result');
+    const resultContent = resultDiv.querySelector('.result-content');
+    const recommendation = emotionRecommendations[emotion] || emotionRecommendations.neutral;
+
+    resultContent.innerHTML = `
+        <h3>${recommendation.title}</h3>
+        ${recommendation.products.map(product => `
+            <div class="emotion-product">
+                <img src="/api/placeholder/200/200" alt="${product.name}">
+                <div class="emotion-product-info">
+                    <h4 class="emotion-product-title">${product.name}</h4>
+                    <p class="emotion-product-size">Tamanho: ${product.size}</p>
+                    <p class="emotion-product-description">${product.description}</p>
+                    <p class="emotion-product-toppings">
+                        <i class="fas fa-check-circle"></i> 
+                        Acompanhamentos: ${product.acompanhamentos.join(', ')}
+                    </p>
+                    <p class="emotion-product-price">R$ ${product.price.toFixed(2)}</p>
+                </div>
+                <button class="add-to-cart-btn" onclick="addEmotionProductToCart(${JSON.stringify(product)})">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        `).join('')}
+    `;
+
+    resultDiv.style.display = 'block';
+    hideEmotionLoading();
+}
+
+function addEmotionProductToCart(product) {
+    cart.push({
+        ...product,
+        selectedToppings: product.acompanhamentos,
+        selectedExtras: []
+    });
+    updateCartCount();
+    showNotification('Produto adicionado ao carrinho!');
+}
     
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -4878,7 +5200,14 @@ document.addEventListener('DOMContentLoaded', () => {
     createFloatingMascot(); // Adicionamos aqui a criação do mascote flutuante
     addTimeMachineButton(); // Adiciona o botão do Time Machine
 
-
+document.querySelectorAll('.category-btn').forEach(button => {
+    button.addEventListener('click', () => {
+        if (button.textContent.trim() === 'Emotion Reader') {
+            const modal = document.getElementById('emotionReaderModal');
+            modal.style.display = 'block';
+            initEmotionReader();
+            return;
+        }
 
     // Evento para o ícone do carrinho
     const cartIcon = document.querySelector('.cart-icon');
