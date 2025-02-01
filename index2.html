@@ -5256,7 +5256,32 @@ function createAcaiDoDiaElement(product) {
 
     const acaiHTML = `
         <div class="acai-do-dia">
-        ... // resto do seu código HTML continua igual
+            <div class="acai-deal-badge">Açaí do Dia</div>
+            <div class="acai-content">
+                <img src="${product.imageUrl || '/api/placeholder/400/400'}" alt="${product.name}" class="acai-image">
+                <div class="acai-info">
+                    <h2 class="acai-title">${product.name}</h2>
+                    <p class="acai-description">${product.description}</p>
+                    <div class="price-container">
+                        <span class="original-price">R$ ${product.originalPrice.toFixed(2)}</span>
+                        <span class="deal-price">R$ ${product.price.toFixed(2)}</span>
+                    </div>
+                    <div class="stats-container">
+                        <div class="stat-item">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span class="units-sold">7 unidades vendidas hoje</span>
+                        </div>
+                        <div class="countdown">
+                            <i class="fas fa-clock"></i>
+                            <span>Oferta expira em: <span class="time-left"></span></span>
+                        </div>
+                    </div>
+                    <button class="add-deal-btn" onclick="addAcaiDoDiaToCart(${JSON.stringify(product).replace(/"/g, '&quot;')})">
+                        Adicionar à Sacola
+                    </button>
+                </div>
+            </div>
+        </div>
     `;
     
     const storeStatus = document.querySelector('.store-status');
