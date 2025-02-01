@@ -5222,9 +5222,10 @@ function initAcaiDoDia() {
     const today = new Date().toLocaleDateString();
     let selectedProduct = JSON.parse(localStorage.getItem('acaiDoDia'));
     
-    if (!selectedProduct || selectedProduct.date !== today) {
-        realtimeDB.ref('menu/products').once('value')
-            .then(snapshot => {
+if (!selectedProduct || selectedProduct.date !== today) {
+    localStorage.removeItem('acaiDoDiaUnitsSold'); // Reseta contagem quando muda o dia
+    realtimeDB.ref('menu/products').once('value')
+        .then(snapshot => {
                 const products = Object.values(snapshot.val() || {})
                     .filter(p => p.status && 
                              (p.name.includes('500ml') || p.name.includes('1 Litro')) &&
@@ -5247,42 +5248,24 @@ function initAcaiDoDia() {
 }
 
 function createAcaiDoDiaElement(product) {
+    // Primeiro, verifica se já existe um Açaí do Dia na página
+    const existingAcai = document.querySelector('.acai-do-dia');
+    if (existingAcai) {
+        existingAcai.remove(); // Remove se já existir
+    }
+
     const acaiHTML = `
         <div class="acai-do-dia">
-            <div class="acai-deal-badge">Açaí do Dia</div>
-            <div class="acai-content">
-                <img src="${product.imageUrl || '/api/placeholder/400/400'}" alt="${product.name}" class="acai-image">
-                <div class="acai-info">
-                    <h2 class="acai-title">${product.name}</h2>
-                    <p class="acai-description">${product.description}</p>
-                    <div class="price-container">
-                        <span class="original-price">R$ ${product.originalPrice.toFixed(2)}</span>
-                        <span class="deal-price">R$ ${product.price.toFixed(2)}</span>
-                    </div>
-                    <div class="stats-container">
-                        <div class="stat-item">
-                            <i class="fas fa-shopping-cart"></i>
-                            <span class="units-sold">7 unidades vendidas hoje</span>
-                        </div>
-                        <div class="countdown">
-                            <i class="fas fa-clock"></i>
-                            <span>Oferta expira em: <span class="time-left"></span></span>
-                        </div>
-                    </div>
-                    <button class="add-deal-btn" onclick="addAcaiDoDiaToCart(${JSON.stringify(product).replace(/"/g, '&quot;')})">
-                        Adicionar à Sacola
-                    </button>
-                </div>
-            </div>
-        </div>
+        ... // resto do seu código HTML continua igual
     `;
     
     const storeStatus = document.querySelector('.store-status');
-    storeStatus.insertAdjacentHTML('afterend', acaiHTML);
-    
-    updateCountdown();
-    setInterval(updateCountdown, 1000);
-    simulateUnitsSold();
+    if (storeStatus) {
+        storeStatus.insertAdjacentHTML('afterend', acaiHTML);
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+        simulateUnitsSold();
+    }
 }
 
 function updateCountdown() {
@@ -5308,16 +5291,26 @@ function simulateUnitsSold() {
     const now = new Date();
     const elapsedMinutes = (now - startTime) / (1000 * 60);
     
-    // Calcula unidades vendidas com base no tempo decorrido
-    let unitsSold = Math.max(7, Math.min(75, Math.floor(7 + (elapsedMinutes / 15))));
+    // Pega o valor salvo ou calcula um novo
+    let unitsSold = localStorage.getItem('acaiDoDiaUnitsSold');
+    if (!unitsSold) {
+        unitsSold = Math.max(7, Math.min(75, Math.floor(7 + (elapsedMinutes / 15))));
+        localStorage.setItem('acaiDoDiaUnitsSold', unitsSold);
+    }
     
     const unitsElement = document.querySelector('.units-sold');
     if (unitsElement) {
         unitsElement.textContent = `${unitsSold} unidades vendidas hoje`;
     }
     
-    // Atualiza a cada 3 minutos
-    setTimeout(simulateUnitsSold, 180000);
+    // Incrementa a cada 3 minutos se ainda não atingiu o máximo
+    setTimeout(() => {
+        if (unitsSold < 75) {
+            unitsSold = Math.min(75, parseInt(unitsSold) + 1);
+            localStorage.setItem('acaiDoDiaUnitsSold', unitsSold);
+        }
+        simulateUnitsSold();
+    }, 180000);
 }
 
 function addAcaiDoDiaToCart(product) {
