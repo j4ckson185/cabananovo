@@ -1741,6 +1741,60 @@ header {
         left: -20px;
     }
 }
+
+.initial-tip {
+    position: absolute;
+    bottom: calc(100% + 15px);
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1rem;
+    width: 200px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    font-size: 0.9rem;
+    color: var(--text);
+    animation: fadeIn 0.3s ease;
+}
+
+.initial-tip::before {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    right: 30px;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid var(--glass-border);
+}
+
+.initial-tip::after {
+    content: '';
+    position: absolute;
+    bottom: -9px;
+    right: 30px;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-top: 9px solid var(--surface);
+}
+
+.close-tip {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 5px;
+    transition: all 0.3s ease;
+}
+
+.close-tip:hover {
+    color: var(--accent);
+    transform: scale(1.1);
+}
     
 </style>
 </head>
@@ -4862,11 +4916,17 @@ function filterProductsByOccasion(products) {
         }
     });
 }
-    function createFloatingMascot() {
+ function createFloatingMascot() {
     const visitCount = parseInt(localStorage.getItem('visitCount') || '0');
     
     const mascotHTML = `
         <div class="floating-mascot">
+            <div class="initial-tip">
+                Clique em mim para ouvir a dica do dia
+                <button class="close-tip">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
             <div class="floating-mascot-dialog">
                 <button class="minimize-mascot">
                     <i class="fas fa-minus"></i>
@@ -4885,9 +4945,11 @@ function filterProductsByOccasion(products) {
     const video = mascot.querySelector('.floating-mascot-video');
     const dialog = mascot.querySelector('.floating-mascot-dialog');
     const minimizeBtn = mascot.querySelector('.minimize-mascot');
+    const closeTipBtn = mascot.querySelector('.close-tip');
+    const initialTip = mascot.querySelector('.initial-tip');
     let isDialogVisible = true;
     
-    // Definir URL do vídeo baseado no número de visitas
+    // URLs dos vídeos
     const videos = [
         "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness.mp4?alt=media&token=904bfced-6f04-459b-943a-50fa1a998aaf",
         "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness2.mp4?alt=media&token=b66fcb5e-1dfb-467f-926d-dbeb92d03061",
@@ -4897,7 +4959,7 @@ function filterProductsByOccasion(products) {
     
     video.src = videos[visitCount % videos.length];
     
-    // Iniciar vídeo quando estiver visível
+    // Observer para iniciar/pausar vídeo
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -4939,6 +5001,12 @@ function filterProductsByOccasion(products) {
         minimizeBtn.innerHTML = isDialogVisible ? 
             '<i class="fas fa-minus"></i>' : 
             '<i class="fas fa-plus"></i>';
+    });
+
+    // Botão fechar dica inicial
+    closeTipBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        initialTip.style.display = 'none';
     });
     
     // Mensagens rotativas
