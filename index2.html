@@ -3792,20 +3792,30 @@ function addToCart(product, selectedToppings) {
     const totalExtrasPrice = selectedExtras.reduce((total, extra) => total + extra.price, 0);
     const totalPrice = product.price + totalExtrasPrice;
 
+    if (product.isAcaiDoDia && acaiDoDiaQuantityInCart >= 2) {
+        showNotification('Limite de 2 unidades do Açaí do Dia por pedido');
+        return;
+    }
+
     cart.push({
         ...product,
         selectedToppings,
         selectedExtras: selectedExtras.map(extra => extra.name),
         price: totalPrice,
-        originalPrice: product.price
+        originalPrice: product.originalPrice || product.price
     });
+
+    if (product.isAcaiDoDia) {
+        acaiDoDiaQuantityInCart++;
+    }
+
     updateCartCount();
     
-    // Close product modal and show cart modal
+    // Fecha o modal do produto e mostra o carrinho
     document.getElementById('productModal').style.display = 'none';
     showCartModal();
 }
-
+    
 async function applyCoupon() {
     const couponCode = document.getElementById('couponCode').value.toUpperCase();
     const messageDiv = document.getElementById('couponMessage');
@@ -5316,16 +5326,12 @@ function addAcaiDoDiaToCart(product) {
         return;
     }
     
-    // Adiciona ao carrinho existente
-    cart.push({
+    // Ao invés de adicionar ao carrinho, abre o modal do produto
+    openProductModal({
         ...product,
-        selectedToppings: [],
-        selectedExtras: []
+        price: product.price, // Mantém o preço promocional
+        isAcaiDoDia: true // Flag para identificar que é o açaí do dia
     });
-    
-    acaiDoDiaQuantityInCart++;
-    updateCartCount();
-    showNotification('Açaí do Dia adicionado ao carrinho!');
 }
 </script>
 <<!-- Modal para Criar Novo Pedido -->
