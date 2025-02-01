@@ -3468,8 +3468,13 @@ function updateCategoryButtons(categories) {
             <i class="fas fa-magic"></i>
             Monte seu Combo
         </button>
+        <button class="category-btn" data-category="dreamBuilder">
+            <i class="fas fa-paint-brush"></i>
+            Monte seu Açaí
+        </button>
     `;
     
+    // Adiciona as categorias do Firebase após os botões fixos
     Object.entries(categories).forEach(([id, category]) => {
         categoriesNav.innerHTML += `
             <button class="category-btn" data-category="${id}">
@@ -3486,10 +3491,14 @@ function updateCategoryButtons(categories) {
             button.classList.add('active');
             
             const categoryId = button.dataset.category;
+            
             if (categoryId === 'combo') {
                 document.getElementById('comboModal').style.display = 'block';
                 resetComboBuilder();
                 initComboBuilder();
+            } else if (categoryId === 'dreamBuilder') {
+                document.getElementById('dreamBuilderModal').style.display = 'block';
+                initDreamBuilder();
             } else {
                 const filteredProducts = categoryId === 'all' 
                     ? currentProducts 
