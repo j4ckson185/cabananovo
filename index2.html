@@ -2710,6 +2710,8 @@ let appliedCoupon = null;
 let customerInfo = {};
 let deliveryInfo = {};
 let acaiDoDiaQuantityInCart = 0;
+let faceDetectionActive = false;
+let emotionDetectionInterval = null;
 
 async function searchOrderHistory() {
     const phoneInput = document.getElementById('historyPhoneInput');
@@ -5258,55 +5260,158 @@ function addEmotionProductToCart(product) {
     }
 }
 
-    async function initEmotionReader() {
+async function initEmotionReader() {
     try {
-        // Tenta carregar os modelos, se não existirem, faz o download
-        try {
-            await Promise.all([
-                faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-                faceapi.nets.faceExpressionNet.loadFromUri('/models')
-            ]);
-        } catch (error) {
-            // Se falhar ao carregar, tenta baixar
-            const setupSuccess = await setupFaceAPI();
-            if (!setupSuccess) {
-                throw new Error('Falha ao configurar modelos');
-            }
-            // Tenta carregar novamente após baixar
-            await Promise.all([
-                faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-                faceapi.nets.faceExpressionNet.loadFromUri('/models')
-            ]);
-        }
+        showEmotionLoading();
+
+        // Tentar carregar os modelos
+        await Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
+            faceapi.nets.faceExpressionNet.loadFromUri('/models')
+        ]);
 
         const video = document.getElementById('emotionVideo');
         const canvas = document.getElementById('emotionCanvas');
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        
+
+        if (!video || !canvas) {
+            throw new Error('Elementos de vídeo ou canvas não encontrados');
+        }
+
+        // Solicitar acesso à câmera
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                width: 400,
+                height: 300,
+                facingMode: 'user'
+            } 
+        });
+
         video.srcObject = stream;
-        
+        await video.play();
+
+        // Configurar dimensões do canvas
+        const displaySize = { width: video.clientWidth, height: video.clientHeight };
+        faceapi.matchDimensions(canvas, displaySize);
+
+        // Iniciar detecção quando o vídeo estiver pronto
         video.addEventListener('play', () => {
-            const displaySize = { 
-                width: video.width, 
-                height: video.height 
-            };
-            faceapi.matchDimensions(canvas, displaySize);
-            
             faceDetectionActive = true;
             detectEmotions();
         });
 
-        showEmotionLoading();
-        
     } catch (error) {
         console.error('Erro ao inicializar Emotion Reader:', error);
         showEmotionError('Não foi possível acessar a câmera. Por favor, permita o acesso.');
     }
 }
+
+    // 3. Função para detectar emoções
+async function detectEmotions() {
+    if (!faceDetectionActive) return;
+
+    const video = document.getElementById('emotionVideo');
+    const canvas = document.getElementById('emotionCanvas');
+    
+    if (!video || !canvas) return;
+
+    try {
+        const detections = await faceapi.detectAllFaces(
+            video, 
+            new faceapi.TinyFaceDetectorOptions()
+        ).withFaceExpressions();
+
+        if (detections && detections.length > 0) {
+            // Limpar canvas
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Desenhar detecções
+            const displaySize = { width: video.width, height: video.height };
+            const resizedDetections = faceapi.resizeResults(detections, displaySize);
+            
+            // Pegar emoção dominante
+            const expressions = detections[0].expressions;
+            const dominantEmotion = Object.keys(expressions).reduce((a, b) => 
+                expressions[a] > expressions[b] ? a : b
+            );
+
+            // Mapear emoção para as categorias que temos
+            let mappedEmotion = 'neutral';
+            if (dominantEmotion === 'happy') mappedEmotion = 'happy';
+            else if (dominantEmotion === 'sad') mappedEmotion = 'sad';
+            else if (dominantEmotion === 'surprised') mappedEmotion = 'surprised';
+
+            // Mostrar recomendações
+            showRecommendations(mappedEmotion);
+            hideEmotionLoading();
+
+            // Parar a detecção após encontrar uma emoção
+            faceDetectionActive = false;
+        } else {
+            // Continuar procurando se não encontrou face
+            requestAnimationFrame(detectEmotions);
+        }
+    } catch (error) {
+        console.error('Erro na detecção:', error);
+        showEmotionError('Erro ao detectar emoções. Por favor, tente novamente.');
+    }
+}
+
+    // 2. Adicione estas funções auxiliares
+function showEmotionLoading() {
+    const loadingDiv = document.querySelector('.emotion-loading');
+    if (loadingDiv) {
+        loadingDiv.classList.add('active');
+    }
+}
+
+function hideEmotionLoading() {
+    const loadingDiv = document.querySelector('.emotion-loading');
+    if (loadingDiv) {
+        loadingDiv.classList.remove('active');
+    }
+}
+
+function showEmotionError(message) {
+    const statusDiv = document.querySelector('.emotion-status');
+    if (statusDiv) {
+        statusDiv.innerHTML = `<p style="color: var(--error);">${message}</p>`;
+    }
+    hideEmotionLoading();
+}
     
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Carregado'); // Log para diagnóstico
+
+        // ADICIONE ESTE BLOCO AQUI
+    const emotionReaderButton = document.querySelector('[data-category="emotion"]');
+    if (emotionReaderButton) {
+        emotionReaderButton.addEventListener('click', () => {
+            const modal = document.getElementById('emotionReaderModal');
+            if (modal) {
+                modal.style.display = 'block';
+                initEmotionReader();
+            }
+        });
+    }
+
+    // E ESTE TAMBÉM
+    const closeEmotionButton = document.querySelector('#emotionReaderModal .close-modal');
+    if (closeEmotionButton) {
+        closeEmotionButton.addEventListener('click', () => {
+            const modal = document.getElementById('emotionReaderModal');
+            if (modal) {
+                modal.style.display = 'none';
+                // Parar a detecção e a câmera quando fechar
+                faceDetectionActive = false;
+                const video = document.getElementById('emotionVideo');
+                if (video && video.srcObject) {
+                    video.srcObject.getTracks().forEach(track => track.stop());
+                }
+            }
+        });
+    }
 
     createFloatingMascot(); // Adicionamos aqui a criação do mascote flutuante
     addTimeMachineButton(); // Adiciona o botão do Time Machine
@@ -5354,6 +5459,7 @@ document.querySelectorAll('.category-btn').forEach(button => {
     checkStoreStatus();
     setInterval(checkStoreStatus, 60000);
     setupPaymentEvents();
+    
 
         // Configuração do Intersection Observer para o mascote
     const mascotVideo = document.querySelector('.mascot-video');
