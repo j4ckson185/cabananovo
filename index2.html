@@ -8,8 +8,6 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>   
     <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
@@ -1971,176 +1969,6 @@ header {
         font-size: 1.6rem;
     }
 }
-
-/* Emotion Reader Styles */
-.emotion-content {
-    padding: 1.5rem;
-    text-align: center;
-}
-
-.camera-container {
-    position: relative;
-    width: 400px;
-    height: 300px;
-    margin: 1.5rem auto;
-    border-radius: 15px;
-    overflow: hidden;
-    background: var(--surface);
-    border: 2px solid var(--accent);
-}
-
-#emotionVideo {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transform: scaleX(-1); /* Espelhar vídeo */
-}
-
-#emotionCanvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-}
-
-.emotion-status {
-    margin: 1rem 0;
-    padding: 1rem;
-    background: var(--glass);
-    border-radius: 10px;
-    border: 1px solid var(--glass-border);
-}
-
-.emotion-loading {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 0.5rem;
-}
-
-.emotion-loading.active {
-    display: flex;
-}
-
-.emotion-result {
-    margin-top: 2rem;
-    padding: 1.5rem;
-    background: var(--glass);
-    border-radius: 15px;
-    border: 1px solid var(--glass-border);
-}
-
-.result-content {
-    margin-top: 1rem;
-}
-
-.emotion-product {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    padding: 1rem;
-    margin: 1rem 0;
-    background: var(--surface);
-    border-radius: 10px;
-    transition: all 0.3s ease;
-}
-
-.emotion-product:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-.emotion-product img {
-    width: 100px;
-    height: 100px;
-    border-radius: 8px;
-    object-fit: cover;
-}
-
-.emotion-product-info {
-    flex: 1;
-    text-align: left;
-}
-
-.emotion-product-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: white;
-    margin-bottom: 0.5rem;
-}
-
-.emotion-product-description {
-    color: var(--text);
-    font-size: 0.9rem;
-    line-height: 1.4;
-}
-
-.emotion-product-price {
-    color: var(--accent);
-    font-weight: 600;
-    font-size: 1.1rem;
-    margin-top: 0.5rem;
-}
-
-/* Animação de pulso para feedback visual */
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-
-.emotion-capture-active {
-    animation: pulse 2s infinite;
-}
-
-/* Responsividade */
-@media (max-width: 768px) {
-    .camera-container {
-        width: 300px;
-        height: 225px;
-    }
-
-    .emotion-product {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .emotion-product-info {
-        text-align: center;
-    }
-}
-
-@media (max-width: 480px) {
-    .camera-container {
-        width: 240px;
-        height: 180px;
-    }
-
-    .emotion-content {
-        padding: 1rem;
-    }
-
-    .emotion-product img {
-        width: 80px;
-        height: 80px;
-    }
-}
-
-/* Estado de carregamento */
-.emotion-loading .spinner {
-    width: 24px;
-    height: 24px;
-    border: 3px solid var(--glass-border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
     
 </style>
 </head>
@@ -2170,10 +1998,6 @@ header {
         <button class="category-btn">
         <i class="fas fa-magic"></i>
          Monte seu Combo
-        </button>
-                <button class="category-btn" data-category="emotion">
-            <i class="fas fa-smile"></i>
-            Emotion Reader
         </button>
         <button class="category-btn">
             <i class="fas fa-ice-cream"></i>
@@ -2660,33 +2484,6 @@ header {
     </div>
 </div>
 
-    <div class="modal" id="emotionReaderModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Açaí Emotion Reader</h2>
-            <button class="close-modal">&times;</button>
-        </div>
-        <div class="emotion-content">
-            <p>Vamos descobrir o açaí perfeito para seu humor!</p>
-            <div class="camera-container">
-                <video id="emotionVideo" autoplay muted playsinline></video>
-                <canvas id="emotionCanvas"></canvas>
-            </div>
-            <div class="emotion-status">
-                <p>Sorria para a câmera! 😊</p>
-                <div class="emotion-loading">
-                    <div class="spinner"></div>
-                    <span>Analisando seu humor...</span>
-                </div>
-            </div>
-            <div class="emotion-result" style="display: none;">
-                <h3>Sua Recomendação:</h3>
-                <div class="result-content"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
 // Firebase initialization
 const firebaseConfig = {
@@ -2710,8 +2507,6 @@ let appliedCoupon = null;
 let customerInfo = {};
 let deliveryInfo = {};
 let acaiDoDiaQuantityInCart = 0;
-let faceDetectionActive = false;
-let modelsLoaded = false;
 
 async function searchOrderHistory() {
     const phoneInput = document.getElementById('historyPhoneInput');
@@ -3462,10 +3257,6 @@ function updateCategoryButtons(categories) {
         <button class="category-btn" data-category="combo">
             <i class="fas fa-magic"></i>
             Monte seu Combo
-        </button>
-                <button class="category-btn" data-category="emotion">
-            <i class="fas fa-smile"></i>
-            Emotion Reader
         </button>
     `;
     
@@ -5079,244 +4870,15 @@ openProductModal = function(product) {
         addMascotToProduct(modalContent, '1L');
     }
 };
-
-function addEmotionProductToCart(product) {
-    cart.push({
-        ...product,
-        selectedToppings: product.acompanhamentos,
-        selectedExtras: []
-    });
-    updateCartCount();
-    showNotification('Produto adicionado ao carrinho!');
-}
-
-    async function setupFaceAPI() {
-    const modelsPath = '/models';
-    const modelsList = [
-        {
-            name: 'tiny_face_detector_model',
-            url: 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/tiny_face_detector_model'
-        },
-        {
-            name: 'face_expression_model',
-            url: 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/face_expression_model'
-        }
-    ];
-
-    async function downloadFile(url) {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        return await response.blob();
-    }
-
-    async function saveFile(blob, filename) {
-        try {
-            const content = await blob.arrayBuffer();
-            await window.fs.writeFile(`${modelsPath}/${filename}`, new Uint8Array(content));
-        } catch (error) {
-            console.error('Erro ao salvar arquivo:', error);
-            throw error;
-        }
-    }
-
-    try {
-        // Criar pasta models se não existir
-        try {
-            await window.fs.mkdir(modelsPath);
-        } catch (error) {
-            // Ignora erro se pasta já existir
-            if (error.code !== 'EEXIST') throw error;
-        }
-
-        showNotification('Baixando modelos necessários...');
-
-        // Baixar cada modelo e seus arquivos
-        for (const model of modelsList) {
-            // Baixar manifest
-            const manifestBlob = await downloadFile(`${model.url}-weights_manifest.json`);
-            await saveFile(manifestBlob, `${model.name}-weights_manifest.json`);
-
-            // Baixar shard
-            const shardBlob = await downloadFile(`${model.url}-shard1`);
-            await saveFile(shardBlob, `${model.name}-shard1`);
-        }
-
-        showNotification('Modelos configurados com sucesso!');
-        return true;
-    } catch (error) {
-        console.error('Erro na configuração dos modelos:', error);
-        showNotification('Erro ao configurar modelos. Tente novamente.');
-        return false;
-    }
-}
-
-    // Função para carregar os modelos do face-api
-async function loadModels() {
-    try {
-        await faceapi.nets.tinyFaceDetector.load('/models');
-        await faceapi.nets.faceExpressionNet.load('/models');
-        modelsLoaded = true;
-        console.log('Modelos carregados com sucesso');
-    } catch (error) {
-        console.error('Erro ao carregar modelos:', error);
-        showEmotionError('Erro ao carregar modelos de detecção facial');
-    }
-}
-
-// Função para inicializar o Emotion Reader
-async function initEmotionReader() {
-    const video = document.getElementById('emotionVideo');
-    const canvas = document.getElementById('emotionCanvas');
-    
-    if (!video || !canvas) {
-        console.error('Elementos de vídeo ou canvas não encontrados');
-        return;
-    }
-
-    showEmotionLoading();
-
-    try {
-        // Carregar modelos se ainda não foram carregados
-        if (!modelsLoaded) {
-            await loadModels();
-        }
-
-        // Solicitar acesso à câmera
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                width: 400,
-                height: 300,
-                facingMode: 'user'
-            }
-        });
-
-        video.srcObject = stream;
-        
-        // Aguardar o vídeo estar pronto
-        await new Promise((resolve) => {
-            video.onloadedmetadata = () => {
-                resolve();
-            };
-        });
-
-        await video.play();
-
-        // Configurar canvas
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-
-        // Iniciar detecção
-        faceDetectionActive = true;
-        detectEmotions();
-
-        hideEmotionLoading();
-        console.log('Emotion Reader iniciado com sucesso');
-
-    } catch (error) {
-        console.error('Erro ao inicializar câmera:', error);
-        showEmotionError('Erro ao acessar a câmera. Por favor, permita o acesso.');
-        hideEmotionLoading();
-    }
-}
-
-// Função para mostrar loading
-function showEmotionLoading() {
-    const loadingDiv = document.querySelector('.emotion-loading');
-    if (loadingDiv) {
-        loadingDiv.classList.add('active');
-    }
-}
-
-// Função para esconder loading
-function hideEmotionLoading() {
-    const loadingDiv = document.querySelector('.emotion-loading');
-    if (loadingDiv) {
-        loadingDiv.classList.remove('active');
-    }
-}
-
-// Função para mostrar erro
-function showEmotionError(message) {
-    const statusDiv = document.querySelector('.emotion-status');
-    if (statusDiv) {
-        statusDiv.innerHTML = `<p style="color: var(--error);">${message}</p>`;
-    }
-    hideEmotionLoading();
-}
-
-// Função para detectar emoções
-async function detectEmotions() {
-    if (!faceDetectionActive) return;
-
-    const video = document.getElementById('emotionVideo');
-    const canvas = document.getElementById('emotionCanvas');
-    
-    if (!video || !canvas) return;
-
-    try {
-        const detections = await faceapi.detectAllFaces(
-            video,
-            new faceapi.TinyFaceDetectorOptions()
-        ).withFaceExpressions();
-
-        if (detections && detections.length > 0) {
-            // Pegar emoção dominante
-            const expressions = detections[0].expressions;
-            const dominantEmotion = Object.keys(expressions).reduce((a, b) => 
-                expressions[a] > expressions[b] ? a : b
-            );
-
-            let mappedEmotion = 'neutral';
-            if (dominantEmotion === 'happy') mappedEmotion = 'happy';
-            else if (dominantEmotion === 'sad') mappedEmotion = 'sad';
-            else if (dominantEmotion === 'surprised') mappedEmotion = 'surprised';
-
-            showRecommendations(mappedEmotion);
-            faceDetectionActive = false;
-        } else {
-            requestAnimationFrame(detectEmotions);
-        }
-    } catch (error) {
-        console.error('Erro na detecção:', error);
-        showEmotionError('Erro ao detectar emoções');
-    }
-}
     
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Carregado'); // Log para diagnóstico
 
-        const emotionReaderButton = document.querySelector('[data-category="emotion"]');
-    if (emotionReaderButton) {
-        emotionReaderButton.addEventListener('click', () => {
-            console.log('Botão Emotion Reader clicado');
-            const modal = document.getElementById('emotionReaderModal');
-            if (modal) {
-                modal.style.display = 'block';
-                initEmotionReader();
-            }
-        });
-    }
-
-    // Event listener para fechar o modal
-    const closeButton = document.querySelector('#emotionReaderModal .close-modal');
-    if (closeButton) {
-        closeButton.addEventListener('click', () => {
-            const modal = document.getElementById('emotionReaderModal');
-            if (modal) {
-                modal.style.display = 'none';
-                faceDetectionActive = false;
-                const video = document.getElementById('emotionVideo');
-                if (video && video.srcObject) {
-                    video.srcObject.getTracks().forEach(track => track.stop());
-                }
-            }
-        });
-    }
-});
-
     createFloatingMascot(); // Adicionamos aqui a criação do mascote flutuante
     addTimeMachineButton(); // Adiciona o botão do Time Machine
+
+
 
     // Evento para o ícone do carrinho
     const cartIcon = document.querySelector('.cart-icon');
@@ -5350,7 +4912,6 @@ document.addEventListener('DOMContentLoaded', () => {
     checkStoreStatus();
     setInterval(checkStoreStatus, 60000);
     setupPaymentEvents();
-    
 
         // Configuração do Intersection Observer para o mascote
     const mascotVideo = document.querySelector('.mascot-video');
@@ -5377,6 +4938,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+});
    
    // Categories
    document.querySelectorAll('.category-btn').forEach(button => {
