@@ -9,6 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
@@ -5195,6 +5196,112 @@ function addEmotionProductToCart(product) {
     });
     updateCartCount();
     showNotification('Produto adicionado ao carrinho!');
+}
+
+    async function setupFaceAPI() {
+    const modelsPath = '/models';
+    const modelsList = [
+        {
+            name: 'tiny_face_detector_model',
+            url: 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/tiny_face_detector_model'
+        },
+        {
+            name: 'face_expression_model',
+            url: 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/face_expression_model'
+        }
+    ];
+
+    async function downloadFile(url) {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return await response.blob();
+    }
+
+    async function saveFile(blob, filename) {
+        try {
+            const content = await blob.arrayBuffer();
+            await window.fs.writeFile(`${modelsPath}/${filename}`, new Uint8Array(content));
+        } catch (error) {
+            console.error('Erro ao salvar arquivo:', error);
+            throw error;
+        }
+    }
+
+    try {
+        // Criar pasta models se não existir
+        try {
+            await window.fs.mkdir(modelsPath);
+        } catch (error) {
+            // Ignora erro se pasta já existir
+            if (error.code !== 'EEXIST') throw error;
+        }
+
+        showNotification('Baixando modelos necessários...');
+
+        // Baixar cada modelo e seus arquivos
+        for (const model of modelsList) {
+            // Baixar manifest
+            const manifestBlob = await downloadFile(`${model.url}-weights_manifest.json`);
+            await saveFile(manifestBlob, `${model.name}-weights_manifest.json`);
+
+            // Baixar shard
+            const shardBlob = await downloadFile(`${model.url}-shard1`);
+            await saveFile(shardBlob, `${model.name}-shard1`);
+        }
+
+        showNotification('Modelos configurados com sucesso!');
+        return true;
+    } catch (error) {
+        console.error('Erro na configuração dos modelos:', error);
+        showNotification('Erro ao configurar modelos. Tente novamente.');
+        return false;
+    }
+}
+
+    async function initEmotionReader() {
+    try {
+        // Tenta carregar os modelos, se não existirem, faz o download
+        try {
+            await Promise.all([
+                faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
+                faceapi.nets.faceExpressionNet.loadFromUri('/models')
+            ]);
+        } catch (error) {
+            // Se falhar ao carregar, tenta baixar
+            const setupSuccess = await setupFaceAPI();
+            if (!setupSuccess) {
+                throw new Error('Falha ao configurar modelos');
+            }
+            // Tenta carregar novamente após baixar
+            await Promise.all([
+                faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
+                faceapi.nets.faceExpressionNet.loadFromUri('/models')
+            ]);
+        }
+
+        const video = document.getElementById('emotionVideo');
+        const canvas = document.getElementById('emotionCanvas');
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        
+        video.srcObject = stream;
+        
+        video.addEventListener('play', () => {
+            const displaySize = { 
+                width: video.width, 
+                height: video.height 
+            };
+            faceapi.matchDimensions(canvas, displaySize);
+            
+            faceDetectionActive = true;
+            detectEmotions();
+        });
+
+        showEmotionLoading();
+        
+    } catch (error) {
+        console.error('Erro ao inicializar Emotion Reader:', error);
+        showEmotionError('Não foi possível acessar a câmera. Por favor, permita o acesso.');
+    }
 }
     
 // Initialize
