@@ -2711,7 +2711,7 @@ let customerInfo = {};
 let deliveryInfo = {};
 let acaiDoDiaQuantityInCart = 0;
 let faceDetectionActive = false;
-let emotionDetectionInterval = null;
+let modelsLoaded = false;
 
 async function searchOrderHistory() {
     const phoneInput = document.getElementById('historyPhoneInput');
@@ -5080,116 +5080,6 @@ openProductModal = function(product) {
     }
 };
 
-const emotionRecommendations = {
-    happy: {
-        title: "Você está feliz! 😊",
-        products: [
-            {
-                name: "Açaí + Creme de Ninho",
-                description: "A combinação mais pedida com granola, leite em pó e calda de morango!",
-                price: 15.99,
-                size: "500ml",
-                acompanhamentos: ["Granola", "Leite em pó", "Calda de Morango"]
-            },
-            {
-                name: "Açaí + Creme de Ovomaltine",
-                description: "Mix delicioso com Ovomaltine, M&M e leite condensado!",
-                price: 25.99,
-                size: "1 Litro",
-                acompanhamentos: ["Ovomaltine", "M&M", "Leite condensado"]
-            }
-        ]
-    },
-    sad: {
-        title: "Vamos melhorar seu dia! 🌟",
-        products: [
-            {
-                name: "Açaí + Creme de Morango",
-                description: "Com calda de chocolate, leite condensado e chocoball!",
-                price: 15.99,
-                size: "500ml",
-                acompanhamentos: ["Calda de Chocolate", "Leite condensado", "Chocoball"]
-            },
-            {
-                name: "Açaí Puro",
-                description: "O tradicional com granola, amendoim e côco ralado.",
-                price: 10.99,
-                size: "300ml",
-                acompanhamentos: ["Granola", "Amendoim", "Côco ralado"]
-            }
-        ]
-    },
-    neutral: {
-        title: "Que tal experimentar algo especial? ✨",
-        products: [
-            {
-                name: "Açaí + Creme de Cupuaçu",
-                description: "Com granola, leite em pó e calda de chocolate!",
-                price: 15.99,
-                size: "500ml",
-                acompanhamentos: ["Granola", "Leite em pó", "Calda de Chocolate"]
-            },
-            {
-                name: "Açaí + Creme de Amendoim",
-                description: "Mix proteico com amendoim, granola e leite condensado.",
-                price: 25.99,
-                size: "1 Litro",
-                acompanhamentos: ["Amendoim", "Granola", "Leite condensado"]
-            }
-        ]
-    },
-    surprised: {
-        title: "Hora de uma surpresa deliciosa! 🎉",
-        products: [
-            {
-                name: "Açaí + Creme de Ovomaltine",
-                description: "Com ovomaltine, M&M e calda de chocolate!",
-                price: 15.99,
-                size: "500ml",
-                acompanhamentos: ["Ovomaltine", "M&M", "Calda de Chocolate"]
-            },
-            {
-                name: "Açaí + Creme de Ninho",
-                description: "Tamanho família com leite em pó, chocoball e leite condensado!",
-                price: 25.99,
-                size: "1 Litro",
-                acompanhamentos: ["Leite em pó", "Chocoball", "Leite condensado"]
-            }
-        ]
-    }
-};
-
-    function showRecommendations(emotion) {
-    const resultDiv = document.querySelector('.emotion-result');
-    const resultContent = resultDiv.querySelector('.result-content');
-    const recommendation = emotionRecommendations[emotion] || emotionRecommendations.neutral;
-
-    resultContent.innerHTML = `
-        <h3>${recommendation.title}</h3>
-        ${recommendation.products.map(product => `
-            <div class="emotion-product">
-                <img src="/api/placeholder/200/200" alt="${product.name}">
-                <div class="emotion-product-info">
-                    <h4 class="emotion-product-title">${product.name}</h4>
-                    <p class="emotion-product-size">Tamanho: ${product.size}</p>
-                    <p class="emotion-product-description">${product.description}</p>
-                    <p class="emotion-product-toppings">
-                        <i class="fas fa-check-circle"></i> 
-                        Acompanhamentos: ${product.acompanhamentos.join(', ')}
-                    </p>
-                    <p class="emotion-product-price">R$ ${product.price.toFixed(2)}</p>
-                </div>
-                <button class="add-to-cart-btn" onclick="addEmotionProductToCart(${JSON.stringify(product)})">
-                    <i class="fas fa-plus"></i>
-                </button>
-            </div>
-        `).join('')}
-    `;
-
-    resultDiv.style.display = 'block';
-    hideEmotionLoading();
-}
-
 function addEmotionProductToCart(product) {
     cart.push({
         ...product,
@@ -5260,52 +5150,101 @@ function addEmotionProductToCart(product) {
     }
 }
 
-async function initEmotionReader() {
+    // Função para carregar os modelos do face-api
+async function loadModels() {
     try {
-        showEmotionLoading();
-
-        // Tentar carregar os modelos
-        await Promise.all([
-            faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-            faceapi.nets.faceExpressionNet.loadFromUri('/models')
-        ]);
-
-        const video = document.getElementById('emotionVideo');
-        const canvas = document.getElementById('emotionCanvas');
-
-        if (!video || !canvas) {
-            throw new Error('Elementos de vídeo ou canvas não encontrados');
-        }
-
-        // Solicitar acesso à câmera
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { 
-                width: 400,
-                height: 300,
-                facingMode: 'user'
-            } 
-        });
-
-        video.srcObject = stream;
-        await video.play();
-
-        // Configurar dimensões do canvas
-        const displaySize = { width: video.clientWidth, height: video.clientHeight };
-        faceapi.matchDimensions(canvas, displaySize);
-
-        // Iniciar detecção quando o vídeo estiver pronto
-        video.addEventListener('play', () => {
-            faceDetectionActive = true;
-            detectEmotions();
-        });
-
+        await faceapi.nets.tinyFaceDetector.load('/models');
+        await faceapi.nets.faceExpressionNet.load('/models');
+        modelsLoaded = true;
+        console.log('Modelos carregados com sucesso');
     } catch (error) {
-        console.error('Erro ao inicializar Emotion Reader:', error);
-        showEmotionError('Não foi possível acessar a câmera. Por favor, permita o acesso.');
+        console.error('Erro ao carregar modelos:', error);
+        showEmotionError('Erro ao carregar modelos de detecção facial');
     }
 }
 
-    // 3. Função para detectar emoções
+// Função para inicializar o Emotion Reader
+async function initEmotionReader() {
+    const video = document.getElementById('emotionVideo');
+    const canvas = document.getElementById('emotionCanvas');
+    
+    if (!video || !canvas) {
+        console.error('Elementos de vídeo ou canvas não encontrados');
+        return;
+    }
+
+    showEmotionLoading();
+
+    try {
+        // Carregar modelos se ainda não foram carregados
+        if (!modelsLoaded) {
+            await loadModels();
+        }
+
+        // Solicitar acesso à câmera
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                width: 400,
+                height: 300,
+                facingMode: 'user'
+            }
+        });
+
+        video.srcObject = stream;
+        
+        // Aguardar o vídeo estar pronto
+        await new Promise((resolve) => {
+            video.onloadedmetadata = () => {
+                resolve();
+            };
+        });
+
+        await video.play();
+
+        // Configurar canvas
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        // Iniciar detecção
+        faceDetectionActive = true;
+        detectEmotions();
+
+        hideEmotionLoading();
+        console.log('Emotion Reader iniciado com sucesso');
+
+    } catch (error) {
+        console.error('Erro ao inicializar câmera:', error);
+        showEmotionError('Erro ao acessar a câmera. Por favor, permita o acesso.');
+        hideEmotionLoading();
+    }
+}
+
+// Função para mostrar loading
+function showEmotionLoading() {
+    const loadingDiv = document.querySelector('.emotion-loading');
+    if (loadingDiv) {
+        loadingDiv.classList.add('active');
+    }
+}
+
+// Função para esconder loading
+function hideEmotionLoading() {
+    const loadingDiv = document.querySelector('.emotion-loading');
+    if (loadingDiv) {
+        loadingDiv.classList.remove('active');
+    }
+}
+
+// Função para mostrar erro
+function showEmotionError(message) {
+    const statusDiv = document.querySelector('.emotion-status');
+    if (statusDiv) {
+        statusDiv.innerHTML = `<p style="color: var(--error);">${message}</p>`;
+    }
+    hideEmotionLoading();
+}
+
+// Função para detectar emoções
 async function detectEmotions() {
     if (!faceDetectionActive) return;
 
@@ -5316,78 +5255,41 @@ async function detectEmotions() {
 
     try {
         const detections = await faceapi.detectAllFaces(
-            video, 
+            video,
             new faceapi.TinyFaceDetectorOptions()
         ).withFaceExpressions();
 
         if (detections && detections.length > 0) {
-            // Limpar canvas
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Desenhar detecções
-            const displaySize = { width: video.width, height: video.height };
-            const resizedDetections = faceapi.resizeResults(detections, displaySize);
-            
             // Pegar emoção dominante
             const expressions = detections[0].expressions;
             const dominantEmotion = Object.keys(expressions).reduce((a, b) => 
                 expressions[a] > expressions[b] ? a : b
             );
 
-            // Mapear emoção para as categorias que temos
             let mappedEmotion = 'neutral';
             if (dominantEmotion === 'happy') mappedEmotion = 'happy';
             else if (dominantEmotion === 'sad') mappedEmotion = 'sad';
             else if (dominantEmotion === 'surprised') mappedEmotion = 'surprised';
 
-            // Mostrar recomendações
             showRecommendations(mappedEmotion);
-            hideEmotionLoading();
-
-            // Parar a detecção após encontrar uma emoção
             faceDetectionActive = false;
         } else {
-            // Continuar procurando se não encontrou face
             requestAnimationFrame(detectEmotions);
         }
     } catch (error) {
         console.error('Erro na detecção:', error);
-        showEmotionError('Erro ao detectar emoções. Por favor, tente novamente.');
+        showEmotionError('Erro ao detectar emoções');
     }
-}
-
-    // 2. Adicione estas funções auxiliares
-function showEmotionLoading() {
-    const loadingDiv = document.querySelector('.emotion-loading');
-    if (loadingDiv) {
-        loadingDiv.classList.add('active');
-    }
-}
-
-function hideEmotionLoading() {
-    const loadingDiv = document.querySelector('.emotion-loading');
-    if (loadingDiv) {
-        loadingDiv.classList.remove('active');
-    }
-}
-
-function showEmotionError(message) {
-    const statusDiv = document.querySelector('.emotion-status');
-    if (statusDiv) {
-        statusDiv.innerHTML = `<p style="color: var(--error);">${message}</p>`;
-    }
-    hideEmotionLoading();
 }
     
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Carregado'); // Log para diagnóstico
 
-        // ADICIONE ESTE BLOCO AQUI
-    const emotionReaderButton = document.querySelector('[data-category="emotion"]');
+        const emotionReaderButton = document.querySelector('[data-category="emotion"]');
     if (emotionReaderButton) {
         emotionReaderButton.addEventListener('click', () => {
+            console.log('Botão Emotion Reader clicado');
             const modal = document.getElementById('emotionReaderModal');
             if (modal) {
                 modal.style.display = 'block';
@@ -5396,14 +5298,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // E ESTE TAMBÉM
-    const closeEmotionButton = document.querySelector('#emotionReaderModal .close-modal');
-    if (closeEmotionButton) {
-        closeEmotionButton.addEventListener('click', () => {
+    // Event listener para fechar o modal
+    const closeButton = document.querySelector('#emotionReaderModal .close-modal');
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
             const modal = document.getElementById('emotionReaderModal');
             if (modal) {
                 modal.style.display = 'none';
-                // Parar a detecção e a câmera quando fechar
                 faceDetectionActive = false;
                 const video = document.getElementById('emotionVideo');
                 if (video && video.srcObject) {
@@ -5412,20 +5313,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+});
 
     createFloatingMascot(); // Adicionamos aqui a criação do mascote flutuante
     addTimeMachineButton(); // Adiciona o botão do Time Machine
-
-document.querySelectorAll('.category-btn').forEach(button => {
-    button.addEventListener('click', () => {
-        if (button.textContent.trim() === 'Emotion Reader') {
-            const modal = document.getElementById('emotionReaderModal');
-            modal.style.display = 'block';
-            initEmotionReader();
-            return;
-        }
-     });
-});
 
     // Evento para o ícone do carrinho
     const cartIcon = document.querySelector('.cart-icon');
