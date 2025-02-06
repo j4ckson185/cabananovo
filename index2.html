@@ -4092,50 +4092,59 @@ function showCartModal() {
     modal.style.display = 'block';
 }
 
-function updateCartTotal() {
-    const subtotal = cart.reduce((total, item) => total + item.price, 0);
-    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+function updateCartTotal(subtotal = null) {
+    const modal = document.getElementById('cartModal');
+    if (!modal) return;
     
-    // Usa a flag global para determinar se tem frete grátis
-    const total = orderHasFreeShipping ? 
-        (subtotal - discount) : 
-        (subtotal - discount + 3.00);
-
-    // Atualiza valores no modal do carrinho
-    const modalContent = document.querySelector('#cartModal .modal-content');
-    if (modalContent) {
-        // Atualiza subtotal
-        modalContent.querySelector('.subtotal span').textContent = subtotal.toFixed(2);
-        
-        // Atualiza desconto se houver
-        const discountDiv = modalContent.querySelector('.discount');
-        if (discount > 0) {
-            discountDiv.style.display = 'block';
-            discountDiv.querySelector('span').textContent = discount.toFixed(2);
+    // Calcula o subtotal se não for informado
+    if (subtotal === null) {
+        subtotal = cart.reduce((total, item) => total + item.price, 0);
+    }
+    
+    // Calcula o desconto do cupom, se houver
+    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    const deliveryFee = 3.00;
+    
+    // Determina se o frete grátis está ativo (usando a variável global ou o localStorage)
+    const freeShippingActive = (isFreeShipping === true) || (localStorage.getItem('isFreeShipping') === 'true');
+    
+    // Calcula o total: se frete grátis, não soma a taxa; caso contrário, soma a taxa
+    let total = freeShippingActive ? (subtotal - discount) : (subtotal - discount + deliveryFee);
+    
+    // Atualiza o valor do Subtotal
+    const subtotalEl = modal.querySelector('.subtotal span');
+    if (subtotalEl) {
+        subtotalEl.textContent = subtotal.toFixed(2);
+    }
+    
+    // Atualiza a exibição da taxa ou do desconto no frete
+    const feeEl = modal.querySelector('.delivery-fee');
+    if (feeEl) {
+        if (freeShippingActive) {
+            feeEl.innerHTML = `<i class="fas fa-motorcycle"></i> Desconto no Frete: -R$ ${deliveryFee.toFixed(2)}`;
         } else {
-            discountDiv.style.display = 'none';
+            feeEl.innerHTML = `<i class="fas fa-motorcycle"></i> Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}`;
         }
-        
-        // Atualiza taxa de entrega visual
-        const deliveryFeeDiv = modalContent.querySelector('.delivery-fee');
-        if (deliveryFeeDiv) {
-            if (orderHasFreeShipping) {
-                deliveryFeeDiv.innerHTML = `
-                    <i class="fas fa-motorcycle"></i> 
-                    Taxa de Entrega: <span style="color: var(--accent);">GRÁTIS</span>
-                `;
-            } else {
-                deliveryFeeDiv.innerHTML = `
-                    <i class="fas fa-motorcycle"></i> 
-                    Taxa de Entrega: R$ 3,00
-                `;
-            }
+    }
+    
+    // Atualiza a exibição do desconto (caso exista cupom)
+    const discountEl = modal.querySelector('.discount');
+    if (discountEl) {
+        if (discount > 0) {
+            discountEl.style.display = 'block';
+            discountEl.querySelector('span').textContent = discount.toFixed(2);
+        } else {
+            discountEl.style.display = 'none';
         }
-        
-        // Atualiza total
-        modalContent.querySelector('.total span').textContent = total.toFixed(2);
+    }
+    
+    // Atualiza o Total
+    const totalEl = modal.querySelector('.total span');
+    if (totalEl) {
+        totalEl.textContent = total.toFixed(2);
     }
 }
+
 
 function removeFromCart(index) {
     cart.splice(index, 1);
@@ -4301,27 +4310,25 @@ function updateCartCount() {
     cartCount.style.display = cart.length ? 'flex' : 'none';
 }
 
-function formatOrderForWhatsApp() {
+function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     try {
         const paymentMethodMap = {
-            'money': 'Dinheiro',
-            'card': 'Cartão',
-            'pix': 'PIX',
-            'online': 'PIX'
+            money: 'Dinheiro',
+            card: 'Cartão',
+            pix: 'PIX',
+            online: 'PIX'
         };
 
-        // Verificar se o carrinho existe e tem itens
         if (!cart || cart.length === 0) {
             throw new Error('Carrinho vazio');
         }
 
-        let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
+        // Inicia a mensagem
+        let message = '*🛍️ Novo Pedido - Cabana Açaí*\n\n';
 
-        // Informações do cliente - Leitura direta do formulário
+        // Obtém os dados do formulário
         const form = document.getElementById('createOrderForm');
-        if (!form) {
-            throw new Error('Formulário não encontrado');
-        }
+        if (!form) throw new Error('Formulário não encontrado');
 
         const customerName = form.querySelector('#customerName')?.value || 'Não informado';
         const customerPhone = form.querySelector('#customerPhone')?.value || 'Não informado';
@@ -4332,77 +4339,51 @@ function formatOrderForWhatsApp() {
         const zipCode = form.querySelector('#zipCode')?.value || 'Não informado';
         const paymentMethod = form.querySelector('input[name="paymentMethod"]:checked')?.value || 'money';
 
-        // Dados do cliente
+        // Monta as informações do cliente e endereço
         message += `*Cliente:* ${customerName}\n`;
         message += `*WhatsApp:* ${customerPhone}\n\n`;
-
-        // Endereço
         message += `*📍 Endereço de Entrega:*\n`;
         message += `${street}, ${streetNumber}\n`;
-        if (complement) {
-            message += `Complemento: ${complement}\n`;
-        }
+        if (complement) message += `Complemento: ${complement}\n`;
         message += `Bairro: ${neighborhood}\n`;
         message += `CEP: ${zipCode}\n\n`;
 
-        // Itens do pedido
+        // Itens do pedido (obtidos de um textarea, por exemplo)
         message += `*🍨 Itens do Pedido:*\n`;
-        cart.forEach((item, index) => {
-            message += `${index + 1}. ${item.name}\n`;
-            if (item.selectedToppings?.length > 0) {
-                message += `   Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
-            }
-            if (item.selectedExtras?.length > 0) {
-                message += `   Extras: ${item.selectedExtras.join(', ')}\n`;
-            }
-            if (item.description) {
-                message += `   ${item.description}\n`;
-            }
-            message += `   Valor: R$ ${item.price.toFixed(2)}\n\n`;
-        });
+        const orderDetails = document.getElementById('orderDetails').value;
+        message += `${orderDetails}\n`;
 
-        // Pegar o total atual do carrinho
-        const cartTotalElement = document.querySelector('#cartModal .total span');
-        const currentTotal = cartTotalElement ? parseFloat(cartTotalElement.textContent) : 0;
-
-        // Cálculos
+        // Cálculos: subtotal e desconto (caso haja cupom)
         const subtotal = cart.reduce((total, item) => total + item.price, 0);
         const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-        
-        // Resumo financeiro
+        const deliveryFee = 3.00;
+
+        // Determina se o frete está grátis; verifica a variável global e também o localStorage
+        const freeShippingActive = (isFreeShipping === true) || (localStorage.getItem('isFreeShipping') === 'true');
+
+        // Calcula o total: se frete grátis, não soma a taxa
+        const total = freeShippingActive ? (subtotal - discount) : (subtotal - discount + deliveryFee);
+
+        // Monta o resumo financeiro
         message += `*💰 Resumo do Pedido:*\n`;
         message += `Subtotal: R$ ${subtotal.toFixed(2)}\n`;
-        if (discount > 0) {
-            message += `Desconto: -R$ ${discount.toFixed(2)}\n`;
+        if (freeShippingActive) {
+            // Em vez de exibir taxa de entrega, informa o desconto aplicado
+            message += `Desconto no Frete: -R$ ${deliveryFee.toFixed(2)}\n`;
+        } else {
+            message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
+        }
+        message += `*Total:* R$ ${total.toFixed(2)}\n\n`;
+
+        // Adiciona a forma de pagamento (e troco, se for dinheiro)
+        message += `*💳 Forma de Pagamento:* ${paymentMethodMap[deliveryInfo.payment]}\n`;
+        if (deliveryInfo.payment === 'money' && deliveryInfo.change) {
+            message += `Troco para: R$ ${deliveryInfo.change}\n`;
         }
 
-        // Usa a flag para determinar se tem frete grátis
-        const total = orderHasFreeShipping ? 
-            (subtotal - discount) : 
-            (subtotal - discount + 3.00);
-
-        message += orderHasFreeShipping ? 
-            `Taxa de Entrega: GRÁTIS\n` : 
-            `Taxa de Entrega: R$ 3,00\n`;
-
-        message += `*Total: R$ ${total.toFixed(2)}*\n\n`;
-
-        // Pagamento
-        message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod]}\n`;
-
-        // Troco
-        if (paymentMethod === 'money') {
-            const changeAmount = document.getElementById('changeAmount')?.value;
-            if (changeAmount) {
-                message += `Troco para: R$ ${changeAmount}\n`;
-            }
-        }
-
-        // Observações
-        const notes = document.getElementById('notes')?.value;
-        if (notes?.trim()) {
-            message += `\n*📝 Observações:* ${notes.trim()}\n`;
-        }
+        // Observações (se houver)
+        const notes = document.getElementById('notes').value;
+        if (notes) message += `*Observações:* ${notes}\n`;
 
         return message;
     } catch (error) {
@@ -4410,6 +4391,7 @@ function formatOrderForWhatsApp() {
         return 'Erro ao formatar pedido. Por favor, tente novamente.';
     }
 }
+
     
 function setupPaymentEvents() {
     const moneyRadio = document.getElementById('paymentMoney');
