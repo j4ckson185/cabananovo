@@ -4337,8 +4337,8 @@ function formatOrderForWhatsApp() {
         // Cálculos
         const subtotal = cart.reduce((total, item) => total + item.price, 0);
         const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-        const deliveryFee = 3.00;
-        const total = subtotal - discount + deliveryFee;
+        const hasFreeShipping = localStorage.getItem('isFreeShipping') === 'true';
+        const total = hasFreeShipping ? subtotal - discount : subtotal - discount + 3.00;
 
         // Resumo financeiro
         message += `*💰 Resumo do Pedido:*\n`;
@@ -4347,14 +4347,12 @@ function formatOrderForWhatsApp() {
             message += `Desconto: -R$ ${discount.toFixed(2)}\n`;
         }
 
-        // Usa a variável global para verificar se o frete é grátis
-        if (isFreeShipping) {
+        if (hasFreeShipping) {
             message += `Taxa de Entrega: GRÁTIS\n`;
-            message += `*Total: R$ ${(subtotal - discount).toFixed(2)}*\n\n`;
         } else {
-            message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
-            message += `*Total: R$ ${(subtotal - discount + deliveryFee).toFixed(2)}*\n\n`;
+            message += `Taxa de Entrega: R$ 3,00\n`;
         }
+        message += `*Total: R$ ${total.toFixed(2)}*\n\n`;
 
         // Pagamento
         message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod]}\n`;
@@ -5885,7 +5883,9 @@ async function handleFile(file) {
 
 // Aplicar frete grátis
 function applyFreeShipping() {
-    isFreeShipping = true; // Define frete como grátis
+    isFreeShipping = true;
+    localStorage.setItem('isFreeShipping', 'true'); // Salva o estado
+    
     const deliveryFee = document.querySelector('.delivery-fee');
     if (deliveryFee) {
         deliveryFee.innerHTML = `
@@ -5894,27 +5894,25 @@ function applyFreeShipping() {
         `;
     }
 
-    // Atualizar total do carrinho
     const subtotal = cart.reduce((total, item) => total + item.price, 0);
     const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-    // Não adiciona mais a taxa de entrega (3.00)
-    const total = subtotal - discount;
+    const total = subtotal - discount; // Não adiciona deliveryFee
 
-    // Atualizar valores no modal do carrinho
     const modalContent = document.querySelector('#cartModal .modal-content');
     if (modalContent) {
         modalContent.querySelector('.subtotal span').textContent = subtotal.toFixed(2);
-        
-        const discountDiv = modalContent.querySelector('.discount');
         if (discount > 0) {
-            discountDiv.style.display = 'block';
-            discountDiv.querySelector('span').textContent = discount.toFixed(2);
-        } else {
-            discountDiv.style.display = 'none';
+            modalContent.querySelector('.discount').style.display = 'block';
+            modalContent.querySelector('.discount span').textContent = discount.toFixed(2);
         }
-        
         modalContent.querySelector('.total span').textContent = total.toFixed(2);
     }
+}
+
+    // Adicionar uma função para limpar o estado do frete grátis após finalizar o pedido
+function clearOrderState() {
+    localStorage.removeItem('isFreeShipping');
+    isFreeShipping = false;
 }
     
 </script>
