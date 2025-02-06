@@ -5634,16 +5634,22 @@ function generateSharingImage(canvas) {
 }
 
 function getCartProductImages() {
-    // Pega as imagens dos produtos no carrinho
     const cartItems = document.querySelectorAll('.cart-item');
     const productImages = [];
     
     cartItems.forEach((item, index) => {
-        const imgElement = item.querySelector('img');
-        if (imgElement && imgElement.src) {
+        // Procura a imagem do produto no modal do carrinho
+        const itemDetails = item.querySelector('.cart-item-details');
+        const titleElement = itemDetails.querySelector('.cart-item-title');
+        
+        // Pega a URL da imagem do produto a partir do objeto cart global
+        if (cart[index] && cart[index].imageUrl) {
             productImages.push({
-                src: imgElement.src,
-                type: `product${index}`
+                src: cart[index].imageUrl || '/api/placeholder/300/200',
+                type: `product${index}`,
+                title: titleElement ? titleElement.textContent : '',
+                toppings: cart[index].selectedToppings || [],
+                extras: cart[index].selectedExtras || []
             });
         }
     });
@@ -5673,16 +5679,19 @@ function drawCompleteImage(ctx, canvas, images) {
     ctx.font = '60px Montserrat';
     ctx.fillText('@acainatalzn', canvas.width / 2, logoSize + 250);
 
+    // Texto "Meu Pedido"
+    ctx.font = 'bold 50px Montserrat';
+    ctx.fillText('Meu Pedido Especial:', canvas.width / 2, logoSize + 350);
+
     // Desenhar produtos
     let yPosition = logoSize + 400;
     const productSize = 200;
-    const cartItems = Array.from(document.querySelectorAll('.cart-item'));
-    
-    cartItems.forEach((item, index) => {
-        const productImage = images[`product${index}`];
-        if (productImage) {
+
+    // Itera sobre os itens do carrinho global
+    cart.forEach((item, index) => {
+        if (images[`product${index}`]) {
             // Desenhar imagem do produto
-            ctx.drawImage(productImage,
+            ctx.drawImage(images[`product${index}`],
                 (canvas.width - productSize) / 2,
                 yPosition,
                 productSize,
@@ -5690,28 +5699,29 @@ function drawCompleteImage(ctx, canvas, images) {
             );
             
             // Nome do produto
-            const title = item.querySelector('.cart-item-title').textContent;
             yPosition += productSize + 40;
             ctx.font = 'bold 40px Montserrat';
-            ctx.fillText(title, canvas.width / 2, yPosition);
+            ctx.fillText(item.name, canvas.width / 2, yPosition);
             
             // Acompanhamentos
-            const toppings = item.querySelector('.cart-item-toppings')?.textContent;
-            if (toppings) {
+            if (item.selectedToppings && item.selectedToppings.length > 0) {
                 yPosition += 50;
                 ctx.font = '30px Montserrat';
-                ctx.fillText(toppings, canvas.width / 2, yPosition);
+                ctx.fillText('Acompanhamentos: ' + item.selectedToppings.join(', '), 
+                    canvas.width / 2, yPosition);
+            }
+
+            // Extras
+            if (item.selectedExtras && item.selectedExtras.length > 0) {
+                yPosition += 50;
+                ctx.font = '30px Montserrat';
+                ctx.fillText('Extras: ' + item.selectedExtras.join(', '), 
+                    canvas.width / 2, yPosition);
             }
             
             yPosition += 80; // Espaço para próximo produto
         }
     });
-
-    // Habilitar o botão de download
-    const downloadBtn = document.querySelector('.download-button');
-    if (downloadBtn) {
-        downloadBtn.onclick = () => downloadCanvas(canvas);
-    }
 }
     function getCartDetails() {
     const items = [];
