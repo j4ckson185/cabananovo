@@ -4096,7 +4096,7 @@ function updateCartTotal(subtotal = null) {
     const modal = document.getElementById('cartModal');
     if (!modal) return;
     
-    // Calcula o subtotal se não for informado
+    // Calcula o subtotal se não for passado
     if (subtotal === null) {
         subtotal = cart.reduce((total, item) => total + item.price, 0);
     }
@@ -4105,29 +4105,38 @@ function updateCartTotal(subtotal = null) {
     const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
     const deliveryFee = 3.00;
     
-    // Determina se o frete grátis está ativo (usando a variável global ou o localStorage)
+    // Verifica se o frete grátis está ativo.
+    // Atenção: certifique-se que, por padrão, isFreeShipping seja false
     const freeShippingActive = (isFreeShipping === true) || (localStorage.getItem('isFreeShipping') === 'true');
     
-    // Calcula o total: se frete grátis, não soma a taxa; caso contrário, soma a taxa
-    let total = freeShippingActive ? (subtotal - discount) : (subtotal - discount + deliveryFee);
+    // Calcula o total conforme o status do frete
+    const total = freeShippingActive ? (subtotal - discount) : (subtotal - discount + deliveryFee);
     
-    // Atualiza o valor do Subtotal
+    // Atualiza o elemento do Subtotal
     const subtotalEl = modal.querySelector('.subtotal span');
     if (subtotalEl) {
         subtotalEl.textContent = subtotal.toFixed(2);
     }
     
-    // Atualiza a exibição da taxa ou do desconto no frete
+    // Atualiza a área da taxa de entrega / desconto no frete
     const feeEl = modal.querySelector('.delivery-fee');
     if (feeEl) {
         if (freeShippingActive) {
             feeEl.innerHTML = `<i class="fas fa-motorcycle"></i> Desconto no Frete: -R$ ${deliveryFee.toFixed(2)}`;
         } else {
             feeEl.innerHTML = `<i class="fas fa-motorcycle"></i> Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}`;
+            // Se ainda não existir o botão para frete grátis, adiciona-o
+            if (!feeEl.querySelector('.free-shipping-button')) {
+                const button = document.createElement('button');
+                button.className = 'free-shipping-button';
+                button.innerHTML = '🎁 Ganhe Frete Grátis';
+                button.onclick = showFreeShippingModal;
+                feeEl.appendChild(button);
+            }
         }
     }
     
-    // Atualiza a exibição do desconto (caso exista cupom)
+    // Atualiza o elemento de desconto (caso exista e haja cupom)
     const discountEl = modal.querySelector('.discount');
     if (discountEl) {
         if (discount > 0) {
@@ -4138,7 +4147,7 @@ function updateCartTotal(subtotal = null) {
         }
     }
     
-    // Atualiza o Total
+    // Atualiza o elemento do Total
     const totalEl = modal.querySelector('.total span');
     if (totalEl) {
         totalEl.textContent = total.toFixed(2);
