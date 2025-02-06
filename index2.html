@@ -2013,6 +2013,9 @@ header {
     max-width: 500px;
     width: 90%;
     position: relative;
+    max-height: 90vh;  /* Nova propriedade */
+    overflow-y: auto;  /* Nova propriedade */
+    margin: 2rem;      /* Nova propriedade */
 }
 
 .close-shipping-modal {
@@ -5587,7 +5590,6 @@ function showFreeShippingModal() {
 function generateSharingImage(canvas) {
     const ctx = canvas.getContext('2d');
     
-    // Definir tamanho do canvas (proporção do Instagram Story)
     canvas.width = 1080;
     canvas.height = 1920;
     
@@ -5599,45 +5601,117 @@ function generateSharingImage(canvas) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Carregar e desenhar logo
-    const logo = new Image();
-    logo.onload = () => {
-        // Desenhar logo
-        const logoSize = 300;
-        ctx.drawImage(logo, 
-            (canvas.width - logoSize) / 2, 
-            100, 
-            logoSize, 
-            logoSize
-        );
+    // Carregar todas as imagens necessárias primeiro
+    const imagesToLoad = [
+        { src: 'https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg', type: 'logo' },
+        ...getCartProductImages() // Pega imagens dos produtos do carrinho
+    ];
 
-        // Adicionar textos
-        ctx.textAlign = 'center';
-        
-        // Nome da loja
-        ctx.font = 'bold 80px Montserrat';
-        ctx.fillStyle = 'white';
-        ctx.fillText('Cabana Açaí', canvas.width / 2, logoSize + 160);
-        
-        // Instagram
-        ctx.font = '60px Montserrat';
-        ctx.fillText('@acainatalzn', canvas.width / 2, logoSize + 250);
+    let loadedImages = 0;
+    const images = {};
 
-        // Detalhes do pedido
-        ctx.font = 'bold 50px Montserrat';
-        ctx.fillText('Meu Pedido Especial:', canvas.width / 2, canvas.height - 400);
+    imagesToLoad.forEach(img => {
+        const image = new Image();
+        image.crossOrigin = "Anonymous"; // Importante para poder baixar a imagem depois
         
-        // Pegar detalhes do carrinho atual
-        const cartItems = getCartDetails();
-        let yPosition = canvas.height - 300;
-        
-        cartItems.forEach(item => {
-            ctx.font = '40px Montserrat';
-            ctx.fillText(item, canvas.width / 2, yPosition);
-            yPosition += 60;
-        });
-    };
-    logo.src = 'https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg';
+        image.onload = () => {
+            images[img.type] = image;
+            loadedImages++;
+
+            if (loadedImages === imagesToLoad.length) {
+                // Todas as imagens carregadas, agora podemos desenhar
+                drawCompleteImage(ctx, canvas, images);
+            }
+        };
+
+        image.onerror = (err) => {
+            console.error('Erro ao carregar imagem:', err);
+            loadedImages++;
+        };
+
+        image.src = img.src;
+    });
+}
+
+function getCartProductImages() {
+    // Pega as imagens dos produtos no carrinho
+    const cartItems = document.querySelectorAll('.cart-item');
+    const productImages = [];
+    
+    cartItems.forEach((item, index) => {
+        const imgElement = item.querySelector('img');
+        if (imgElement && imgElement.src) {
+            productImages.push({
+                src: imgElement.src,
+                type: `product${index}`
+            });
+        }
+    });
+
+    return productImages;
+}
+
+function drawCompleteImage(ctx, canvas, images) {
+    // Desenhar logo
+    const logoSize = 300;
+    ctx.drawImage(images.logo, 
+        (canvas.width - logoSize) / 2, 
+        100, 
+        logoSize, 
+        logoSize
+    );
+
+    // Textos do topo
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'white';
+    
+    // Nome da loja
+    ctx.font = 'bold 80px Montserrat';
+    ctx.fillText('Cabana Açaí', canvas.width / 2, logoSize + 160);
+    
+    // Instagram
+    ctx.font = '60px Montserrat';
+    ctx.fillText('@acainatalzn', canvas.width / 2, logoSize + 250);
+
+    // Desenhar produtos
+    let yPosition = logoSize + 400;
+    const productSize = 200;
+    const cartItems = Array.from(document.querySelectorAll('.cart-item'));
+    
+    cartItems.forEach((item, index) => {
+        const productImage = images[`product${index}`];
+        if (productImage) {
+            // Desenhar imagem do produto
+            ctx.drawImage(productImage,
+                (canvas.width - productSize) / 2,
+                yPosition,
+                productSize,
+                productSize
+            );
+            
+            // Nome do produto
+            const title = item.querySelector('.cart-item-title').textContent;
+            yPosition += productSize + 40;
+            ctx.font = 'bold 40px Montserrat';
+            ctx.fillText(title, canvas.width / 2, yPosition);
+            
+            // Acompanhamentos
+            const toppings = item.querySelector('.cart-item-toppings')?.textContent;
+            if (toppings) {
+                yPosition += 50;
+                ctx.font = '30px Montserrat';
+                ctx.fillText(toppings, canvas.width / 2, yPosition);
+            }
+            
+            yPosition += 80; // Espaço para próximo produto
+        }
+    });
+
+    // Habilitar o botão de download
+    const downloadBtn = document.querySelector('.download-button');
+    if (downloadBtn) {
+        downloadBtn.onclick = () => downloadCanvas(canvas);
+    }
 }
     function getCartDetails() {
     const items = [];
@@ -5651,10 +5725,27 @@ function generateSharingImage(canvas) {
 
 // Download da imagem
 function downloadCanvas(canvas) {
-    const link = document.createElement('a');
-    link.download = 'cabana-acai-pedido.png';
-    link.href = canvas.toDataURL();
-    link.click();
+    try {
+        // Converter o canvas para blob
+        canvas.toBlob((blob) => {
+            // Criar URL temporária
+            const url = URL.createObjectURL(blob);
+            
+            // Criar link de download
+            const link = document.createElement('a');
+            link.download = 'cabana-acai-pedido.png';
+            link.href = url;
+            
+            // Simular clique e limpar URL
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }, 'image/png');
+    } catch (error) {
+        console.error('Erro ao fazer download:', error);
+        alert('Erro ao fazer download da imagem. Por favor, tente novamente.');
+    }
 }
 
 // Configurar upload de arquivo
