@@ -4289,11 +4289,11 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
 
         let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
 
+        // Obter dados do cliente a partir do formulário
         const form = document.getElementById('createOrderForm');
         if (!form) {
             throw new Error('Formulário não encontrado');
         }
-
         const customerName = form.querySelector('#customerName')?.value || 'Não informado';
         const customerPhone = form.querySelector('#customerPhone')?.value || 'Não informado';
         const street = form.querySelector('#street')?.value || 'Não informado';
@@ -4316,30 +4316,38 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
         message += `Bairro: ${neighborhood}\n`;
         message += `CEP: ${zipCode}\n\n`;
 
-        // Itens do pedido
+        // Itens do pedido (usando o conteúdo do textarea)
         message += `*🍨 Itens do Pedido:*\n`;
         const orderDetails = document.getElementById('orderDetails').value;
         message += `${orderDetails}\n`;
 
-        // Resumo do pedido (incluindo taxa de entrega conforme frete grátis)
-        const orderTotalElement = document.getElementById('orderTotal');
-        const orderTotal = parseFloat(orderTotalElement.value);
-
-        message += `*💰 Resumo do Pedido:*\n`;
+        // Cálculos financeiros
+        const subtotal = cart.reduce((total, item) => total + item.price, 0);
+        const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+        const deliveryFee = 3.00;
+        let total;
         if (isFreeShipping) {
-            message += `Taxa de Entrega: GRÁTIS\n`;
+            total = subtotal - discount; // frete grátis: não soma o valor de 3 reais
         } else {
-            message += `Taxa de Entrega: R$ 3,00\n`;
+            total = subtotal - discount + deliveryFee;
         }
-        message += `*Total:* R$ ${orderTotal.toFixed(2)}\n\n`;
 
-        // Forma de pagamento e, se for dinheiro, o troco (se informado)
+        // Resumo do pedido
+        message += `*💰 Resumo do Pedido:*\n`;
+        message += `Subtotal: R$ ${subtotal.toFixed(2)}\n`;
+        message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
+        if (isFreeShipping) {
+            message += `Desconto no Frete: -R$ ${deliveryFee.toFixed(2)}\n`;
+        }
+        message += `*Total:* R$ ${total.toFixed(2)}\n\n`;
+
+        // Forma de pagamento e troco (se aplicável)
         message += `*💳 Forma de Pagamento:* ${paymentMethodMap[deliveryInfo.payment]}\n`;
         if (deliveryInfo.payment === 'money' && deliveryInfo.change) {
             message += `Troco para: R$ ${deliveryInfo.change}\n`;
         }
 
-        // Observações (se houver)
+        // Observações, se houver
         const notes = document.getElementById('notes').value;
         if (notes) {
             message += `*Observações:* ${notes}\n`;
@@ -4351,6 +4359,7 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
         return 'Erro ao formatar pedido. Por favor, tente novamente.';
     }
 }
+
 
     
 function setupPaymentEvents() {
