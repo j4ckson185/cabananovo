@@ -4289,7 +4289,7 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
 
         let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
 
-        // Obter dados do cliente a partir do formulário
+        // Obter dados do formulário
         const form = document.getElementById('createOrderForm');
         if (!form) {
             throw new Error('Formulário não encontrado');
@@ -4303,11 +4303,9 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
         const zipCode = form.querySelector('#zipCode')?.value || 'Não informado';
         const paymentMethod = form.querySelector('input[name="paymentMethod"]:checked')?.value || 'money';
 
-        // Dados do cliente
+        // Dados do cliente e endereço
         message += `*Cliente:* ${customerName}\n`;
         message += `*WhatsApp:* ${customerPhone}\n\n`;
-
-        // Endereço de entrega
         message += `*📍 Endereço de Entrega:*\n`;
         message += `${street}, ${streetNumber}\n`;
         if (complement) {
@@ -4316,7 +4314,7 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
         message += `Bairro: ${neighborhood}\n`;
         message += `CEP: ${zipCode}\n\n`;
 
-        // Itens do pedido (usando o conteúdo do textarea)
+        // Itens do pedido
         message += `*🍨 Itens do Pedido:*\n`;
         const orderDetails = document.getElementById('orderDetails').value;
         message += `${orderDetails}\n`;
@@ -4327,27 +4325,27 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
         const deliveryFee = 3.00;
         let total;
         if (isFreeShipping) {
-            total = subtotal - discount; // frete grátis: não soma o valor de 3 reais
+            total = subtotal - discount; // Não soma a taxa de entrega
         } else {
             total = subtotal - discount + deliveryFee;
         }
 
-        // Resumo do pedido
         message += `*💰 Resumo do Pedido:*\n`;
         message += `Subtotal: R$ ${subtotal.toFixed(2)}\n`;
-        message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
         if (isFreeShipping) {
             message += `Desconto no Frete: -R$ ${deliveryFee.toFixed(2)}\n`;
+        } else {
+            message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
         }
         message += `*Total:* R$ ${total.toFixed(2)}\n\n`;
 
-        // Forma de pagamento e troco (se aplicável)
+        // Forma de pagamento e troco, se for o caso
         message += `*💳 Forma de Pagamento:* ${paymentMethodMap[deliveryInfo.payment]}\n`;
         if (deliveryInfo.payment === 'money' && deliveryInfo.change) {
             message += `Troco para: R$ ${deliveryInfo.change}\n`;
         }
 
-        // Observações, se houver
+        // Observações
         const notes = document.getElementById('notes').value;
         if (notes) {
             message += `*Observações:* ${notes}\n`;
@@ -4359,8 +4357,6 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
         return 'Erro ao formatar pedido. Por favor, tente novamente.';
     }
 }
-
-
     
 function setupPaymentEvents() {
     const moneyRadio = document.getElementById('paymentMoney');
