@@ -2667,6 +2667,7 @@ let appliedCoupon = null;
 let customerInfo = {};
 let deliveryInfo = {};
 let acaiDoDiaQuantityInCart = 0;
+let isFreeShipping = false;
 
 async function searchOrderHistory() {
     const phoneInput = document.getElementById('historyPhoneInput');
@@ -4339,28 +4340,21 @@ function formatOrderForWhatsApp() {
         const deliveryFee = 3.00;
         const total = subtotal - discount + deliveryFee;
 
-// Resumo financeiro
-message += `*💰 Resumo do Pedido:*\n`;
-message += `Subtotal: R$ ${subtotal.toFixed(2)}\n`;
-if (discount > 0) {
-    message += `Desconto: -R$ ${discount.toFixed(2)}\n`;
-}
+        // Resumo financeiro
+        message += `*💰 Resumo do Pedido:*\n`;
+        message += `Subtotal: R$ ${subtotal.toFixed(2)}\n`;
+        if (discount > 0) {
+            message += `Desconto: -R$ ${discount.toFixed(2)}\n`;
+        }
 
-// Verifica se o frete está grátis
-const deliveryFeeElement = document.querySelector('.delivery-fee');
-const deliveryText = deliveryFeeElement ? deliveryFeeElement.textContent.toLowerCase() : '';
-const isDeliveryFree = deliveryText.includes('grátis') || deliveryText.includes('gratis');
-
-if (isDeliveryFree) {
-    message += `Taxa de Entrega: GRÁTIS\n`;
-    // Calcula total sem a taxa de entrega
-    const finalTotal = subtotal - discount;
-    message += `*Total: R$ ${finalTotal.toFixed(2)}*\n\n`;
-} else {
-    const finalTotal = subtotal - discount + deliveryFee;
-    message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
-    message += `*Total: R$ ${finalTotal.toFixed(2)}*\n\n`;
-}
+        // Usa a variável global para verificar se o frete é grátis
+        if (isFreeShipping) {
+            message += `Taxa de Entrega: GRÁTIS\n`;
+            message += `*Total: R$ ${(subtotal - discount).toFixed(2)}*\n\n`;
+        } else {
+            message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
+            message += `*Total: R$ ${(subtotal - discount + deliveryFee).toFixed(2)}*\n\n`;
+        }
 
         // Pagamento
         message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod]}\n`;
@@ -5891,6 +5885,7 @@ async function handleFile(file) {
 
 // Aplicar frete grátis
 function applyFreeShipping() {
+    isFreeShipping = true; // Define frete como grátis
     const deliveryFee = document.querySelector('.delivery-fee');
     if (deliveryFee) {
         deliveryFee.innerHTML = `
