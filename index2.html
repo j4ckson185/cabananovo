@@ -4274,7 +4274,7 @@ function updateCartCount() {
     cartCount.style.display = cart.length ? 'flex' : 'none';
 }
 
-function formatOrderForWhatsApp() {
+function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     try {
         const paymentMethodMap = {
             'money': 'Dinheiro',
@@ -4283,14 +4283,12 @@ function formatOrderForWhatsApp() {
             'online': 'PIX'
         };
 
-        // Verificar se o carrinho existe e tem itens
         if (!cart || cart.length === 0) {
             throw new Error('Carrinho vazio');
         }
 
         let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
 
-        // Informações do cliente - Leitura direta do formulário
         const form = document.getElementById('createOrderForm');
         if (!form) {
             throw new Error('Formulário não encontrado');
@@ -4309,7 +4307,7 @@ function formatOrderForWhatsApp() {
         message += `*Cliente:* ${customerName}\n`;
         message += `*WhatsApp:* ${customerPhone}\n\n`;
 
-        // Endereço
+        // Endereço de entrega
         message += `*📍 Endereço de Entrega:*\n`;
         message += `${street}, ${streetNumber}\n`;
         if (complement) {
@@ -4320,60 +4318,31 @@ function formatOrderForWhatsApp() {
 
         // Itens do pedido
         message += `*🍨 Itens do Pedido:*\n`;
-        cart.forEach((item, index) => {
-            message += `${index + 1}. ${item.name}\n`;
-            if (item.selectedToppings?.length > 0) {
-                message += `   Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
-            }
-            if (item.selectedExtras?.length > 0) {
-                message += `   Extras: ${item.selectedExtras.join(', ')}\n`;
-            }
-            if (item.description) {
-                message += `   ${item.description}\n`;
-            }
-            message += `   Valor: R$ ${item.price.toFixed(2)}\n\n`;
-        });
+        const orderDetails = document.getElementById('orderDetails').value;
+        message += `${orderDetails}\n`;
 
-        // Pegar o total atual do carrinho
-        const currentTotal = parseFloat(document.querySelector('#cartModal .total span').textContent);
-        
-        // Cálculos
-        const subtotal = cart.reduce((total, item) => total + item.price, 0);
-        const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-        
-        // Se o total atual for igual ao subtotal menos desconto, significa que não tem taxa de entrega
-        const isFreeShipping = currentTotal === (subtotal - discount);
+        // Resumo do pedido (incluindo taxa de entrega conforme frete grátis)
+        const orderTotalElement = document.getElementById('orderTotal');
+        const orderTotal = parseFloat(orderTotalElement.value);
 
-        // Resumo financeiro
         message += `*💰 Resumo do Pedido:*\n`;
-        message += `Subtotal: R$ ${subtotal.toFixed(2)}\n`;
-        if (discount > 0) {
-            message += `Desconto: -R$ ${discount.toFixed(2)}\n`;
-        }
-
         if (isFreeShipping) {
             message += `Taxa de Entrega: GRÁTIS\n`;
-            message += `*Total: R$ ${currentTotal.toFixed(2)}*\n\n`;
         } else {
             message += `Taxa de Entrega: R$ 3,00\n`;
-            message += `*Total: R$ ${(currentTotal).toFixed(2)}*\n\n`;
+        }
+        message += `*Total:* R$ ${orderTotal.toFixed(2)}\n\n`;
+
+        // Forma de pagamento e, se for dinheiro, o troco (se informado)
+        message += `*💳 Forma de Pagamento:* ${paymentMethodMap[deliveryInfo.payment]}\n`;
+        if (deliveryInfo.payment === 'money' && deliveryInfo.change) {
+            message += `Troco para: R$ ${deliveryInfo.change}\n`;
         }
 
-        // Pagamento
-        message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod]}\n`;
-
-        // Troco
-        if (paymentMethod === 'money') {
-            const changeAmount = document.getElementById('changeAmount')?.value;
-            if (changeAmount) {
-                message += `Troco para: R$ ${changeAmount}\n`;
-            }
-        }
-
-        // Observações
-        const notes = document.getElementById('notes')?.value;
-        if (notes?.trim()) {
-            message += `\n*📝 Observações:* ${notes.trim()}\n`;
+        // Observações (se houver)
+        const notes = document.getElementById('notes').value;
+        if (notes) {
+            message += `*Observações:* ${notes}\n`;
         }
 
         return message;
@@ -4382,6 +4351,7 @@ function formatOrderForWhatsApp() {
         return 'Erro ao formatar pedido. Por favor, tente novamente.';
     }
 }
+
     
 function setupPaymentEvents() {
     const moneyRadio = document.getElementById('paymentMoney');
