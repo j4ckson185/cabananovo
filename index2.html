@@ -4346,9 +4346,7 @@ function formatOrderForWhatsApp() {
         // Cálculos
         const subtotal = cart.reduce((total, item) => total + item.price, 0);
         const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-        const deliveryFeeElement = document.querySelector('.delivery-fee');
-        const hasDeliveryFee = !deliveryFeeElement.textContent.toLowerCase().includes('grátis');
-
+        
         // Resumo financeiro
         message += `*💰 Resumo do Pedido:*\n`;
         message += `Subtotal: R$ ${subtotal.toFixed(2)}\n`;
@@ -4356,14 +4354,16 @@ function formatOrderForWhatsApp() {
             message += `Desconto: -R$ ${discount.toFixed(2)}\n`;
         }
 
-        // Verifica taxa de entrega e total
-        if (hasDeliveryFee) {
-            message += `Taxa de Entrega: R$ 3,00\n`;
-            message += `*Total: R$ ${(subtotal - discount + 3.00).toFixed(2)}*\n\n`;
-        } else {
-            message += `Taxa de Entrega: GRÁTIS\n`;
-            message += `*Total: R$ ${(subtotal - discount).toFixed(2)}*\n\n`;
-        }
+        // Usa a flag para determinar se tem frete grátis
+        const total = orderHasFreeShipping ? 
+            (subtotal - discount) : 
+            (subtotal - discount + 3.00);
+
+        message += orderHasFreeShipping ? 
+            `Taxa de Entrega: GRÁTIS\n` : 
+            `Taxa de Entrega: R$ 3,00\n`;
+
+        message += `*Total: R$ ${total.toFixed(2)}*\n\n`;
 
         // Pagamento
         message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod]}\n`;
@@ -5916,6 +5916,11 @@ function applyFreeShipping() {
 function clearOrderState() {
     localStorage.removeItem('isFreeShipping');
     isFreeShipping = false;
+}
+
+    function resetOrderState() {
+    orderHasFreeShipping = false;
+    // ... outros resets que você precise fazer
 }
     
 </script>
