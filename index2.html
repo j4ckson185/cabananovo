@@ -5884,8 +5884,30 @@ function applyFreeShipping() {
             Taxa de Entrega: <span style="color: var(--accent);">GRÁTIS</span>
         `;
     }
-    updateCartTotal();
+
+    // Atualizar total do carrinho
+    const subtotal = cart.reduce((total, item) => total + item.price, 0);
+    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    // Não adiciona mais a taxa de entrega (3.00)
+    const total = subtotal - discount;
+
+    // Atualizar valores no modal do carrinho
+    const modalContent = document.querySelector('#cartModal .modal-content');
+    if (modalContent) {
+        modalContent.querySelector('.subtotal span').textContent = subtotal.toFixed(2);
+        
+        const discountDiv = modalContent.querySelector('.discount');
+        if (discount > 0) {
+            discountDiv.style.display = 'block';
+            discountDiv.querySelector('span').textContent = discount.toFixed(2);
+        } else {
+            discountDiv.style.display = 'none';
+        }
+        
+        modalContent.querySelector('.total span').textContent = total.toFixed(2);
+    }
 }
+    
 </script>
 <<!-- Modal para Criar Novo Pedido -->
 <!-- Modal para Criar Novo Pedido -->
