@@ -1969,6 +1969,162 @@ header {
         font-size: 1.6rem;
     }
 }
+
+    .free-shipping-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.free-shipping-button:hover {
+    color: var(--accent);
+    transform: scale(1.05);
+}
+
+.free-shipping-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.free-shipping-modal.active {
+    display: flex;
+}
+
+.free-shipping-content {
+    background: var(--surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+}
+
+.close-shipping-modal {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.close-shipping-modal:hover {
+    color: var(--accent);
+    transform: rotate(90deg);
+}
+
+.sharing-canvas {
+    width: 100%;
+    max-height: 500px;
+    object-fit: contain;
+    margin: 1rem 0;
+    border-radius: 10px;
+}
+
+.download-button {
+    background: var(--gradient);
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 10px;
+    width: 100%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 1rem 0;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.download-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
+}
+
+.instructions {
+    color: var(--text);
+    margin: 1.5rem 0;
+}
+
+.instructions ol {
+    list-style: decimal;
+    padding-left: 1.5rem;
+    margin: 1rem 0;
+}
+
+.instructions li {
+    margin: 0.5rem 0;
+}
+
+.upload-area {
+    border: 2px dashed var(--glass-border);
+    border-radius: 10px;
+    padding: 2rem;
+    text-align: center;
+    margin: 1rem 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+    border-color: var(--accent);
+}
+
+.upload-area.dragging {
+    background: rgba(247, 37, 133, 0.1);
+    border-color: var(--accent);
+}
+
+.preview-image {
+    max-width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: 10px;
+    margin: 1rem 0;
+}
+
+.verification-message {
+    text-align: center;
+    margin: 1rem 0;
+    font-weight: 600;
+}
+
+.verification-message.success {
+    color: #4CAF50;
+}
+
+.verification-message.error {
+    color: var(--error);
+}
+
+.whatsapp-info {
+    font-size: 0.9rem;
+    color: var(--text);
+    text-align: center;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--glass-border);
+}
     
 </style>
 </head>
@@ -4877,6 +5033,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     createFloatingMascot(); // Adicionamos aqui a criação do mascote flutuante
     addTimeMachineButton(); // Adiciona o botão do Time Machine
+    addFreeShippingButton(); // Adiciona botão de frete grátis
 
 
 
@@ -5352,6 +5509,235 @@ function addAcaiDoDiaToCart(product) {
         price: product.price, // Mantém o preço promocional
         isAcaiDoDia: true // Flag para identificar que é o açaí do dia
     });
+}
+
+    // Adicionar botão de frete grátis ao elemento de frete
+function addFreeShippingButton() {
+    const deliveryFee = document.querySelector('.delivery-fee');
+    if (!deliveryFee) return;
+
+    const button = document.createElement('button');
+    button.className = 'free-shipping-button';
+    button.innerHTML = '🎁 Ganhe Frete Grátis';
+    button.onclick = showFreeShippingModal;
+
+    deliveryFee.appendChild(button);
+}
+
+// Criar e mostrar modal
+function showFreeShippingModal() {
+    const modal = document.createElement('div');
+    modal.className = 'free-shipping-modal';
+    modal.innerHTML = `
+        <div class="free-shipping-content">
+            <button class="close-shipping-modal">&times;</button>
+            <h3>Ganhe Frete Grátis!</h3>
+            
+            <canvas id="sharingCanvas" class="sharing-canvas"></canvas>
+            
+            <button class="download-button">
+                <i class="fas fa-download"></i>
+                Salvar Imagem
+            </button>
+
+            <div class="instructions">
+                <p>Como ganhar seu frete grátis:</p>
+                <ol>
+                    <li>Salve a imagem acima</li>
+                    <li>Poste em seu story do Instagram marcando @acainatalzn</li>
+                    <li>Tire um print do story postado</li>
+                    <li>Envie o print aqui para validação</li>
+                </ol>
+            </div>
+
+            <div class="upload-area" id="uploadArea">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Clique ou arraste o print do seu story aqui</p>
+                <input type="file" id="storyUpload" accept="image/*" style="display: none;">
+            </div>
+
+            <p class="whatsapp-info">
+                * Mantenha seu story ativo por 24h e receba um cupom especial! 
+                Enviaremos instruções pelo WhatsApp.
+            </p>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('active'), 10);
+
+    const canvas = document.getElementById('sharingCanvas');
+    generateSharingImage(canvas);
+
+    // Event Listeners
+    modal.querySelector('.close-shipping-modal').onclick = () => {
+        modal.classList.remove('active');
+        setTimeout(() => modal.remove(), 300);
+    };
+
+    modal.querySelector('.download-button').onclick = () => {
+        downloadCanvas(canvas);
+    };
+
+    setupFileUpload();
+}
+
+// Gerar imagem para compartilhamento
+function generateSharingImage(canvas) {
+    const ctx = canvas.getContext('2d');
+    
+    // Definir tamanho do canvas (proporção do Instagram Story)
+    canvas.width = 1080;
+    canvas.height = 1920;
+    
+    // Gradiente de fundo
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, '#F72585');
+    gradient.addColorStop(0.5, '#7209B7');
+    gradient.addColorStop(1, '#3A0CA3');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Carregar e desenhar logo
+    const logo = new Image();
+    logo.onload = () => {
+        // Desenhar logo
+        const logoSize = 300;
+        ctx.drawImage(logo, 
+            (canvas.width - logoSize) / 2, 
+            100, 
+            logoSize, 
+            logoSize
+        );
+
+        // Adicionar textos
+        ctx.textAlign = 'center';
+        
+        // Nome da loja
+        ctx.font = 'bold 80px Montserrat';
+        ctx.fillStyle = 'white';
+        ctx.fillText('Cabana Açaí', canvas.width / 2, logoSize + 160);
+        
+        // Instagram
+        ctx.font = '60px Montserrat';
+        ctx.fillText('@acainatalzn', canvas.width / 2, logoSize + 250);
+
+        // Detalhes do pedido
+        ctx.font = 'bold 50px Montserrat';
+        ctx.fillText('Meu Pedido Especial:', canvas.width / 2, canvas.height - 400);
+        
+        // Pegar detalhes do carrinho atual
+        const cartItems = getCartDetails();
+        let yPosition = canvas.height - 300;
+        
+        cartItems.forEach(item => {
+            ctx.font = '40px Montserrat';
+            ctx.fillText(item, canvas.width / 2, yPosition);
+            yPosition += 60;
+        });
+    };
+    logo.src = 'https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg';
+}
+    function getCartDetails() {
+    const items = [];
+    document.querySelectorAll('.cart-item').forEach(item => {
+        const title = item.querySelector('.cart-item-title').textContent;
+        const toppings = item.querySelector('.cart-item-toppings')?.textContent;
+        items.push(title + (toppings ? ` (${toppings})` : ''));
+    });
+    return items;
+}
+
+// Download da imagem
+function downloadCanvas(canvas) {
+    const link = document.createElement('a');
+    link.download = 'cabana-acai-pedido.png';
+    link.href = canvas.toDataURL();
+    link.click();
+}
+
+// Configurar upload de arquivo
+function setupFileUpload() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('storyUpload');
+
+    uploadArea.onclick = () => fileInput.click();
+
+    // Drag and drop
+    uploadArea.ondragover = (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragging');
+    };
+
+    uploadArea.ondragleave = () => {
+        uploadArea.classList.remove('dragging');
+    };
+
+    uploadArea.ondrop = (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragging');
+        handleFile(e.dataTransfer.files[0]);
+    };
+
+    fileInput.onchange = (e) => {
+        handleFile(e.target.files[0]);
+    };
+}
+
+// Processar arquivo enviado
+async function handleFile(file) {
+    if (!file || !file.type.startsWith('image/')) {
+        alert('Por favor, envie uma imagem válida.');
+        return;
+    }
+
+    const uploadArea = document.getElementById('uploadArea');
+    uploadArea.innerHTML = '<p>Verificando...</p>';
+
+    try {
+        // Carregar Tesseract.js dinamicamente
+        const Tesseract = await import('https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.esm.min.js');
+        
+        // Verificar a imagem
+        const result = await Tesseract.recognize(file, 'eng');
+        const text = result.data.text.toLowerCase();
+
+        if (text.includes('@acainatalzn')) {
+            applyFreeShipping();
+            uploadArea.innerHTML = `
+                <div class="verification-message success">
+                    ✅ Frete grátis aplicado com sucesso!
+                </div>
+            `;
+        } else {
+            uploadArea.innerHTML = `
+                <div class="verification-message error">
+                    ❌ Não encontramos a marcação @acainatalzn. Tente novamente.
+                </div>
+                <p>Clique aqui para enviar outro print</p>
+            `;
+        }
+    } catch (error) {
+        console.error('Erro na verificação:', error);
+        uploadArea.innerHTML = `
+            <div class="verification-message error">
+                Erro na verificação. Por favor, tente novamente.
+            </div>
+            <p>Clique aqui para tentar novamente</p>
+        `;
+    }
+}
+
+// Aplicar frete grátis
+function applyFreeShipping() {
+    const deliveryFee = document.querySelector('.delivery-fee');
+    if (deliveryFee) {
+        deliveryFee.innerHTML = `
+            <i class="fas fa-motorcycle"></i> 
+            Taxa de Entrega: <span style="color: var(--accent);">GRÁTIS</span>
+        `;
+    }
+    updateCartTotal();
 }
 </script>
 <<!-- Modal para Criar Novo Pedido -->
