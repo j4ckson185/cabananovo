@@ -4092,27 +4092,49 @@ function showCartModal() {
     modal.style.display = 'block';
 }
 
-function updateCartTotal(subtotal = null) {
-    const modal = document.getElementById('cartModal');
-    if (subtotal === null) {
-        subtotal = cart.reduce((total, item) => total + item.price, 0);
+function updateCartTotal() {
+    const subtotal = cart.reduce((total, item) => total + item.price, 0);
+    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    
+    // Usa a flag global para determinar se tem frete grátis
+    const total = orderHasFreeShipping ? 
+        (subtotal - discount) : 
+        (subtotal - discount + 3.00);
+
+    // Atualiza valores no modal do carrinho
+    const modalContent = document.querySelector('#cartModal .modal-content');
+    if (modalContent) {
+        // Atualiza subtotal
+        modalContent.querySelector('.subtotal span').textContent = subtotal.toFixed(2);
+        
+        // Atualiza desconto se houver
+        const discountDiv = modalContent.querySelector('.discount');
+        if (discount > 0) {
+            discountDiv.style.display = 'block';
+            discountDiv.querySelector('span').textContent = discount.toFixed(2);
+        } else {
+            discountDiv.style.display = 'none';
+        }
+        
+        // Atualiza taxa de entrega visual
+        const deliveryFeeDiv = modalContent.querySelector('.delivery-fee');
+        if (deliveryFeeDiv) {
+            if (orderHasFreeShipping) {
+                deliveryFeeDiv.innerHTML = `
+                    <i class="fas fa-motorcycle"></i> 
+                    Taxa de Entrega: <span style="color: var(--accent);">GRÁTIS</span>
+                `;
+            } else {
+                deliveryFeeDiv.innerHTML = `
+                    <i class="fas fa-motorcycle"></i> 
+                    Taxa de Entrega: R$ 3,00
+                `;
+            }
+        }
+        
+        // Atualiza total
+        modalContent.querySelector('.total span').textContent = total.toFixed(2);
     }
-    
-    const discount = calculateDiscount(subtotal);
-    const deliveryFee = 3.00;
-    const total = subtotal - discount + deliveryFee;
-    
-    modal.querySelector('.subtotal span').textContent = subtotal.toFixed(2);
-    
-    const discountDiv = modal.querySelector('.discount');
-    if (discount > 0) {
-        discountDiv.style.display = 'block';
-        discountDiv.querySelector('span').textContent = discount.toFixed(2);
-    } else {
-        discountDiv.style.display = 'none';
-    }
-    
-    modal.querySelector('.total span').textContent = total.toFixed(2);
 }
 
 function removeFromCart(index) {
