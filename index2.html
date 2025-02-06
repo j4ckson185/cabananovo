@@ -8,7 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
+<script src="https://unpkg.com/tesseract.js@v4.1.1/dist/tesseract.min.js"></script>
     <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
@@ -5797,12 +5797,27 @@ async function handleFile(file) {
     uploadArea.innerHTML = '<p>Verificando...</p>';
 
     try {
-        // Carregar Tesseract.js dinamicamente
-        const Tesseract = await import('https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.esm.min.js');
+        // Mostrar preview da imagem
+        const previewImg = document.createElement('img');
+        previewImg.className = 'preview-image';
+        previewImg.src = URL.createObjectURL(file);
+        uploadArea.appendChild(previewImg);
+
+        // Inicializar Tesseract
+        const worker = await Tesseract.createWorker('eng');
         
-        // Verificar a imagem
-        const result = await Tesseract.recognize(file, 'eng');
+        uploadArea.innerHTML += '<p>Analisando texto na imagem...</p>';
+
+        // Realizar o reconhecimento
+        const result = await worker.recognize(file);
+        console.log('Texto encontrado:', result.data.text); // Debug
+
         const text = result.data.text.toLowerCase();
+        console.log('Texto em lowercase:', text); // Debug
+        console.log('Inclui @acainatalzn?', text.includes('@acainatalzn')); // Debug
+
+        // Terminar o worker
+        await worker.terminate();
 
         if (text.includes('@acainatalzn')) {
             applyFreeShipping();
@@ -5816,16 +5831,20 @@ async function handleFile(file) {
                 <div class="verification-message error">
                     ❌ Não encontramos a marcação @acainatalzn. Tente novamente.
                 </div>
-                <p>Clique aqui para enviar outro print</p>
+                <p style="margin-top: 1rem; cursor: pointer;" onclick="setupFileUpload()">
+                    Clique aqui para enviar outro print
+                </p>
             `;
         }
     } catch (error) {
-        console.error('Erro na verificação:', error);
+        console.error('Erro detalhado na verificação:', error);
         uploadArea.innerHTML = `
             <div class="verification-message error">
                 Erro na verificação. Por favor, tente novamente.
+                <p style="margin-top: 1rem; cursor: pointer;" onclick="setupFileUpload()">
+                    Clique aqui para tentar novamente
+                </p>
             </div>
-            <p>Clique aqui para tentar novamente</p>
         `;
     }
 }
