@@ -4345,8 +4345,20 @@ function formatOrderForWhatsApp() {
         if (discount > 0) {
             message += `Desconto: -R$ ${discount.toFixed(2)}\n`;
         }
-        message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
-        message += `*Total: R$ ${total.toFixed(2)}*\n\n`;
+        
+        // Verifica se o frete está grátis
+        const deliveryFeeElement = document.querySelector('.delivery-fee');
+        const isDeliveryFree = deliveryFeeElement && 
+                              deliveryFeeElement.textContent.toLowerCase().includes('grátis');
+
+        if (isDeliveryFree) {
+            message += `Taxa de Entrega: GRÁTIS\n`;
+            // Calcula total sem a taxa de entrega
+            message += `*Total: R$ ${(subtotal - discount).toFixed(2)}*\n\n`;
+        } else {
+            message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
+            message += `*Total: R$ ${(subtotal - discount + deliveryFee).toFixed(2)}*\n\n`;
+        }
 
         // Pagamento
         message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod]}\n`;
