@@ -2668,6 +2668,11 @@ let customerInfo = {};
 let deliveryInfo = {};
 let acaiDoDiaQuantityInCart = 0;
 let isFreeShipping = false;
+let orderHasFreeShipping = false;
+
+document.addEventListener('freeShippingApplied', () => {
+    orderHasFreeShipping = true;
+});
 
 async function searchOrderHistory() {
     const phoneInput = document.getElementById('historyPhoneInput');
@@ -5889,30 +5894,22 @@ async function handleFile(file) {
 
 // Aplicar frete grátis
 function applyFreeShipping() {
-    isFreeShipping = true;
-    localStorage.setItem('isFreeShipping', 'true'); // Salva o estado
-    
     const deliveryFee = document.querySelector('.delivery-fee');
     if (deliveryFee) {
         deliveryFee.innerHTML = `
             <i class="fas fa-motorcycle"></i> 
             Taxa de Entrega: <span style="color: var(--accent);">GRÁTIS</span>
         `;
+        
+        // Dispara evento customizado
+        const freeShippingEvent = new CustomEvent('freeShippingApplied', {
+            detail: { timestamp: Date.now() }
+        });
+        document.dispatchEvent(freeShippingEvent);
     }
 
-    const subtotal = cart.reduce((total, item) => total + item.price, 0);
-    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-    const total = subtotal - discount; // Não adiciona deliveryFee
-
-    const modalContent = document.querySelector('#cartModal .modal-content');
-    if (modalContent) {
-        modalContent.querySelector('.subtotal span').textContent = subtotal.toFixed(2);
-        if (discount > 0) {
-            modalContent.querySelector('.discount').style.display = 'block';
-            modalContent.querySelector('.discount span').textContent = discount.toFixed(2);
-        }
-        modalContent.querySelector('.total span').textContent = total.toFixed(2);
-    }
+    // Atualiza total do carrinho
+    updateCartTotal();
 }
 
     // Adicionar uma função para limpar o estado do frete grátis após finalizar o pedido
