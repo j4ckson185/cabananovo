@@ -8,7 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-<script src="https://unpkg.com/tesseract.js@v4.1.1/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
     <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
@@ -5794,7 +5794,7 @@ async function handleFile(file) {
     }
 
     const uploadArea = document.getElementById('uploadArea');
-    uploadArea.innerHTML = '<p>Verificando...</p>';
+    uploadArea.innerHTML = '<p>Iniciando verificação...</p>';
 
     try {
         // Mostrar preview da imagem
@@ -5803,18 +5803,40 @@ async function handleFile(file) {
         previewImg.src = URL.createObjectURL(file);
         uploadArea.appendChild(previewImg);
 
-        // Inicializar Tesseract
-        const worker = await Tesseract.createWorker('eng');
+        // Carregar e inicializar Tesseract
+        uploadArea.innerHTML += '<p>Preparando análise...</p>';
+        
+        // Criar worker com configurações explícitas
+        const worker = await Tesseract.createWorker({
+            logger: m => {
+                console.log(m);
+                if (m.status === 'recognizing text') {
+                    uploadArea.innerHTML = `
+                        <img src="${previewImg.src}" class="preview-image">
+                        <p>Analisando texto: ${Math.round(m.progress * 100)}%</p>
+                    `;
+                }
+            }
+        });
+
+        // Inicializar worker
+        await worker.loadLanguage('eng');
+        await worker.initialize('eng');
         
         uploadArea.innerHTML += '<p>Analisando texto na imagem...</p>';
 
-        // Realizar o reconhecimento
-        const result = await worker.recognize(file);
-        console.log('Texto encontrado:', result.data.text); // Debug
+        // Converter arquivo para URL de dados
+        const reader = new FileReader();
+        const imageData = await new Promise((resolve) => {
+            reader.onload = (e) => resolve(e.target.result);
+            reader.readAsDataURL(file);
+        });
 
+        // Realizar o reconhecimento
+        const result = await worker.recognize(imageData);
         const text = result.data.text.toLowerCase();
-        console.log('Texto em lowercase:', text); // Debug
-        console.log('Inclui @acainatalzn?', text.includes('@acainatalzn')); // Debug
+        
+        console.log('Texto encontrado:', text);
 
         // Terminar o worker
         await worker.terminate();
@@ -5822,12 +5844,14 @@ async function handleFile(file) {
         if (text.includes('@acainatalzn')) {
             applyFreeShipping();
             uploadArea.innerHTML = `
+                <img src="${previewImg.src}" class="preview-image">
                 <div class="verification-message success">
                     ✅ Frete grátis aplicado com sucesso!
                 </div>
             `;
         } else {
             uploadArea.innerHTML = `
+                <img src="${previewImg.src}" class="preview-image">
                 <div class="verification-message error">
                     ❌ Não encontramos a marcação @acainatalzn. Tente novamente.
                 </div>
@@ -5841,6 +5865,8 @@ async function handleFile(file) {
         uploadArea.innerHTML = `
             <div class="verification-message error">
                 Erro na verificação. Por favor, tente novamente.
+                <br>
+                <small>${error.message}</small>
                 <p style="margin-top: 1rem; cursor: pointer;" onclick="setupFileUpload()">
                     Clique aqui para tentar novamente
                 </p>
