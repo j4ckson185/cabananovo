@@ -4334,11 +4334,15 @@ function formatOrderForWhatsApp() {
             message += `   Valor: R$ ${item.price.toFixed(2)}\n\n`;
         });
 
+        // Pegar o total atual do carrinho
+        const currentTotal = parseFloat(document.querySelector('#cartModal .total span').textContent);
+        
         // Cálculos
         const subtotal = cart.reduce((total, item) => total + item.price, 0);
         const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-        const hasFreeShipping = localStorage.getItem('isFreeShipping') === 'true';
-        const total = hasFreeShipping ? subtotal - discount : subtotal - discount + 3.00;
+        
+        // Se o total atual for igual ao subtotal menos desconto, significa que não tem taxa de entrega
+        const isFreeShipping = currentTotal === (subtotal - discount);
 
         // Resumo financeiro
         message += `*💰 Resumo do Pedido:*\n`;
@@ -4347,12 +4351,13 @@ function formatOrderForWhatsApp() {
             message += `Desconto: -R$ ${discount.toFixed(2)}\n`;
         }
 
-        if (hasFreeShipping) {
+        if (isFreeShipping) {
             message += `Taxa de Entrega: GRÁTIS\n`;
+            message += `*Total: R$ ${currentTotal.toFixed(2)}*\n\n`;
         } else {
             message += `Taxa de Entrega: R$ 3,00\n`;
+            message += `*Total: R$ ${(currentTotal).toFixed(2)}*\n\n`;
         }
-        message += `*Total: R$ ${total.toFixed(2)}*\n\n`;
 
         // Pagamento
         message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod]}\n`;
