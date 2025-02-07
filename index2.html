@@ -2095,6 +2095,12 @@ header {
     background: var(--gradient);
     color: white;
 }
+
+    .button-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
     
 </style>
 </head>
@@ -2202,14 +2208,33 @@ header {
                 <div class="product-category">Açaí com Ninho</div>
                 <h3 class="product-title">Açaí com Leite Ninho</h3>
                 <p class="product-description">Açaí cremoso coberto com leite ninho em pó e frutas selecionadas.</p>
-                <div class="product-footer">
-                    <div class="product-price">R$ 18,90</div>
-                    <button class="add-to-cart-btn">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                </div>
-            </div>
+    <div class="product-footer">
+        <div class="product-price">R$ ${product.price.toFixed(2)}</div>
+        <div class="button-group">
+            <button class="add-to-cart-btn">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button class="nutrition-helper">
+                <i class="fas fa-heart"></i> Info
+            </button>
         </div>
+    </div>
+</div>
+`;
+
+    // Adicione aqui o evento de clique para o botão nutricional
+    card.querySelector('.nutrition-helper').addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleChat();
+        document.querySelector('.chat-input').value = `Informação nutricional do ${product.name}`;
+        sendMessage();
+    });
+
+    card.addEventListener('click', () => openProductModal(product));
+    
+    return card;
+}
+            
         <!-- More product cards will be added dynamically -->
     </div>
 
