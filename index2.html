@@ -8,7 +8,6 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
     <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
@@ -1971,163 +1970,110 @@ header {
     }
 }
 
-    .free-shipping-button {
+    .chat-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background: var(--gradient);
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    background: none;
-    border: none;
-    color: var(--text);
+    justify-content: center;
     cursor: pointer;
-    font-size: 0.9rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    z-index: 1000;
     transition: all 0.3s ease;
 }
 
-.free-shipping-button:hover {
-    color: var(--accent);
-    transform: scale(1.05);
+.chat-button i {
+    color: white;
+    font-size: 24px;
 }
 
-.free-shipping-modal {
+.chat-container {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
-}
-
-.free-shipping-modal.active {
-    display: flex;
-}
-
-.free-shipping-content {
+    bottom: 90px;
+    right: 20px;
+    width: 350px;
+    height: 500px;
     background: var(--surface);
     border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    padding: 2rem;
-    max-width: 500px;
-    width: 90%;
-    position: relative;
-    max-height: 90vh;  /* Nova propriedade */
-    overflow-y: auto;  /* Nova propriedade */
-    margin: 2rem;      /* Nova propriedade */
+    border-radius: 15px;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
-.close-shipping-modal {
-    position: absolute;
-    right: 1rem;
-    top: 1rem;
-    background: none;
-    border: none;
-    color: var(--text);
-    font-size: 1.5rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.close-shipping-modal:hover {
-    color: var(--accent);
-    transform: rotate(90deg);
-}
-
-.sharing-canvas {
-    width: 100%;
-    max-height: 500px;
-    object-fit: contain;
-    margin: 1rem 0;
-    border-radius: 10px;
-}
-
-.download-button {
+.chat-header {
+    padding: 15px;
     background: var(--gradient);
     color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chat-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    background: var(--background);
+}
+
+.chat-input-container {
+    padding: 15px;
+    background: var(--surface);
+    border-top: 1px solid var(--glass-border);
+    display: flex;
+    gap: 10px;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    background: var(--glass);
+    color: var(--text);
+}
+
+.send-button {
+    background: var(--gradient);
     border: none;
-    padding: 1rem;
-    border-radius: 10px;
-    width: 100%;
-    cursor: pointer;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    margin: 1rem 0;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.download-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
-}
-
-.instructions {
-    color: var(--text);
-    margin: 1.5rem 0;
-}
-
-.instructions ol {
-    list-style: decimal;
-    padding-left: 1.5rem;
-    margin: 1rem 0;
-}
-
-.instructions li {
-    margin: 0.5rem 0;
-}
-
-.upload-area {
-    border: 2px dashed var(--glass-border);
-    border-radius: 10px;
-    padding: 2rem;
-    text-align: center;
-    margin: 1rem 0;
     cursor: pointer;
-    transition: all 0.3s ease;
+    color: white;
 }
 
-.upload-area:hover {
-    border-color: var(--accent);
+.message {
+    margin-bottom: 10px;
+    max-width: 80%;
+    padding: 10px 15px;
+    border-radius: 15px;
+    word-wrap: break-word;
 }
 
-.upload-area.dragging {
-    background: rgba(247, 37, 133, 0.1);
-    border-color: var(--accent);
+.user-message {
+    background: var(--primary-color);
+    color: white;
+    margin-left: auto;
+    border-radius: 15px 15px 0 15px;
 }
 
-.preview-image {
-    max-width: 100%;
-    max-height: 300px;
-    object-fit: contain;
-    border-radius: 10px;
-    margin: 1rem 0;
-}
-
-.verification-message {
-    text-align: center;
-    margin: 1rem 0;
-    font-weight: 600;
-}
-
-.verification-message.success {
-    color: #4CAF50;
-}
-
-.verification-message.error {
-    color: var(--error);
-}
-
-.whatsapp-info {
-    font-size: 0.9rem;
+.bot-message {
+    background: var(--glass);
     color: var(--text);
-    text-align: center;
-    margin-top: 1.5rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--glass-border);
+    margin-right: auto;
+    border-radius: 15px 15px 15px 0;
 }
     
 </style>
@@ -2662,21 +2608,11 @@ const realtimeDB = firebase.database(); // para funções que usam .ref()
 const db = firebase.firestore(); // para novas funções que integram com o PDV
 
 let cart = [];
-let cartSettings = {
-    shippingFee: 3.00,
-    isFreeShipping: false
-};
 let currentProducts = [];
 let appliedCoupon = null;
 let customerInfo = {};
 let deliveryInfo = {};
 let acaiDoDiaQuantityInCart = 0;
-let isFreeShipping = false;
-let orderHasFreeShipping = false;
-
-document.addEventListener('freeShippingApplied', () => {
-    orderHasFreeShipping = true;
-});
 
 async function searchOrderHistory() {
     const phoneInput = document.getElementById('historyPhoneInput');
@@ -4096,41 +4032,28 @@ function showCartModal() {
     modal.style.display = 'block';
 }
 
-function updateCartTotal() {
-    const subtotal = cart.reduce((total, item) => total + item.price, 0);
-    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-    const total = subtotal - discount + cartSettings.shippingFee;
-
-    const modalContent = document.querySelector('#cartModal .modal-content');
-    if (modalContent) {
-        modalContent.querySelector('.subtotal span').textContent = subtotal.toFixed(2);
-        
-        const discountDiv = modalContent.querySelector('.discount');
-        if (discount > 0) {
-            discountDiv.style.display = 'block';
-            discountDiv.querySelector('span').textContent = discount.toFixed(2);
-        } else {
-            discountDiv.style.display = 'none';
-        }
-        
-        // Atualiza taxa de entrega preservando o botão
-        const deliveryFeeDiv = modalContent.querySelector('.delivery-fee');
-        if (deliveryFeeDiv) {
-            deliveryFeeDiv.innerHTML = `
-                <i class="fas fa-motorcycle"></i> 
-                Taxa de Entrega: ${cartSettings.isFreeShipping ? 
-                    `<span style="color: var(--accent);">GRÁTIS</span>` : 
-                    `R$ ${cartSettings.shippingFee.toFixed(2)}`}
-                <button class="free-shipping-button" onclick="showFreeShippingModal()">
-                    🎁 Ganhe Frete Grátis
-                </button>
-            `;
-        }
-        
-        modalContent.querySelector('.total span').textContent = total.toFixed(2);
+function updateCartTotal(subtotal = null) {
+    const modal = document.getElementById('cartModal');
+    if (subtotal === null) {
+        subtotal = cart.reduce((total, item) => total + item.price, 0);
     }
+    
+    const discount = calculateDiscount(subtotal);
+    const deliveryFee = 3.00;
+    const total = subtotal - discount + deliveryFee;
+    
+    modal.querySelector('.subtotal span').textContent = subtotal.toFixed(2);
+    
+    const discountDiv = modal.querySelector('.discount');
+    if (discount > 0) {
+        discountDiv.style.display = 'block';
+        discountDiv.querySelector('span').textContent = discount.toFixed(2);
+    } else {
+        discountDiv.style.display = 'none';
+    }
+    
+    modal.querySelector('.total span').textContent = total.toFixed(2);
 }
-
 
 function removeFromCart(index) {
     cart.splice(index, 1);
@@ -4359,7 +4282,8 @@ function formatOrderForWhatsApp() {
         // Cálculos
         const subtotal = cart.reduce((total, item) => total + item.price, 0);
         const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-        const total = subtotal - discount + cartSettings.shippingFee;
+        const deliveryFee = 3.00;
+        const total = subtotal - discount + deliveryFee;
 
         // Resumo financeiro
         message += `*💰 Resumo do Pedido:*\n`;
@@ -4367,12 +4291,7 @@ function formatOrderForWhatsApp() {
         if (discount > 0) {
             message += `Desconto: -R$ ${discount.toFixed(2)}\n`;
         }
-
-        // Usa cartSettings para determinar mensagem de frete
-        message += cartSettings.isFreeShipping ? 
-            `Taxa de Entrega: GRÁTIS\n` : 
-            `Taxa de Entrega: R$ ${cartSettings.shippingFee.toFixed(2)}\n`;
-
+        message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
         message += `*Total: R$ ${total.toFixed(2)}*\n\n`;
 
         // Pagamento
@@ -4398,7 +4317,6 @@ function formatOrderForWhatsApp() {
         return 'Erro ao formatar pedido. Por favor, tente novamente.';
     }
 }
-
     
 function setupPaymentEvents() {
     const moneyRadio = document.getElementById('paymentMoney');
@@ -5065,7 +4983,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     createFloatingMascot(); // Adicionamos aqui a criação do mascote flutuante
     addTimeMachineButton(); // Adiciona o botão do Time Machine
-    addFreeShippingButton(); // Adiciona botão de frete grátis
 
 
 
@@ -5542,396 +5459,76 @@ function addAcaiDoDiaToCart(product) {
         isAcaiDoDia: true // Flag para identificar que é o açaí do dia
     });
 }
+    const CHATBASE_CONFIG = {
+    apiKey: '6564b636-1a71-4a0f-9863-7c87e586384a',
+    chatbotId: 'PpgNSIgeYN1FCucFGP4w3'
+};
 
-    // Adicionar botão de frete grátis ao elemento de frete
-function addFreeShippingButton() {
-    const deliveryFee = document.querySelector('.delivery-fee');
-    if (!deliveryFee) return;
+let chatHistory = [];
 
-    const button = document.createElement('button');
-    button.className = 'free-shipping-button';
-    button.innerHTML = '🎁 Ganhe Frete Grátis';
-    button.onclick = showFreeShippingModal;
-
-    deliveryFee.appendChild(button);
+function toggleChat() {
+    const chatContainer = document.querySelector('.chat-container');
+    chatContainer.style.display = chatContainer.style.display === 'none' || !chatContainer.style.display ? 'flex' : 'none';
 }
 
-// Criar e mostrar modal
-function showFreeShippingModal() {
-    const modal = document.createElement('div');
-    modal.className = 'free-shipping-modal';
-    modal.innerHTML = `
-        <div class="free-shipping-content">
-            <button class="close-shipping-modal">&times;</button>
-            <h3>Ganhe Frete Grátis!</h3>
-            
-            <canvas id="sharingCanvas" class="sharing-canvas"></canvas>
-            
-            <button class="download-button">
-                <i class="fas fa-download"></i>
-                Salvar Imagem
-            </button>
-
-            <div class="instructions">
-                <p>Como ganhar seu frete grátis:</p>
-                <ol>
-                    <li>Salve a imagem acima</li>
-                    <li>Poste em seu story do Instagram marcando @acainatalzn</li>
-                    <li>Tire um print do story postado</li>
-                    <li>Envie o print aqui para validação</li>
-                </ol>
-            </div>
-
-            <div class="upload-area" id="uploadArea">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Clique ou arraste o print do seu story aqui</p>
-                <input type="file" id="storyUpload" accept="image/*" style="display: none;">
-            </div>
-
-            <p class="whatsapp-info">
-                * Mantenha seu story ativo por 24h e receba um cupom especial! 
-                Enviaremos instruções pelo WhatsApp.
-            </p>
-        </div>
-    `;
-
-    document.body.appendChild(modal);
-    setTimeout(() => modal.classList.add('active'), 10);
-
-    const canvas = document.getElementById('sharingCanvas');
-    generateSharingImage(canvas);
-
-    // Event Listeners
-    modal.querySelector('.close-shipping-modal').onclick = () => {
-        modal.classList.remove('active');
-        setTimeout(() => modal.remove(), 300);
-    };
-
-    modal.querySelector('.download-button').onclick = () => {
-        downloadCanvas(canvas);
-    };
-
-    setupFileUpload();
-}
-
-// Gerar imagem para compartilhamento
-function generateSharingImage(canvas) {
-    const ctx = canvas.getContext('2d');
+async function sendMessage() {
+    const input = document.querySelector('.chat-input');
+    const message = input.value.trim();
     
-    canvas.width = 1080;
-    canvas.height = 1920;
+    if (!message) return;
     
-    // Gradiente de fundo
-    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    gradient.addColorStop(0, '#F72585');
-    gradient.addColorStop(0.5, '#7209B7');
-    gradient.addColorStop(1, '#3A0CA3');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Adiciona mensagem do usuário
+    addMessageToChat(message, 'user');
+    input.value = '';
 
-    // Carregar todas as imagens necessárias primeiro
-    const imagesToLoad = [
-        { src: 'https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg', type: 'logo' },
-        ...getCartProductImages() // Pega imagens dos produtos do carrinho
-    ];
+    try {
+        const response = await fetch('https://www.chatbase.co/api/v1/chat', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${CHATBASE_CONFIG.apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                messages: [
+                    ...chatHistory,
+                    { content: message, role: 'user' }
+                ],
+                chatbotId: CHATBASE_CONFIG.chatbotId,
+                stream: false,
+                temperature: 0
+            })
+        });
 
-    let loadedImages = 0;
-    const images = {};
-
-    imagesToLoad.forEach(img => {
-        const image = new Image();
-        image.crossOrigin = "Anonymous"; // Importante para poder baixar a imagem depois
+        const data = await response.json();
         
-        image.onload = () => {
-            images[img.type] = image;
-            loadedImages++;
-
-            if (loadedImages === imagesToLoad.length) {
-                // Todas as imagens carregadas, agora podemos desenhar
-                drawCompleteImage(ctx, canvas, images);
-            }
-        };
-
-        image.onerror = (err) => {
-            console.error('Erro ao carregar imagem:', err);
-            loadedImages++;
-        };
-
-        image.src = img.src;
-    });
-}
-
-function getCartProductImages() {
-    const cartItems = document.querySelectorAll('.cart-item');
-    const productImages = [];
-    
-    cartItems.forEach((item, index) => {
-        // Procura a imagem do produto no modal do carrinho
-        const itemDetails = item.querySelector('.cart-item-details');
-        const titleElement = itemDetails.querySelector('.cart-item-title');
-        
-        // Pega a URL da imagem do produto a partir do objeto cart global
-        if (cart[index] && cart[index].imageUrl) {
-            productImages.push({
-                src: cart[index].imageUrl || '/api/placeholder/300/200',
-                type: `product${index}`,
-                title: titleElement ? titleElement.textContent : '',
-                toppings: cart[index].selectedToppings || [],
-                extras: cart[index].selectedExtras || []
-            });
-        }
-    });
-
-    return productImages;
-}
-
-function drawCompleteImage(ctx, canvas, images) {
-    // Desenhar logo
-    const logoSize = 300;
-    ctx.drawImage(images.logo, 
-        (canvas.width - logoSize) / 2, 
-        100, 
-        logoSize, 
-        logoSize
-    );
-
-    // Textos do topo
-    ctx.textAlign = 'center';
-    ctx.fillStyle = 'white';
-    
-    // Nome da loja
-    ctx.font = 'bold 80px Montserrat';
-    ctx.fillText('Cabana Açaí', canvas.width / 2, logoSize + 160);
-    
-    // Instagram
-    ctx.font = '60px Montserrat';
-    ctx.fillText('@acainatalzn', canvas.width / 2, logoSize + 250);
-
-    // Texto "Meu Pedido"
-    ctx.font = 'bold 50px Montserrat';
-    ctx.fillText('Meu Pedido Especial:', canvas.width / 2, logoSize + 350);
-
-    // Desenhar produtos
-    let yPosition = logoSize + 400;
-    const productSize = 200;
-
-    // Itera sobre os itens do carrinho global
-    cart.forEach((item, index) => {
-        if (images[`product${index}`]) {
-            // Desenhar imagem do produto
-            ctx.drawImage(images[`product${index}`],
-                (canvas.width - productSize) / 2,
-                yPosition,
-                productSize,
-                productSize
+        if (data.text) {
+            addMessageToChat(data.text, 'bot');
+            chatHistory.push(
+                { content: message, role: 'user' },
+                { content: data.text, role: 'assistant' }
             );
-            
-            // Nome do produto
-            yPosition += productSize + 40;
-            ctx.font = 'bold 40px Montserrat';
-            ctx.fillText(item.name, canvas.width / 2, yPosition);
-            
-            // Acompanhamentos
-            if (item.selectedToppings && item.selectedToppings.length > 0) {
-                yPosition += 50;
-                ctx.font = '30px Montserrat';
-                ctx.fillText('Acompanhamentos: ' + item.selectedToppings.join(', '), 
-                    canvas.width / 2, yPosition);
-            }
-
-            // Extras
-            if (item.selectedExtras && item.selectedExtras.length > 0) {
-                yPosition += 50;
-                ctx.font = '30px Montserrat';
-                ctx.fillText('Extras: ' + item.selectedExtras.join(', '), 
-                    canvas.width / 2, yPosition);
-            }
-            
-            yPosition += 80; // Espaço para próximo produto
         }
-    });
-}
-    function getCartDetails() {
-    const items = [];
-    document.querySelectorAll('.cart-item').forEach(item => {
-        const title = item.querySelector('.cart-item-title').textContent;
-        const toppings = item.querySelector('.cart-item-toppings')?.textContent;
-        items.push(title + (toppings ? ` (${toppings})` : ''));
-    });
-    return items;
-}
 
-// Download da imagem
-function downloadCanvas(canvas) {
-    try {
-        // Converter o canvas para blob
-        canvas.toBlob((blob) => {
-            // Criar URL temporária
-            const url = URL.createObjectURL(blob);
-            
-            // Criar link de download
-            const link = document.createElement('a');
-            link.download = 'cabana-acai-pedido.png';
-            link.href = url;
-            
-            // Simular clique e limpar URL
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        }, 'image/png');
     } catch (error) {
-        console.error('Erro ao fazer download:', error);
-        alert('Erro ao fazer download da imagem. Por favor, tente novamente.');
+        console.error('Erro ao enviar mensagem:', error);
+        addMessageToChat('Desculpe, ocorreu um erro ao processar sua mensagem.', 'bot');
     }
 }
 
-// Configurar upload de arquivo
-function setupFileUpload() {
-    const uploadArea = document.getElementById('uploadArea');
-    const fileInput = document.getElementById('storyUpload');
-
-    uploadArea.onclick = () => fileInput.click();
-
-    // Drag and drop
-    uploadArea.ondragover = (e) => {
-        e.preventDefault();
-        uploadArea.classList.add('dragging');
-    };
-
-    uploadArea.ondragleave = () => {
-        uploadArea.classList.remove('dragging');
-    };
-
-    uploadArea.ondrop = (e) => {
-        e.preventDefault();
-        uploadArea.classList.remove('dragging');
-        handleFile(e.dataTransfer.files[0]);
-    };
-
-    fileInput.onchange = (e) => {
-        handleFile(e.target.files[0]);
-    };
+function addMessageToChat(message, type) {
+    const messagesContainer = document.querySelector('.chat-messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${type}-message`;
+    messageDiv.textContent = message;
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-// Processar arquivo enviado
-async function handleFile(file) {
-    if (!file || !file.type.startsWith('image/')) {
-        alert('Por favor, envie uma imagem válida.');
-        return;
-    }
-
-    const uploadArea = document.getElementById('uploadArea');
-    uploadArea.innerHTML = '<p>Iniciando verificação...</p>';
-
-    try {
-        // Mostrar preview da imagem
-        const previewImg = document.createElement('img');
-        previewImg.className = 'preview-image';
-        previewImg.src = URL.createObjectURL(file);
-        uploadArea.appendChild(previewImg);
-
-        // Carregar e inicializar Tesseract
-        uploadArea.innerHTML += '<p>Preparando análise...</p>';
-        
-        // Criar worker com configurações explícitas
-        const worker = await Tesseract.createWorker({
-            logger: m => {
-                console.log(m);
-                if (m.status === 'recognizing text') {
-                    uploadArea.innerHTML = `
-                        <img src="${previewImg.src}" class="preview-image">
-                        <p>Analisando texto: ${Math.round(m.progress * 100)}%</p>
-                    `;
-                }
-            }
-        });
-
-        // Inicializar worker
-        await worker.loadLanguage('eng');
-        await worker.initialize('eng');
-        
-        uploadArea.innerHTML += '<p>Analisando texto na imagem...</p>';
-
-        // Converter arquivo para URL de dados
-        const reader = new FileReader();
-        const imageData = await new Promise((resolve) => {
-            reader.onload = (e) => resolve(e.target.result);
-            reader.readAsDataURL(file);
-        });
-
-        // Realizar o reconhecimento
-        const result = await worker.recognize(imageData);
-        const text = result.data.text.toLowerCase();
-        
-        console.log('Texto encontrado:', text);
-
-        // Terminar o worker
-        await worker.terminate();
-
-        if (text.includes('@acainatalzn')) {
-            applyFreeShipping();
-            uploadArea.innerHTML = `
-                <img src="${previewImg.src}" class="preview-image">
-                <div class="verification-message success">
-                    ✅ Frete grátis aplicado com sucesso!
-                </div>
-            `;
-        } else {
-            uploadArea.innerHTML = `
-                <img src="${previewImg.src}" class="preview-image">
-                <div class="verification-message error">
-                    ❌ Não encontramos a marcação @acainatalzn. Tente novamente.
-                </div>
-                <p style="margin-top: 1rem; cursor: pointer;" onclick="setupFileUpload()">
-                    Clique aqui para enviar outro print
-                </p>
-            `;
-        }
-    } catch (error) {
-        console.error('Erro detalhado na verificação:', error);
-        uploadArea.innerHTML = `
-            <div class="verification-message error">
-                Erro na verificação. Por favor, tente novamente.
-                <br>
-                <small>${error.message}</small>
-                <p style="margin-top: 1rem; cursor: pointer;" onclick="setupFileUpload()">
-                    Clique aqui para tentar novamente
-                </p>
-            </div>
-        `;
+function handleKeyPress(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
     }
 }
-
-// Aplicar frete grátis
-function applyFreeShipping() {
-    cartSettings.isFreeShipping = true;
-    cartSettings.shippingFee = 0;
-    
-    const deliveryFee = document.querySelector('.delivery-fee');
-    if (deliveryFee) {
-        deliveryFee.innerHTML = `
-            <i class="fas fa-motorcycle"></i> 
-            Taxa de Entrega: <span style="color: var(--accent);">GRÁTIS</span>
-            <button class="free-shipping-button" onclick="showFreeShippingModal()">
-                🎁 Ganhe Frete Grátis
-            </button>
-        `;
-    }
-    updateCartTotal();
-}
-
-    // Adicionar uma função para limpar o estado do frete grátis após finalizar o pedido
-function clearOrderState() {
-    localStorage.removeItem('isFreeShipping');
-    isFreeShipping = false;
-}
-
-    function resetOrderState() {
-    orderHasFreeShipping = false;
-    // ... outros resets que você precise fazer
-}
-    
 </script>
 <<!-- Modal para Criar Novo Pedido -->
 <!-- Modal para Criar Novo Pedido -->
@@ -6026,6 +5623,23 @@ function clearOrderState() {
             <li><strong>Sábado e Domingo:</strong> 12:30h às 17:30h</li>
         </ul>
         <button onclick="closeStoreClosedPopup()">Fechar</button>
+    </div>
+</div>
+    <div class="chat-button" onclick="toggleChat()">
+    <i class="fas fa-comments"></i>
+</div>
+
+<div class="chat-container">
+    <div class="chat-header">
+        <span>Chat Cabana Açaí</span>
+        <i class="fas fa-times" onclick="toggleChat()"></i>
+    </div>
+    <div class="chat-messages"></div>
+    <div class="chat-input-container">
+        <input type="text" class="chat-input" placeholder="Digite sua mensagem..." onkeypress="handleKeyPress(event)">
+        <button class="send-button" onclick="sendMessage()">
+            <i class="fas fa-paper-plane"></i>
+        </button>
     </div>
 </div>
 </body>
