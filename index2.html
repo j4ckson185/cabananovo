@@ -2662,6 +2662,9 @@ const realtimeDB = firebase.database(); // para funções que usam .ref()
 const db = firebase.firestore(); // para novas funções que integram com o PDV
 
 let cart = [];
+let cartSettings = {
+    shippingFee: 3.00,
+    isFreeShipping: false
 let currentProducts = [];
 let appliedCoupon = null;
 let customerInfo = {};
@@ -4095,10 +4098,7 @@ function showCartModal() {
 function updateCartTotal() {
     const subtotal = cart.reduce((total, item) => total + item.price, 0);
     const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-    
-    const total = orderHasFreeShipping ? 
-        (subtotal - discount) : 
-        (subtotal - discount + 3.00);
+    const total = subtotal - discount + cartSettings.shippingFee;
 
     const modalContent = document.querySelector('#cartModal .modal-content');
     if (modalContent) {
@@ -4115,23 +4115,15 @@ function updateCartTotal() {
         // Atualiza taxa de entrega preservando o botão
         const deliveryFeeDiv = modalContent.querySelector('.delivery-fee');
         if (deliveryFeeDiv) {
-            if (orderHasFreeShipping) {
-                deliveryFeeDiv.innerHTML = `
-                    <i class="fas fa-motorcycle"></i> 
-                    Taxa de Entrega: <span style="color: var(--accent);">GRÁTIS</span>
-                    <button class="free-shipping-button" onclick="showFreeShippingModal()">
-                        🎁 Ganhe Frete Grátis
-                    </button>
-                `;
-            } else {
-                deliveryFeeDiv.innerHTML = `
-                    <i class="fas fa-motorcycle"></i> 
-                    Taxa de Entrega: R$ 3,00
-                    <button class="free-shipping-button" onclick="showFreeShippingModal()">
-                        🎁 Ganhe Frete Grátis
-                    </button>
-                `;
-            }
+            deliveryFeeDiv.innerHTML = `
+                <i class="fas fa-motorcycle"></i> 
+                Taxa de Entrega: ${cartSettings.isFreeShipping ? 
+                    `<span style="color: var(--accent);">GRÁTIS</span>` : 
+                    `R$ ${cartSettings.shippingFee.toFixed(2)}`}
+                <button class="free-shipping-button" onclick="showFreeShippingModal()">
+                    🎁 Ganhe Frete Grátis
+                </button>
+            `;
         }
         
         modalContent.querySelector('.total span').textContent = total.toFixed(2);
@@ -4366,7 +4358,8 @@ function formatOrderForWhatsApp() {
         // Cálculos
         const subtotal = cart.reduce((total, item) => total + item.price, 0);
         const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-        
+        const total = subtotal - discount + cartSettings.shippingFee;
+
         // Resumo financeiro
         message += `*💰 Resumo do Pedido:*\n`;
         message += `Subtotal: R$ ${subtotal.toFixed(2)}\n`;
@@ -4374,14 +4367,10 @@ function formatOrderForWhatsApp() {
             message += `Desconto: -R$ ${discount.toFixed(2)}\n`;
         }
 
-        // Usa a flag para determinar se tem frete grátis
-        const total = orderHasFreeShipping ? 
-            (subtotal - discount) : 
-            (subtotal - discount + 3.00);
-
-        message += orderHasFreeShipping ? 
+        // Usa cartSettings para determinar mensagem de frete
+        message += cartSettings.isFreeShipping ? 
             `Taxa de Entrega: GRÁTIS\n` : 
-            `Taxa de Entrega: R$ 3,00\n`;
+            `Taxa de Entrega: R$ ${cartSettings.shippingFee.toFixed(2)}\n`;
 
         message += `*Total: R$ ${total.toFixed(2)}*\n\n`;
 
@@ -5915,21 +5904,19 @@ async function handleFile(file) {
 
 // Aplicar frete grátis
 function applyFreeShipping() {
+    cartSettings.isFreeShipping = true;
+    cartSettings.shippingFee = 0;
+    
     const deliveryFee = document.querySelector('.delivery-fee');
     if (deliveryFee) {
         deliveryFee.innerHTML = `
             <i class="fas fa-motorcycle"></i> 
             Taxa de Entrega: <span style="color: var(--accent);">GRÁTIS</span>
+            <button class="free-shipping-button" onclick="showFreeShippingModal()">
+                🎁 Ganhe Frete Grátis
+            </button>
         `;
-        
-        // Dispara evento customizado
-        const freeShippingEvent = new CustomEvent('freeShippingApplied', {
-            detail: { timestamp: Date.now() }
-        });
-        document.dispatchEvent(freeShippingEvent);
     }
-
-    // Atualiza total do carrinho
     updateCartTotal();
 }
 
