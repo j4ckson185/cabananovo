@@ -2075,6 +2075,19 @@ header {
     margin-right: auto;
     border-radius: 15px 15px 15px 0;
 }
+
+    .nutrition-helper {
+    background: var(--gradient);
+    border: none;
+    border-radius: 20px;
+    padding: 5px 12px;
+    color: white;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
     
 </style>
 </head>
@@ -5528,6 +5541,25 @@ function handleKeyPress(event) {
     if (event.key === 'Enter') {
         sendMessage();
     }
+}
+
+    function addNutritionalHelper() {
+    const productCards = document.querySelectorAll('.product-card');
+    productCards.forEach(card => {
+        const nutritionButton = document.createElement('button');
+        nutritionButton.className = 'nutrition-helper';
+        nutritionButton.innerHTML = '<i class="fas fa-heart"></i> Info Nutricional';
+        
+        nutritionButton.onclick = (e) => {
+            e.stopPropagation();
+            const productName = card.querySelector('.product-title').textContent;
+            toggleChat();
+            document.querySelector('.chat-input').value = `Informação nutricional do ${productName}`;
+            sendMessage();
+        };
+        
+        card.querySelector('.product-footer').appendChild(nutritionButton);
+    });
 }
 </script>
 <<!-- Modal para Criar Novo Pedido -->
