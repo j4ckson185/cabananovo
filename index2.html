@@ -2076,17 +2076,24 @@ header {
     border-radius: 15px 15px 15px 0;
 }
 
-    .nutrition-helper {
-    background: var(--gradient);
-    border: none;
+ .nutrition-helper {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
     border-radius: 20px;
     padding: 5px 12px;
-    color: white;
+    color: var(--text);
     cursor: pointer;
     font-size: 0.9rem;
     display: flex;
     align-items: center;
     gap: 5px;
+    margin-left: 10px;
+    transition: all 0.3s ease;
+}
+
+.nutrition-helper:hover {
+    background: var(--gradient);
+    color: white;
 }
     
 </style>
@@ -4996,6 +5003,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     createFloatingMascot(); // Adicionamos aqui a criação do mascote flutuante
     addTimeMachineButton(); // Adiciona o botão do Time Machine
+    addNutritionalHelper();
 
 
 
