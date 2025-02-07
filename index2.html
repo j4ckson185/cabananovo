@@ -3609,7 +3609,6 @@ function createProductCard(product) {
 }
 
 function askNutrition(productName) {
-    event.stopPropagation();
     const chatContainer = document.querySelector('.chat-container');
     const chatInput = document.querySelector('.chat-input');
     
@@ -3647,6 +3646,34 @@ function hideMascot() {
 function openProductModal(product) {
     currentProduct = product;
     const modal = document.getElementById('productModal');
+    
+    // First remove any existing nutrition button
+    const existingNutritionBtn = modal.querySelector('.nutrition-info-btn');
+    if (existingNutritionBtn) {
+        existingNutritionBtn.remove();
+    }
+
+    // Create nutrition button
+    const nutritionBtn = document.createElement('button');
+    nutritionBtn.className = 'modal-btn nutrition-info-btn';
+    nutritionBtn.innerHTML = '<i class="fas fa-heartbeat"></i> Info Nutricional';
+    nutritionBtn.onclick = () => askNutrition(product.name);
+    nutritionBtn.style.cssText = `
+        margin-bottom: 1rem;
+        background: var(--glass);
+        border: 1px solid var(--glass-border);
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: fit-content;
+        transition: all 0.3s ease;
+    `;
+
+    // Insert button before product image
+    const productImage = modal.querySelector('.modal-product-image');
+    productImage.parentNode.insertBefore(nutritionBtn, productImage);
     
     modal.querySelectorAll('.video-container, .upgrade-button, .mascot-container, .upgrade-section, .benefits-section').forEach(el => el.remove());
     
