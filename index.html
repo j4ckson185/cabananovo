@@ -2075,7 +2075,7 @@ header {
     margin-right: auto;
     border-radius: 15px 15px 15px 0;
 }
-    
+
 </style>
 </head>
 <body>
@@ -3536,34 +3536,51 @@ document.querySelectorAll('.close-modal').forEach(button => {
     });
 }
 
-    function createProductCard(product) {
-   const card = document.createElement('div');
-   card.className = 'product-card';
-   
-   realtimeDB.ref(`categories/${product.category}`).once('value')
-       .then(snapshot => {
-           const category = snapshot.val();
-           const categoryName = category ? category.name : 'Categoria';
-           
-           card.innerHTML = `
-               <img src="${product.imageUrl || '/api/placeholder/300/200'}" alt="${product.name}" class="product-image">
-               <div class="product-info">
-                   <div class="product-category">${categoryName}</div>
-                   <h3 class="product-title">${product.name}</h3>
-                   <p class="product-description">${product.description}</p>
-                   <div class="product-footer">
-                       <div class="product-price">R$ ${product.price.toFixed(2)}</div>
-                       <button class="add-to-cart-btn">
-                           <i class="fas fa-plus"></i>
-                       </button>
-                   </div>
-               </div>
-           `;
-           
-           card.addEventListener('click', () => openProductModal(product));
-       });
-   
-   return card;
+function createProductCard(product) {
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    
+    realtimeDB.ref(`categories/${product.category}`).once('value')
+        .then(snapshot => {
+            const category = snapshot.val();
+            const categoryName = category ? category.name : 'Categoria';
+            
+            card.innerHTML = `
+                <img src="${product.imageUrl || '/api/placeholder/300/200'}" alt="${product.name}" class="product-image">
+                <div class="product-info">
+                    <div class="product-category">${categoryName}</div>
+                    <h3 class="product-title">${product.name}</h3>
+                    <p class="product-description">${product.description}</p>
+                    <div class="product-footer">
+                        <div class="product-price">R$ ${product.price.toFixed(2)}</div>
+                            <button class="add-to-cart-btn">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            card.addEventListener('click', (e) => {
+                if (!e.target.closest('.nutrition-btn')) {
+                    openProductModal(product);
+                }
+            });
+        });
+    
+    return card;
+}
+
+function askNutrition(productName) {
+    const chatContainer = document.querySelector('.chat-container');
+    const chatInput = document.querySelector('.chat-input');
+    
+    if (chatContainer.style.display === 'none' || !chatContainer.style.display) {
+        toggleChat();
+    }
+    
+    chatInput.value = `Quais são as informações nutricionais do ${productName}?`;
+    sendMessage();
 }
 
 async function getCategoryName(categoryId) {
@@ -3592,6 +3609,47 @@ function hideMascot() {
 function openProductModal(product) {
     currentProduct = product;
     const modal = document.getElementById('productModal');
+    
+    // First remove any existing nutrition button
+    const existingNutritionBtn = modal.querySelector('.nutrition-info-btn');
+    if (existingNutritionBtn) {
+        existingNutritionBtn.remove();
+    }
+
+    // Create nutrition button
+    const nutritionBtn = document.createElement('button');
+    nutritionBtn.className = 'modal-btn nutrition-info-btn';
+    nutritionBtn.innerHTML = '<i class="fas fa-heartbeat"></i> Info Nutricional';
+    nutritionBtn.onclick = () => askNutrition(product.name);
+nutritionBtn.style.cssText = `
+    margin-bottom: 1rem;
+    background: var(--gradient);
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: fit-content;
+    margin: 0 auto 1rem auto;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+`;
+
+nutritionBtn.addEventListener('mouseover', () => {
+    nutritionBtn.style.transform = 'translateY(-3px)';
+    nutritionBtn.style.boxShadow = '0 5px 15px rgba(247, 37, 133, 0.3)';
+});
+
+nutritionBtn.addEventListener('mouseout', () => {
+    nutritionBtn.style.transform = 'translateY(0)';
+    nutritionBtn.style.boxShadow = 'none';
+});
+
+    // Insert button before product image
+    const productImage = modal.querySelector('.modal-product-image');
+    productImage.parentNode.insertBefore(nutritionBtn, productImage);
     
     modal.querySelectorAll('.video-container, .upgrade-button, .mascot-container, .upgrade-section, .benefits-section').forEach(el => el.remove());
     
