@@ -2076,29 +2076,36 @@ header {
     border-radius: 15px 15px 15px 0;
 }
 
- .nutrition-helper {
+    .nutrition-btn {
     background: var(--glass);
     border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    padding: 5px 12px;
-    color: var(--text);
-    cursor: pointer;
-    font-size: 0.9rem;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    gap: 5px;
-    margin-left: 10px;
+    justify-content: center;
+    cursor: pointer;
     transition: all 0.3s ease;
+    margin-right: 0.5rem;
 }
 
-.nutrition-helper:hover {
+.nutrition-btn:hover {
+    transform: scale(1.1);
     background: var(--gradient);
+}
+
+.nutrition-btn i {
+    color: var(--text);
+    font-size: 1.2rem;
+}
+
+.nutrition-btn:hover i {
     color: white;
 }
 
-    .button-group {
+.product-buttons {
     display: flex;
-    gap: 10px;
     align-items: center;
 }
     
@@ -2208,33 +2215,14 @@ header {
                 <div class="product-category">Açaí com Ninho</div>
                 <h3 class="product-title">Açaí com Leite Ninho</h3>
                 <p class="product-description">Açaí cremoso coberto com leite ninho em pó e frutas selecionadas.</p>
-    <div class="product-footer">
-        <div class="product-price">R$ ${product.price.toFixed(2)}</div>
-        <div class="button-group">
-            <button class="add-to-cart-btn">
-                <i class="fas fa-plus"></i>
-            </button>
-            <button class="nutrition-helper">
-                <i class="fas fa-heart"></i> Info
-            </button>
+                <div class="product-footer">
+                    <div class="product-price">R$ 18,90</div>
+                    <button class="add-to-cart-btn">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
-`;
-
-    // Adicione aqui o evento de clique para o botão nutricional
-    card.querySelector('.nutrition-helper').addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleChat();
-        document.querySelector('.chat-input').value = `Informação nutricional do ${product.name}`;
-        sendMessage();
-    });
-
-    card.addEventListener('click', () => openProductModal(product));
-    
-    return card;
-}
-            
         <!-- More product cards will be added dynamically -->
     </div>
 
@@ -3581,34 +3569,56 @@ document.querySelectorAll('.close-modal').forEach(button => {
     });
 }
 
-    function createProductCard(product) {
-   const card = document.createElement('div');
-   card.className = 'product-card';
-   
-   realtimeDB.ref(`categories/${product.category}`).once('value')
-       .then(snapshot => {
-           const category = snapshot.val();
-           const categoryName = category ? category.name : 'Categoria';
-           
-           card.innerHTML = `
-               <img src="${product.imageUrl || '/api/placeholder/300/200'}" alt="${product.name}" class="product-image">
-               <div class="product-info">
-                   <div class="product-category">${categoryName}</div>
-                   <h3 class="product-title">${product.name}</h3>
-                   <p class="product-description">${product.description}</p>
-                   <div class="product-footer">
-                       <div class="product-price">R$ ${product.price.toFixed(2)}</div>
-                       <button class="add-to-cart-btn">
-                           <i class="fas fa-plus"></i>
-                       </button>
-                   </div>
-               </div>
-           `;
-           
-           card.addEventListener('click', () => openProductModal(product));
-       });
-   
-   return card;
+function createProductCard(product) {
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    
+    realtimeDB.ref(`categories/${product.category}`).once('value')
+        .then(snapshot => {
+            const category = snapshot.val();
+            const categoryName = category ? category.name : 'Categoria';
+            
+            card.innerHTML = `
+                <img src="${product.imageUrl || '/api/placeholder/300/200'}" alt="${product.name}" class="product-image">
+                <div class="product-info">
+                    <div class="product-category">${categoryName}</div>
+                    <h3 class="product-title">${product.name}</h3>
+                    <p class="product-description">${product.description}</p>
+                    <div class="product-footer">
+                        <div class="product-price">R$ ${product.price.toFixed(2)}</div>
+                        <div class="product-buttons">
+                            <button class="nutrition-btn" onclick="askNutrition('${product.name}')">
+                                <i class="fas fa-heartbeat"></i>
+                            </button>
+                            <button class="add-to-cart-btn">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            card.addEventListener('click', (e) => {
+                if (!e.target.closest('.nutrition-btn')) {
+                    openProductModal(product);
+                }
+            });
+        });
+    
+    return card;
+}
+
+function askNutrition(productName) {
+    event.stopPropagation();
+    const chatContainer = document.querySelector('.chat-container');
+    const chatInput = document.querySelector('.chat-input');
+    
+    if (chatContainer.style.display === 'none' || !chatContainer.style.display) {
+        toggleChat();
+    }
+    
+    chatInput.value = `Quais são as informações nutricionais do ${productName}?`;
+    sendMessage();
 }
 
 async function getCategoryName(categoryId) {
@@ -5028,7 +5038,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     createFloatingMascot(); // Adicionamos aqui a criação do mascote flutuante
     addTimeMachineButton(); // Adiciona o botão do Time Machine
-    addNutritionalHelper();
 
 
 
@@ -5574,25 +5583,6 @@ function handleKeyPress(event) {
     if (event.key === 'Enter') {
         sendMessage();
     }
-}
-
-    function addNutritionalHelper() {
-    const productCards = document.querySelectorAll('.product-card');
-    productCards.forEach(card => {
-        const nutritionButton = document.createElement('button');
-        nutritionButton.className = 'nutrition-helper';
-        nutritionButton.innerHTML = '<i class="fas fa-heart"></i> Info Nutricional';
-        
-        nutritionButton.onclick = (e) => {
-            e.stopPropagation();
-            const productName = card.querySelector('.product-title').textContent;
-            toggleChat();
-            document.querySelector('.chat-input').value = `Informação nutricional do ${productName}`;
-            sendMessage();
-        };
-        
-        card.querySelector('.product-footer').appendChild(nutritionButton);
-    });
 }
 </script>
 <<!-- Modal para Criar Novo Pedido -->
