@@ -3811,7 +3811,10 @@ function openProductModal(product) {
             const priceDiff = product.name.includes('300ml') ? '5' : '10';
 
             upgradeSection.innerHTML = `
-                <p>Sabia que por apenas R$${priceDiff} a mais você leva o dobro de açai, o dobro de creme e o dobro de Acompanhamentos? Só clicar no botão abaixo:</p>
+                <p>${product.name.includes('300ml') 
+                    ? 'Sabia que por apenas R$5 a mais você leva quase o dobro de açai, creme e Acompanhamentos? Só clicar no botão abaixo:'
+                    : 'Sabia que por apenas R$10 a mais você leva o dobro de açai, o dobro de creme e o dobro de Acompanhamentos? Só clicar no botão abaixo:'
+                }</p>
             `;
 
             const upgradeButton = document.createElement('button');
