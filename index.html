@@ -3621,31 +3621,31 @@ function openProductModal(product) {
     nutritionBtn.className = 'modal-btn nutrition-info-btn';
     nutritionBtn.innerHTML = '<i class="fas fa-heartbeat"></i> Info Nutricional';
     nutritionBtn.onclick = () => askNutrition(product.name);
-nutritionBtn.style.cssText = `
-    margin-bottom: 1rem;
-    background: var(--gradient);
-    border: none;
-    padding: 0.8rem 1.5rem;
-    border-radius: 25px;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    width: fit-content;
-    margin: 0 auto 1rem auto;
-    color: white;
-    cursor: pointer;
-    transition: all 0.3s ease;
-`;
+    nutritionBtn.style.cssText = `
+        margin-bottom: 1rem;
+        background: var(--gradient);
+        border: none;
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: fit-content;
+        margin: 0 auto 1rem auto;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    `;
 
-nutritionBtn.addEventListener('mouseover', () => {
-    nutritionBtn.style.transform = 'translateY(-3px)';
-    nutritionBtn.style.boxShadow = '0 5px 15px rgba(247, 37, 133, 0.3)';
-});
+    nutritionBtn.addEventListener('mouseover', () => {
+        nutritionBtn.style.transform = 'translateY(-3px)';
+        nutritionBtn.style.boxShadow = '0 5px 15px rgba(247, 37, 133, 0.3)';
+    });
 
-nutritionBtn.addEventListener('mouseout', () => {
-    nutritionBtn.style.transform = 'translateY(0)';
-    nutritionBtn.style.boxShadow = 'none';
-});
+    nutritionBtn.addEventListener('mouseout', () => {
+        nutritionBtn.style.transform = 'translateY(0)';
+        nutritionBtn.style.boxShadow = 'none';
+    });
 
     // Insert button before product image
     const productImage = modal.querySelector('.modal-product-image');
@@ -3659,7 +3659,7 @@ nutritionBtn.addEventListener('mouseout', () => {
     modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
 
     // Objeto com os benefícios dos acompanhamentos
-const toppingBenefits = {
+    const toppingBenefits = {
         'Amendoim': 'Rico em proteínas e gorduras boas, ajuda na construção muscular e fornece energia duradoura.',
         'Granola': 'Fonte de fibras e carboidratos complexos, fornece energia sustentada para seus treinos.',
         'Chocoball': 'Fonte rápida de energia e carboidratos, perfeito para pré-treino.',
@@ -3691,18 +3691,18 @@ const toppingBenefits = {
     `;
 
     // Verificar status da loja e mostrar popup quando estiver fechada
-realtimeDB.ref('schedule').once('value')
-    .then(snapshot => {
-        const schedule = snapshot.val() || {};
-        const isOpen = isStoreOpenNow(schedule);
-        
-        if (!isOpen) {
-            const popup = document.getElementById('storeClosedPopup');
-            if (popup) {
-                popup.classList.add('active');
+    realtimeDB.ref('schedule').once('value')
+        .then(snapshot => {
+            const schedule = snapshot.val() || {};
+            const isOpen = isStoreOpenNow(schedule);
+            
+            if (!isOpen) {
+                const popup = document.getElementById('storeClosedPopup');
+                if (popup) {
+                    popup.classList.add('active');
+                }
             }
-        }
-    });
+        });
 
     Promise.all([
         realtimeDB.ref('menu/toppings').once('value'),
@@ -3791,8 +3791,8 @@ realtimeDB.ref('schedule').once('value')
             extrasSection.parentNode.insertBefore(benefitsSection, extrasSection);
         }
 
-        // Mensagem e botão apenas para produtos de 500ml
-        if (product.name.includes('500ml') && !product.name.includes('1 Litro')) {
+        // Mensagem e botão para produtos de 300ml ou 500ml
+        if ((product.name.includes('300ml') || product.name.includes('500ml')) && !product.name.includes('1 Litro')) {
             const upgradeSection = document.createElement('div');
             upgradeSection.className = 'upgrade-section';
             upgradeSection.style.cssText = `
@@ -3806,14 +3806,21 @@ realtimeDB.ref('schedule').once('value')
                 font-size: 1.1rem;
                 line-height: 1.5;
             `;
+
+            const nextSize = product.name.includes('300ml') ? '500ml' : '1 Litro';
+            const priceDiff = product.name.includes('300ml') ? '5' : '10';
+
             upgradeSection.innerHTML = `
-                <p>Sabia que por apenas R$10 a mais você leva o dobro de açai, o dobro de creme e o dobro de Acompanhamentos? Só clicar no botão abaixo:</p>
+                <p>${product.name.includes('300ml') 
+                    ? 'Sabia que por apenas R$5 a mais você leva quase o dobro de açai, creme e Acompanhamentos? Só clicar no botão abaixo:'
+                    : 'Sabia que por apenas R$10 a mais você leva o dobro de açai, o dobro de creme e o dobro de Acompanhamentos? Só clicar no botão abaixo:'
+                }</p>
             `;
 
             const upgradeButton = document.createElement('button');
             upgradeButton.className = 'modal-btn upgrade-button';
-            upgradeButton.innerHTML = 'Ver opção de 1 Litro';
-            upgradeButton.onclick = () => switchToSize('1 Litro', product.name);
+            upgradeButton.innerHTML = `Ver opção de ${nextSize}`;
+            upgradeButton.onclick = () => switchToSize(nextSize, product.name);
             upgradeButton.style.cssText = `
                 background: var(--gradient);
                 color: white;
