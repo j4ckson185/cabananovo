@@ -2076,6 +2076,65 @@ header {
     border-radius: 15px 15px 15px 0;
 }
 
+    const style = document.createElement('style');
+style.textContent = `
+    .store-closed-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(16, 0, 43, 0.95);
+        backdrop-filter: blur(5px);
+        z-index: 999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .store-closed-message {
+        background: var(--surface);
+        padding: 2rem;
+        border-radius: 20px;
+        text-align: center;
+        max-width: 400px;
+        border: 1px solid var(--glass-border);
+    }
+
+    .store-closed-message i {
+        font-size: 3rem;
+        color: var(--accent);
+        margin-bottom: 1rem;
+    }
+
+    .store-closed-message h2 {
+        color: white;
+        margin-bottom: 1rem;
+    }
+
+    .store-closed-message p {
+        color: var(--text);
+        margin-bottom: 0.5rem;
+    }
+
+    .store-closed-message ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .store-closed-message li {
+        color: var(--text);
+        margin: 0.5rem 0;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+`;
+document.head.appendChild(style);
+
 </style>
 </head>
 <body>
@@ -3397,10 +3456,6 @@ function updateCategoryButtons(categories) {
 }
 
 function checkStoreStatus() {
-    // Controle de visitas
-    const visitCount = parseInt(localStorage.getItem('visitCount') || '0');
-    localStorage.setItem('visitCount', visitCount + 1);
-
     const existingStatus = document.querySelector('.store-status');
     if (existingStatus) existingStatus.remove();
 
@@ -3436,17 +3491,26 @@ function checkStoreStatus() {
             const categories = document.querySelector('.categories');
             categories.parentNode.insertBefore(statusDiv, categories);
 
-            // Inicializa o Açaí do Dia após inserir o status
-            initAcaiDoDia();
-
             if (!isOpen) {
                 disableOrdering();
+                showStoreClosedPopup();
+            } else {
+                enableOrdering();
             }
+
+            // Inicializa o Açaí do Dia após verificar o status
+            initAcaiDoDia();
         })
         .catch(error => {
             console.error('Erro ao verificar status da loja:', error);
+            // Em caso de erro, assume que a loja está fechada por segurança
+            disableOrdering();
+            showStoreClosedPopup();
         });
 }
+
+// Verificar status da loja a cada minuto
+setInterval(checkStoreStatus, 60000);
 
 function isStoreOpenNow(schedule) {
     const now = new Date();
@@ -3469,23 +3533,119 @@ function isStoreOpenNow(schedule) {
     return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
 }
 
-function disableOrdering() {
-    const addButtons = document.querySelectorAll('.add-to-cart-btn');
+// Definir funções no escopo global
+window.disableOrdering = function() {
+    // Desabilitar botões de adicionar ao carrinho
+    const addButtons = document.querySelectorAll('.add-to-cart-btn, .add-deal-btn');
     addButtons.forEach(button => {
         button.disabled = true;
         button.style.opacity = '0.5';
         button.style.cursor = 'not-allowed';
     });
     
+    // Desabilitar cards de produtos
     document.querySelectorAll('.product-card').forEach(card => {
         card.style.opacity = '0.7';
         card.style.cursor = 'not-allowed';
         card.onclick = (e) => {
             e.preventDefault();
-            showAlert('error', 'A loja está fechada no momento. Confira nosso horário de funcionamento.');
+            showStoreClosedPopup();
         };
     });
-}
+
+    // Desabilitar botão de checkout
+    const checkoutBtn = document.querySelector('.checkout');
+    if (checkoutBtn) {
+        checkoutBtn.disabled = true;
+        checkoutBtn.style.opacity = '0.5';
+        checkoutBtn.style.cursor = 'not-allowed';
+        checkoutBtn.onclick = (e) => {
+            e.preventDefault();
+            showStoreClosedPopup();
+        };
+    }
+
+    // Desabilitar botão de montar combo
+    const comboBtn = document.querySelector('.category-btn[data-category="combo"]');
+    if (comboBtn) {
+        comboBtn.disabled = true;
+        comboBtn.style.opacity = '0.5';
+        comboBtn.style.cursor = 'not-allowed';
+        comboBtn.onclick = (e) => {
+            e.preventDefault();
+            showStoreClosedPopup();
+        };
+    }
+
+    // Adicionar overlay de loja fechada se ainda não existir
+    if (!document.querySelector('.store-closed-overlay')) {
+        const storeClosedOverlay = document.createElement('div');
+        storeClosedOverlay.className = 'store-closed-overlay';
+        storeClosedOverlay.innerHTML = `
+            <div class="store-closed-message">
+                <i class="fas fa-store-alt-slash"></i>
+                <h2>Loja Fechada</h2>
+                <p>Horário de Funcionamento:</p>
+                <ul>
+                    <li>Quarta à Sexta: 12:30h às 22:30h</li>
+                    <li>Sábado e Domingo: 12:30h às 17:30h</li>
+                </ul>
+            </div>
+        `;
+        document.body.appendChild(storeClosedOverlay);
+    }
+};
+
+window.enableOrdering = function() {
+    // Remover overlay de loja fechada
+    const overlay = document.querySelector('.store-closed-overlay');
+    if (overlay) {
+        overlay.remove();
+    }
+
+    // Reabilitar botões de adicionar ao carrinho
+    const addButtons = document.querySelectorAll('.add-to-cart-btn, .add-deal-btn');
+    addButtons.forEach(button => {
+        button.disabled = false;
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
+    });
+
+    // Reabilitar cards de produtos
+    document.querySelectorAll('.product-card').forEach(card => {
+        card.style.opacity = '1';
+        card.style.cursor = 'pointer';
+        card.onclick = null; // Apenas remove o handler de loja fechada
+    });
+
+    // Reabilitar botão de checkout
+    const checkoutBtn = document.querySelector('.checkout');
+    if (checkoutBtn) {
+        checkoutBtn.disabled = false;
+        checkoutBtn.style.opacity = '1';
+        checkoutBtn.style.cursor = 'pointer';
+        checkoutBtn.onclick = handleCheckout;
+    }
+
+    // Reabilitar botão de montar combo
+    const comboBtn = document.querySelector('.category-btn[data-category="combo"]');
+    if (comboBtn) {
+        comboBtn.disabled = false;
+        comboBtn.style.opacity = '1';
+        comboBtn.style.cursor = 'pointer';
+        // Restaurar o comportamento original do botão de combo
+        comboBtn.onclick = () => {
+            document.getElementById('comboModal').style.display = 'block';
+            resetComboBuilder();
+            initComboBuilder();
+        };
+    }
+};
+
+window.showStoreClosedPopup = function() {
+    const popup = document.getElementById('storeClosedPopup');
+    popup.classList.add('active');
+};
 
 function setupEventListeners() {
     // Category buttons
