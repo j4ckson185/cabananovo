@@ -3533,6 +3533,7 @@ function isStoreOpenNow(schedule) {
     return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
 }
 
+// Definir funções no escopo global
 window.disableOrdering = function() {
     // Desabilitar botões de adicionar ao carrinho
     const addButtons = document.querySelectorAll('.add-to-cart-btn, .add-deal-btn');
@@ -3614,18 +3615,7 @@ window.enableOrdering = function() {
     document.querySelectorAll('.product-card').forEach(card => {
         card.style.opacity = '1';
         card.style.cursor = 'pointer';
-        // Remover o onclick anterior e restaurar o comportamento padrão
-        card.onclick = function(e) {
-            if (!e.target.closest('.nutrition-btn')) {
-                const productData = {
-                    name: card.querySelector('.product-title').textContent,
-                    description: card.querySelector('.product-description').textContent,
-                    price: parseFloat(card.querySelector('.product-price').textContent.replace('R$ ', '')),
-                    imageUrl: card.querySelector('.product-image').src
-                };
-                openProductModal(productData);
-            }
-        };
+        card.onclick = null; // Apenas remove o handler de loja fechada
     });
 
     // Reabilitar botão de checkout
