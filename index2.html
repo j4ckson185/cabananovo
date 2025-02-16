@@ -3533,7 +3533,7 @@ function isStoreOpenNow(schedule) {
     return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
 }
 
-function disableOrdering() {
+window.disableOrdering = function() {
     // Desabilitar botões de adicionar ao carrinho
     const addButtons = document.querySelectorAll('.add-to-cart-btn, .add-deal-btn');
     addButtons.forEach(button => {
@@ -3576,27 +3576,86 @@ function disableOrdering() {
         };
     }
 
-    // Adicionar overlay de loja fechada
-    const storeClosedOverlay = document.createElement('div');
-    storeClosedOverlay.className = 'store-closed-overlay';
-    storeClosedOverlay.innerHTML = `
-        <div class="store-closed-message">
-            <i class="fas fa-store-alt-slash"></i>
-            <h2>Loja Fechada</h2>
-            <p>Horário de Funcionamento:</p>
-            <ul>
-                <li>Quarta à Sexta: 12:30h às 22:30h</li>
-                <li>Sábado e Domingo: 12:30h às 17:30h</li>
-            </ul>
-        </div>
-    `;
-    document.body.appendChild(storeClosedOverlay);
-}
+    // Adicionar overlay de loja fechada se ainda não existir
+    if (!document.querySelector('.store-closed-overlay')) {
+        const storeClosedOverlay = document.createElement('div');
+        storeClosedOverlay.className = 'store-closed-overlay';
+        storeClosedOverlay.innerHTML = `
+            <div class="store-closed-message">
+                <i class="fas fa-store-alt-slash"></i>
+                <h2>Loja Fechada</h2>
+                <p>Horário de Funcionamento:</p>
+                <ul>
+                    <li>Quarta à Sexta: 12:30h às 22:30h</li>
+                    <li>Sábado e Domingo: 12:30h às 17:30h</li>
+                </ul>
+            </div>
+        `;
+        document.body.appendChild(storeClosedOverlay);
+    }
+};
 
-function showStoreClosedPopup() {
+window.enableOrdering = function() {
+    // Remover overlay de loja fechada
+    const overlay = document.querySelector('.store-closed-overlay');
+    if (overlay) {
+        overlay.remove();
+    }
+
+    // Reabilitar botões de adicionar ao carrinho
+    const addButtons = document.querySelectorAll('.add-to-cart-btn, .add-deal-btn');
+    addButtons.forEach(button => {
+        button.disabled = false;
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
+    });
+
+    // Reabilitar cards de produtos
+    document.querySelectorAll('.product-card').forEach(card => {
+        card.style.opacity = '1';
+        card.style.cursor = 'pointer';
+        // Remover o onclick anterior e restaurar o comportamento padrão
+        card.onclick = function(e) {
+            if (!e.target.closest('.nutrition-btn')) {
+                const productData = {
+                    name: card.querySelector('.product-title').textContent,
+                    description: card.querySelector('.product-description').textContent,
+                    price: parseFloat(card.querySelector('.product-price').textContent.replace('R$ ', '')),
+                    imageUrl: card.querySelector('.product-image').src
+                };
+                openProductModal(productData);
+            }
+        };
+    });
+
+    // Reabilitar botão de checkout
+    const checkoutBtn = document.querySelector('.checkout');
+    if (checkoutBtn) {
+        checkoutBtn.disabled = false;
+        checkoutBtn.style.opacity = '1';
+        checkoutBtn.style.cursor = 'pointer';
+        checkoutBtn.onclick = handleCheckout;
+    }
+
+    // Reabilitar botão de montar combo
+    const comboBtn = document.querySelector('.category-btn[data-category="combo"]');
+    if (comboBtn) {
+        comboBtn.disabled = false;
+        comboBtn.style.opacity = '1';
+        comboBtn.style.cursor = 'pointer';
+        // Restaurar o comportamento original do botão de combo
+        comboBtn.onclick = () => {
+            document.getElementById('comboModal').style.display = 'block';
+            resetComboBuilder();
+            initComboBuilder();
+        };
+    }
+};
+
+window.showStoreClosedPopup = function() {
     const popup = document.getElementById('storeClosedPopup');
     popup.classList.add('active');
-}
+};
 
 function setupEventListeners() {
     // Category buttons
