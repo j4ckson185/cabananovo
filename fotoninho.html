@@ -1,0 +1,127 @@
+// Configurações do Twilio
+const TWILIO_ACCOUNT_SID = 'AC04c1d67a4b599d4cb0d804029109fad3';
+const TWILIO_AUTH_TOKEN = '4061a06f7cbacc1262afa1f2356e69b3';
+const TWILIO_WHATSAPP_NUMBER = 'whatsapp:+14155238886'; // Número do Sandbox
+
+function doPost(e) {
+  try {
+    // Parse do payload recebido do Chatbase
+    const payload = JSON.parse(e.postData.contents);
+    
+    // Número do destinatário fixo para teste
+    const destinatario = 'whatsapp:+558487673202';
+    const mensagemIntrodutoria = "Confira o relatório do creme ninho:";
+    const urlImagem = "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/ninho.jpg?alt=media&token=0b22f03b-7a6a-4de9-8424-be2ba1bfac57";
+    
+    // Envia primeira mensagem
+    enviarMensagemWhatsApp(destinatario, mensagemIntrodutoria);
+    
+    // Aguarda 2 segundos
+    Utilities.sleep(2000);
+    
+    // Envia a imagem
+    enviarImagemWhatsApp(destinatario, urlImagem);
+    
+    // Retorna sucesso
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'success',
+      message: 'Mensagens enviadas com sucesso'
+    })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (error) {
+    // Log do erro
+    console.error('Erro ao processar requisição:', error);
+    
+    // Retorna erro
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'error',
+      message: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function enviarMensagemWhatsApp(para, mensagem) {
+  // Configuração da URL da API do Twilio
+  const url = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
+  
+  // Dados da mensagem
+  const dados = {
+    To: para,
+    From: TWILIO_WHATSAPP_NUMBER,
+    Body: mensagem
+  };
+  
+  // Configuração da requisição
+  const opcoes = {
+    method: 'post',
+    headers: {
+      Authorization: 'Basic ' + Utilities.base64Encode(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)
+    },
+    payload: dados,
+    muteHttpExceptions: true
+  };
+  
+  try {
+    // Faz a requisição para a API do Twilio
+    const response = UrlFetchApp.fetch(url, opcoes);
+    const resultado = JSON.parse(response.getContentText());
+    
+    // Log do resultado
+    console.log('Mensagem enviada:', resultado);
+    
+    return resultado;
+    
+  } catch (error) {
+    console.error('Erro ao enviar mensagem:', error);
+    throw error;
+  }
+}
+
+function enviarImagemWhatsApp(para, urlImagem) {
+  // Configuração da URL da API do Twilio
+  const url = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
+  
+  // Dados da mensagem com imagem
+  const dados = {
+    To: para,
+    From: TWILIO_WHATSAPP_NUMBER,
+    MediaUrl: urlImagem
+  };
+  
+  // Configuração da requisição
+  const opcoes = {
+    method: 'post',
+    headers: {
+      Authorization: 'Basic ' + Utilities.base64Encode(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)
+    },
+    payload: dados,
+    muteHttpExceptions: true
+  };
+  
+  try {
+    // Faz a requisição para a API do Twilio
+    const response = UrlFetchApp.fetch(url, opcoes);
+    const resultado = JSON.parse(response.getContentText());
+    
+    // Log do resultado
+    console.log('Imagem enviada:', resultado);
+    
+    return resultado;
+    
+  } catch (error) {
+    console.error('Erro ao enviar imagem:', error);
+    throw error;
+  }
+}
+
+// Função para testar a integração
+function testarIntegracao() {
+  const payload = {};  // Payload vazio pois estamos usando valores fixos
+  
+  // Simula uma requisição POST
+  doPost({
+    postData: {
+      contents: JSON.stringify(payload)
+    }
+  });
+}
