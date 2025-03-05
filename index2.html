@@ -2193,6 +2193,79 @@ document.head.appendChild(style);
     animation: fadeIn 0.3s ease;
 }
 
+.audio-button-full {
+    width: 100%;
+    padding: 12px;
+    background: var(--gradient);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.audio-button-full i {
+    margin-right: 8px;
+}
+
+.recording-indicator {
+    width: 100%;
+    padding: 15px;
+    background: var(--surface);
+    border-radius: 8px;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.audio-waves {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    margin-bottom: 15px;
+}
+
+.audio-waves span {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    margin: 0 3px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: wave 1.5s infinite ease-in-out;
+}
+
+.audio-waves span:nth-child(1) { animation-delay: 0s; }
+.audio-waves span:nth-child(2) { animation-delay: 0.3s; }
+.audio-waves span:nth-child(3) { animation-delay: 0.6s; }
+.audio-waves span:nth-child(4) { animation-delay: 0.3s; }
+.audio-waves span:nth-child(5) { animation-delay: 0s; }
+
+@keyframes wave {
+    0%, 100% { height: 5px; }
+    50% { height: 30px; }
+}
+
+.stop-recording {
+    padding: 10px 20px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
 </style>
 </head>
 <body>
@@ -5295,58 +5368,44 @@ openProductModal = function(product) {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Carregado'); // Log para diagnóstico
 
-    createFloatingMascot(); // Adicionamos aqui a criação do mascote flutuante
+    createVoiceOrderButton();
     addTimeMachineButton(); // Adiciona o botão do Time Machine
     let recognition;
     let isListening = false;
 
-    function startVoiceSearch() {
-        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            showNotification('Seu navegador não suporta pesquisa por voz');
-            return;
-        }
+// Atualizar a função startVoiceSearch para fazer a busca imediata
+function startVoiceSearch() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        showNotification('Seu navegador não suporta pesquisa por voz');
+        return;
+    }
 
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        recognition = new SpeechRecognition();
-        recognition.lang = 'pt-BR';
-        recognition.continuous = false;
-        recognition.interimResults = false;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'pt-BR';
+    recognition.continuous = false;
+    recognition.interimResults = false;
 
-        const voiceBtn = document.querySelector('.voice-search-btn');
-        const searchInput = document.getElementById('searchInput');
+    const voiceBtn = document.querySelector('.voice-search-btn');
+    const searchInput = document.getElementById('searchInput');
 
-        // Criar feedback visual
-        let feedbackDiv = document.querySelector('.voice-feedback');
-        if (!feedbackDiv) {
-            feedbackDiv = document.createElement('div');
-            feedbackDiv.className = 'voice-feedback';
-            document.body.appendChild(feedbackDiv);
-        }
+    recognition.onresult = function(event) {
+        const result = event.results[0][0].transcript.toLowerCase();
+        searchInput.value = result;
+        
+        // Realizar a busca imediatamente
+        const filteredProducts = currentProducts.filter(product => {
+            const productNameLower = product.name.toLowerCase();
+            const productDescLower = product.description.toLowerCase();
+            return productNameLower.includes(result) || productDescLower.includes(result);
+        });
 
-        if (!isListening) {
-            // Iniciando gravação
-            recognition.start();
-            isListening = true;
-            voiceBtn.classList.add('listening');
-            feedbackDiv.innerHTML = `
-                <i class="fas fa-microphone" style="font-size: 2rem; color: var(--accent); margin-bottom: 1rem;"></i>
-                <p>Ouvindo... Fale o que você procura</p>
-            `;
-            feedbackDiv.classList.add('active');
-        } else {
-            // Parando gravação
-            recognition.stop();
-            isListening = false;
-            voiceBtn.classList.remove('listening');
-            feedbackDiv.classList.remove('active');
-        }
+        displayProducts(filteredProducts);
+    };
 
-        recognition.onresult = function(event) {
-            const result = event.results[0][0].transcript.toLowerCase();
-            searchInput.value = result;
-            feedbackDiv.classList.remove('active');
-            voiceBtn.classList.remove('listening');
-            isListening = false;
+    recognition.start();
+    voiceBtn.classList.add('listening');
+}
             
             // Função para calcular similaridade entre strings
             function similarity(s1, s2) {
@@ -5667,116 +5726,136 @@ function filterProductsByOccasion(products) {
         }
     });
 }
- function createFloatingMascot() {
-    const visitCount = parseInt(localStorage.getItem('visitCount') || '0');
-    
-    const mascotHTML = `
-        <div class="floating-mascot">
-            <div class="initial-tip">
-                Clique em mim para ouvir a dica do dia
-                <button class="close-tip">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="floating-mascot-dialog">
-                <button class="minimize-mascot">
-                    <i class="fas fa-minus"></i>
-                </button>
-                <p class="mascot-message">Olá! Bem-vindo à Cabana Açaí! 😊</p>
-            </div>
-            <div class="floating-mascot-container">
-                <video class="floating-mascot-video" loop playsinline muted></video>
+// Remova a função createFloatingMascot() e substitua por:
+function createVoiceOrderButton() {
+    const voiceOrderHTML = `
+        <div class="voice-order-button">
+            <div class="voice-button-container">
+                <i class="fas fa-microphone"></i>
+                <span>Pedir por Voz</span>
             </div>
         </div>
     `;
     
-    document.body.insertAdjacentHTML('beforeend', mascotHTML);
+    document.body.insertAdjacentHTML('beforeend', voiceOrderHTML);
     
-    const mascot = document.querySelector('.floating-mascot');
-    const video = mascot.querySelector('.floating-mascot-video');
-    const dialog = mascot.querySelector('.floating-mascot-dialog');
-    const minimizeBtn = mascot.querySelector('.minimize-mascot');
-    const closeTipBtn = mascot.querySelector('.close-tip');
-    const initialTip = mascot.querySelector('.initial-tip');
-    let isDialogVisible = true;
-    
-    // URLs dos vídeos
-    const videos = [
-        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness.mp4?alt=media&token=904bfced-6f04-459b-943a-50fa1a998aaf",
-        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness2.mp4?alt=media&token=b66fcb5e-1dfb-467f-926d-dbeb92d03061",
-        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/C%C3%B3pia%20de%20C%C3%B3pia%20de%20V%C3%ADdeo%20sem%20t%C3%ADtulo%202.mp4?alt=media&token=8c88b590-4f3f-4a52-b259-8b4b6e6c22b1",
-        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness%204.mp4?alt=media&token=d01ee1d9-33d1-44c9-a4cd-e1e61ef59543"
-    ];
-    
-    video.src = videos[visitCount % videos.length];
-    
-    // Observer para iniciar/pausar vídeo
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                video.play();
-            } else {
-                video.pause();
-            }
-        });
-    }, {
-        threshold: 0.5
-    });
-    
-    observer.observe(video);
-    
-    // Alternar áudio ao clicar
-    let isMuted = true;
-    mascot.querySelector('.floating-mascot-container').addEventListener('click', () => {
-        if (video.paused) {
-            video.play();
-        } else {
-            video.pause();
+    // Adicionar estilos
+    const style = document.createElement('style');
+    style.textContent = `
+        .voice-order-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--gradient);
+            padding: 12px 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
         }
-        video.muted = !video.muted;
-        isMuted = !isMuted;
-        
-        // Mostrar diálogo se estiver minimizado
-        if (!isDialogVisible) {
-            dialog.classList.add('active');
-            isDialogVisible = true;
-            minimizeBtn.innerHTML = '<i class="fas fa-minus"></i>';
-        }
-    });
-    
-    // Botão minimizar
-    minimizeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        isDialogVisible = !isDialogVisible;
-        dialog.classList.toggle('active');
-        minimizeBtn.innerHTML = isDialogVisible ? 
-            '<i class="fas fa-minus"></i>' : 
-            '<i class="fas fa-plus"></i>';
-    });
 
-    // Botão fechar dica inicial
-    closeTipBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        initialTip.style.display = 'none';
-    });
-    
-    // Mensagens rotativas
-    const messages = [
-        "Olá! Bem-vindo à Cabana Açaí! 😊",
-        "Que tal um açaí delicioso hoje? 🍇",
-        "Experimente nossos combos! 🥄",
-        "Posso ajudar você a escolher? 😃"
-    ];
-    
-    let messageIndex = 0;
-    const messageElement = mascot.querySelector('.mascot-message');
-    
-    setInterval(() => {
-        if (isDialogVisible) {
-            messageIndex = (messageIndex + 1) % messages.length;
-            messageElement.textContent = messages[messageIndex];
+        .voice-order-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         }
-    }, 5000);
+
+        .voice-button-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .voice-button-container i {
+            font-size: 1.2rem;
+        }
+
+        .voice-button-container span {
+            font-weight: 500;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Adicionar evento de clique
+    const voiceOrderBtn = document.querySelector('.voice-order-button');
+    voiceOrderBtn.addEventListener('click', () => {
+        toggleChat(); // Abre o chat
+        startVoiceOrderChat(); // Inicia o processo de pedido por voz
+    });
+}
+
+let mediaRecorder;
+let audioChunks = [];
+let isRecording = false;
+
+function gravarAudio() {
+    const audioButton = document.querySelector('.audio-button-full');
+    const recordingIndicator = document.querySelector('.recording-indicator');
+
+    if (!isRecording) {
+        // Inicia gravação
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    enviarAudioParaChatbot(audioBlob);
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                audioButton.style.display = 'none';
+                recordingIndicator.style.display = 'flex';
+            })
+            .catch(error => {
+                console.error('Erro ao acessar microfone:', error);
+                showNotification('Erro ao acessar microfone. Verifique as permissões.');
+            });
+    }
+}
+
+function pararGravacao() {
+    if (mediaRecorder && isRecording) {
+        mediaRecorder.stop();
+        isRecording = false;
+        document.querySelector('.audio-button-full').style.display = 'block';
+        document.querySelector('.recording-indicator').style.display = 'none';
+    }
+}
+
+function enviarAudioParaChatbot(audioBlob) {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'pt-BR';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onresult = (event) => {
+        const texto = event.results[0][0].transcript;
+        addMessageToChat(texto, 'user');
+        sendMessage(texto);
+    };
+
+    recognition.onerror = (error) => {
+        console.error('Erro no reconhecimento:', error);
+        showNotification('Não foi possível entender o áudio. Tente novamente.');
+    };
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        const audioUrl = new Blob([reader.result], { type: 'audio/wav' });
+        recognition.start();
+    };
+    reader.readAsArrayBuffer(audioBlob);
 }
 
 function initAcaiDoDia() {
@@ -6083,18 +6162,33 @@ function handleKeyPress(event) {
     <i class="fas fa-comments"></i>
 </div>
 
-<div class="chat-container">
+document.querySelector('.chat-container').innerHTML = `
     <div class="chat-header">
         <span>Chat Cabana Açaí</span>
         <i class="fas fa-times" onclick="toggleChat()"></i>
     </div>
     <div class="chat-messages"></div>
     <div class="chat-input-container">
-        <input type="text" class="chat-input" placeholder="Digite sua mensagem..." onkeypress="handleKeyPress(event)">
-        <button class="send-button" onclick="sendMessage()">
-            <i class="fas fa-paper-plane"></i>
-        </button>
+        <div class="input-row">
+            <input type="text" class="chat-input" placeholder="Digite sua mensagem..." onkeypress="handleKeyPress(event)">
+            <button class="send-button" onclick="sendMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+        <div class="audio-row">
+            <button class="audio-button-full" onclick="gravarAudio()">
+                <i class="fas fa-microphone"></i> Gravar Áudio
+            </button>
+        </div>
+        <div class="recording-indicator" style="display: none;">
+            <div class="audio-waves">
+                <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <button class="stop-recording" onclick="pararGravacao()">
+                <i class="fas fa-stop"></i> Parar Gravação
+            </button>
+        </div>
     </div>
-</div>
+`;
 </body>
 </html>
