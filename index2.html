@@ -4590,21 +4590,21 @@ function setupPaymentEvents() {
     });
 }
     
-function submitOrder() {
-    try {
-        // Obter o contador atual do localStorage ou inicializar como 1
-        let orderCounter = parseInt(localStorage.getItem('orderCounter') || '1');
-        
-        // Verificar se o contador está dentro do intervalo (1-9)
-        if (orderCounter > 9) {
-            orderCounter = 1; // Reiniciar para 1 quando atingir 9
-        }
-        
-        // Gerar o ID do pedido com o formato 5555X
-        const orderId = `5555${orderCounter}`;
-        
-        // Incrementar o contador para o próximo pedido
-        localStorage.setItem('orderCounter', (orderCounter + 1).toString());
+async function submitOrder() {
+  try {
+    // Obter o contador atual do localStorage ou inicializar como 1
+    let orderCounter = parseInt(localStorage.getItem('orderCounter') || '1');
+    
+    // Verificar se o contador está dentro do intervalo (1-9)
+    if (orderCounter > 9) {
+        orderCounter = 1; // Reiniciar para 1 quando atingir 9
+    }
+    
+    // Gerar o ID do pedido com o formato 5555X
+    const orderId = `5555${orderCounter}`;
+    
+    // Incrementar o contador para o próximo pedido
+    localStorage.setItem('orderCounter', (orderCounter + 1).toString());
         
         // Mapear métodos de pagamento
         const paymentMethodMap = {
