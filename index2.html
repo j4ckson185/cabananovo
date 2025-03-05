@@ -2135,62 +2135,40 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-    .search-bar {
-    position: relative;
-    width: 100%;
+.voice-order-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--gradient);
+    padding: 12px 24px;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    transition: all 0.3s ease;
     display: flex;
     align-items: center;
+    gap: 10px;
+    color: white;
 }
 
-.voice-search-btn {
-    position: absolute;
-    right: 1.2rem;
-    background: none;
-    border: none;
-    color: var(--text);
-    font-size: 1.3rem;
-    cursor: pointer;
-    padding: 0.5rem;
-    transition: all 0.3s ease;
+.voice-button-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.voice-search-btn:hover {
-    color: var(--accent);
-    transform: scale(1.1);
+.voice-button-container i {
+    font-size: 1.2rem;
 }
 
-.voice-search-btn.listening {
-    color: var(--accent);
-    animation: pulse 1.5s infinite;
+.voice-button-container span {
+    font-weight: 500;
 }
 
-.search-input {
-    padding-right: 3.5rem !important;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-}
-
-.voice-feedback {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: var(--surface);
-    padding: 2rem;
-    border-radius: 15px;
-    border: 1px solid var(--glass-border);
-    z-index: 1000;
-    text-align: center;
-    display: none;
-}
-
-.voice-feedback.active {
-    display: block;
-    animation: fadeIn 0.3s ease;
+.voice-order-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .audio-button-full {
@@ -2321,16 +2299,13 @@ document.head.appendChild(style);
         </button>
     </nav>
 
-<div class="search-container">
-    <div class="search-bar">
-        <i class="fas fa-search search-icon"></i>
-        <input type="text" class="search-input" placeholder="O que você quer comer hoje?" id="searchInput">
-        <button class="voice-search-btn" id="voiceSearchBtn">
-            <i class="fas fa-microphone"></i>
-        </button>
+    <div class="search-container">
+        <div class="search-bar">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" placeholder="O que você quer comer hoje?" id="searchInput">
+        </div>
     </div>
-</div>
-    
+
     <!-- Assistente de Ocasiões -->
 <div class="occasion-assistant">
     <div class="assistant-header">
@@ -2806,6 +2781,77 @@ let appliedCoupon = null;
 let customerInfo = {};
 let deliveryInfo = {};
 let acaiDoDiaQuantityInCart = 0;
+let recognition;
+let isListening = false;
+let mediaRecorder;
+let audioChunks = [];
+let isRecording = false;
+
+function gravarAudio() {
+    const audioButton = document.querySelector('.audio-button-full');
+    const recordingIndicator = document.querySelector('.recording-indicator');
+
+    if (!isRecording) {
+        // Inicia gravação
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    enviarAudioParaChatbot(audioBlob);
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                audioButton.style.display = 'none';
+                recordingIndicator.style.display = 'flex';
+            })
+            .catch(error => {
+                console.error('Erro ao acessar microfone:', error);
+                showNotification('Erro ao acessar microfone. Verifique as permissões.');
+            });
+    }
+}
+
+function pararGravacao() {
+    if (mediaRecorder && isRecording) {
+        mediaRecorder.stop();
+        isRecording = false;
+        document.querySelector('.audio-button-full').style.display = 'block';
+        document.querySelector('.recording-indicator').style.display = 'none';
+    }
+}
+
+function enviarAudioParaChatbot(audioBlob) {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'pt-BR';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onresult = (event) => {
+        const texto = event.results[0][0].transcript;
+        addMessageToChat(texto, 'user');
+        sendMessage(texto);
+    };
+
+    recognition.onerror = (error) => {
+        console.error('Erro no reconhecimento:', error);
+        showNotification('Não foi possível entender o áudio. Tente novamente.');
+    };
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        const audioUrl = new Blob([reader.result], { type: 'audio/wav' });
+        recognition.start();
+    };
+    reader.readAsArrayBuffer(audioBlob);
+}
 
 async function searchOrderHistory() {
     const phoneInput = document.getElementById('historyPhoneInput');
@@ -5366,10 +5412,12 @@ openProductModal = function(product) {
     
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM Carregado'); 
+    console.log('DOM Carregado'); // Log para diagnóstico
 
-    // Modifique a estrutura do chat no HTML
-    document.querySelector('.chat-container').innerHTML = `
+    // Configurar estrutura do chat
+const chatContainer = document.querySelector('.chat-container');
+if (chatContainer) {
+    chatContainer.innerHTML = `
         <div class="chat-header">
             <span>Chat Cabana Açaí</span>
             <i class="fas fa-times" onclick="toggleChat()"></i>
@@ -5397,205 +5445,10 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         </div>
     `;
+}
 
     createVoiceOrderButton();
     addTimeMachineButton(); // Adiciona o botão do Time Machine
-}); // Fim do DOMContentLoaded
-
-let recognition;
-let isListening = false;
-let mediaRecorder;
-let audioChunks = [];
-let isRecording = false;
-
-function gravarAudio() {
-    const audioButton = document.querySelector('.audio-button-full');
-    const recordingIndicator = document.querySelector('.recording-indicator');
-
-    if (!isRecording) {
-        // Inicia gravação
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(stream => {
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-
-                mediaRecorder.ondataavailable = (event) => {
-                    audioChunks.push(event.data);
-                };
-
-                mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                    enviarAudioParaChatbot(audioBlob);
-                };
-
-                mediaRecorder.start();
-                isRecording = true;
-                audioButton.style.display = 'none';
-                recordingIndicator.style.display = 'flex';
-            })
-            .catch(error => {
-                console.error('Erro ao acessar microfone:', error);
-                showNotification('Erro ao acessar microfone. Verifique as permissões.');
-            });
-    }
-}
-
-function pararGravacao() {
-    if (mediaRecorder && isRecording) {
-        mediaRecorder.stop();
-        isRecording = false;
-        document.querySelector('.audio-button-full').style.display = 'block';
-        document.querySelector('.recording-indicator').style.display = 'none';
-    }
-}
-
-function enviarAudioParaChatbot(audioBlob) {
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = 'pt-BR';
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    recognition.onresult = (event) => {
-        const texto = event.results[0][0].transcript;
-        addMessageToChat(texto, 'user');
-        sendMessage(texto);
-    };
-
-    recognition.onerror = (error) => {
-        console.error('Erro no reconhecimento:', error);
-        showNotification('Não foi possível entender o áudio. Tente novamente.');
-    };
-
-    const reader = new FileReader();
-    reader.onload = () => {
-        const audioUrl = new Blob([reader.result], { type: 'audio/wav' });
-        recognition.start();
-    };
-    reader.readAsArrayBuffer(audioBlob);
-}
-
-function startVoiceSearch() {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        showNotification('Seu navegador não suporta pesquisa por voz');
-        return;
-    }
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.lang = 'pt-BR';
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    const voiceBtn = document.querySelector('.voice-search-btn');
-    const searchInput = document.getElementById('searchInput');
-
-    recognition.onresult = function(event) {
-        const result = event.results[0][0].transcript.toLowerCase();
-        searchInput.value = result;
-        
-        // Realizar a busca imediatamente
-        const filteredProducts = currentProducts.filter(product => {
-            const productNameLower = product.name.toLowerCase();
-            const productDescLower = product.description.toLowerCase();
-            return productNameLower.includes(result) || productDescLower.includes(result);
-        });
-
-        displayProducts(filteredProducts);
-    };
-
-    recognition.start();
-    voiceBtn.classList.add('listening');
-}
-            
-            // Função para calcular similaridade entre strings
-            function similarity(s1, s2) {
-                let longer = s1;
-                let shorter = s2;
-                if (s1.length < s2.length) {
-                    longer = s2;
-                    shorter = s1;
-                }
-                const longerLength = longer.length;
-                if (longerLength === 0) {
-                    return 1.0;
-                }
-                return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
-            }
-
-            function editDistance(s1, s2) {
-                s1 = s1.toLowerCase();
-                s2 = s2.toLowerCase();
-                const costs = [];
-                for (let i = 0; i <= s1.length; i++) {
-                    let lastValue = i;
-                    for (let j = 0; j <= s2.length; j++) {
-                        if (i === 0) {
-                            costs[j] = j;
-                        } else if (j > 0) {
-                            let newValue = costs[j - 1];
-                            if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
-                                newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-                            }
-                            costs[j - 1] = lastValue;
-                            lastValue = newValue;
-                        }
-                    }
-                    if (i > 0) {
-                        costs[s2.length] = lastValue;
-                    }
-                }
-                return costs[s2.length];
-            }
-
-            // Filtrar produtos com base na similaridade
-            const filteredProducts = currentProducts.filter(product => {
-                const productNameLower = product.name.toLowerCase();
-                const productDescLower = product.description.toLowerCase();
-                
-                // Palavras-chave do resultado da pesquisa por voz
-                const searchWords = result.split(' ');
-                
-                return searchWords.some(word => {
-                    return productNameLower.split(' ').some(productWord => 
-                        similarity(word, productWord) > 0.7) || 
-                        productDescLower.split(' ').some(descWord => 
-                            similarity(word, descWord) > 0.7);
-                });
-            });
-
-            displayProducts(filteredProducts);
-
-            if (filteredProducts.length === 0) {
-                showNotification('Não encontrei exatamente o que você disse. Mostrando opções similares...');
-                // Mostrar produtos com menor similaridade
-                const alternativeProducts = currentProducts.filter(product => {
-                    const productNameLower = product.name.toLowerCase();
-                    return similarity(result, productNameLower) > 0.3;
-                });
-                displayProducts(alternativeProducts);
-            }
-        };
-
-        recognition.onerror = function(event) {
-            console.error('Erro no reconhecimento de voz:', event.error);
-            feedbackDiv.classList.remove('active');
-            voiceBtn.classList.remove('listening');
-            isListening = false;
-            showNotification('Ops! Não consegui entender. Tente novamente.');
-        };
-
-        recognition.onend = function() {
-            feedbackDiv.classList.remove('active');
-            voiceBtn.classList.remove('listening');
-            isListening = false;
-        };
-    }
-
-    // Adicionar o evento de clique no botão
-    const voiceSearchBtn = document.getElementById('voiceSearchBtn');
-    if (voiceSearchBtn) {
-        voiceSearchBtn.addEventListener('click', startVoiceSearch);
-    }
 
 
 
@@ -5826,7 +5679,6 @@ function filterProductsByOccasion(products) {
         }
     });
 }
- // Remova a função createFloatingMascot() e substitua por:
 function createVoiceOrderButton() {
     const voiceOrderHTML = `
         <div class="voice-order-button">
@@ -5839,53 +5691,57 @@ function createVoiceOrderButton() {
     
     document.body.insertAdjacentHTML('beforeend', voiceOrderHTML);
     
-    // Adicionar estilos
-    const style = document.createElement('style');
-    style.textContent = `
-        .voice-order-button {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--gradient);
-            padding: 12px 24px;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            z-index: 1000;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: white;
-        }
-
-        .voice-order-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .voice-button-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .voice-button-container i {
-            font-size: 1.2rem;
-        }
-
-        .voice-button-container span {
-            font-weight: 500;
-        }
-    `;
-    document.head.appendChild(style);
-
     // Adicionar evento de clique
     const voiceOrderBtn = document.querySelector('.voice-order-button');
     voiceOrderBtn.addEventListener('click', () => {
         toggleChat(); // Abre o chat
         startVoiceOrderChat(); // Inicia o processo de pedido por voz
     });
+}
+
+function startVoiceSearch() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        showNotification('Seu navegador não suporta pesquisa por voz');
+        return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'pt-BR';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    const voiceBtn = document.querySelector('.voice-search-btn');
+    const searchInput = document.getElementById('searchInput');
+
+    recognition.onresult = function(event) {
+        const result = event.results[0][0].transcript.toLowerCase();
+        searchInput.value = result;
+        
+        // Realizar a busca imediatamente
+        const filteredProducts = currentProducts.filter(product => {
+            const productNameLower = product.name.toLowerCase();
+            const productDescLower = product.description.toLowerCase();
+            return productNameLower.includes(result) || productDescLower.includes(result);
+        });
+
+        displayProducts(filteredProducts);
+        
+        voiceBtn.classList.remove('listening');
+    };
+
+    recognition.onerror = function(event) {
+        console.error('Erro no reconhecimento de voz:', event.error);
+        voiceBtn.classList.remove('listening');
+        showNotification('Ops! Não consegui entender. Tente novamente.');
+    };
+
+    recognition.onend = function() {
+        voiceBtn.classList.remove('listening');
+    };
+
+    recognition.start();
+    voiceBtn.classList.add('listening');
 }
 
 function initAcaiDoDia() {
@@ -6031,7 +5887,16 @@ let chatHistory = [];
 
 function toggleChat() {
     const chatContainer = document.querySelector('.chat-container');
-    chatContainer.style.display = chatContainer.style.display === 'none' || !chatContainer.style.display ? 'flex' : 'none';
+    if (chatContainer.style.display === 'none' || !chatContainer.style.display) {
+        chatContainer.style.display = 'flex';
+        // Adicionar mensagem inicial se não houver mensagens
+        const messages = document.querySelector('.chat-messages');
+        if (!messages.children.length) {
+            addMessageToChat('Olá! Como posso ajudar você hoje? Você pode digitar ou gravar um áudio!', 'bot');
+        }
+    } else {
+        chatContainer.style.display = 'none';
+    }
 }
 
 async function sendMessage() {
@@ -6082,14 +5947,34 @@ function addMessageToChat(message, type) {
     const messagesContainer = document.querySelector('.chat-messages');
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${type}-message`;
-    messageDiv.textContent = message;
+    if (type === 'bot') {
+        messageDiv.innerHTML = `<span class="bot-prefix">🤖</span>${message}`;
+    } else {
+        messageDiv.textContent = message;
+    }
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
+function startVoiceOrderChat() {
+    toggleChat(); // Abre o chat se estiver fechado
+    const messages = document.querySelector('.chat-messages');
+    if (!messages.children.length) {
+        addMessageToChat('Olá! Vou ajudar você a fazer seu pedido por voz. Você pode me dizer o que gostaria de pedir ou usar o botão de gravação abaixo.', 'bot');
+    }
+    
+    // Se o chat já estiver aberto, adiciona uma nova mensagem
+    addMessageToChat('O que você gostaria de pedir hoje?', 'bot');
+}
+
 function handleKeyPress(event) {
     if (event.key === 'Enter') {
-        sendMessage();
+        const input = document.querySelector('.chat-input');
+        const message = input.value.trim();
+        if (message) {
+            sendMessage(message);
+            input.value = '';
+        }
     }
 }
 </script>
@@ -6188,9 +6073,20 @@ function handleKeyPress(event) {
         <button onclick="closeStoreClosedPopup()">Fechar</button>
     </div>
 </div>
-    <div class="chat-button" onclick="toggleChat()">
+<div class="chat-button" onclick="toggleChat()">
     <i class="fas fa-comments"></i>
 </div>
 
+<div class="chat-container">
+    <!-- O conteúdo será inserido via JavaScript -->
+</div>
+    <div class="chat-messages"></div>
+    <div class="chat-input-container">
+        <input type="text" class="chat-input" placeholder="Digite sua mensagem..." onkeypress="handleKeyPress(event)">
+        <button class="send-button" onclick="sendMessage()">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+</div>
 </body>
 </html>
