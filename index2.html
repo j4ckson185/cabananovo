@@ -5368,6 +5368,37 @@ openProductModal = function(product) {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Carregado'); // Log para diagnóstico
 
+              // Modifique a estrutura do chat no HTML
+document.querySelector('.chat-container').innerHTML = `
+    <div class="chat-header">
+        <span>Chat Cabana Açaí</span>
+        <i class="fas fa-times" onclick="toggleChat()"></i>
+    </div>
+    <div class="chat-messages"></div>
+    <div class="chat-input-container">
+        <div class="input-row">
+            <input type="text" class="chat-input" placeholder="Digite sua mensagem..." onkeypress="handleKeyPress(event)">
+            <button class="send-button" onclick="sendMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+        <div class="audio-row">
+            <button class="audio-button-full" onclick="gravarAudio()">
+                <i class="fas fa-microphone"></i> Gravar Áudio
+            </button>
+        </div>
+        <div class="recording-indicator" style="display: none;">
+            <div class="audio-waves">
+                <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <button class="stop-recording" onclick="pararGravacao()">
+                <i class="fas fa-stop"></i> Parar Gravação
+            </button>
+        </div>
+    </div>
+`;
+}
+
     createVoiceOrderButton();
     addTimeMachineButton(); // Adiciona o botão do Time Machine
     let recognition;
@@ -5489,36 +5520,6 @@ function startVoiceSearch() {
                 }
                 return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
             }
-
-          // Modifique a estrutura do chat no HTML
-document.querySelector('.chat-container').innerHTML = `
-    <div class="chat-header">
-        <span>Chat Cabana Açaí</span>
-        <i class="fas fa-times" onclick="toggleChat()"></i>
-    </div>
-    <div class="chat-messages"></div>
-    <div class="chat-input-container">
-        <div class="input-row">
-            <input type="text" class="chat-input" placeholder="Digite sua mensagem..." onkeypress="handleKeyPress(event)">
-            <button class="send-button" onclick="sendMessage()">
-                <i class="fas fa-paper-plane"></i>
-            </button>
-        </div>
-        <div class="audio-row">
-            <button class="audio-button-full" onclick="gravarAudio()">
-                <i class="fas fa-microphone"></i> Gravar Áudio
-            </button>
-        </div>
-        <div class="recording-indicator" style="display: none;">
-            <div class="audio-waves">
-                <span></span><span></span><span></span><span></span><span></span>
-            </div>
-            <button class="stop-recording" onclick="pararGravacao()">
-                <i class="fas fa-stop"></i> Parar Gravação
-            </button>
-        </div>
-    </div>
-`;
 
             function editDistance(s1, s2) {
                 s1 = s1.toLowerCase();
