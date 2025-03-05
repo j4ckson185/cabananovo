@@ -5366,46 +5366,47 @@ openProductModal = function(product) {
     
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM Carregado'); // Log para diagnóstico
+    console.log('DOM Carregado'); 
 
-              // Modifique a estrutura do chat no HTML
-document.querySelector('.chat-container').innerHTML = `
-    <div class="chat-header">
-        <span>Chat Cabana Açaí</span>
-        <i class="fas fa-times" onclick="toggleChat()"></i>
-    </div>
-    <div class="chat-messages"></div>
-    <div class="chat-input-container">
-        <div class="input-row">
-            <input type="text" class="chat-input" placeholder="Digite sua mensagem..." onkeypress="handleKeyPress(event)">
-            <button class="send-button" onclick="sendMessage()">
-                <i class="fas fa-paper-plane"></i>
-            </button>
+    // Modifique a estrutura do chat no HTML
+    document.querySelector('.chat-container').innerHTML = `
+        <div class="chat-header">
+            <span>Chat Cabana Açaí</span>
+            <i class="fas fa-times" onclick="toggleChat()"></i>
         </div>
-        <div class="audio-row">
-            <button class="audio-button-full" onclick="gravarAudio()">
-                <i class="fas fa-microphone"></i> Gravar Áudio
-            </button>
-        </div>
-        <div class="recording-indicator" style="display: none;">
-            <div class="audio-waves">
-                <span></span><span></span><span></span><span></span><span></span>
+        <div class="chat-messages"></div>
+        <div class="chat-input-container">
+            <div class="input-row">
+                <input type="text" class="chat-input" placeholder="Digite sua mensagem..." onkeypress="handleKeyPress(event)">
+                <button class="send-button" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
             </div>
-            <button class="stop-recording" onclick="pararGravacao()">
-                <i class="fas fa-stop"></i> Parar Gravação
-            </button>
+            <div class="audio-row">
+                <button class="audio-button-full" onclick="gravarAudio()">
+                    <i class="fas fa-microphone"></i> Gravar Áudio
+                </button>
+            </div>
+            <div class="recording-indicator" style="display: none;">
+                <div class="audio-waves">
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <button class="stop-recording" onclick="pararGravacao()">
+                    <i class="fas fa-stop"></i> Parar Gravação
+                </button>
+            </div>
         </div>
-    </div>
-`;
-});
+    `;
 
     createVoiceOrderButton();
     addTimeMachineButton(); // Adiciona o botão do Time Machine
-    let recognition;
-    let isListening = false;
-    let mediaRecorder;
-    let audioChunks = [];
-    let isRecording = false;
+}); // Fim do DOMContentLoaded
+
+let recognition;
+let isListening = false;
+let mediaRecorder;
+let audioChunks = [];
+let isRecording = false;
 
 function gravarAudio() {
     const audioButton = document.querySelector('.audio-button-full');
