@@ -2901,7 +2901,18 @@ function showCreateOrderModal() {
    const createOrderModal = document.getElementById('createOrderModal');
    const modalContent = createOrderModal.querySelector('.modal-content');
 
-   document.getElementById('orderId').value = '5555';
+   // Obter o contador atual do localStorage ou inicializar como 1
+   let orderCounter = parseInt(localStorage.getItem('orderCounter') || '1');
+   
+   // Verificar se o contador está dentro do intervalo (1-9)
+   if (orderCounter > 9) {
+       orderCounter = 1; // Reiniciar para 1 quando atingir 9
+   }
+   
+   // Gerar o ID do pedido com o formato 5555X
+   const orderId = `5555${orderCounter}`;
+
+   document.getElementById('orderId').value = orderId;
 
    // Limpar campos do formulário
    document.getElementById('customerName').value = '';
@@ -4579,8 +4590,22 @@ function setupPaymentEvents() {
     });
 }
     
-async function submitOrder() {
+function submitOrder() {
     try {
+        // Obter o contador atual do localStorage ou inicializar como 1
+        let orderCounter = parseInt(localStorage.getItem('orderCounter') || '1');
+        
+        // Verificar se o contador está dentro do intervalo (1-9)
+        if (orderCounter > 9) {
+            orderCounter = 1; // Reiniciar para 1 quando atingir 9
+        }
+        
+        // Gerar o ID do pedido com o formato 5555X
+        const orderId = `5555${orderCounter}`;
+        
+        // Incrementar o contador para o próximo pedido
+        localStorage.setItem('orderCounter', (orderCounter + 1).toString());
+        
         // Mapear métodos de pagamento
         const paymentMethodMap = {
             'money': 'Dinheiro',
@@ -4620,7 +4645,7 @@ async function submitOrder() {
 
         // Preparar objeto para a API no formato original
         const order = {
-            id: "5555", // ou gerar um ID único se necessário
+            id: orderId, // Usando o novo ID gerado com número sequencial
             status: "open",
             paymentMethod: paymentMethod === 'pix' ? 'online' : paymentMethod,
             orderTotal: total,
@@ -4675,7 +4700,7 @@ async function submitOrder() {
         }
 
         // Construir mensagem WhatsApp
-        let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
+        let message = `*🛍️ Novo Pedido Nº ${orderId} - Cabana Açaí*\n\n`;
         
         // Dados do cliente
         message += `*Cliente:* ${customerName}\n`;
@@ -4778,7 +4803,10 @@ function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
         'online': 'PIX'
     };
 
-    let message = `*🛍️ Novo Pedido - Cabana Açaí*\n\n`;
+    // Usar o mesmo ID de pedido gerado
+    const orderId = document.getElementById('orderId').value;
+
+    let message = `*🛍️ Novo Pedido Nº ${orderId} - Cabana Açaí*\n\n`;
     
     // Informações do cliente
     message += `*Cliente:* ${deliveryInfo.customerName}\n`;
