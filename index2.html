@@ -5413,6 +5413,7 @@ openProductModal = function(product) {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Carregado'); // Log para diagnóstico
+    
     // Configurar estrutura do chat
     const chatContainer = document.querySelector('.chat-container');
     if (chatContainer) {
@@ -5445,8 +5446,10 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
     }
+
     createVoiceOrderButton();
     addTimeMachineButton(); // Adiciona o botão do Time Machine
+    
     // Evento para o ícone do carrinho
     const cartIcon = document.querySelector('.cart-icon');
     if (cartIcon) {
@@ -5454,6 +5457,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         console.error('Ícone do carrinho não encontrado');
     }
+    
     // Evento para botão de checkout
     const checkoutButton = document.querySelector('.checkout');
     if (checkoutButton) {
@@ -5462,7 +5466,8 @@ document.addEventListener('DOMContentLoaded', () => {
             showCreateOrderModal();
         });
     } 
-    // ADICIONAR AQUI - Event listeners para fechar modais
+
+    // Event listeners para fechar modais
     document.querySelectorAll('.close-modal').forEach(button => {
         button.addEventListener('click', (e) => {
             const modal = e.target.closest('.modal');
@@ -5471,15 +5476,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+    
     // Firebase listeners
     loadMenuProducts();
     loadCategories();
     checkStoreStatus();
     setInterval(checkStoreStatus, 60000);
     setupPaymentEvents();
-}); // Adicionar este fechamento
 
-        // Configuração do Intersection Observer para o mascote
+    // Configuração do Intersection Observer para o mascote
     const mascotVideo = document.querySelector('.mascot-video');
     if (mascotVideo) {
         const observer = new IntersectionObserver((entries) => {
@@ -5504,8 +5509,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-});
+}); // Fechamento do DOMContentLoaded
    
    // Categories
    document.querySelectorAll('.category-btn').forEach(button => {
