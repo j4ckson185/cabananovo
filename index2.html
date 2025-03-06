@@ -2244,6 +2244,56 @@ document.head.appendChild(style);
     font-weight: 600;
 }
 
+.voice-search-btn {
+    position: absolute;
+    right: 1.2rem;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.voice-search-btn:hover {
+    color: var(--accent);
+    transform: scale(1.1);
+}
+
+.voice-search-btn.listening {
+    color: var(--accent);
+    animation: pulse 1.5s infinite;
+}
+
+.search-input {
+    padding-right: 3.5rem !important;
+}
+
+.voice-feedback {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: 15px;
+    border: 1px solid var(--glass-border);
+    z-index: 1000;
+    text-align: center;
+    display: none;
+}
+
+.voice-feedback.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 </style>
 </head>
 <body>
@@ -2299,12 +2349,15 @@ document.head.appendChild(style);
         </button>
     </nav>
 
-    <div class="search-container">
-        <div class="search-bar">
-            <i class="fas fa-search search-icon"></i>
-            <input type="text" class="search-input" placeholder="O que você quer comer hoje?" id="searchInput">
-        </div>
+<div class="search-container">
+    <div class="search-bar">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" class="search-input" placeholder="O que você quer comer hoje?" id="searchInput">
+        <button class="voice-search-btn" onclick="startVoiceSearch()">
+            <i class="fas fa-microphone"></i>
+        </button>
     </div>
+</div>
 
     <!-- Assistente de Ocasiões -->
 <div class="occasion-assistant">
@@ -2836,21 +2889,49 @@ function enviarAudioParaChatbot(audioBlob) {
 
     recognition.onresult = (event) => {
         const texto = event.results[0][0].transcript;
-        addMessageToChat(texto, 'user');
-        sendMessage(texto);
+        addMessageToChat(texto, 'user'); // Adiciona a mensagem do usuário
+
+        // Simulando uma pequena espera antes da resposta do bot
+        addMessageToChat('Processando sua mensagem...', 'bot');
+        
+        // Enviar para o Chatbase
+        fetch('https://www.chatbase.co/api/v1/chat', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${CHATBASE_CONFIG.apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                messages: [{ content: texto, role: 'user' }],
+                chatbotId: CHATBASE_CONFIG.chatbotId,
+                stream: false,
+                temperature: 0
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Remove a mensagem de processamento
+            const messages = document.querySelector('.chat-messages');
+            messages.removeChild(messages.lastChild);
+            
+            // Adiciona a resposta do chatbot
+            if (data.text) {
+                addMessageToChat(data.text, 'bot');
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao enviar mensagem para o chatbot:', error);
+            addMessageToChat('Desculpe, tive um problema ao processar sua mensagem. Pode tentar novamente?', 'bot');
+        });
     };
 
     recognition.onerror = (error) => {
         console.error('Erro no reconhecimento:', error);
-        showNotification('Não foi possível entender o áudio. Tente novamente.');
+        addMessageToChat('Não consegui entender o áudio. Pode tentar novamente?', 'bot');
     };
 
-    const reader = new FileReader();
-    reader.onload = () => {
-        const audioUrl = new Blob([reader.result], { type: 'audio/wav' });
-        recognition.start();
-    };
-    reader.readAsArrayBuffer(audioBlob);
+    // Iniciar o reconhecimento
+    recognition.start();
 }
 
 async function searchOrderHistory() {
@@ -5704,7 +5785,7 @@ function startVoiceSearch() {
     }
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
+    const recognition = new SpeechRecognition();
     recognition.lang = 'pt-BR';
     recognition.continuous = false;
     recognition.interimResults = false;
@@ -5712,34 +5793,67 @@ function startVoiceSearch() {
     const voiceBtn = document.querySelector('.voice-search-btn');
     const searchInput = document.getElementById('searchInput');
 
+    // Feedback visual
+    let feedbackDiv = document.querySelector('.voice-feedback');
+    if (!feedbackDiv) {
+        feedbackDiv = document.createElement('div');
+        feedbackDiv.className = 'voice-feedback';
+        document.body.appendChild(feedbackDiv);
+    }
+
+    voiceBtn.classList.add('listening');
+    feedbackDiv.innerHTML = `
+        <i class="fas fa-microphone" style="font-size: 2rem; color: var(--accent); margin-bottom: 1rem;"></i>
+        <p>Ouvindo... Fale o que você procura</p>
+    `;
+    feedbackDiv.classList.add('active');
+
     recognition.onresult = function(event) {
         const result = event.results[0][0].transcript.toLowerCase();
         searchInput.value = result;
+        voiceBtn.classList.remove('listening');
+        feedbackDiv.classList.remove('active');
         
         // Realizar a busca imediatamente
         const filteredProducts = currentProducts.filter(product => {
             const productNameLower = product.name.toLowerCase();
             const productDescLower = product.description.toLowerCase();
-            return productNameLower.includes(result) || productDescLower.includes(result);
+            
+            // Busca por similaridade
+            return result.split(' ').some(word => 
+                productNameLower.includes(word) || 
+                productDescLower.includes(word)
+            );
         });
 
         displayProducts(filteredProducts);
-        
-        voiceBtn.classList.remove('listening');
+
+        if (filteredProducts.length === 0) {
+            showNotification('Não encontrei exatamente o que você disse. Mostrando opções similares...');
+            // Mostrar produtos com menor similaridade
+            const alternativeProducts = currentProducts.filter(product => {
+                const productNameLower = product.name.toLowerCase();
+                return productNameLower.split(' ').some(word => 
+                    result.includes(word) || word.includes(result)
+                );
+            });
+            displayProducts(alternativeProducts);
+        }
     };
 
     recognition.onerror = function(event) {
         console.error('Erro no reconhecimento de voz:', event.error);
         voiceBtn.classList.remove('listening');
+        feedbackDiv.classList.remove('active');
         showNotification('Ops! Não consegui entender. Tente novamente.');
     };
 
     recognition.onend = function() {
         voiceBtn.classList.remove('listening');
+        feedbackDiv.classList.remove('active');
     };
 
     recognition.start();
-    voiceBtn.classList.add('listening');
 }
 
 function initAcaiDoDia() {
