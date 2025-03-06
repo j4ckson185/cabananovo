@@ -2135,6 +2135,129 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
+.audio-button-full {
+    width: 100%;
+    padding: 12px;
+    background: var(--gradient);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.audio-button-full i {
+    margin-right: 8px;
+}
+
+.recording-indicator {
+    width: 100%;
+    padding: 15px;
+    background: var(--surface);
+    border-radius: 8px;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.audio-waves {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    margin-bottom: 15px;
+}
+
+.audio-waves span {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    margin: 0 3px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: wave 1.5s infinite ease-in-out;
+}
+
+.audio-waves span:nth-child(1) { animation-delay: 0s; }
+.audio-waves span:nth-child(2) { animation-delay: 0.3s; }
+.audio-waves span:nth-child(3) { animation-delay: 0.6s; }
+.audio-waves span:nth-child(4) { animation-delay: 0.3s; }
+.audio-waves span:nth-child(5) { animation-delay: 0s; }
+
+@keyframes wave {
+    0%, 100% { height: 5px; }
+    50% { height: 30px; }
+}
+
+.stop-recording {
+    padding: 10px 20px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.voice-search-btn {
+    position: absolute;
+    right: 1.2rem;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.voice-search-btn:hover {
+    color: var(--accent);
+    transform: scale(1.1);
+}
+
+.voice-search-btn.listening {
+    color: var(--accent);
+    animation: pulse 1.5s infinite;
+}
+
+.search-input {
+    padding-right: 3.5rem !important;
+}
+
+.voice-feedback {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: 15px;
+    border: 1px solid var(--glass-border);
+    z-index: 1000;
+    text-align: center;
+    display: none;
+}
+
+.voice-feedback.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 </style>
 </head>
 <body>
@@ -2190,12 +2313,15 @@ document.head.appendChild(style);
         </button>
     </nav>
 
-    <div class="search-container">
-        <div class="search-bar">
-            <i class="fas fa-search search-icon"></i>
-            <input type="text" class="search-input" placeholder="O que você quer comer hoje?" id="searchInput">
-        </div>
+<div class="search-container">
+    <div class="search-bar">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" class="search-input" placeholder="O que você quer comer hoje?" id="searchInput">
+        <button class="voice-search-btn" onclick="startVoiceSearch()">
+            <i class="fas fa-microphone"></i>
+        </button>
     </div>
+</div>
 
     <!-- Assistente de Ocasiões -->
 <div class="occasion-assistant">
@@ -2672,6 +2798,167 @@ let appliedCoupon = null;
 let customerInfo = {};
 let deliveryInfo = {};
 let acaiDoDiaQuantityInCart = 0;
+let recognition;
+let isListening = false;
+let mediaRecorder;
+let audioChunks = [];
+let isRecording = false;
+
+function gravarAudio() {
+    const audioButton = document.querySelector('.audio-button-full');
+    const recordingIndicator = document.querySelector('.recording-indicator');
+    const replyInput = document.getElementById('replyInput') || document.querySelector('.chat-input');
+    
+    // Verifica se o navegador suporta reconhecimento de voz
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert('Seu navegador não suporta reconhecimento de voz. Tente usar Chrome ou Edge.');
+        return;
+    }
+    
+    // Se já estiver gravando, para a gravação
+    if (isRecording) {
+        recognition.stop();
+        audioButton.style.display = 'block';
+        recordingIndicator.style.display = 'none';
+        isRecording = false;
+        return;
+    }
+    
+    // Inicializa o objeto de reconhecimento
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'pt-BR';
+    recognition.continuous = true;
+    
+    // IMPORTANTE: Desativar resultados interinos para evitar repetições
+    recognition.interimResults = false;
+    
+    // Limpa o transcript ao iniciar nova gravação
+    finalTranscript = '';
+    replyInput.value = '';
+    
+    // Mostra o indicador de gravação
+    audioButton.style.display = 'none';
+    recordingIndicator.style.display = 'flex';
+    isRecording = true;
+    
+    // Evento quando o resultado é reconhecido
+    recognition.onresult = function(event) {
+        // Processa apenas os novos resultados desde o último evento
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+                // Adiciona espaço apenas se já tiver conteúdo
+                if (finalTranscript.length > 0) {
+                    finalTranscript += ' ';
+                }
+                
+                // Adiciona apenas o novo fragmento de texto
+                finalTranscript += event.results[i][0].transcript.trim();
+                
+                // Atualiza o campo de entrada
+                replyInput.value = finalTranscript;
+            }
+        }
+    };
+    
+    // Eventos para tratar erros
+    recognition.onerror = function(event) {
+        console.error('Erro no reconhecimento de voz:', event.error);
+        pararGravacao();
+    };
+    
+    // Se a gravação terminar automaticamente, reinicie
+    recognition.onend = function() {
+        if (isRecording) {
+            try {
+                recognition.start();
+            } catch (e) {
+                console.error('Erro ao reiniciar gravação:', e);
+                pararGravacao();
+            }
+        }
+    };
+    
+    // Inicia a gravação
+    try {
+        recognition.start();
+    } catch (e) {
+        console.error('Erro ao iniciar gravação:', e);
+        pararGravacao();
+        showNotification('Erro ao iniciar gravação de voz. Tente novamente.');
+    }
+}
+
+// Função para parar a gravação
+function pararGravacao() {
+    if (recognition) {
+        try {
+            recognition.stop();
+        } catch (e) {
+            console.error('Erro ao parar o reconhecimento:', e);
+        }
+    }
+    
+    isRecording = false;
+    const audioButton = document.querySelector('.audio-button-full');
+    const recordingIndicator = document.querySelector('.recording-indicator');
+    
+    if (audioButton) audioButton.style.display = 'block';
+    if (recordingIndicator) recordingIndicator.style.display = 'none';
+}
+    
+function enviarAudioParaChatbot(audioBlob) {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'pt-BR';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onresult = (event) => {
+        const texto = event.results[0][0].transcript;
+        addMessageToChat(texto, 'user'); // Adiciona a mensagem do usuário
+
+        // Simulando uma pequena espera antes da resposta do bot
+        addMessageToChat('Processando sua mensagem...', 'bot');
+        
+        // Enviar para o Chatbase
+        fetch('https://www.chatbase.co/api/v1/chat', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${CHATBASE_CONFIG.apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                messages: [{ content: texto, role: 'user' }],
+                chatbotId: CHATBASE_CONFIG.chatbotId,
+                stream: false,
+                temperature: 0
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Remove a mensagem de processamento
+            const messages = document.querySelector('.chat-messages');
+            messages.removeChild(messages.lastChild);
+            
+            // Adiciona a resposta do chatbot
+            if (data.text) {
+                addMessageToChat(data.text, 'bot');
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao enviar mensagem para o chatbot:', error);
+            addMessageToChat('Desculpe, tive um problema ao processar sua mensagem. Pode tentar novamente?', 'bot');
+        });
+    };
+
+    recognition.onerror = (error) => {
+        console.error('Erro no reconhecimento:', error);
+        addMessageToChat('Não consegui entender o áudio. Pode tentar novamente?', 'bot');
+    };
+
+    // Iniciar o reconhecimento
+    recognition.start();
+}
 
 async function searchOrderHistory() {
     const phoneInput = document.getElementById('historyPhoneInput');
@@ -5234,11 +5521,41 @@ openProductModal = function(product) {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Carregado'); // Log para diagnóstico
 
-    createFloatingMascot(); // Adicionamos aqui a criação do mascote flutuante
     addTimeMachineButton(); // Adiciona o botão do Time Machine
-
-
-
+    
+    // Configurar estrutura do chat
+    const chatContainer = document.querySelector('.chat-container');
+    if (chatContainer) {
+        chatContainer.innerHTML = `
+            <div class="chat-header">
+                <span>Chat Cabana Açaí</span>
+                <i class="fas fa-times" onclick="toggleChat()"></i>
+            </div>
+            <div class="chat-messages"></div>
+            <div class="chat-input-container">
+                <div class="input-row">
+                    <input type="text" class="chat-input" placeholder="Digite sua mensagem..." onkeypress="handleKeyPress(event)">
+                    <button class="send-button" onclick="sendMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="audio-row">
+                    <button class="audio-button-full" onclick="gravarAudio()">
+                        <i class="fas fa-microphone"></i> Gravar Áudio
+                    </button>
+                </div>
+                <div class="recording-indicator" style="display: none;">
+                    <div class="audio-waves">
+                        <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                    <button class="stop-recording" onclick="pararGravacao()">
+                        <i class="fas fa-stop"></i> Parar Gravação
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
     // Evento para o ícone do carrinho
     const cartIcon = document.querySelector('.cart-icon');
     if (cartIcon) {
@@ -5246,7 +5563,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         console.error('Ícone do carrinho não encontrado');
     }
-
+    
     // Evento para botão de checkout
     const checkoutButton = document.querySelector('.checkout');
     if (checkoutButton) {
@@ -5255,7 +5572,8 @@ document.addEventListener('DOMContentLoaded', () => {
             showCreateOrderModal();
         });
     } 
-        // ADICIONAR AQUI - Event listeners para fechar modais
+
+    // Event listeners para fechar modais
     document.querySelectorAll('.close-modal').forEach(button => {
         button.addEventListener('click', (e) => {
             const modal = e.target.closest('.modal');
@@ -5264,7 +5582,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
-
+    
     // Firebase listeners
     loadMenuProducts();
     loadCategories();
@@ -5272,7 +5590,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(checkStoreStatus, 60000);
     setupPaymentEvents();
 
-        // Configuração do Intersection Observer para o mascote
+    // Configuração do Intersection Observer para o mascote
     const mascotVideo = document.querySelector('.mascot-video');
     if (mascotVideo) {
         const observer = new IntersectionObserver((entries) => {
@@ -5297,8 +5615,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-});
+}); // Fechamento do DOMContentLoaded
    
    // Categories
    document.querySelectorAll('.category-btn').forEach(button => {
@@ -5466,116 +5783,71 @@ function filterProductsByOccasion(products) {
         }
     });
 }
- function createFloatingMascot() {
-    const visitCount = parseInt(localStorage.getItem('visitCount') || '0');
-    
-    const mascotHTML = `
-        <div class="floating-mascot">
-            <div class="initial-tip">
-                Clique em mim para ouvir a dica do dia
-                <button class="close-tip">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="floating-mascot-dialog">
-                <button class="minimize-mascot">
-                    <i class="fas fa-minus"></i>
-                </button>
-                <p class="mascot-message">Olá! Bem-vindo à Cabana Açaí! 😊</p>
-            </div>
-            <div class="floating-mascot-container">
-                <video class="floating-mascot-video" loop playsinline muted></video>
-            </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', mascotHTML);
-    
-    const mascot = document.querySelector('.floating-mascot');
-    const video = mascot.querySelector('.floating-mascot-video');
-    const dialog = mascot.querySelector('.floating-mascot-dialog');
-    const minimizeBtn = mascot.querySelector('.minimize-mascot');
-    const closeTipBtn = mascot.querySelector('.close-tip');
-    const initialTip = mascot.querySelector('.initial-tip');
-    let isDialogVisible = true;
-    
-    // URLs dos vídeos
-    const videos = [
-        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness.mp4?alt=media&token=904bfced-6f04-459b-943a-50fa1a998aaf",
-        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness2.mp4?alt=media&token=b66fcb5e-1dfb-467f-926d-dbeb92d03061",
-        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/C%C3%B3pia%20de%20C%C3%B3pia%20de%20V%C3%ADdeo%20sem%20t%C3%ADtulo%202.mp4?alt=media&token=8c88b590-4f3f-4a52-b259-8b4b6e6c22b1",
-        "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/Avatar%20Fitness%204.mp4?alt=media&token=d01ee1d9-33d1-44c9-a4cd-e1e61ef59543"
-    ];
-    
-    video.src = videos[visitCount % videos.length];
-    
-    // Observer para iniciar/pausar vídeo
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                video.play();
-            } else {
-                video.pause();
-            }
-        });
-    }, {
-        threshold: 0.5
-    });
-    
-    observer.observe(video);
-    
-    // Alternar áudio ao clicar
-    let isMuted = true;
-    mascot.querySelector('.floating-mascot-container').addEventListener('click', () => {
-        if (video.paused) {
-            video.play();
-        } else {
-            video.pause();
-        }
-        video.muted = !video.muted;
-        isMuted = !isMuted;
-        
-        // Mostrar diálogo se estiver minimizado
-        if (!isDialogVisible) {
-            dialog.classList.add('active');
-            isDialogVisible = true;
-            minimizeBtn.innerHTML = '<i class="fas fa-minus"></i>';
-        }
-    });
-    
-    // Botão minimizar
-    minimizeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        isDialogVisible = !isDialogVisible;
-        dialog.classList.toggle('active');
-        minimizeBtn.innerHTML = isDialogVisible ? 
-            '<i class="fas fa-minus"></i>' : 
-            '<i class="fas fa-plus"></i>';
-    });
 
-    // Botão fechar dica inicial
-    closeTipBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        initialTip.style.display = 'none';
-    });
-    
-    // Mensagens rotativas
-    const messages = [
-        "Olá! Bem-vindo à Cabana Açaí! 😊",
-        "Que tal um açaí delicioso hoje? 🍇",
-        "Experimente nossos combos! 🥄",
-        "Posso ajudar você a escolher? 😃"
-    ];
-    
-    let messageIndex = 0;
-    const messageElement = mascot.querySelector('.mascot-message');
-    
-    setInterval(() => {
-        if (isDialogVisible) {
-            messageIndex = (messageIndex + 1) % messages.length;
-            messageElement.textContent = messages[messageIndex];
+    function startVoiceSearch() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        showNotification('Seu navegador não suporta pesquisa por voz');
+        return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'pt-BR';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    const voiceBtn = document.querySelector('.voice-search-btn');
+    const searchInput = document.getElementById('searchInput');
+
+    // Feedback visual
+    let feedbackDiv = document.querySelector('.voice-feedback');
+    if (!feedbackDiv) {
+        feedbackDiv = document.createElement('div');
+        feedbackDiv.className = 'voice-feedback';
+        document.body.appendChild(feedbackDiv);
+    }
+
+    voiceBtn.classList.add('listening');
+    feedbackDiv.innerHTML = `
+        <i class="fas fa-microphone" style="font-size: 2rem; color: var(--accent); margin-bottom: 1rem;"></i>
+        <p>Ouvindo... Fale o que você procura</p>
+    `;
+    feedbackDiv.classList.add('active');
+
+    recognition.onresult = function(event) {
+        const result = event.results[0][0].transcript.toLowerCase();
+        searchInput.value = result;
+        voiceBtn.classList.remove('listening');
+        feedbackDiv.classList.remove('active');
+        
+        // Busca exata pela palavra-chave
+        const palavraChave = result.trim();
+        const filteredProducts = currentProducts.filter(product => {
+            const productNameLower = product.name.toLowerCase();
+            return productNameLower.includes(palavraChave);
+        });
+
+        displayProducts(filteredProducts);
+
+        if (filteredProducts.length === 0) {
+            showNotification('Nenhum produto encontrado com esse nome');
+            displayProducts(currentProducts); // Mostra todos os produtos
         }
-    }, 5000);
+    };
+
+    recognition.onerror = function(event) {
+        console.error('Erro no reconhecimento de voz:', event.error);
+        voiceBtn.classList.remove('listening');
+        feedbackDiv.classList.remove('active');
+        showNotification('Ops! Não consegui entender. Tente novamente.');
+    };
+
+    recognition.onend = function() {
+        voiceBtn.classList.remove('listening');
+        feedbackDiv.classList.remove('active');
+    };
+
+    recognition.start();
 }
 
 function initAcaiDoDia() {
@@ -5721,7 +5993,16 @@ let chatHistory = [];
 
 function toggleChat() {
     const chatContainer = document.querySelector('.chat-container');
-    chatContainer.style.display = chatContainer.style.display === 'none' || !chatContainer.style.display ? 'flex' : 'none';
+    if (chatContainer.style.display === 'none' || !chatContainer.style.display) {
+        chatContainer.style.display = 'flex';
+        // Adicionar mensagem inicial se não houver mensagens
+        const messages = document.querySelector('.chat-messages');
+        if (!messages.children.length) {
+            addMessageToChat('Olá! Como posso ajudar você hoje? Você pode digitar ou gravar um áudio!', 'bot');
+        }
+    } else {
+        chatContainer.style.display = 'none';
+    }
 }
 
 async function sendMessage() {
@@ -5772,14 +6053,34 @@ function addMessageToChat(message, type) {
     const messagesContainer = document.querySelector('.chat-messages');
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${type}-message`;
-    messageDiv.textContent = message;
+    if (type === 'bot') {
+        messageDiv.innerHTML = `<span class="bot-prefix">🤖</span>${message}`;
+    } else {
+        messageDiv.textContent = message;
+    }
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
+function startVoiceOrderChat() {
+    toggleChat(); // Abre o chat se estiver fechado
+    const messages = document.querySelector('.chat-messages');
+    if (!messages.children.length) {
+        addMessageToChat('Olá! Vou ajudar você a fazer seu pedido por voz. Você pode me dizer o que gostaria de pedir ou usar o botão de gravação abaixo.', 'bot');
+    }
+    
+    // Se o chat já estiver aberto, adiciona uma nova mensagem
+    addMessageToChat('O que você gostaria de pedir hoje?', 'bot');
+}
+
 function handleKeyPress(event) {
     if (event.key === 'Enter') {
-        sendMessage();
+        const input = document.querySelector('.chat-input');
+        const message = input.value.trim();
+        if (message) {
+            sendMessage(message);
+            input.value = '';
+        }
     }
 }
 </script>
@@ -5878,15 +6179,13 @@ function handleKeyPress(event) {
         <button onclick="closeStoreClosedPopup()">Fechar</button>
     </div>
 </div>
-    <div class="chat-button" onclick="toggleChat()">
+<div class="chat-button" onclick="toggleChat()">
     <i class="fas fa-comments"></i>
 </div>
 
 <div class="chat-container">
-    <div class="chat-header">
-        <span>Chat Cabana Açaí</span>
-        <i class="fas fa-times" onclick="toggleChat()"></i>
-    </div>
+    <!-- O conteúdo será inserido via JavaScript -->
+</div>
     <div class="chat-messages"></div>
     <div class="chat-input-container">
         <input type="text" class="chat-input" placeholder="Digite sua mensagem..." onkeypress="handleKeyPress(event)">
