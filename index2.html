@@ -2862,15 +2862,6 @@ function gravarAudio() {
         return;
     }
     
-    // Limpa o transcript ao iniciar nova gravação
-    let finalTranscript = '';
-    replyInput.value = '';
-    
-    // Mostra o indicador de gravação
-    audioButton.style.display = 'none';
-    recordingIndicator.style.display = 'flex';
-    isRecording = true;
-    
     // Inicializa o objeto de reconhecimento
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognition = new SpeechRecognition();
@@ -2878,85 +2869,46 @@ function gravarAudio() {
     recognition.continuous = true;
     recognition.interimResults = true;
     
+    // Limpa o transcript ao iniciar nova gravação
+    finalTranscript = '';
+    replyInput.value = '';
+    
+    // Mostra o indicador de gravação
+    audioButton.style.display = 'none';
+    recordingIndicator.style.display = 'flex';
+    isRecording = true;
+    
     // Evento quando o resultado é reconhecido
     recognition.onresult = function(event) {
         let interimTranscript = '';
+        finalTranscript = '';
         
-        // Processa os resultados
-        for (let i = event.resultIndex; i < event.results.length; i++) {
+        // Processa os resultados - coletando resultados finais em um acumulador
+        for (let i = 0; i < event.results.length; i++) {
             const transcript = event.results[i][0].transcript;
             
             if (event.results[i].isFinal) {
-                finalTranscript += transcript;
+                finalTranscript += transcript + ' ';
             } else {
                 interimTranscript += transcript;
             }
         }
         
-        // Atualiza o campo de entrada em tempo real com o texto reconhecido
+        // Atualiza o campo de entrada em tempo real
         replyInput.value = finalTranscript + interimTranscript;
     };
     
     // Eventos para tratar erros
     recognition.onerror = function(event) {
         console.error('Erro no reconhecimento de voz:', event.error);
-        isRecording = false;
-        audioButton.style.display = 'block';
-        recordingIndicator.style.display = 'none';
+        finalizarGravacao();
         showNotification('Erro no reconhecimento de voz. Tente novamente.');
     };
     
-    // Quando a gravação termina
+    // Quando a gravação termina normalmente
     recognition.onend = function() {
-        if (isRecording) {
-            isRecording = false;
-            audioButton.style.display = 'block';
-            recordingIndicator.style.display = 'none';
-            
-            // Se tiver texto reconhecido, envia para o chat
-            if (replyInput.value.trim()) {
-                const texto = replyInput.value.trim();
-                
-                // Adiciona a mensagem do usuário ao chat
-                addMessageToChat(texto, 'user');
-                
-                // Envia para o chatbot
-                fetch('https://www.chatbase.co/api/v1/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${CHATBASE_CONFIG.apiKey}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        messages: [
-                            ...chatHistory,
-                            { content: texto, role: 'user' }
-                        ],
-                        chatbotId: CHATBASE_CONFIG.chatbotId,
-                        stream: false,
-                        temperature: 0
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.text) {
-                        // Adiciona a resposta do chatbot
-                        addMessageToChat(data.text, 'bot');
-                        chatHistory.push(
-                            { content: texto, role: 'user' },
-                            { content: data.text, role: 'assistant' }
-                        );
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro:', error);
-                    addMessageToChat('Desculpe, tive um problema ao processar sua mensagem.', 'bot');
-                });
-                
-                // Limpa o campo de entrada
-                replyInput.value = '';
-            }
-        }
+        // Apenas finaliza a UI, mas não envia mensagem automaticamente
+        finalizarGravacao();
     };
     
     // Inicia a gravação
@@ -2964,11 +2916,19 @@ function gravarAudio() {
         recognition.start();
     } catch (e) {
         console.error('Erro ao iniciar gravação:', e);
-        isRecording = false;
-        audioButton.style.display = 'block';
-        recordingIndicator.style.display = 'none';
+        finalizarGravacao();
         showNotification('Erro ao iniciar gravação de voz. Tente novamente.');
     }
+}
+
+// Função para finalizar a gravação (resetar UI)
+function finalizarGravacao() {
+    isRecording = false;
+    const audioButton = document.querySelector('.audio-button-full');
+    const recordingIndicator = document.querySelector('.recording-indicator');
+    
+    if (audioButton) audioButton.style.display = 'block';
+    if (recordingIndicator) recordingIndicator.style.display = 'none';
 }
 
 function pararGravacao() {
