@@ -2853,12 +2853,7 @@ function gravarAudio() {
     
     // Se já estiver gravando, para a gravação
     if (isRecording) {
-        if (recognition) {
-            recognition.stop();
-        }
-        isRecording = false;
-        audioButton.style.display = 'block';
-        recordingIndicator.style.display = 'none';
+        pararGravacao();
         return;
     }
     
@@ -2901,14 +2896,16 @@ function gravarAudio() {
     // Eventos para tratar erros
     recognition.onerror = function(event) {
         console.error('Erro no reconhecimento de voz:', event.error);
-        finalizarGravacao();
+        pararGravacao();
         showNotification('Erro no reconhecimento de voz. Tente novamente.');
     };
     
     // Quando a gravação termina normalmente
     recognition.onend = function() {
         // Apenas finaliza a UI, mas não envia mensagem automaticamente
-        finalizarGravacao();
+        if (isRecording) {
+            pararGravacao();
+        }
     };
     
     // Inicia a gravação
@@ -2916,31 +2913,27 @@ function gravarAudio() {
         recognition.start();
     } catch (e) {
         console.error('Erro ao iniciar gravação:', e);
-        finalizarGravacao();
+        pararGravacao();
         showNotification('Erro ao iniciar gravação de voz. Tente novamente.');
     }
 }
 
-// Função para finalizar a gravação (resetar UI)
-function finalizarGravacao() {
+// Função para parar a gravação
+function pararGravacao() {
+    if (recognition) {
+        try {
+            recognition.stop();
+        } catch (e) {
+            console.error('Erro ao parar o reconhecimento:', e);
+        }
+    }
+    
     isRecording = false;
     const audioButton = document.querySelector('.audio-button-full');
     const recordingIndicator = document.querySelector('.recording-indicator');
     
     if (audioButton) audioButton.style.display = 'block';
     if (recordingIndicator) recordingIndicator.style.display = 'none';
-}
-
-function pararGravacao() {
-    if (mediaRecorder && isRecording) {
-        mediaRecorder.stop();
-        isRecording = false;
-        document.querySelector('.audio-button-full').style.display = 'block';
-        document.querySelector('.recording-indicator').style.display = 'none';
-        
-        // Libera as tracks do MediaStream
-        mediaRecorder.stream.getTracks().forEach(track => track.stop());
-    }
 }
 
 function enviarAudioParaChatbot(audioBlob) {
