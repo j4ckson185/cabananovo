@@ -5556,6 +5556,9 @@ openProductModal = function(product) {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Carregado'); // Log para diagnóstico
+
+    createVoiceOrderButton();
+    addTimeMachineButton(); // Adiciona o botão do Time Machine
     
     // Configurar estrutura do chat
     const chatContainer = document.querySelector('.chat-container');
@@ -5589,9 +5592,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
     }
-
-    createVoiceOrderButton();
-    addTimeMachineButton(); // Adiciona o botão do Time Machine
     
     // Evento para o ícone do carrinho
     const cartIcon = document.querySelector('.cart-icon');
