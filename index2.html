@@ -2135,42 +2135,6 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-.voice-order-button {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: var(--gradient);
-    padding: 12px 24px;
-    border-radius: 50px;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: white;
-}
-
-.voice-button-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.voice-button-container i {
-    font-size: 1.2rem;
-}
-
-.voice-button-container span {
-    font-weight: 500;
-}
-
-.voice-order-button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-}
-
 .audio-button-full {
     width: 100%;
     padding: 12px;
@@ -5557,7 +5521,6 @@ openProductModal = function(product) {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Carregado'); // Log para diagnóstico
 
-    createVoiceOrderButton();
     addTimeMachineButton(); // Adiciona o botão do Time Machine
     
     // Configurar estrutura do chat
@@ -5820,27 +5783,8 @@ function filterProductsByOccasion(products) {
         }
     });
 }
-function createVoiceOrderButton() {
-    const voiceOrderHTML = `
-        <div class="voice-order-button">
-            <div class="voice-button-container">
-                <i class="fas fa-microphone"></i>
-                <span>Pedir por Voz</span>
-            </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', voiceOrderHTML);
-    
-    // Adicionar evento de clique
-    const voiceOrderBtn = document.querySelector('.voice-order-button');
-    voiceOrderBtn.addEventListener('click', () => {
-        toggleChat(); // Abre o chat
-        startVoiceOrderChat(); // Inicia o processo de pedido por voz
-    });
-}
 
-function startVoiceSearch() {
+    function startVoiceSearch() {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
         showNotification('Seu navegador não suporta pesquisa por voz');
         return;
