@@ -2853,7 +2853,10 @@ function gravarAudio() {
     
     // Se já estiver gravando, para a gravação
     if (isRecording) {
-        pararGravacao();
+        recognition.stop();
+        audioButton.style.display = 'block';
+        recordingIndicator.style.display = 'none';
+        isRecording = false;
         return;
     }
     
@@ -2862,7 +2865,9 @@ function gravarAudio() {
     recognition = new SpeechRecognition();
     recognition.lang = 'pt-BR';
     recognition.continuous = true;
-    recognition.interimResults = true;
+    
+    // IMPORTANTE: Desativar resultados interinos para evitar repetições
+    recognition.interimResults = false;
     
     // Limpa o transcript ao iniciar nova gravação
     finalTranscript = '';
@@ -2875,36 +2880,38 @@ function gravarAudio() {
     
     // Evento quando o resultado é reconhecido
     recognition.onresult = function(event) {
-        let interimTranscript = '';
-        finalTranscript = '';
-        
-        // Processa os resultados - coletando resultados finais em um acumulador
-        for (let i = 0; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript;
-            
+        // Processa apenas os novos resultados desde o último evento
+        for (let i = event.resultIndex; i < event.results.length; i++) {
             if (event.results[i].isFinal) {
-                finalTranscript += transcript + ' ';
-            } else {
-                interimTranscript += transcript;
+                // Adiciona espaço apenas se já tiver conteúdo
+                if (finalTranscript.length > 0) {
+                    finalTranscript += ' ';
+                }
+                
+                // Adiciona apenas o novo fragmento de texto
+                finalTranscript += event.results[i][0].transcript.trim();
+                
+                // Atualiza o campo de entrada
+                replyInput.value = finalTranscript;
             }
         }
-        
-        // Atualiza o campo de entrada em tempo real
-        replyInput.value = finalTranscript + interimTranscript;
     };
     
     // Eventos para tratar erros
     recognition.onerror = function(event) {
         console.error('Erro no reconhecimento de voz:', event.error);
         pararGravacao();
-        showNotification('Erro no reconhecimento de voz. Tente novamente.');
     };
     
-    // Quando a gravação termina normalmente
+    // Se a gravação terminar automaticamente, reinicie
     recognition.onend = function() {
-        // Apenas finaliza a UI, mas não envia mensagem automaticamente
         if (isRecording) {
-            pararGravacao();
+            try {
+                recognition.start();
+            } catch (e) {
+                console.error('Erro ao reiniciar gravação:', e);
+                pararGravacao();
+            }
         }
     };
     
