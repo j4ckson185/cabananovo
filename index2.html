@@ -2942,7 +2942,7 @@ function pararGravacao() {
     if (audioButton) audioButton.style.display = 'block';
     if (recordingIndicator) recordingIndicator.style.display = 'none';
 }
-
+    
 function enviarAudioParaChatbot(audioBlob) {
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.lang = 'pt-BR';
