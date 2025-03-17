@@ -4408,16 +4408,10 @@ function updateTotalPrice(product) {
 }
 
 function addToCart(product, selectedToppings) {
-    // Sempre pedir o número para cada nova sessão
-    if (!localStorage.getItem('cartPhone')) {
-        window.pendingCartAddition = { product, selectedToppings };
-        createPhoneCollectionModal();
-        document.getElementById('phoneCollectionModal').style.display = 'block';
-        return;
-    }
-    
+    console.log('Iniciando addToCart');
     // Verificar se já tem telefone cadastrado
     if (!localStorage.getItem('cartPhone')) {
+        console.log('Telefone não encontrado, mostrando modal');
         // Armazenar temporariamente o produto
         window.pendingCartAddition = { product, selectedToppings };
         
@@ -4460,6 +4454,7 @@ function addToCart(product, selectedToppings) {
 
     updateCartCount();
     
+    // Fecha o modal do produto e mostra o carrinho
     document.getElementById('productModal').style.display = 'none';
     showCartModal();
 }
@@ -5577,6 +5572,7 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.removeItem('cartPhone');
     localStorage.removeItem('cartTimestamp');
     localStorage.removeItem('orderCompleted');
+    console.log('LocalStorage limpo');
    
     console.log('DOM Carregado'); // Log para diagnóstico
 
@@ -6143,8 +6139,13 @@ function handleKeyPress(event) {
     }
 }
 
-// Função para adicionar o modal de coleta de telefone
+// Certifique-se que a função createPhoneCollectionModal está presente
 function createPhoneCollectionModal() {
+    const existingModal = document.getElementById('phoneCollectionModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
     const modal = document.createElement('div');
     modal.id = 'phoneCollectionModal';
     modal.className = 'modal';
