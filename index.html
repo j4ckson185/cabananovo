@@ -4408,6 +4408,20 @@ function updateTotalPrice(product) {
 }
 
 function addToCart(product, selectedToppings) {
+    console.log('Iniciando addToCart');
+    // Verificar se já tem telefone cadastrado
+    if (!localStorage.getItem('cartPhone')) {
+        console.log('Telefone não encontrado, mostrando modal');
+        // Armazenar temporariamente o produto
+        window.pendingCartAddition = { product, selectedToppings };
+        
+        // Criar e mostrar modal de telefone
+        createPhoneCollectionModal();
+        document.getElementById('phoneCollectionModal').style.display = 'block';
+        return;
+    }
+
+    // Se já tem número, continua com a adição normal ao carrinho
     const selectedExtras = Array.from(document.querySelectorAll('.extra-item.selected'))
         .map(extra => {
             const priceText = extra.querySelector('.extra-price')?.textContent;
@@ -5101,6 +5115,22 @@ async function submitOrder() {
         alert('Erro ao processar pedido. Por favor, tente novamente.');
     }
 }
+
+// Modificar função submitOrder existente
+const originalSubmitOrder = submitOrder;
+submitOrder = async function(...args) {
+    // Marcar pedido como completo
+    localStorage.setItem('orderCompleted', 'true');
+    
+    // Atualizar status na planilha
+    const phone = localStorage.getItem('cartPhone');
+    if (phone) {
+        await updateSMSStatus(phone, 'completed');
+    }
+
+    // Continuar com o envio normal do pedido
+    return originalSubmitOrder.apply(this, args);
+};
     
 function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     const paymentMethodMap = {
@@ -5538,6 +5568,12 @@ openProductModal = function(product) {
     
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Limpar dados do carrinho anterior (ADICIONAR ESTAS LINHAS PRIMEIRO)
+    localStorage.removeItem('cartPhone');
+    localStorage.removeItem('cartTimestamp');
+    localStorage.removeItem('orderCompleted');
+    console.log('LocalStorage limpo');
+   
     console.log('DOM Carregado'); // Log para diagnóstico
 
     addTimeMachineButton(); // Adiciona o botão do Time Machine
@@ -6102,6 +6138,212 @@ function handleKeyPress(event) {
         }
     }
 }
+
+// Certifique-se que a função createPhoneCollectionModal está presente
+function createPhoneCollectionModal() {
+    const existingModal = document.getElementById('phoneCollectionModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    const modal = document.createElement('div');
+    modal.id = 'phoneCollectionModal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px;">
+            <h2>Para prosseguir com seu pedido</h2>
+            <p>Digite seu WhatsApp com DDD para continuar:</p>
+            <div class="form-group">
+                <input type="tel" id="customerPhoneCart" 
+                    placeholder="Ex: 84988888888" 
+                    pattern="[0-9]{11}" 
+                    required
+                    style="width: 100%; padding: 10px; margin: 10px 0;">
+                <div id="phoneError" style="color: var(--error); display: none;">
+                    Digite um número válido com DDD (11 dígitos)
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn" onclick="validateAndStorePhone()">Continuar</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Variável global para armazenar temporariamente o produto a ser adicionado
+let pendingCartAddition = null;
+
+async function validateAndStorePhone() {
+    const phoneInput = document.getElementById('customerPhoneCart');
+    const phoneError = document.getElementById('phoneError');
+    const phone = phoneInput.value.replace(/\D/g, '');
+
+    if (phone.length !== 11) {
+        phoneError.style.display = 'block';
+        return;
+    }
+
+    try {
+        console.log('Iniciando processo de validação do telefone...');
+        const timestamp = new Date().toISOString();
+        
+        // Registrar na planilha
+        const data = {
+            phone: phone,
+            timestamp: timestamp,
+            cartItems: JSON.stringify(cart),
+            status: 'active'
+        };
+
+        // Registrar no Google Sheets
+        await recordAbandonedCart(data);
+        
+        // Salvar localmente
+        localStorage.setItem('cartPhone', phone);
+        localStorage.setItem('cartTimestamp', timestamp);
+
+        // Fechar modal do telefone
+        document.getElementById('phoneCollectionModal').style.display = 'none';
+
+        // Adicionar o produto pendente ao carrinho
+        if (window.pendingCartAddition) {
+            addToCart(
+                window.pendingCartAddition.product,
+                window.pendingCartAddition.selectedToppings
+            );
+            window.pendingCartAddition = null;
+        }
+
+        console.log('Iniciando monitoramento do carrinho...');
+        startCartMonitoring(); // Iniciar monitoramento imediatamente
+
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao processar seu número. Tente novamente.');
+    }
+}
+
+// Função para registrar carrinho abandonado na planilha
+async function recordAbandonedCart(data) {
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbyCsrhKsKTDk6NEj5PaanzaFAvOQD4zPtumRyEgBuEZ-c0O7CGzlX_vM6XoJAmi3xbhhw/exec';
+    
+    const response = await fetch(scriptUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    });
+
+    return response;
+}
+
+// Função para enviar SMS usando Twilio
+async function sendSMSReminder(type) {
+    const phone = localStorage.getItem('cartPhone');
+    if (!phone) {
+        console.error('Número de telefone não encontrado');
+        return;
+    }
+
+    const message = type === '10min' 
+        ? '📢🔥 Tá na hora de se deliciar com um açaí incrível! 🍓✨ Faça seu pedido agora e receba rapidinho! 👉 http://cabanaacai.netlify.app/'
+        : '⏳🍨 Ainda tá com vontade de um açaí top? A gente tá pronto pra te atender! 😋 Não deixa pra depois! 👉 https://cabanaacai.netlify.app/';
+
+    const twilioAccount = 'AC04c1d67a4b599d4cb0d804029109fad3';
+    const twilioToken = '4061a06f7cbacc1262afa1f2356e69b3';
+    const twilioNumber = '+12362016670';
+
+    try {
+        const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioAccount}/Messages.json`, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Basic ' + btoa(`${twilioAccount}:${twilioToken}`),
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+                'To': `+55${phone}`,
+                'From': twilioNumber,
+                'Body': message
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Erro Twilio: ${errorData.message || 'Erro desconhecido'}`);
+        }
+
+        const result = await response.json();
+        console.log('SMS enviado com sucesso:', result);
+
+        // Atualizar status na planilha
+        await updateSMSStatus(phone, type);
+
+    } catch (error) {
+        console.error('Erro detalhado ao enviar SMS:', error);
+        
+        // Tentar novamente em 1 minuto se for um erro temporário
+        if (error.message.includes('429') || error.message.includes('503')) {
+            setTimeout(() => sendSMSReminder(type), 60000);
+        }
+    }
+}
+
+// Função para monitorar carrinho abandonado
+function startCartMonitoring() {
+    const timestamp = localStorage.getItem('cartTimestamp');
+    if (!timestamp) {
+        console.log('Timestamp não encontrado');
+        return;
+    }
+
+    // Tempos para teste
+    const tenMinutes = 30 * 1000;  // 30 segundos
+    const oneHour = 60 * 1000;     // 1 minuto
+
+    const now = new Date().getTime();
+    const cartTime = new Date(timestamp).getTime();
+
+    console.log('Iniciando monitoramento...');
+    console.log('Hora atual:', new Date(now).toLocaleString());
+    console.log('Hora do carrinho:', new Date(cartTime).toLocaleString());
+
+    // Primeira mensagem (30 segundos)
+    setTimeout(() => {
+        console.log('Verificando status para mensagem de 30 segundos...');
+        if (!localStorage.getItem('orderCompleted')) {
+            console.log('Enviando primeira mensagem');
+            sendSMSReminder('10min');
+        } else {
+            console.log('Pedido já completado');
+        }
+    }, 30000); // Forçando 30 segundos
+
+    // Segunda mensagem (1 minuto)
+    setTimeout(() => {
+        console.log('Verificando status para mensagem de 1 minuto...');
+        if (!localStorage.getItem('orderCompleted')) {
+            console.log('Enviando segunda mensagem');
+            sendSMSReminder('1hour');
+        } else {
+            console.log('Pedido já completado');
+        }
+    }, 60000); // Forçando 1 minuto
+}
+
+// Função para atualizar status do SMS na planilha
+async function updateSMSStatus(phone, type) {
+    const data = {
+        phone: phone,
+        smsType: type,
+        status: 'sent'
+    };
+
+    await recordAbandonedCart(data);
+}
+
 </script>
 <<!-- Modal para Criar Novo Pedido -->
 <!-- Modal para Criar Novo Pedido -->
