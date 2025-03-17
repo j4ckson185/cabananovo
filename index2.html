@@ -4455,7 +4455,7 @@ async function applyCoupon() {
     }
 
     try {
-        // Correct way to query coupons in Firebase Realtime Database
+        // Verificar o cupom no Firebase
         const couponsSnapshot = await realtimeDB.ref('coupons').orderByChild('code').equalTo(couponCode).once('value');
         const coupons = couponsSnapshot.val();
         
@@ -4468,28 +4468,34 @@ async function applyCoupon() {
 
         const coupon = Object.values(coupons)[0];
 
-        // If it's a first purchase coupon, do additional verification
+        // Se for cupom de primeira compra
         if (coupon.isFirstPurchase) {
+            // Gerar identificadores únicos
             const deviceFingerprint = await generateDeviceFingerprint();
             const userIP = await getUserIP();
             
-            // Check if there's already a purchase with this device or IP
-            const purchasesSnapshot = await realtimeDB.ref('purchases').once('value');
-            const purchases = purchasesSnapshot.val() || {};
+            // Verificar no Firebase se já existe uso do cupom com esses identificadores
+            const usedCouponsRef = realtimeDB.ref('usedCoupons');
+            const query = usedCouponsRef
+                .orderByChild('couponCode')
+                .equalTo('PRIMEIRACOMPRA');
             
-            const hasUsedFirstPurchase = Object.values(purchases).some(purchase => 
-                purchase.deviceFingerprint === deviceFingerprint || 
-                purchase.userIP === userIP
+            const usedCouponsSnapshot = await query.once('value');
+            const usedCoupons = usedCouponsSnapshot.val() || {};
+            
+            const hasUsed = Object.values(usedCoupons).some(usage => 
+                usage.deviceFingerprint === deviceFingerprint || 
+                usage.userIP === userIP
             );
 
-            if (hasUsedFirstPurchase) {
-                messageDiv.innerHTML = '<span style="color: var(--error);">Este cupom é válido apenas para primeira compra</span>';
+            if (hasUsed) {
+                messageDiv.innerHTML = '<span style="color: var(--error);">Este cupom já foi utilizado</span>';
                 appliedCoupon = null;
                 updateCartTotal();
                 return;
             }
 
-            // Store identifiers for future use
+            // Armazenar identificadores para uso posterior
             window.deviceFingerprint = deviceFingerprint;
             window.userIP = userIP;
         }
@@ -5072,6 +5078,19 @@ async function submitOrder() {
         
         if (!newOrderRef.key) {
             throw new Error('Falha ao salvar o pedido');
+        }
+
+              // Se houver cupom aplicado, registrar seu uso
+        if (appliedCoupon && appliedCoupon.isFirstPurchase) {
+            const usedCouponData = {
+                couponCode: appliedCoupon.code,
+                deviceFingerprint: window.deviceFingerprint,
+                userIP: window.userIP,
+                usedAt: firebase.database.ServerValue.TIMESTAMP,
+                orderTotal: total
+            };
+
+            await realtimeDB.ref('usedCoupons').push(usedCouponData);
         }
 
         // Redirecionar para WhatsApp
