@@ -5127,18 +5127,6 @@ async function submitOrder() {
             await realtimeDB.ref('usedCoupons').push(usedCouponData);
         }
 
-              const phone = localStorage.getItem('cartPhone');
-        if (phone) {
-            // Atualizar status para completed
-            const data = {
-                phone: phone,
-                status: 'completed',
-                timestamp: new Date().toISOString()
-            };
-
-            await recordAbandonedCart(data); // Usa a mesma função que já existe
-        }
-
         // Redirecionar para WhatsApp
         window.location.href = `https://wa.me/5584988731028?text=${encodeURIComponent(message)}`;
 
