@@ -4898,23 +4898,13 @@ function setupPaymentEvents() {
 }
     
 async function submitOrder() {
-  try {
-              // Primeiro, marcar como completed ANTES de qualquer outra ação
+    try {
+        // Primeiro, marcar como completed ANTES de qualquer outra ação
         const phone = localStorage.getItem('cartPhone');
         if (phone) {
             console.log('Atualizando status para completed...');
-            await fetch('https://script.google.com/macros/s/AKfycbzJTc7iKnzXZkLrFTcPo0EGoZYIs1iSmRlLuWzme5fXlF2SqqZcNy5-QBi37IANhLMPPA/exec', {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    phone: phone,
-                    status: 'completed',
-                    timestamp: new Date().toISOString()
-                })
-            });
+            // Aqui vamos usar updateSMSStatus em vez de fetch direto
+            await updateSMSStatus(phone, 'completed');
             localStorage.setItem('orderCompleted', 'true');
             console.log('Status atualizado para completed');
         }
@@ -6355,23 +6345,23 @@ function startCartMonitoring() {
 
 // Função para atualizar status do SMS na planilha
 async function updateSMSStatus(phone, type) {
-    // Se não for completed, mantém o comportamento atual
-    if (type !== 'completed') {
-        const data = {
+    let data;
+    if (type === 'completed') {
+        data = {
+            phone: phone,
+            status: 'completed',    // Mudamos para enviar status direto
+            timestamp: new Date().toISOString()
+        };
+    } else {
+        data = {
             phone: phone,
             smsType: type,
             status: 'sent'
         };
-        await recordAbandonedCart(data);
-    } else {
-        // Se for completed, envia no formato correto
-        const data = {
-            phone: phone,
-            status: 'completed',
-            timestamp: new Date().toISOString()
-        };
-        await recordAbandonedCart(data);
     }
+
+    console.log('Enviando dados para planilha:', data); // Log para debug
+    await recordAbandonedCart(data);
 }
 
 </script>
