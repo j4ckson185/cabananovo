@@ -4903,7 +4903,7 @@ async function submitOrder() {
         const phone = localStorage.getItem('cartPhone');
         if (phone) {
             console.log('Atualizando status para completed...');
-            await fetch('https://script.google.com/macros/s/AKfycbyFnqviPHn4AlKjsCmZ4iGyw_Qt6a37CzRp53Y-2UHxg2egeGlfOiXqnT5pRRQ3KH3Xrw/exec', {
+            await fetch('https://script.google.com/macros/s/AKfycbw5sc-1ouUAgUqph9KNZOMYh-KrE7qg7CycWyb8rkgGAcoOO82ghgd_xC_t1d_YtUHi7w/exec', {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: {
@@ -6246,7 +6246,7 @@ async function validateAndStorePhone() {
 
 // Função para registrar carrinho abandonado na planilha
 async function recordAbandonedCart(data) {
-    const scriptUrl = 'https://script.google.com/macros/s/AKfycbyFnqviPHn4AlKjsCmZ4iGyw_Qt6a37CzRp53Y-2UHxg2egeGlfOiXqnT5pRRQ3KH3Xrw/exec';
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbw5sc-1ouUAgUqph9KNZOMYh-KrE7qg7CycWyb8rkgGAcoOO82ghgd_xC_t1d_YtUHi7w/exec';
     
     const response = await fetch(scriptUrl, {
         method: 'POST',
