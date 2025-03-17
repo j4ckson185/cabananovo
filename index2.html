@@ -4408,6 +4408,14 @@ function updateTotalPrice(product) {
 }
 
 function addToCart(product, selectedToppings) {
+    // Sempre pedir o número para cada nova sessão
+    if (!localStorage.getItem('cartPhone')) {
+        window.pendingCartAddition = { product, selectedToppings };
+        createPhoneCollectionModal();
+        document.getElementById('phoneCollectionModal').style.display = 'block';
+        return;
+    }
+    
     // Verificar se já tem telefone cadastrado
     if (!localStorage.getItem('cartPhone')) {
         // Armazenar temporariamente o produto
@@ -4452,7 +4460,6 @@ function addToCart(product, selectedToppings) {
 
     updateCartCount();
     
-    // Fecha o modal do produto e mostra o carrinho
     document.getElementById('productModal').style.display = 'none';
     showCartModal();
 }
@@ -5566,6 +5573,11 @@ openProductModal = function(product) {
     
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Limpar dados do carrinho anterior (ADICIONAR ESTAS LINHAS PRIMEIRO)
+    localStorage.removeItem('cartPhone');
+    localStorage.removeItem('cartTimestamp');
+    localStorage.removeItem('orderCompleted');
+   
     console.log('DOM Carregado'); // Log para diagnóstico
 
     addTimeMachineButton(); // Adiciona o botão do Time Machine
