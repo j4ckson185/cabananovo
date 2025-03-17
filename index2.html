@@ -6102,6 +6102,188 @@ function handleKeyPress(event) {
         }
     }
 }
+
+// Função para adicionar o modal de coleta de telefone
+function createPhoneCollectionModal() {
+    const modal = document.createElement('div');
+    modal.id = 'phoneCollectionModal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px;">
+            <h2>Para prosseguir com seu pedido</h2>
+            <p>Digite seu WhatsApp com DDD para continuar:</p>
+            <div class="form-group">
+                <input type="tel" id="customerPhoneCart" 
+                    placeholder="Ex: 84988888888" 
+                    pattern="[0-9]{11}" 
+                    required
+                    style="width: 100%; padding: 10px; margin: 10px 0;">
+                <div id="phoneError" style="color: var(--error); display: none;">
+                    Digite um número válido com DDD (11 dígitos)
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn" onclick="validateAndStorePhone()">Continuar</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Função para validar e armazenar o telefone
+async function validateAndStorePhone() {
+    const phoneInput = document.getElementById('customerPhoneCart');
+    const phoneError = document.getElementById('phoneError');
+    const phone = phoneInput.value.replace(/\D/g, '');
+
+    if (phone.length !== 11) {
+        phoneError.style.display = 'block';
+        return;
+    }
+
+    try {
+        // Armazenar na planilha usando Google Apps Script
+        const timestamp = new Date().toISOString();
+        const data = {
+            phone: phone,
+            timestamp: timestamp,
+            cartItems: JSON.stringify(cart),
+            status: 'active'
+        };
+
+        await recordAbandonedCart(data);
+        
+        // Armazenar localmente
+        localStorage.setItem('cartPhone', phone);
+        localStorage.setItem('cartTimestamp', timestamp);
+
+        // Fechar modal e continuar com o carrinho
+        document.getElementById('phoneCollectionModal').style.display = 'none';
+        showCartModal();
+
+        // Iniciar monitoramento do carrinho abandonado
+        startCartMonitoring();
+
+    } catch (error) {
+        console.error('Erro ao registrar carrinho:', error);
+        alert('Erro ao processar seu número. Por favor, tente novamente.');
+    }
+}
+
+// Função para registrar carrinho abandonado na planilha
+async function recordAbandonedCart(data) {
+    const scriptUrl = 'https://script.google.com/macros/s/SEU_SCRIPT_ID/exec';
+    
+    const response = await fetch(scriptUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    });
+
+    return response;
+}
+
+// Função para monitorar carrinho abandonado
+function startCartMonitoring() {
+    const timestamp = localStorage.getItem('cartTimestamp');
+    if (!timestamp) return;
+
+    const tenMinutes = 10 * 60 * 1000;
+    const oneHour = 60 * 60 * 1000;
+    const now = new Date().getTime();
+    const cartTime = new Date(timestamp).getTime();
+
+    // Agendar mensagens
+    setTimeout(() => {
+        if (!localStorage.getItem('orderCompleted')) {
+            sendSMSReminder('10min');
+        }
+    }, Math.max(0, (cartTime + tenMinutes) - now));
+
+    setTimeout(() => {
+        if (!localStorage.getItem('orderCompleted')) {
+            sendSMSReminder('1hour');
+        }
+    }, Math.max(0, (cartTime + oneHour) - now));
+}
+
+// Função para enviar SMS usando Twilio
+async function sendSMSReminder(type) {
+    const phone = localStorage.getItem('cartPhone');
+    if (!phone) return;
+
+    const message = type === '10min' 
+        ? '📢🔥 Tá na hora de se deliciar com um açaí incrível! 🍓✨ Faça seu pedido agora e receba rapidinho! 👉 http://cabanaacai.netlify.app/'
+        : '⏳🍨 Ainda tá com vontade de um açaí top? A gente tá pronto pra te atender! 😋 Não deixa pra depois! 👉 https://cabanaacai.netlify.app/';
+
+    try {
+        const response = await fetch('https://api.twilio.com/2010-04-01/Accounts/AC04c1d67a4b599d4cb0d804029109fad3/Messages.json', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Basic ' + btoa('AC04c1d67a4b599d4cb0d804029109fad3:4061a06f7cbacc1262afa1f2356e69b3'),
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+                'To': `+55${phone}`,
+                'From': 'seu_numero_twilio',
+                'Body': message
+            })
+        });
+
+        const result = await response.json();
+        console.log('SMS enviado:', result);
+
+        // Atualizar status na planilha
+        await updateSMSStatus(phone, type);
+
+    } catch (error) {
+        console.error('Erro ao enviar SMS:', error);
+    }
+}
+
+// Função para atualizar status do SMS na planilha
+async function updateSMSStatus(phone, type) {
+    const data = {
+        phone: phone,
+        smsType: type,
+        status: 'sent'
+    };
+
+    await recordAbandonedCart(data);
+}
+
+// Modificar função addToCart existente
+const originalAddToCart = addToCart;
+addToCart = function(...args) {
+    // Se não tiver telefone armazenado, mostrar modal
+    if (!localStorage.getItem('cartPhone')) {
+        createPhoneCollectionModal();
+        document.getElementById('phoneCollectionModal').style.display = 'block';
+        return;
+    }
+
+    // Se já tiver telefone, continuar normalmente
+    return originalAddToCart.apply(this, args);
+};
+
+// Modificar função submitOrder existente
+const originalSubmitOrder = submitOrder;
+submitOrder = async function(...args) {
+    // Marcar pedido como completo
+    localStorage.setItem('orderCompleted', 'true');
+    
+    // Atualizar status na planilha
+    const phone = localStorage.getItem('cartPhone');
+    if (phone) {
+        await updateSMSStatus(phone, 'completed');
+    }
+
+    // Continuar com o envio normal do pedido
+    return originalSubmitOrder.apply(this, args);
+};
 </script>
 <<!-- Modal para Criar Novo Pedido -->
 <!-- Modal para Criar Novo Pedido -->
