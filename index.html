@@ -6355,13 +6355,23 @@ function startCartMonitoring() {
 
 // Função para atualizar status do SMS na planilha
 async function updateSMSStatus(phone, type) {
-    const data = {
-        phone: phone,
-        smsType: type,
-        status: 'sent'
-    };
-
-    await recordAbandonedCart(data);
+    // Se não for completed, mantém o comportamento atual
+    if (type !== 'completed') {
+        const data = {
+            phone: phone,
+            smsType: type,
+            status: 'sent'
+        };
+        await recordAbandonedCart(data);
+    } else {
+        // Se for completed, envia no formato correto
+        const data = {
+            phone: phone,
+            status: 'completed',
+            timestamp: new Date().toISOString()
+        };
+        await recordAbandonedCart(data);
+    }
 }
 
 </script>
