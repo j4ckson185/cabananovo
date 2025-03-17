@@ -6172,7 +6172,7 @@ async function validateAndStorePhone() {
 
 // Função para registrar carrinho abandonado na planilha
 async function recordAbandonedCart(data) {
-    const scriptUrl = 'https://script.google.com/macros/s/SEU_SCRIPT_ID/exec';
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbytBY9c1El1mav0hdB55AdcwD7iMh1vwtgCelUeI2QcSB4gGGV0ioMASeUSaqnZCBLOKg/exec';
     
     const response = await fetch(scriptUrl, {
         method: 'POST',
@@ -6228,7 +6228,7 @@ async function sendSMSReminder(type) {
             },
             body: new URLSearchParams({
                 'To': `+55${phone}`,
-                'From': 'seu_numero_twilio',
+                'From': '+12362016670',
                 'Body': message
             })
         });
