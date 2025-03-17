@@ -4444,6 +4444,18 @@ function addToCart(product, selectedToppings) {
     document.getElementById('productModal').style.display = 'none';
     showCartModal();
 }
+
+// E logo APÓS ela, adicione:
+const originalAddToCart = addToCart;
+addToCart = function(product, selectedToppings) {
+    if (!localStorage.getItem('cartPhone')) {
+        pendingCartAddition = { product, selectedToppings };
+        createPhoneCollectionModal();
+        document.getElementById('phoneCollectionModal').style.display = 'block';
+        return;
+    }
+    return originalAddToCart.apply(this, [product, selectedToppings]);
+};
     
 async function applyCoupon() {
     const couponCode = document.getElementById('couponCode').value.toUpperCase();
@@ -5101,6 +5113,22 @@ async function submitOrder() {
         alert('Erro ao processar pedido. Por favor, tente novamente.');
     }
 }
+
+// Modificar função submitOrder existente
+const originalSubmitOrder = submitOrder;
+submitOrder = async function(...args) {
+    // Marcar pedido como completo
+    localStorage.setItem('orderCompleted', 'true');
+    
+    // Atualizar status na planilha
+    const phone = localStorage.getItem('cartPhone');
+    if (phone) {
+        await updateSMSStatus(phone, 'completed');
+    }
+
+    // Continuar com o envio normal do pedido
+    return originalSubmitOrder.apply(this, args);
+};
     
 function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     const paymentMethodMap = {
@@ -6130,7 +6158,10 @@ function createPhoneCollectionModal() {
     document.body.appendChild(modal);
 }
 
-// Função para validar e armazenar o telefone
+// Variável global para armazenar temporariamente o produto a ser adicionado
+let pendingCartAddition = null;
+
+// Função para adicionar o modal de coleta de telefone
 async function validateAndStorePhone() {
     const phoneInput = document.getElementById('customerPhoneCart');
     const phoneError = document.getElementById('phoneError');
@@ -6142,7 +6173,6 @@ async function validateAndStorePhone() {
     }
 
     try {
-        // Armazenar na planilha usando Google Apps Script
         const timestamp = new Date().toISOString();
         const data = {
             phone: phone,
@@ -6152,16 +6182,20 @@ async function validateAndStorePhone() {
         };
 
         await recordAbandonedCart(data);
-        
-        // Armazenar localmente
         localStorage.setItem('cartPhone', phone);
         localStorage.setItem('cartTimestamp', timestamp);
 
-        // Fechar modal e continuar com o carrinho
+        // Fechar modal do telefone
         document.getElementById('phoneCollectionModal').style.display = 'none';
-        showCartModal();
 
-        // Iniciar monitoramento do carrinho abandonado
+        // IMPORTANTE: Adicionar o produto pendente ao carrinho
+        if (pendingCartAddition) {
+            originalAddToCart(pendingCartAddition.product, pendingCartAddition.selectedToppings);
+            pendingCartAddition = null;
+        }
+
+        // Mostrar o carrinho
+        showCartModal();
         startCartMonitoring();
 
     } catch (error) {
@@ -6255,35 +6289,6 @@ async function updateSMSStatus(phone, type) {
     await recordAbandonedCart(data);
 }
 
-// Modificar função addToCart existente
-const originalAddToCart = addToCart;
-addToCart = function(...args) {
-    // Se não tiver telefone armazenado, mostrar modal
-    if (!localStorage.getItem('cartPhone')) {
-        createPhoneCollectionModal();
-        document.getElementById('phoneCollectionModal').style.display = 'block';
-        return;
-    }
-
-    // Se já tiver telefone, continuar normalmente
-    return originalAddToCart.apply(this, args);
-};
-
-// Modificar função submitOrder existente
-const originalSubmitOrder = submitOrder;
-submitOrder = async function(...args) {
-    // Marcar pedido como completo
-    localStorage.setItem('orderCompleted', 'true');
-    
-    // Atualizar status na planilha
-    const phone = localStorage.getItem('cartPhone');
-    if (phone) {
-        await updateSMSStatus(phone, 'completed');
-    }
-
-    // Continuar com o envio normal do pedido
-    return originalSubmitOrder.apply(this, args);
-};
 </script>
 <<!-- Modal para Criar Novo Pedido -->
 <!-- Modal para Criar Novo Pedido -->
