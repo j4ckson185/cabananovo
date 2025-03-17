@@ -5107,6 +5107,18 @@ async function submitOrder() {
             await realtimeDB.ref('usedCoupons').push(usedCouponData);
         }
 
+              const phone = localStorage.getItem('cartPhone');
+        if (phone) {
+            // Atualizar status para completed
+            const data = {
+                phone: phone,
+                status: 'completed',
+                timestamp: new Date().toISOString()
+            };
+
+            await recordAbandonedCart(data); // Usa a mesma função que já existe
+        }
+
         // Redirecionar para WhatsApp
         window.location.href = `https://wa.me/5584988731028?text=${encodeURIComponent(message)}`;
 
@@ -6226,7 +6238,7 @@ async function validateAndStorePhone() {
 
 // Função para registrar carrinho abandonado na planilha
 async function recordAbandonedCart(data) {
-    const scriptUrl = 'https://script.google.com/macros/s/AKfycbykUqfs3lExP0cDkcK8fqipZ3yY40t8bma9zA2H-Nx8Q0oYIcQbLZe2S0eNddqQUhVzGA/exec';
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbxiS-HITpHC7R0zb7U6_nAPVq3tG718p36edjhFiVetfRZU6PnD8eCU5aOASnRb-nncMA/exec';
     
     const response = await fetch(scriptUrl, {
         method: 'POST',
