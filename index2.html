@@ -6173,7 +6173,6 @@ function createPhoneCollectionModal() {
 // Variável global para armazenar temporariamente o produto a ser adicionado
 let pendingCartAddition = null;
 
-// Atualizar também o momento em que o monitoramento inicia
 async function validateAndStorePhone() {
     const phoneInput = document.getElementById('customerPhoneCart');
     const phoneError = document.getElementById('phoneError');
@@ -6187,6 +6186,19 @@ async function validateAndStorePhone() {
     try {
         console.log('Iniciando processo de validação do telefone...');
         const timestamp = new Date().toISOString();
+        
+        // Registrar na planilha
+        const data = {
+            phone: phone,
+            timestamp: timestamp,
+            cartItems: JSON.stringify(cart),
+            status: 'active'
+        };
+
+        // Registrar no Google Sheets
+        await recordAbandonedCart(data);
+        
+        // Salvar localmente
         localStorage.setItem('cartPhone', phone);
         localStorage.setItem('cartTimestamp', timestamp);
 
