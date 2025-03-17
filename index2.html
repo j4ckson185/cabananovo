@@ -4408,6 +4408,18 @@ function updateTotalPrice(product) {
 }
 
 function addToCart(product, selectedToppings) {
+    // Verificar se já tem telefone cadastrado
+    if (!localStorage.getItem('cartPhone')) {
+        // Armazenar temporariamente o produto
+        window.pendingCartAddition = { product, selectedToppings };
+        
+        // Criar e mostrar modal de telefone
+        createPhoneCollectionModal();
+        document.getElementById('phoneCollectionModal').style.display = 'block';
+        return;
+    }
+
+    // Se já tem número, continua com a adição normal ao carrinho
     const selectedExtras = Array.from(document.querySelectorAll('.extra-item.selected'))
         .map(extra => {
             const priceText = extra.querySelector('.extra-price')?.textContent;
@@ -4444,18 +4456,6 @@ function addToCart(product, selectedToppings) {
     document.getElementById('productModal').style.display = 'none';
     showCartModal();
 }
-
-// E logo APÓS ela, adicione:
-const originalAddToCart = addToCart;
-addToCart = function(product, selectedToppings) {
-    if (!localStorage.getItem('cartPhone')) {
-        pendingCartAddition = { product, selectedToppings };
-        createPhoneCollectionModal();
-        document.getElementById('phoneCollectionModal').style.display = 'block';
-        return;
-    }
-    return originalAddToCart.apply(this, [product, selectedToppings]);
-};
     
 async function applyCoupon() {
     const couponCode = document.getElementById('couponCode').value.toUpperCase();
@@ -6161,7 +6161,6 @@ function createPhoneCollectionModal() {
 // Variável global para armazenar temporariamente o produto a ser adicionado
 let pendingCartAddition = null;
 
-// Função para adicionar o modal de coleta de telefone
 async function validateAndStorePhone() {
     const phoneInput = document.getElementById('customerPhoneCart');
     const phoneError = document.getElementById('phoneError');
@@ -6188,14 +6187,15 @@ async function validateAndStorePhone() {
         // Fechar modal do telefone
         document.getElementById('phoneCollectionModal').style.display = 'none';
 
-        // IMPORTANTE: Adicionar o produto pendente ao carrinho
-        if (pendingCartAddition) {
-            originalAddToCart(pendingCartAddition.product, pendingCartAddition.selectedToppings);
-            pendingCartAddition = null;
+        // Adicionar o produto pendente ao carrinho
+        if (window.pendingCartAddition) {
+            addToCart(
+                window.pendingCartAddition.product,
+                window.pendingCartAddition.selectedToppings
+            );
+            window.pendingCartAddition = null;
         }
 
-        // Mostrar o carrinho
-        showCartModal();
         startCartMonitoring();
 
     } catch (error) {
