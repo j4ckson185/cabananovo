@@ -6173,6 +6173,7 @@ function createPhoneCollectionModal() {
 // Variável global para armazenar temporariamente o produto a ser adicionado
 let pendingCartAddition = null;
 
+// Atualizar também o momento em que o monitoramento inicia
 async function validateAndStorePhone() {
     const phoneInput = document.getElementById('customerPhoneCart');
     const phoneError = document.getElementById('phoneError');
@@ -6184,15 +6185,8 @@ async function validateAndStorePhone() {
     }
 
     try {
+        console.log('Iniciando processo de validação do telefone...');
         const timestamp = new Date().toISOString();
-        const data = {
-            phone: phone,
-            timestamp: timestamp,
-            cartItems: JSON.stringify(cart),
-            status: 'active'
-        };
-
-        await recordAbandonedCart(data);
         localStorage.setItem('cartPhone', phone);
         localStorage.setItem('cartTimestamp', timestamp);
 
@@ -6208,11 +6202,12 @@ async function validateAndStorePhone() {
             window.pendingCartAddition = null;
         }
 
-        startCartMonitoring();
+        console.log('Iniciando monitoramento do carrinho...');
+        startCartMonitoring(); // Iniciar monitoramento imediatamente
 
     } catch (error) {
-        console.error('Erro ao registrar carrinho:', error);
-        alert('Erro ao processar seu número. Por favor, tente novamente.');
+        console.error('Erro:', error);
+        alert('Erro ao processar seu número. Tente novamente.');
     }
 }
 
@@ -6287,44 +6282,42 @@ async function sendSMSReminder(type) {
 function startCartMonitoring() {
     const timestamp = localStorage.getItem('cartTimestamp');
     if (!timestamp) {
-        console.log('Timestamp não encontrado, monitoramento não iniciado');
+        console.log('Timestamp não encontrado');
         return;
     }
 
-const tenMinutes = 30 * 1000; // 30 segundos para teste
-const oneHour = 60 * 1000;    // 1 minuto para teste
+    // Tempos para teste
+    const tenMinutes = 30 * 1000;  // 30 segundos
+    const oneHour = 60 * 1000;     // 1 minuto
+
     const now = new Date().getTime();
     const cartTime = new Date(timestamp).getTime();
 
-    console.log('Iniciando monitoramento de carrinho abandonado');
+    console.log('Iniciando monitoramento...');
     console.log('Hora atual:', new Date(now).toLocaleString());
     console.log('Hora do carrinho:', new Date(cartTime).toLocaleString());
 
-    // Agendar primeira mensagem (10 minutos)
-    const timeToFirstMessage = Math.max(0, (cartTime + tenMinutes) - now);
-    console.log('Tempo até primeira mensagem (ms):', timeToFirstMessage);
-    
+    // Primeira mensagem (30 segundos)
     setTimeout(() => {
+        console.log('Verificando status para mensagem de 30 segundos...');
         if (!localStorage.getItem('orderCompleted')) {
-            console.log('Enviando primeira mensagem (10min)');
+            console.log('Enviando primeira mensagem');
             sendSMSReminder('10min');
         } else {
-            console.log('Pedido já completado, não enviando mensagem de 10min');
+            console.log('Pedido já completado');
         }
-    }, timeToFirstMessage);
+    }, 30000); // Forçando 30 segundos
 
-    // Agendar segunda mensagem (1 hora)
-    const timeToSecondMessage = Math.max(0, (cartTime + oneHour) - now);
-    console.log('Tempo até segunda mensagem (ms):', timeToSecondMessage);
-    
+    // Segunda mensagem (1 minuto)
     setTimeout(() => {
+        console.log('Verificando status para mensagem de 1 minuto...');
         if (!localStorage.getItem('orderCompleted')) {
-            console.log('Enviando segunda mensagem (1hora)');
+            console.log('Enviando segunda mensagem');
             sendSMSReminder('1hour');
         } else {
-            console.log('Pedido já completado, não enviando mensagem de 1hora');
+            console.log('Pedido já completado');
         }
-    }, timeToSecondMessage);
+    }, 60000); // Forçando 1 minuto
 }
 
 // Função para atualizar status do SMS na planilha
