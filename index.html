@@ -4898,17 +4898,7 @@ function setupPaymentEvents() {
 }
     
 async function submitOrder() {
-    try {
-        // Primeiro, marcar como completed ANTES de qualquer outra ação
-        const phone = localStorage.getItem('cartPhone');
-        if (phone) {
-            console.log('Atualizando status para completed...');
-            // Aqui vamos usar updateSMSStatus em vez de fetch direto
-            await updateSMSStatus(phone, 'completed');
-            localStorage.setItem('orderCompleted', 'true');
-            console.log('Status atualizado para completed');
-        }
-      
+  try {
     // Obter o contador atual do localStorage ou inicializar como 1
     let orderCounter = parseInt(localStorage.getItem('orderCounter') || '1');
     
@@ -6236,7 +6226,7 @@ async function validateAndStorePhone() {
 
 // Função para registrar carrinho abandonado na planilha
 async function recordAbandonedCart(data) {
-    const scriptUrl = 'https://script.google.com/macros/s/AKfycbz9uQm1l7iDu5WTRzJrkZKLTFXSvz0jUq1sj34wLNz2Iwkvuy3NLqAP9vBW6GinJsDLcA/exec';
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbyCsrhKsKTDk6NEj5PaanzaFAvOQD4zPtumRyEgBuEZ-c0O7CGzlX_vM6XoJAmi3xbhhw/exec';
     
     const response = await fetch(scriptUrl, {
         method: 'POST',
@@ -6258,9 +6248,9 @@ async function sendSMSReminder(type) {
         return;
     }
 
-const message = type === '10min' 
-  ? 'Cabana Açaí: 📢🔥 Obrigado por acessar nosso cardápio digital 🍓✨ Faça seu pedido agora e receba rapidinho! 👉 http://cabanaacai.netlify.app/'
-  : 'Cabana Açaí: ⏳🍨 Ainda tá com vontade de um açaí top? A gente tá pronto pra te atender! 😋 Não deixa pra depois! 👉 https://cabanaacai.netlify.app/';
+    const message = type === '10min' 
+        ? '📢🔥 Tá na hora de se deliciar com um açaí incrível! 🍓✨ Faça seu pedido agora e receba rapidinho! 👉 http://cabanaacai.netlify.app/'
+        : '⏳🍨 Ainda tá com vontade de um açaí top? A gente tá pronto pra te atender! 😋 Não deixa pra depois! 👉 https://cabanaacai.netlify.app/';
 
     const twilioAccount = 'AC04c1d67a4b599d4cb0d804029109fad3';
     const twilioToken = '4061a06f7cbacc1262afa1f2356e69b3';
@@ -6345,22 +6335,12 @@ function startCartMonitoring() {
 
 // Função para atualizar status do SMS na planilha
 async function updateSMSStatus(phone, type) {
-    let data;
-    if (type === 'completed') {
-        data = {
-            phone: phone,
-            status: 'completed',    // Mudamos para enviar status direto
-            timestamp: new Date().toISOString()
-        };
-    } else {
-        data = {
-            phone: phone,
-            smsType: type,
-            status: 'sent'
-        };
-    }
+    const data = {
+        phone: phone,
+        smsType: type,
+        status: 'sent'
+    };
 
-    console.log('Enviando dados para planilha:', data); // Log para debug
     await recordAbandonedCart(data);
 }
 
