@@ -5527,14 +5527,14 @@ async function createPagBankCheckout() {
     // Chamar a API do PagBank
     // Note: Idealmente isso deveria ser feito no servidor para proteger suas credenciais
     // Esta é uma implementação simplificada para teste
-    const response = await fetch("https://api.pagseguro.com/checkouts", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify(checkoutData)
-    });
+const response = await fetch("https://cors-anywhere.herokuapp.com/https://api.pagseguro.com/checkouts", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${token}`
+  },
+  body: JSON.stringify(checkoutData)
+});
     
     // Processar a resposta
     if (!response.ok) {
