@@ -6907,6 +6907,28 @@ function generatePixQRCode(total) {
     return qrContainer;
 }
 
+function calculateCRC16(str) {
+    function crc16(data) {
+        let crc = 0xFFFF;
+        const polynomial = 0x1021;
+
+        for (let i = 0; i < data.length; i++) {
+            crc ^= (data[i] << 8);
+            for (let j = 0; j < 8; j++) {
+                if (crc & 0x8000) {
+                    crc = ((crc << 1) ^ polynomial) & 0xFFFF;
+                } else {
+                    crc = (crc << 1) & 0xFFFF;
+                }
+            }
+        }
+        return crc;
+    }
+
+    const data = Array.from(str).map(c => c.charCodeAt(0));
+    return crc16(data);
+}
+
 // Função atualizada para copiar a chave PIX
 function copyPixKey(button, event) {
     event.preventDefault(); // Previne o comportamento padrão
@@ -6929,14 +6951,13 @@ function copyPixKey(button, event) {
 
 function showComprovanteUpload(event) {
     if (event) {
-        event.preventDefault();
-        event.stopPropagation();
+        event.preventDefault(); // Previne o comportamento padrão
+        event.stopPropagation(); // Impede a propagação do evento
     }
 
     const pixInfo = document.getElementById('pixQRCode');
     if (!pixInfo) return;
 
-    // Substituir conteúdo com o formulário de upload
     pixInfo.innerHTML = `
         <div style="padding: 15px; background: var(--surface); border-radius: 10px;">
             <h4 style="margin-bottom: 15px; color: white;">Enviar Comprovante</h4>
@@ -6946,8 +6967,20 @@ function showComprovanteUpload(event) {
                 style="width: 100%; margin-bottom: 15px; padding: 10px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text);"
                 onchange="handleComprovanteUpload(this)">
             <div id="uploadStatus" style="margin-top: 10px;"></div>
+            <button onclick="handleNotificacao(event)" class="modal-btn add-to-cart" style="margin-top: 15px;">
+                <i class="fas fa-bell"></i> Notificar Loja
+            </button>
         </div>
     `;
+}
+
+// Nova função para lidar com a notificação
+function handleNotificacao(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    notificarLojaPagamento();
 }
 
 async function handleComprovanteUpload(input) {
