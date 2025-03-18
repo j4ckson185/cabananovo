@@ -5933,80 +5933,6 @@ openProductModal = function(product) {
         addMascotToProduct(modalContent, '1L');
     }
 };
-
-function updatePaymentOptions() {
-  console.log("updatePaymentOptions chamada");
-  const paymentContainer = document.getElementById('changeContainer');
-  const pixInfo = document.getElementById('pixInfo');
-  console.log("pixInfo element:", pixInfo);
-  const pixOption = document.querySelector('input[name="payment"][value="online"]'); // Mudado de "pix" para "online"
-  console.log("pixOption:", pixOption);
-  
-  if (pixOption && pixOption.checked) {
-    // Limpar container anterior
-    pixInfo.style.display = 'block';
-    pixInfo.innerHTML = `
-      <div class="pix-payment-options">
-        <h3 style="color: white; margin-bottom: 1rem;">Escolha como pagar com PIX</h3>
-        
-        <div class="pix-methods" style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-          <button type="button" class="pix-method-btn" onclick="showPixData()" style="flex: 1; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); cursor: pointer;">
-            <i class="fas fa-copy"></i> Copiar dados
-          </button>
-          <button type="button" class="pix-method-btn" onclick="showPixQR()" style="flex: 1; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); cursor: pointer;">
-            <i class="fas fa-qrcode"></i> QR Code
-          </button>
-        </div>
-        
-        <div id="pixDataContainer" style="display: none; margin-top: 1rem;">
-          <p style="color: var(--text); margin-bottom: 0.5rem;">Dados para pagamento via PIX:</p>
-          <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-            <p style="color: white; margin-bottom: 0.5rem;"><strong>Chave PIX:</strong> 84 988731028</p>
-            <p style="color: white; margin-bottom: 0.5rem;"><strong>Banco:</strong> Santander</p>
-            <p style="color: white;"><strong>Nome:</strong> Jackson</p>
-          </div>
-          <button type="button" onclick="copyPixKey()" class="modal-btn" style="width: 100%; background: var(--gradient);">
-            <i class="fas fa-copy"></i> Copiar Chave PIX
-          </button>
-        </div>
-        
-        <div id="pixQrContainer" style="display: none; margin-top: 1rem; text-align: center;">
-          <p style="color: var(--text); margin-bottom: 1rem;">Escaneie o QR Code com o app do seu banco:</p>
-          <div id="pixQrCode" style="width: 200px; height: 200px; background: white; margin: 0 auto 1rem auto; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
-            <!-- QR code será gerado aqui -->
-          </div>
-          <p style="color: var(--accent); font-size: 0.9rem;">A confirmação do pagamento pode levar alguns instantes.</p>
-        </div>
-        
-        <div style="margin-top: 1.5rem;">
-          <p style="color: var(--text); font-size: 0.9rem;">Após realizar o pagamento, por favor continue para finalizar seu pedido. Enviaremos seu comprovante por WhatsApp.</p>
-        </div>
-      </div>
-    `;
-  } else {
-    pixInfo.style.display = 'none';
-  }
-  
-  // Mostrar container de troco se pagamento for dinheiro
-  if (document.querySelector('input[name="payment"][value="money"]')?.checked) {
-    paymentContainer.style.display = 'block';
-  } else {
-    paymentContainer.style.display = 'none';
-  }
-}
-
-// Função para copiar a chave PIX
-function copyPixKey() {
-  const pixKey = "84988731028";
-  
-  // Copiar para a área de transferência
-  navigator.clipboard.writeText(pixKey).then(() => {
-    showNotification("Chave PIX copiada!");
-  }).catch(err => {
-    console.error('Erro ao copiar chave PIX: ', err);
-    showNotification("Não foi possível copiar a chave PIX. Tente copiar manualmente.");
-  });
-}
     
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -6019,6 +5945,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Carregado'); // Log para diagnóstico
 
     addTimeMachineButton(); // Adiciona o botão do Time Machine
+    openProductByUrlParam();
     
     // Configurar estrutura do chat
     const chatContainer = document.querySelector('.chat-container');
@@ -6087,18 +6014,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(checkStoreStatus, 60000);
     setupPaymentEvents();
 
-      // Verificar se pixInfo existe, caso contrário, criar
-  if (!document.getElementById('pixInfo')) {
-    console.log("Criando div pixInfo");
-    const paymentOptions = document.querySelector('.payment-options') || document.querySelector('.payment-group');
-    if (paymentOptions) {
-      const pixInfoDiv = document.createElement('div');
-      pixInfoDiv.id = 'pixInfo';
-      pixInfoDiv.style.display = 'none';
-      paymentOptions.parentNode.insertBefore(pixInfoDiv, paymentOptions.nextSibling);
-    }
-  }
-
     // Configuração do Intersection Observer para o mascote
     const mascotVideo = document.querySelector('.mascot-video');
     if (mascotVideo) {
@@ -6128,14 +6043,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(function() {
     window.openProductByUrlParam();
   }, 1000);
-
-    // Adicionar listener para mudanças nas opções de pagamento
-document.querySelectorAll('input[name="payment"]').forEach(radio => {
-  radio.addEventListener('change', updatePaymentOptions);
-});
-
-    // Inicializar as opções de pagamento
-updatePaymentOptions();
 }); // Fechamento do DOMContentLoaded
    
    // Categories
