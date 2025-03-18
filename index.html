@@ -4217,11 +4217,13 @@ function openProductModal(product) {
         this.style.boxShadow = 'none';
     });
     
+// Manipula o evento de clique no botão
+shareBtn.addEventListener('click', function() {
     // Primeiro, atualize as meta tags para este produto específico
-    const ogTitle = document.querySelector('meta[property="og:title"]');
-    const ogDescription = document.querySelector('meta[property="og:description"]');
-    const ogImage = document.querySelector('meta[property="og:image"]');
-    const ogUrl = document.querySelector('meta[property="og:url"]');
+    let ogTitle = document.querySelector('meta[property="og:title"]');
+    let ogDescription = document.querySelector('meta[property="og:description"]');
+    let ogImage = document.querySelector('meta[property="og:image"]');
+    let ogUrl = document.querySelector('meta[property="og:url"]');
     
     // Se não existirem, crie-as
     if (!ogTitle) {
