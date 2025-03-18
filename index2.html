@@ -5088,7 +5088,6 @@ async function createPixPayment(orderTotal, customerName, customerEmail) {
             }
         };
 
-        // Usando proxy CORS-Anywhere
         const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
         const mpUrl = 'https://api.mercadopago.com/v1/payments';
         
@@ -5097,18 +5096,19 @@ async function createPixPayment(orderTotal, customerName, customerEmail) {
             headers: {
                 'Authorization': 'Bearer APP_USR-5690418429869747-031817-f6ee6e1b8317cfd7526ff7bd547728e7-257593839',
                 'Content-Type': 'application/json',
-                'Origin': window.location.origin
+                'Origin': window.location.origin,
+                'X-Idempotency-Key': `${Date.now()}-${Math.random().toString(36).substring(2)}`
             },
             body: JSON.stringify(payloadData)
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Erro ao criar pagamento');
-        }
-
         const responseData = await response.json();
         console.log('Resposta MP:', responseData);
+
+        if (!response.ok) {
+            throw new Error(responseData.message || 'Erro ao criar pagamento');
+        }
+
         return responseData;
 
     } catch (error) {
