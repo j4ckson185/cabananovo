@@ -6787,14 +6787,14 @@ async function updateSMSStatus(phone, type) {
 }
 
 function generatePixQRCode(total) {
-    // Dados do PIX (ajustados conforme especificação do Banco Central)
+    // Dados do PIX
     const pixKey = "84988731028";
-    const merchantName = "Jackson Silva Santos";  // Nome completo do recebedor
+    const merchantName = "Jackson";
     
     // Formatar valor
     const amount = parseFloat(total.toString().replace(/[^\d.,]/g, '').replace(',', '.')).toFixed(2);
     
-    // Criar container para o QR Code com tamanho ajustado
+    // Criar container principal
     const qrContainer = document.createElement('div');
     qrContainer.id = 'pixQRCode';
     qrContainer.style.cssText = `
@@ -6807,7 +6807,7 @@ function generatePixQRCode(total) {
         margin: 0 auto;
     `;
     
-    // Container do QR Code com tamanho responsivo
+    // Container do QR Code
     const qrElement = document.createElement('div');
     qrElement.style.cssText = `
         background: white;
@@ -6818,27 +6818,31 @@ function generatePixQRCode(total) {
         max-width: 100%;
     `;
     
-    // Gerar QR Code com tamanho menor
+    qrContainer.innerHTML = `
+        <h3 style="margin-bottom: 10px; color: white;">Pagamento via PIX</h3>
+    `;
+    qrContainer.appendChild(qrElement);
+    
+    // Gerar QR Code
     new QRCode(qrElement, {
-        text: pixKey, // Simplificando para usar apenas a chave PIX
+        text: pixKey,
         width: 150,
         height: 150,
         colorDark: "#000000",
         colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.M
+        correctLevel: QRCode.CorrectLevel.H
     });
     
-    // Layout das informações
-    qrContainer.innerHTML = `
-        <h3 style="margin-bottom: 10px; color: white;">Pagamento via PIX</h3>
-        ${qrElement.outerHTML}
+    // Adicionar informações abaixo do QR Code
+    const infoContainer = document.createElement('div');
+    infoContainer.innerHTML = `
         <div style="margin: 15px 0; padding: 10px; background: var(--surface); border-radius: 10px;">
             <div style="margin-bottom: 10px;">
                 <strong>Dados da Chave PIX</strong><br>
                 <span style="color: var(--text);">
-                    WhatsApp: ${pixKey}<br>
+                    Chave PIX: ${pixKey}<br>
                     Banco: Santander<br>
-                    Nome: Jackson Silva Santos<br>
+                    Nome: Jackson<br>
                     Valor: R$ ${amount}
                 </span>
             </div>
@@ -6856,11 +6860,12 @@ function generatePixQRCode(total) {
                 </div>
             </div>
         </div>
-        <button class="modal-btn add-to-cart" onclick="showComprovanteUpload(event)">
+        <button class="modal-btn add-to-cart" onclick="showComprovanteUpload(event)" style="margin-top: 10px;">
             <i class="fas fa-check"></i> Já paguei, enviar comprovante
         </button>
     `;
     
+    qrContainer.appendChild(infoContainer);
     return qrContainer;
 }
 
@@ -6884,43 +6889,40 @@ function copyPixKey(button, event) {
     }, 2000);
 }
 
-// Função atualizada para upload do comprovante
 function showComprovanteUpload(event) {
     if (event) {
         event.preventDefault();
         event.stopPropagation();
     }
 
-    const pixInfo = document.getElementById('pixInfo');
+    const pixInfo = document.getElementById('pixQRCode');
     if (!pixInfo) return;
 
+    // Substituir conteúdo com o formulário de upload
     pixInfo.innerHTML = `
         <div style="padding: 15px; background: var(--surface); border-radius: 10px;">
-            <h4 style="margin-bottom: 15px;">Enviar Comprovante</h4>
+            <h4 style="margin-bottom: 15px; color: white;">Enviar Comprovante</h4>
             <input type="file" 
                 id="comprovante" 
                 accept="image/*,.pdf" 
-                style="width: 100%; margin-bottom: 15px;"
+                style="width: 100%; margin-bottom: 15px; padding: 10px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text);"
                 onchange="handleComprovanteUpload(this)">
             <div id="uploadStatus" style="margin-top: 10px;"></div>
         </div>
     `;
 }
 
-// Função para manipular o upload do comprovante
 function handleComprovanteUpload(input) {
     const file = input.files[0];
     if (!file) return;
 
-    const statusDiv = document.getElementById('uploadStatus');
-    if (statusDiv) {
-        statusDiv.innerHTML = `
-            <div style="color: #4CAF50; margin-top: 10px;">
-                <i class="fas fa-check-circle"></i> 
-                Comprovante carregado com sucesso!
-            </div>
-        `;
-    }
+    const uploadStatus = document.getElementById('uploadStatus');
+    uploadStatus.innerHTML = `
+        <div style="color: #4CAF50; padding: 10px; background: var(--glass); border-radius: 8px;">
+            <i class="fas fa-check-circle"></i> 
+            Comprovante carregado com sucesso!
+        </div>
+    `;
 }
 
 function changePaymentMethod() {
