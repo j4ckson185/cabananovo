@@ -3,14 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Meta tags para preview em WhatsApp e SMS -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://cabanaacai.netlify.app/">
-    <meta property="og:title" content="Cabana Açaí - Menu Premium">
-    <meta property="og:description" content="Peça seu açaí premium com os melhores sabores e acompanhamentos!">
-    <meta property="og:image" content="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg">
-    
     <title>Cabana Açaí - Menu Premium</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -2841,14 +2833,12 @@ window.openProductByUrlParam = function() {
         return normalizedName === normalizedParam;
       });
       
-// Se encontrou o produto, abrir o modal e atualizar meta tags
-if (foundProduct) {
-  openProductModal(foundProduct);
-  window.updateMetaTags(foundProduct);
-  console.log('Produto encontrado:', foundProduct.name);
-} else {
-  console.log(`Produto '${produtoParam}' não encontrado no catálogo.`);
-}
+      // Se encontrou o produto, abrir o modal
+      if (foundProduct) {
+        openProductModal(foundProduct);
+      } else {
+        console.log(`Produto '${produtoParam}' não encontrado no catálogo.`);
+      }
     }
   }, 500); // Verificar a cada 500ms
 };
@@ -3336,49 +3326,255 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Replace the handleDeliveryInfo function in your digital menu with this version:
 async function handleDeliveryInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
     const deliveryInfo = Object.fromEntries(formData);
 
-    // ADICIONAR ESTA LINHA AQUI, logo após obter o formData
-    if (customerInfo && customerInfo.whatsapp) {
-        localStorage.setItem('lastCustomerPhone', customerInfo.whatsapp);
+    // Validação de endereço
+    const validationResult = validateAddress(deliveryInfo);
+    if (!validationResult.valid) {
+        showNotification(validationResult.message);
+        highlightInvalidField(validationResult.field);
+        return;
     }
 
+    updateCustomerAndDeliveryInfo(customerInfo, deliveryInfo);
+    
+    // Calcular totais
+    const subtotal = cart.reduce((total, item) => total + item.price, 0);
+    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    const deliveryFee = 3.00;
+    const total = subtotal - discount + deliveryFee;
+
     try {
-        // Garantir que temos as informações necessárias
-        if (!customerInfo || !customerInfo.fullName) {
-            throw new Error('Informações do cliente incompletas');
-        }
+        // Adiciona log antes de salvar
+        console.log('Tentando salvar pedido:', {
+            customerInfo,
+            deliveryInfo,
+            items: cart,
+            subtotal,
+            discount,
+            deliveryFee,
+            total
+        });
 
         // Criar o pedido para o Firebase
         const orderData = {
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             customerInfo,
-            deliveryInfo,
-            items: cart,
-            status: 'new'
+            deliveryInfo: {
+                ...deliveryInfo,
+                payment: deliveryInfo.payment === 'pix' ? 'online' : deliveryInfo.payment,
+            },
+            items: cart.map(item => ({
+                ...item,
+                price: parseFloat(item.price),
+                originalPrice: parseFloat(item.originalPrice || item.price),
+                selectedToppings: item.selectedToppings || [],
+                selectedExtras: item.selectedExtras || [],
+                observation: [
+                    ...(item.selectedToppings?.length ? [`Acompanhamentos: ${item.selectedToppings.join(", ")}`] : []),
+                    ...(item.selectedExtras?.length ? [`Extras: ${item.selectedExtras.join(", ")}`] : [])
+                ].join("\n")
+            })),
+            subtotal: parseFloat(subtotal),
+            discount: parseFloat(discount),
+            deliveryFee: parseFloat(deliveryFee),
+            total: parseFloat(total),
+            cupom: appliedCoupon ? appliedCoupon.code : null,
+            status: 'open',
+            orderTotal: parseFloat(total),
+            paymentMethod: deliveryInfo.payment === 'pix' ? 'online' : deliveryInfo.payment,
+            id: "5555",
+            creationDate: new Date().toISOString(),
+            deliveryPoint: {
+                address: `${deliveryInfo.address}, ${deliveryInfo.neighborhood}`,
+                street: deliveryInfo.address,
+                neighborhood: deliveryInfo.neighborhood,
+                complement: deliveryInfo.complement || "",
+                postalCode: deliveryInfo.zipcode,
+                city: "Natal",
+                region: "RN",
+                country: "BR"
+            },
+            customer: {
+                customerName: customerInfo.fullName,
+                customerPhone: customerInfo.whatsapp
+            }
         };
 
-        // Salvar no Firebase
-        const newOrderRef = await realtimeDB.ref('orders').push(orderData);
+        // Salvar pedido no Firebase
+        const newOrderRef = await realtimeDB.ref()('orders').push(orderData);
         
-        if (!newOrderRef.key) {
-            throw new Error('Falha ao salvar pedido');
+        // Log após salvar
+        console.log('Pedido salvo com sucesso, ID:', newOrderRef.key);
+
+        // Somente após confirmar que o pedido foi salvo, redirecionar para o WhatsApp
+        if (newOrderRef.key) {
+            const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
+            const encodedMessage = encodeURIComponent(message);
+            window.location.href = `https://wa.me/5584988731028?text=${encodedMessage}`;
+        } else {
+            throw new Error('Falha ao salvar o pedido');
         }
 
-        // Formatar e enviar para WhatsApp
-        const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
-        window.location.href = `https://wa.me/5584988731028?text=${encodeURIComponent(message)}`;
-
     } catch (error) {
+        // Log de erro
         console.error('Erro ao processar pedido:', error);
         alert('Erro ao processar pedido. Por favor, tente novamente.');
     }
 }
 
+function validateAddress(deliveryInfo) {
+    // Verificar se o endereço está preenchido
+    if (!deliveryInfo.address || deliveryInfo.address.trim().length < 5) {
+        return {
+            valid: false,
+            field: 'address',
+            message: 'Por favor, insira um endereço válido (mínimo 5 caracteres)'
+        };
+    }
+    
+    // Verificar se tem o número da casa/prédio
+    if (!deliveryInfo.address.match(/\d+/) && (!deliveryInfo.apt || !deliveryInfo.apt.match(/\d+/))) {
+        return {
+            valid: false,
+            field: 'address',
+            message: 'Por favor, inclua o número do endereço'
+        };
+    }
+    
+    // Verificar bairro
+    if (!deliveryInfo.neighborhood || deliveryInfo.neighborhood.trim().length < 3) {
+        return {
+            valid: false,
+            field: 'neighborhood',
+            message: 'Por favor, insira um bairro válido'
+        };
+    }
+    
+    // Verificar CEP (formato brasileiro: 59000-000)
+    const cepRegex = /^\d{5}-?\d{3}$/;
+    if (!deliveryInfo.zipcode || !cepRegex.test(deliveryInfo.zipcode.replace(/\s/g, ''))) {
+        return {
+            valid: false,
+            field: 'zipcode',
+            message: 'Por favor, insira um CEP válido no formato 59000-000'
+        };
+    }
+    
+    // Verificar método de pagamento
+    if (!deliveryInfo.payment) {
+        return {
+            valid: false,
+            field: 'payment',
+            message: 'Por favor, selecione um método de pagamento'
+        };
+    }
+    
+    // Se for dinheiro, verificar se tem troco quando necessário
+    if (deliveryInfo.payment === 'money' && deliveryInfo.change && deliveryInfo.change < cart.reduce((total, item) => total + item.price, 0) + 3) {
+        return {
+            valid: false,
+            field: 'change',
+            message: 'O valor para troco deve ser maior que o total do pedido'
+        };
+    }
+    
+    return { valid: true };
+}
+
+function highlightInvalidField(fieldName) {
+    const field = document.querySelector(`#deliveryInfoForm [name="${fieldName}"]`);
+    if (field) {
+        field.classList.add('error-shake');
+        field.style.borderColor = 'var(--error)';
+        
+        // Remover destaque após 3 segundos
+        setTimeout(() => {
+            field.classList.remove('error-shake');
+            field.style.borderColor = '';
+        }, 3000);
+        
+        // Focar no campo
+        field.focus();
+    }
+}
+
+function showDeliveryInfoWithSummary() {
+    document.getElementById('customerInfoModal').style.display = 'none';
+    
+    // Atualizar o resumo do pedido antes de mostrar o modal
+    updateOrderSummary();
+    
+    document.getElementById('deliveryInfoModal').style.display = 'block';
+}
+
+function updateOrderSummary() {
+    const orderSummarySection = document.querySelector('.order-summary');
+    let summaryHTML = `
+        <h3 style="color: white; margin-bottom: 1rem;">Resumo do Pedido</h3>
+        <div class="summary-items">
+    `;
+    
+    // Adicionar cada item do carrinho ao resumo
+    cart.forEach((item, index) => {
+        summaryHTML += `
+            <div class="summary-item" style="margin-bottom: 1rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">
+                <div style="font-weight: 600; color: white;">${item.name}</div>
+                ${item.selectedToppings && item.selectedToppings.length ? `
+                    <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
+                        <i class="fas fa-check-circle" style="color: var(--accent);"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
+                    </div>
+                ` : ''}
+                ${item.selectedExtras && item.selectedExtras.length ? `
+                    <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
+                        <i class="fas fa-plus-circle" style="color: var(--accent);"></i> Extras: ${item.selectedExtras.join(', ')}
+                    </div>
+                ` : ''}
+                <div style="display: flex; justify-content: flex-end; font-weight: 600; color: var(--accent); margin-top: 0.5rem;">
+                    R$ ${item.price.toFixed(2)}
+                </div>
+            </div>
+        `;
+    });
+    
+    // Calcular os totais
+    const subtotal = cart.reduce((total, item) => total + item.price, 0);
+    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    const deliveryFee = 3.00;
+    const total = subtotal - discount + deliveryFee;
+    
+    // Adicionar totais ao resumo
+    summaryHTML += `
+        </div>
+        <div class="summary-totals" style="margin-top: 1rem;">
+            <div class="summary-row" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span>Subtotal:</span>
+                <span>R$ ${subtotal.toFixed(2)}</span>
+            </div>
+            ${discount > 0 ? `
+                <div class="summary-row" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #4CAF50;">
+                    <span>Desconto:</span>
+                    <span>-R$ ${discount.toFixed(2)}</span>
+                </div>
+            ` : ''}
+            <div class="summary-row" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span>Taxa de Entrega:</span>
+                <span>R$ ${deliveryFee.toFixed(2)}</span>
+            </div>
+            <div class="summary-row" style="display: flex; justify-content: space-between; font-weight: 700; color: var(--accent); font-size: 1.2rem; margin-top: 0.5rem; border-top: 1px solid var(--glass-border); padding-top: 0.5rem;">
+                <span>Total:</span>
+                <span>R$ ${total.toFixed(2)}</span>
+            </div>
+        </div>
+    `;
+    
+    // Atualizar o conteúdo HTML do resumo
+    orderSummarySection.innerHTML = summaryHTML;
+}
+    
 // Load products from Firebase
 function loadMenuProducts() {
   realtimeDB.ref('menu/products').on('value', snapshot => {
@@ -4186,6 +4382,96 @@ function openProductModal(product) {
     const productImage = modal.querySelector('.modal-product-image');
     productImage.parentNode.insertBefore(nutritionBtn, productImage);
     
+    // Verifica se já existe um botão de compartilhamento e o remove
+    const existingShareBtn = modal.querySelector('.share-whatsapp-btn');
+    if (existingShareBtn) {
+        existingShareBtn.remove();
+    }
+    
+    // Cria URL com parâmetro do produto
+    const normalizedName = product.name.toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]/g, "-");
+    const shareUrl = `${window.location.origin}${window.location.pathname}?produto=${normalizedName}`;
+    
+    // Cria botão de compartilhamento do WhatsApp
+    const shareBtn = document.createElement('button');
+    shareBtn.className = 'share-whatsapp-btn';
+    shareBtn.innerHTML = '<i class="fab fa-whatsapp"></i> Compartilhar no WhatsApp';
+    shareBtn.style.cssText = `
+        background: #25D366;
+        color: white;
+        border: none;
+        padding: 0.8rem 1.2rem;
+        border-radius: 25px;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        margin: 1rem auto;
+        transition: all 0.3s ease;
+    `;
+    
+    shareBtn.addEventListener('mouseover', function() {
+        this.style.transform = 'translateY(-2px)';
+        this.style.boxShadow = '0 5px 10px rgba(37, 211, 102, 0.3)';
+    });
+    
+    shareBtn.addEventListener('mouseout', function() {
+        this.style.transform = 'translateY(0)';
+        this.style.boxShadow = 'none';
+    });
+    
+// Manipula o evento de clique no botão
+shareBtn.addEventListener('click', function() {
+    // Primeiro, atualize as meta tags para este produto específico
+    let ogTitle = document.querySelector('meta[property="og:title"]');
+    let ogDescription = document.querySelector('meta[property="og:description"]');
+    let ogImage = document.querySelector('meta[property="og:image"]');
+    let ogUrl = document.querySelector('meta[property="og:url"]');
+    
+    // Se não existirem, crie-as
+    if (!ogTitle) {
+        ogTitle = document.createElement('meta');
+        ogTitle.setAttribute('property', 'og:title');
+        document.head.appendChild(ogTitle);
+    }
+    
+    if (!ogDescription) {
+        ogDescription = document.createElement('meta');
+        ogDescription.setAttribute('property', 'og:description');
+        document.head.appendChild(ogDescription);
+    }
+    
+    if (!ogImage) {
+        ogImage = document.createElement('meta');
+        ogImage.setAttribute('property', 'og:image');
+        document.head.appendChild(ogImage);
+    }
+    
+    if (!ogUrl) {
+        ogUrl = document.createElement('meta');
+        ogUrl.setAttribute('property', 'og:url');
+        document.head.appendChild(ogUrl);
+    }
+    
+    // Atualize os valores das meta tags
+    ogTitle.setAttribute('content', product.name + ' - Cabana Açaí');
+    ogDescription.setAttribute('content', product.description || 'Peça seu açaí premium com os melhores sabores e acompanhamentos!');
+    ogImage.setAttribute('content', product.imageUrl || 'https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg');
+    ogUrl.setAttribute('content', shareUrl);
+    
+    // Para o compartilhamento no WhatsApp, adiciona um timestamp para evitar cache
+    const whatsappShareUrl = `${shareUrl}&t=${Date.now()}`;
+    const text = `Olha que delícia! ${product.name} da Cabana Açaí 😋🍇`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text + ' ' + whatsappShareUrl)}`;
+    window.open(whatsappUrl, '_blank');
+});
+    
+    // Adiciona o botão ao lado do botão de nutrição
+    productImage.parentNode.insertBefore(shareBtn, productImage);
+    
     modal.querySelectorAll('.video-container, .upgrade-button, .mascot-container, .upgrade-section, .benefits-section').forEach(el => el.remove());
     
     modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
@@ -4730,11 +5016,27 @@ function handleCustomerInfo(e) {
     const formData = new FormData(e.target);
     const customer = Object.fromEntries(formData);
     
+    // Validar o formulário
+    if (!customer.fullName || customer.fullName.trim().length < 5) {
+        showNotification('Por favor, insira seu nome completo');
+        highlightInvalidField('fullName');
+        return;
+    }
+    
+    if (!customer.whatsapp || !/^\d{11}$/.test(customer.whatsapp.replace(/\D/g, ''))) {
+        showNotification('Por favor, insira um número de WhatsApp válido com DDD (11 dígitos)');
+        highlightInvalidField('whatsapp');
+        return;
+    }
+    
+    // Formatar o número de telefone (remover não dígitos)
+    customer.whatsapp = customer.whatsapp.replace(/\D/g, '');
+    
     // Atualiza as informações do cliente
     updateCustomerAndDeliveryInfo(customer, {});
     
-    document.getElementById('customerInfoModal').style.display = 'none';
-    document.getElementById('deliveryInfoModal').style.display = 'block';
+    // Mostrar o modal de endereço com o resumo melhorado
+    showDeliveryInfoWithSummary();
 }
 
 async function handleDeliveryInfo(e) {
@@ -5760,58 +6062,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    // Função para atualizar as meta tags quando um produto é acessado via URL
-window.updateMetaTags = function(product) {
-  if (!product) return;
-  
-  // Verifica se as meta tags existem
-  let ogTitle = document.querySelector('meta[property="og:title"]');
-  let ogDescription = document.querySelector('meta[property="og:description"]');
-  let ogImage = document.querySelector('meta[property="og:image"]');
-  let ogUrl = document.querySelector('meta[property="og:url"]');
-  
-  // Se não existirem, crie-as
-  if (!ogTitle) {
-    ogTitle = document.createElement('meta');
-    ogTitle.setAttribute('property', 'og:title');
-    document.head.appendChild(ogTitle);
-  }
-  
-  if (!ogDescription) {
-    ogDescription = document.createElement('meta');
-    ogDescription.setAttribute('property', 'og:description');
-    document.head.appendChild(ogDescription);
-  }
-  
-  if (!ogImage) {
-    ogImage = document.createElement('meta');
-    ogImage.setAttribute('property', 'og:image');
-    document.head.appendChild(ogImage);
-  }
-  
-  if (!ogUrl) {
-    ogUrl = document.createElement('meta');
-    ogUrl.setAttribute('property', 'og:url');
-    document.head.appendChild(ogUrl);
-  }
-  
-  // Atualize as meta tags
-  ogTitle.setAttribute('content', product.name + ' - Cabana Açaí');
-  ogDescription.setAttribute('content', product.description || 'Peça seu açaí premium com os melhores sabores e acompanhamentos!');
-  ogImage.setAttribute('content', product.imageUrl || 'https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg');
-  
-  // Atualize a URL para incluir o parâmetro do produto
-  const normalizedName = product.name.toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]/g, "-");
-  const productUrl = `${window.location.origin}${window.location.pathname}?produto=${normalizedName}`;
-  ogUrl.setAttribute('content', productUrl);
-  
-  console.log('Meta tags atualizadas para:', product.name);
-  console.log('Imagem:', product.imageUrl || 'https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg');
-};
-    
       // Adicione estas linhas no final, antes do fechamento da função
   setTimeout(function() {
     window.openProductByUrlParam();
@@ -5949,23 +6199,6 @@ function selectOccasion(occasion) {
 
     // Exibir notificação com detalhes
     showRecommendation(message, products, toppings);
-}
-
-// Função para atualizar as meta tags quando um produto é acessado via URL
-function updateMetaTags(product) {
-  if (!product) return;
-  
-  // Atualize as meta tags existentes
-  document.querySelector('meta[property="og:title"]').setAttribute('content', product.name + ' - Cabana Açaí');
-  document.querySelector('meta[property="og:description"]').setAttribute('content', product.description);
-  document.querySelector('meta[property="og:image"]').setAttribute('content', product.imageUrl || 'https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg');
-  
-  // Atualize a URL para incluir o parâmetro do produto
-  const normalizedName = product.name.toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]/g, "-");
-  const productUrl = `${window.location.origin}${window.location.pathname}?produto=${normalizedName}`;
-  document.querySelector('meta[property="og:url"]').setAttribute('content', productUrl);
 }
 
 function showRecommendation(message, products, toppings) {
@@ -6389,7 +6622,7 @@ async function validateAndStorePhone() {
 
 // Função para registrar carrinho abandonado na planilha
 async function recordAbandonedCart(data) {
-    const scriptUrl = 'https://script.google.com/macros/s/AKfycbyCsrhKsKTDk6NEj5PaanzaFAvOQD4zPtumRyEgBuEZ-c0O7CGzlX_vM6XoJAmi3xbhhw/exec';
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbwTGXyecGFipaEf_5p_oCb39vMeUxRW1qML0CnwLETjsQ3XbejSSSio_H1YcpBzLSZeDw/exec';
     
     const response = await fetch(scriptUrl, {
         method: 'POST',
