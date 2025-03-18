@@ -6912,17 +6912,104 @@ function showComprovanteUpload(event) {
     `;
 }
 
-function handleComprovanteUpload(input) {
+async function handleComprovanteUpload(input) {
     const file = input.files[0];
     if (!file) return;
 
     const uploadStatus = document.getElementById('uploadStatus');
     uploadStatus.innerHTML = `
-        <div style="color: #4CAF50; padding: 10px; background: var(--glass); border-radius: 8px;">
-            <i class="fas fa-check-circle"></i> 
-            Comprovante carregado com sucesso!
+        <div style="color: var(--text); padding: 10px; background: var(--glass); border-radius: 8px;">
+            <i class="fas fa-spinner fa-spin"></i> 
+            Processando comprovante...
         </div>
     `;
+
+    try {
+        // Converter para Base64
+        const base64 = await convertFileToBase64(file);
+        
+        // Armazenar temporariamente
+        localStorage.setItem('comprovanteTemp', base64);
+        localStorage.setItem('comprovanteNome', file.name);
+        
+        // Mostrar sucesso e botão de notificação
+        uploadStatus.innerHTML = `
+            <div style="color: #4CAF50; padding: 10px; background: var(--glass); border-radius: 8px;">
+                <i class="fas fa-check-circle"></i> 
+                Comprovante carregado com sucesso!
+            </div>
+            <button onclick="notificarLojaPagamento()" class="modal-btn add-to-cart" style="margin-top: 15px;">
+                <i class="fas fa-bell"></i> 
+                Notificar Loja Sobre Pagamento
+            </button>
+        `;
+    } catch (error) {
+        uploadStatus.innerHTML = `
+            <div style="color: var(--error); padding: 10px; background: var(--glass); border-radius: 8px;">
+                <i class="fas fa-exclamation-circle"></i> 
+                Erro ao carregar comprovante. Tente novamente.
+            </div>
+        `;
+    }
+}
+
+async function notificarLojaPagamento() {
+    const uploadStatus = document.getElementById('uploadStatus');
+    const comprovanteTemp = localStorage.getItem('comprovanteTemp');
+    const customerName = document.getElementById('customerName')?.value || 'Cliente';
+    const orderTotal = document.getElementById('orderTotal')?.value || '0.00';
+
+    if (!comprovanteTemp) {
+        showNotification('Erro: Comprovante não encontrado');
+        return;
+    }
+
+    uploadStatus.innerHTML = `
+        <div style="color: var(--text); padding: 10px; background: var(--glass); border-radius: 8px;">
+            <i class="fas fa-spinner fa-spin"></i> 
+            Notificando a loja...
+        </div>
+    `;
+
+    try {
+        const message = `Novo comprovante PIX recebido!\nCliente: ${customerName}\nValor: R$ ${orderTotal}`;
+        
+        const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioAccount}/Messages.json`, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Basic ' + btoa(`${twilioAccount}:${twilioToken}`),
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+                'To': '+5584988731028',
+                'From': twilioNumber,
+                'Body': message
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao enviar notificação');
+        }
+
+        uploadStatus.innerHTML = `
+            <div style="color: #4CAF50; padding: 10px; background: var(--glass); border-radius: 8px;">
+                <i class="fas fa-check-circle"></i> 
+                Loja notificada sobre seu pagamento!
+                <p style="margin-top: 10px; font-size: 0.9em;">
+                    Você pode continuar com seu pedido normalmente.
+                </p>
+            </div>
+        `;
+
+    } catch (error) {
+        console.error('Erro ao notificar:', error);
+        uploadStatus.innerHTML = `
+            <div style="color: var(--error); padding: 10px; background: var(--glass); border-radius: 8px;">
+                <i class="fas fa-exclamation-circle"></i> 
+                Erro ao notificar a loja. Por favor, continue com seu pedido normalmente.
+            </div>
+        `;
+    }
 }
 
 function changePaymentMethod() {
