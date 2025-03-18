@@ -4176,6 +4176,57 @@ function openProductModal(product) {
     const productImage = modal.querySelector('.modal-product-image');
     productImage.parentNode.insertBefore(nutritionBtn, productImage);
     
+    // Verifica se já existe um botão de compartilhamento e o remove
+    const existingShareBtn = modal.querySelector('.share-whatsapp-btn');
+    if (existingShareBtn) {
+        existingShareBtn.remove();
+    }
+    
+    // Cria URL com parâmetro do produto
+    const normalizedName = product.name.toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]/g, "-");
+    const shareUrl = `${window.location.origin}${window.location.pathname}?produto=${normalizedName}`;
+    
+    // Cria botão de compartilhamento do WhatsApp
+    const shareBtn = document.createElement('button');
+    shareBtn.className = 'share-whatsapp-btn';
+    shareBtn.innerHTML = '<i class="fab fa-whatsapp"></i> Compartilhar no WhatsApp';
+    shareBtn.style.cssText = `
+        background: #25D366;
+        color: white;
+        border: none;
+        padding: 0.8rem 1.2rem;
+        border-radius: 25px;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        margin: 1rem auto;
+        transition: all 0.3s ease;
+    `;
+    
+    shareBtn.addEventListener('mouseover', function() {
+        this.style.transform = 'translateY(-2px)';
+        this.style.boxShadow = '0 5px 10px rgba(37, 211, 102, 0.3)';
+    });
+    
+    shareBtn.addEventListener('mouseout', function() {
+        this.style.transform = 'translateY(0)';
+        this.style.boxShadow = 'none';
+    });
+    
+    // Manipula o evento de clique no botão
+    shareBtn.addEventListener('click', function() {
+        const text = `Olha que delícia! ${product.name} da Cabana Açaí 😋🍇`;
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text + ' ' + shareUrl)}`;
+        window.open(whatsappUrl, '_blank');
+    });
+    
+    // Adiciona o botão ao lado do botão de nutrição
+    productImage.parentNode.insertBefore(shareBtn, productImage);
+    
     modal.querySelectorAll('.video-container, .upgrade-button, .mascot-container, .upgrade-section, .benefits-section').forEach(el => el.remove());
     
     modal.querySelector('.modal-product-image').src = product.imageUrl || '/api/placeholder/800/400';
