@@ -6795,6 +6795,30 @@ async function updateSMSStatus(phone, type) {
     await recordAbandonedCart(data);
 }
 
+// 1. Primeiro a função do CRC16
+function calculateCRC16(str) {
+    function crc16(data) {
+        let crc = 0xFFFF;
+        const polynomial = 0x1021;
+
+        for (let i = 0; i < data.length; i++) {
+            crc ^= (data[i] << 8);
+            for (let j = 0; j < 8; j++) {
+                if (crc & 0x8000) {
+                    crc = ((crc << 1) ^ polynomial) & 0xFFFF;
+                } else {
+                    crc = (crc << 1) & 0xFFFF;
+                }
+            }
+        }
+        return crc;
+    }
+
+    const data = Array.from(str).map(c => c.charCodeAt(0));
+    return crc16(data);
+}
+
+// 2. Depois a função que gera o QR Code
 function generatePixQRCode(total) {
     // Dados do PIX (Padrão Banco Central)
     const pixKey = "84988731028";
@@ -6905,28 +6929,6 @@ function generatePixQRCode(total) {
     qrContainer.appendChild(infoDiv);
 
     return qrContainer;
-}
-
-function calculateCRC16(str) {
-    function crc16(data) {
-        let crc = 0xFFFF;
-        const polynomial = 0x1021;
-
-        for (let i = 0; i < data.length; i++) {
-            crc ^= (data[i] << 8);
-            for (let j = 0; j < 8; j++) {
-                if (crc & 0x8000) {
-                    crc = ((crc << 1) ^ polynomial) & 0xFFFF;
-                } else {
-                    crc = (crc << 1) & 0xFFFF;
-                }
-            }
-        }
-        return crc;
-    }
-
-    const data = Array.from(str).map(c => c.charCodeAt(0));
-    return crc16(data);
 }
 
 // Função atualizada para copiar a chave PIX
