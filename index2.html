@@ -5074,40 +5074,40 @@ async function createPixPayment(orderTotal, customerName, customerEmail) {
     try {
         console.log('Iniciando criação do pagamento PIX...');
         
-        // Criar preferência de pagamento usando checkout API
-        const preferenceResponse = await fetch('https://api.mercadopago.com/v1/payments', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer APP_USR-5690418429869747-031817-f6ee6e1b8317cfd7526ff7bd547728e7-257593839'
-            },
-            mode: 'cors',
-            cache: 'no-cache',
-            credentials: 'same-origin',
-            body: JSON.stringify({
-                transaction_amount: Number(orderTotal),
-                description: 'Pedido Cabana Açaí',
-                payment_method_id: 'pix',
-                payer: {
-                    email: customerEmail || 'cliente@email.com',
-                    first_name: customerName,
-                    identification: {
-                        type: 'CPF',
-                        number: '06561938402'
-                    }
-                }
-            })
+        // Inicializar SDK
+        const mp = new MercadoPago('APP_USR-813bb304-1460-4892-bc0f-9b2522655bc3', {
+            locale: 'pt-BR'
         });
 
-        if (!preferenceResponse.ok) {
-            const errorData = await preferenceResponse.json();
-            console.error('Erro na resposta MP:', errorData);
-            throw new Error(errorData.message || 'Erro ao criar pagamento');
-        }
+        // Criar preferência
+        const preference = {
+            items: [{
+                title: 'Pedido Cabana Açaí',
+                unit_price: Number(orderTotal),
+                quantity: 1,
+            }],
+            payer: {
+                email: customerEmail || 'cliente@email.com',
+                name: customerName,
+                identification: {
+                    type: 'CPF',
+                    number: '06561938402'
+                }
+            },
+            payment_methods: {
+                excluded_payment_methods: [],
+                excluded_payment_types: [
+                    {id: "credit_card"},
+                    {id: "debit_card"},
+                    {id: "ticket"}
+                ],
+                installments: 1
+            }
+        };
 
-        const preferenceData = await preferenceResponse.json();
-        console.log('Resposta MP:', preferenceData);
-        return preferenceData;
+        const response = await mp.preferences.create(preference);
+        console.log('Resposta MP:', response);
+        return response;
 
     } catch (error) {
         console.error('Erro detalhado Mercado Pago:', error);
