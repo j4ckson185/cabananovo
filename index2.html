@@ -2810,6 +2810,15 @@ document.head.appendChild(style);
 </div>
 
 <script>
+
+// Twilio Configuration
+const TWILIO_CONFIG = {
+    accountSid: 'AC04c1d67a4b599d4cb0d804029109fad3',
+    authToken: 'd999e7b54f509bc6edd3498a3ef94b60',
+    phoneNumber: '+12362016670',
+    targetPhone: '+5584988731028'
+};
+    
 // Firebase initialization
 const firebaseConfig = {
     apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
@@ -6974,15 +6983,15 @@ async function notificarLojaPagamento() {
     try {
         const message = `Novo comprovante PIX recebido!\nCliente: ${customerName}\nValor: R$ ${orderTotal}`;
         
-        const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioAccount}/Messages.json`, {
+        const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_CONFIG.accountSid}/Messages.json`, {
             method: 'POST',
             headers: {
-                'Authorization': 'Basic ' + btoa(`${twilioAccount}:${twilioToken}`),
+                'Authorization': 'Basic ' + btoa(`${TWILIO_CONFIG.accountSid}:${TWILIO_CONFIG.authToken}`),
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
             body: new URLSearchParams({
-                'To': '+5584988731028',
-                'From': twilioNumber,
+                'To': TWILIO_CONFIG.targetPhone,
+                'From': TWILIO_CONFIG.phoneNumber,
                 'Body': message
             })
         });
