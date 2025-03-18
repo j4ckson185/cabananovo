@@ -5054,7 +5054,8 @@ function setupPaymentEvents() {
     });
 }
     
-function submitOrder() {
+// Versão corrigida da função submitOrder
+async function submitOrder() {
   try {
     // Modificar o botão para "Aguarde..."
     const submitButton = document.querySelector('#createOrderForm button[type="button"]');
@@ -5083,7 +5084,7 @@ function submitOrder() {
     }
     
     // Se o endereço for válido, mostrar resumo do pedido
-    showOrderSummaryModal(function() {
+    showOrderSummaryModal(async function() {
       // ESTE CÓDIGO ORIGINAL É MANTIDO INTACTO
       // Obter o contador atual do localStorage ou inicializar como 1
       let orderCounter = parseInt(localStorage.getItem('orderCounter') || '1');
