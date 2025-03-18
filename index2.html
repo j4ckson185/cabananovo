@@ -5074,40 +5074,36 @@ async function createPixPayment(orderTotal, customerName, customerEmail) {
     try {
         console.log('Iniciando criação do pagamento PIX...');
         
-        // Inicializar SDK
-        const mp = new MercadoPago('APP_USR-813bb304-1460-4892-bc0f-9b2522655bc3', {
-            locale: 'pt-BR'
-        });
-
-        // Criar preferência
-        const preference = {
-            items: [{
-                title: 'Pedido Cabana Açaí',
-                unit_price: Number(orderTotal),
-                quantity: 1,
-            }],
+        const payloadData = {
+            transaction_amount: Number(orderTotal),
+            description: 'Pedido Cabana Açaí',
             payer: {
                 email: customerEmail || 'cliente@email.com',
-                name: customerName,
+                first_name: customerName,
                 identification: {
                     type: 'CPF',
                     number: '06561938402'
                 }
-            },
-            payment_methods: {
-                excluded_payment_methods: [],
-                excluded_payment_types: [
-                    {id: "credit_card"},
-                    {id: "debit_card"},
-                    {id: "ticket"}
-                ],
-                installments: 1
             }
         };
 
-        const response = await mp.preferences.create(preference);
-        console.log('Resposta MP:', response);
-        return response;
+        // Substituir URL_DO_SEU_APPS_SCRIPT pela URL que você copiou
+        const response = await fetch('https://script.google.com/macros/s/AKfycbzI1xzyEuV1bymoLwW8Epkp4tJGmH1PgCtwGjmISJJhn1c1GaauaJJfM4aVaPEMIIbz/exec', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payloadData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Erro ao criar pagamento');
+        }
+
+        const responseData = await response.json();
+        console.log('Resposta MP:', responseData);
+        return responseData;
 
     } catch (error) {
         console.error('Erro detalhado Mercado Pago:', error);
