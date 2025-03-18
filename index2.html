@@ -5222,8 +5222,13 @@ async function handlePixPayment(customerName, orderTotal) {
         const paymentData = await createPixPayment(orderTotal, customerName);
         console.log('Pagamento criado:', paymentData);
 
-        // Exibir QR Code e instruções - ADICIONAR ESTA LINHA
-        displayPixPayment(paymentData);
+        // Aqui está a mudança importante - chamada direta do displayPixPayment
+        if (paymentData && paymentData.point_of_interaction) {
+            displayPixPayment(paymentData);
+            return paymentData; // Retorna os dados para o then()
+        } else {
+            throw new Error('Dados do PIX incompletos');
+        }
 
     } catch (error) {
         console.error('Erro ao gerar PIX:', error);
@@ -5236,6 +5241,7 @@ async function handlePixPayment(customerName, orderTotal) {
                 <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
             </button>
         `;
+        throw error; // Propaga o erro para o catch()
     }
 }
     
