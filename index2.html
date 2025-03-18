@@ -5206,7 +5206,6 @@ function copyPixCode(button) {
 }
 
 async function handlePixPayment(customerName, orderTotal) {
-    const uploadStatus = document.getElementById('uploadStatus');
     const pixInfo = document.getElementById('pixInfo');
     
     if (!pixInfo) return;
@@ -5220,21 +5219,11 @@ async function handlePixPayment(customerName, orderTotal) {
 
     try {
         // Criar pagamento no Mercado Pago
-        const paymentData = await createPixPayment(
-            orderTotal,
-            customerName,
-            document.getElementById('customerEmail')?.value || ''
-        );
+        const paymentData = await createPixPayment(orderTotal, customerName);
+        console.log('Pagamento criado:', paymentData);
 
-        // Exibir QR Code e instruções
+        // Exibir QR Code e instruções - ADICIONAR ESTA LINHA
         displayPixPayment(paymentData);
-
-        // Adicionar botão para mudar forma de pagamento
-        const changePaymentButton = document.createElement('button');
-        changePaymentButton.className = 'modal-btn continue-shopping';
-        changePaymentButton.innerHTML = '<i class="fas fa-exchange-alt"></i> Alterar forma de pagamento';
-        changePaymentButton.onclick = () => changePaymentMethod();
-        pixInfo.appendChild(changePaymentButton);
 
     } catch (error) {
         console.error('Erro ao gerar PIX:', error);
