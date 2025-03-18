@@ -5073,6 +5073,35 @@ function generateUniqueId() {
 // Função para criar pagamento PIX
 async function createPixPayment(orderTotal, customerName, customerEmail) {
     try {
+        const payloadData = {
+            transaction_amount: parseFloat(orderTotal),
+            payment_method_id: "pix",
+            date_of_expiration: new Date(Date.now() + 30 * 60000).toISOString(),
+            payer: {
+                email: customerEmail || "cliente@email.com",
+                first_name: customerName,
+                last_name: "",
+                identification: {
+                    type: "CPF",
+                    number: "06561938402"
+                },
+                address: {
+                    zip_code: "59000000",
+                    street_name: "Rua Principal",
+                    street_number: "123",
+                    neighborhood: "Centro",
+                    city: "Natal",
+                    federal_unit: "RN"
+                }
+            },
+            description: "Pedido Cabana Açaí",
+            notification_url: "URL_DO_SEU_WEBHOOK", // URL do seu Apps Script publicado
+            external_reference: generateUniqueId(),
+            metadata: {
+                order_number: generateUniqueId()
+            }
+        };
+
         const response = await fetch('https://api.mercadopago.com/v1/payments', {
             method: 'POST',
             headers: {
@@ -5080,30 +5109,21 @@ async function createPixPayment(orderTotal, customerName, customerEmail) {
                 'Content-Type': 'application/json',
                 'X-Idempotency-Key': generateUniqueId()
             },
-            body: JSON.stringify({
-                transaction_amount: parseFloat(orderTotal),
-                description: 'Pedido Cabana Açaí',
-                payment_method_id: 'pix',
-                payer: {
-                    email: customerEmail || 'cliente@email.com',
-                    first_name: customerName,
-                    identification: {
-                        type: 'CPF',
-                        number: '06561938402'
-                    }
-                },
-                date_of_expiration: new Date(Date.now() + 30 * 60000).toISOString() // 30 minutos
-            })
+            body: JSON.stringify(payloadData)
         });
 
         if (!response.ok) {
-            throw new Error('Erro ao criar pagamento');
+            const errorData = await response.json();
+            console.error('Erro MP:', errorData);
+            throw new Error(`Erro MP: ${errorData.message || 'Erro desconhecido'}`);
         }
 
         const paymentData = await response.json();
+        console.log('Resposta MP:', paymentData);
         return paymentData;
+
     } catch (error) {
-        console.error('Erro ao criar pagamento:', error);
+        console.error('Erro detalhado:', error);
         throw error;
     }
 }
