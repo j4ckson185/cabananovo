@@ -4217,12 +4217,49 @@ function openProductModal(product) {
         this.style.boxShadow = 'none';
     });
     
-    // Manipula o evento de clique no botão
-    shareBtn.addEventListener('click', function() {
-        const text = `Olha que delícia! ${product.name} da Cabana Açaí 😋🍇`;
-        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text + ' ' + shareUrl)}`;
-        window.open(whatsappUrl, '_blank');
-    });
+    // Primeiro, atualize as meta tags para este produto específico
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    const ogDescription = document.querySelector('meta[property="og:description"]');
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    
+    // Se não existirem, crie-as
+    if (!ogTitle) {
+        ogTitle = document.createElement('meta');
+        ogTitle.setAttribute('property', 'og:title');
+        document.head.appendChild(ogTitle);
+    }
+    
+    if (!ogDescription) {
+        ogDescription = document.createElement('meta');
+        ogDescription.setAttribute('property', 'og:description');
+        document.head.appendChild(ogDescription);
+    }
+    
+    if (!ogImage) {
+        ogImage = document.createElement('meta');
+        ogImage.setAttribute('property', 'og:image');
+        document.head.appendChild(ogImage);
+    }
+    
+    if (!ogUrl) {
+        ogUrl = document.createElement('meta');
+        ogUrl.setAttribute('property', 'og:url');
+        document.head.appendChild(ogUrl);
+    }
+    
+    // Atualize os valores das meta tags
+    ogTitle.setAttribute('content', product.name + ' - Cabana Açaí');
+    ogDescription.setAttribute('content', product.description || 'Peça seu açaí premium com os melhores sabores e acompanhamentos!');
+    ogImage.setAttribute('content', product.imageUrl || 'https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg');
+    ogUrl.setAttribute('content', shareUrl);
+    
+    // Para o compartilhamento no WhatsApp, adiciona um timestamp para evitar cache
+    const whatsappShareUrl = `${shareUrl}&t=${Date.now()}`;
+    const text = `Olha que delícia! ${product.name} da Cabana Açaí 😋🍇`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text + ' ' + whatsappShareUrl)}`;
+    window.open(whatsappUrl, '_blank');
+});
     
     // Adiciona o botão ao lado do botão de nutrição
     productImage.parentNode.insertBefore(shareBtn, productImage);
