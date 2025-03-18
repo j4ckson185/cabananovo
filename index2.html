@@ -3,6 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Meta tags para preview em WhatsApp e SMS -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://cabanaacai.netlify.app/">
+    <meta property="og:title" content="Cabana Açaí - Menu Premium">
+    <meta property="og:description" content="Peça seu açaí premium com os melhores sabores e acompanhamentos!">
+    <meta property="og:image" content="https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg">
+    
     <title>Cabana Açaí - Menu Premium</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -2833,12 +2841,14 @@ window.openProductByUrlParam = function() {
         return normalizedName === normalizedParam;
       });
       
-      // Se encontrou o produto, abrir o modal
-      if (foundProduct) {
-        openProductModal(foundProduct);
-      } else {
-        console.log(`Produto '${produtoParam}' não encontrado no catálogo.`);
-      }
+// Se encontrou o produto, abrir o modal e atualizar meta tags
+if (foundProduct) {
+  openProductModal(foundProduct);
+  window.updateMetaTags(foundProduct);
+  console.log('Produto encontrado:', foundProduct.name);
+} else {
+  console.log(`Produto '${produtoParam}' não encontrado no catálogo.`);
+}
     }
   }, 500); // Verificar a cada 500ms
 };
@@ -5750,6 +5760,58 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Função para atualizar as meta tags quando um produto é acessado via URL
+window.updateMetaTags = function(product) {
+  if (!product) return;
+  
+  // Verifica se as meta tags existem
+  let ogTitle = document.querySelector('meta[property="og:title"]');
+  let ogDescription = document.querySelector('meta[property="og:description"]');
+  let ogImage = document.querySelector('meta[property="og:image"]');
+  let ogUrl = document.querySelector('meta[property="og:url"]');
+  
+  // Se não existirem, crie-as
+  if (!ogTitle) {
+    ogTitle = document.createElement('meta');
+    ogTitle.setAttribute('property', 'og:title');
+    document.head.appendChild(ogTitle);
+  }
+  
+  if (!ogDescription) {
+    ogDescription = document.createElement('meta');
+    ogDescription.setAttribute('property', 'og:description');
+    document.head.appendChild(ogDescription);
+  }
+  
+  if (!ogImage) {
+    ogImage = document.createElement('meta');
+    ogImage.setAttribute('property', 'og:image');
+    document.head.appendChild(ogImage);
+  }
+  
+  if (!ogUrl) {
+    ogUrl = document.createElement('meta');
+    ogUrl.setAttribute('property', 'og:url');
+    document.head.appendChild(ogUrl);
+  }
+  
+  // Atualize as meta tags
+  ogTitle.setAttribute('content', product.name + ' - Cabana Açaí');
+  ogDescription.setAttribute('content', product.description || 'Peça seu açaí premium com os melhores sabores e acompanhamentos!');
+  ogImage.setAttribute('content', product.imageUrl || 'https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg');
+  
+  // Atualize a URL para incluir o parâmetro do produto
+  const normalizedName = product.name.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "-");
+  const productUrl = `${window.location.origin}${window.location.pathname}?produto=${normalizedName}`;
+  ogUrl.setAttribute('content', productUrl);
+  
+  console.log('Meta tags atualizadas para:', product.name);
+  console.log('Imagem:', product.imageUrl || 'https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg');
+};
+    
       // Adicione estas linhas no final, antes do fechamento da função
   setTimeout(function() {
     window.openProductByUrlParam();
@@ -5887,6 +5949,23 @@ function selectOccasion(occasion) {
 
     // Exibir notificação com detalhes
     showRecommendation(message, products, toppings);
+}
+
+// Função para atualizar as meta tags quando um produto é acessado via URL
+function updateMetaTags(product) {
+  if (!product) return;
+  
+  // Atualize as meta tags existentes
+  document.querySelector('meta[property="og:title"]').setAttribute('content', product.name + ' - Cabana Açaí');
+  document.querySelector('meta[property="og:description"]').setAttribute('content', product.description);
+  document.querySelector('meta[property="og:image"]').setAttribute('content', product.imageUrl || 'https://i.ibb.co/bJy9VxR/logo-cabana-png.jpg');
+  
+  // Atualize a URL para incluir o parâmetro do produto
+  const normalizedName = product.name.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "-");
+  const productUrl = `${window.location.origin}${window.location.pathname}?produto=${normalizedName}`;
+  document.querySelector('meta[property="og:url"]').setAttribute('content', productUrl);
 }
 
 function showRecommendation(message, products, toppings) {
