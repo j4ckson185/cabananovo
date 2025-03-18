@@ -6796,86 +6796,78 @@ async function updateSMSStatus(phone, type) {
 }
 
 function generatePixQRCode(total) {
-    // Dados do PIX
+    // Dados do PIX (Padrão Banco Central)
     const pixKey = "84988731028";
-    const merchantName = "Jackson";
+    const merchantName = "JACKSON";
+    const city = "NATAL";
     
-    // Formatar valor
+    // Formatar valor (garantir 2 casas decimais)
     const amount = parseFloat(total.toString().replace(/[^\d.,]/g, '').replace(',', '.')).toFixed(2);
     
-    // Criar container principal
+    // Funções auxiliares EMV
+    function pad(str, length) {
+        return str.toString().padStart(length, '0');
+    }
+    
+    function createEMV(id, str) {
+        str = str.toString();
+        return id + pad(str.length, 2) + str;
+    }
+
+    // Criar payload seguindo especificação do Bacen
+    const payload = [
+        createEMV('00', '01'),                     // Versão do payload
+        createEMV('01', '12'),                     // 12 = Pagamento único
+        createEMV('26', [                          // Merchant Account Info
+            createEMV('00', 'br.gov.bcb.pix'),     // PIX
+            createEMV('01', pixKey),               // Chave PIX
+        ].join('')),
+        createEMV('52', '0000'),                   // Categoria: Comerciante
+        createEMV('53', '986'),                    // Moeda: BRL = 986
+        createEMV('54', amount),                   // Valor
+        createEMV('58', 'BR'),                     // País
+        createEMV('59', merchantName),             // Nome do comerciante
+        createEMV('60', city),                     // Cidade
+        createEMV('62', createEMV('05', '***')),   // Referência do pagamento
+        '6304'                                     // CRC16 (será calculado)
+    ].join('');
+
+    // Calcular e adicionar CRC16
+    const crc16 = calculateCRC16(payload);
+    const finalPayload = payload + crc16.toString(16).toUpperCase().padStart(4, '0');
+
+    // Resto do código para gerar o QR Code permanece o mesmo...
     const qrContainer = document.createElement('div');
-    qrContainer.id = 'pixQRCode';
-    qrContainer.style.cssText = `
-        text-align: center;
-        padding: 15px;
-        background: var(--glass);
-        border-radius: 15px;
-        border: 1px solid var(--glass-border);
-        max-width: 100%;
-        margin: 0 auto;
-    `;
-    
-    // Container do QR Code
-    const qrElement = document.createElement('div');
-    qrElement.style.cssText = `
-        background: white;
-        padding: 10px;
-        border-radius: 10px;
-        display: inline-block;
-        margin: 10px auto;
-        max-width: 100%;
-    `;
-    
-    qrContainer.innerHTML = `
-        <h3 style="margin-bottom: 10px; color: white;">Pagamento via PIX</h3>
-    `;
-    qrContainer.appendChild(qrElement);
-    
-    // Gerar QR Code
+    // ... (mantenha o resto do código igual)
+
+    // Gerar QR Code com o novo payload
     new QRCode(qrElement, {
-        text: pixKey,
+        text: finalPayload,
         width: 150,
         height: 150,
-        colorDark: "#000000",
-        colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.H
     });
-    
-    // Adicionar informações abaixo do QR Code
-    const infoContainer = document.createElement('div');
-    infoContainer.innerHTML = `
-        <div style="margin: 15px 0; padding: 10px; background: var(--surface); border-radius: 10px;">
-            <div style="margin-bottom: 10px;">
-                <strong>Dados da Chave PIX</strong><br>
-                <span style="color: var(--text);">
-                    Chave PIX: ${pixKey}<br>
-                    Banco: Santander<br>
-                    Nome: Jackson<br>
-                    Valor: R$ ${amount}
-                </span>
-            </div>
-            
-            <div style="margin-top: 15px;">
-                <strong>Chave PIX</strong>
-                <div style="position: relative; margin-top: 5px;">
-                    <input type="text" value="${pixKey}" 
-                        readonly 
-                        style="width: 100%; padding: 8px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); font-size: 12px;">
-                    <button onclick="copyPixKey(this, event)" 
-                        style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--accent); color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">
-                        Copiar
-                    </button>
-                </div>
-            </div>
-        </div>
-        <button class="modal-btn add-to-cart" onclick="showComprovanteUpload(event)" style="margin-top: 10px;">
-            <i class="fas fa-check"></i> Já paguei, enviar comprovante
-        </button>
-    `;
-    
-    qrContainer.appendChild(infoContainer);
+
     return qrContainer;
+}
+
+// Função para calcular CRC16
+function calculateCRC16(str) {
+    const polynomial = 0x1021;
+    let crc = 0xFFFF;
+    
+    for (let i = 0; i < str.length; i++) {
+        crc ^= (str.charCodeAt(i) << 8);
+        for (let j = 0; j < 8; j++) {
+            if (crc & 0x8000) {
+                crc = ((crc << 1) ^ polynomial) & 0xFFFF;
+            } else {
+                crc = (crc << 1) & 0xFFFF;
+            }
+        }
+    }
+    
+    return crc;
 }
 
 // Função atualizada para copiar a chave PIX
@@ -6964,14 +6956,8 @@ async function handleComprovanteUpload(input) {
 
 async function notificarLojaPagamento() {
     const uploadStatus = document.getElementById('uploadStatus');
-    const comprovanteTemp = localStorage.getItem('comprovanteTemp');
     const customerName = document.getElementById('customerName')?.value || 'Cliente';
     const orderTotal = document.getElementById('orderTotal')?.value || '0.00';
-
-    if (!comprovanteTemp) {
-        showNotification('Erro: Comprovante não encontrado');
-        return;
-    }
 
     uploadStatus.innerHTML = `
         <div style="color: var(--text); padding: 10px; background: var(--glass); border-radius: 8px;">
@@ -6980,41 +6966,39 @@ async function notificarLojaPagamento() {
         </div>
     `;
 
-    try {
-        const message = `Novo comprovante PIX recebido!
+    // Criar formulário para envio
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'https://script.google.com/macros/s/AKfycbzVyAGKPNJTTfjq9lwOzggqFC69Tuffm1HQjZVnCBMdnlhRG3Dcc3yil4fvGme3_hoa/exec';  // Substitua pela sua URL
+    
+    // Preparar a mensagem
+    const message = `Novo Pagamento PIX Recebido!
 Cliente: ${customerName}
 Valor: R$ ${orderTotal}
 Data: ${new Date().toLocaleString()}`;
 
-        // Criar um formulário oculto
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = 'https://script.google.com/macros/s/AKfycbzUFdbORhVtvxvVyhrKing8Xwl6aTFFePVFK6o-Q7N-iPAuGf1QDJ0PN9MHpQtaI--z/exec'; // Substitua pela sua URL
-        form.target = 'hiddenFrame';
+    // Adicionar campo da mensagem
+    const messageInput = document.createElement('input');
+    messageInput.type = 'hidden';
+    messageInput.name = 'message';
+    messageInput.value = message;
+    form.appendChild(messageInput);
 
-        // Adicionar campo de mensagem
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'message';
-        input.value = message;
-        form.appendChild(input);
+    // Criar iframe para receber resposta
+    const iframe = document.createElement('iframe');
+    iframe.name = 'hidden_iframe';
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
 
-        // Criar iframe oculto para resposta
-        const iframe = document.createElement('iframe');
-        iframe.name = 'hiddenFrame';
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
+    // Configurar formulário para usar o iframe
+    form.target = 'hidden_iframe';
+    document.body.appendChild(form);
 
-        // Adicionar o formulário, enviar e depois remover
-        document.body.appendChild(form);
+    try {
         form.submit();
         
-        // Aguardar um pouco para garantir que o envio foi processado
+        // Aguardar um pouco para garantir o envio
         await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Limpar elementos temporários
-        document.body.removeChild(form);
-        document.body.removeChild(iframe);
 
         uploadStatus.innerHTML = `
             <div style="color: #4CAF50; padding: 10px; background: var(--glass); border-radius: 8px;">
@@ -7025,7 +7009,6 @@ Data: ${new Date().toLocaleString()}`;
                 </p>
             </div>
         `;
-
     } catch (error) {
         console.error('Erro ao notificar:', error);
         uploadStatus.innerHTML = `
@@ -7034,6 +7017,12 @@ Data: ${new Date().toLocaleString()}`;
                 Erro ao notificar a loja. Por favor, continue com seu pedido normalmente.
             </div>
         `;
+    } finally {
+        // Limpar elementos
+        setTimeout(() => {
+            document.body.removeChild(form);
+            document.body.removeChild(iframe);
+        }, 3000);
     }
 }
 
