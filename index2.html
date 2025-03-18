@@ -5299,22 +5299,22 @@ case 'online':
         const orderTotal = modal.querySelector('#orderTotal')?.value || '0.00';
         console.log('Dados para PIX:', { customerName, orderTotal });
         
-        try {
-            const paymentData = await createPixPayment(orderTotal, customerName);
-            console.log('Dados do pagamento recebidos:', paymentData);
-            displayPixPayment(paymentData);
-        } catch (error) {
-            console.error('Erro ao gerar PIX:', error);
-            pixInfo.innerHTML = `
-                <div style="color: var(--error); padding: 10px; background: var(--glass); border-radius: 8px; text-align: center;">
-                    <i class="fas fa-exclamation-circle"></i> 
-                    Erro ao gerar PIX. Por favor, tente novamente ou escolha outra forma de pagamento.
-                </div>
-                <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 10px;">
-                    <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
-                </button>
-            `;
-        }
+        handlePixPayment(customerName, orderTotal)
+            .then(() => {
+                console.log('PIX gerado com sucesso');
+            })
+            .catch(error => {
+                console.error('Erro ao gerar PIX:', error);
+                pixInfo.innerHTML = `
+                    <div style="color: var(--error); padding: 10px; background: var(--glass); border-radius: 8px; text-align: center;">
+                        <i class="fas fa-exclamation-circle"></i> 
+                        Erro ao gerar PIX. Por favor, tente novamente ou escolha outra forma de pagamento.
+                    </div>
+                    <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 10px;">
+                        <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
+                    </button>
+                `;
+            });
     } else {
         console.error('Elemento pixInfo não encontrado');
     }
