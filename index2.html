@@ -5067,60 +5067,39 @@ const mp = new MercadoPago("APP_USR-813bb304-1460-4892-bc0f-9b2522655bc3");
 
 // Função auxiliar para gerar ID único para idempotência
 function generateUniqueId() {
-    return 'pid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    return `ord-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
 }
 
-function createPixPayment(orderTotal, customerName, customerEmail) {
-    return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
+async function createPixPayment(orderTotal, customerName, customerEmail) {
+    try {
+        console.log('Iniciando criação do pagamento PIX...');
         
-        xhr.open('POST', 'https://api.mercadopago.com/v1/payments', true);
+        // Inicializar SDK
+        const mp = new MercadoPago('APP_USR-813bb304-1460-4892-bc0f-9b2522655bc3');
         
-        xhr.setRequestHeader('Authorization', 'Bearer APP_USR-5690418429869747-031817-f6ee6e1b8317cfd7526ff7bd547728e7-257593839');
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader('X-Idempotency-Key', generateUniqueId());
-
-        xhr.onload = function() {
-            if (xhr.status === 200 || xhr.status === 201) {
-                try {
-                    const paymentData = JSON.parse(xhr.responseText);
-                    console.log('Resposta MP:', paymentData);
-                    resolve(paymentData);
-                } catch (error) {
-                    console.error('Erro ao processar resposta:', error);
-                    reject(error);
-                }
-            } else {
-                console.error('Erro MP:', xhr.responseText);
-                reject(new Error(`Erro MP: ${xhr.status}`));
-            }
-        };
-
-        xhr.onerror = function() {
-            console.error('Erro na requisição:', xhr.statusText);
-            reject(new Error('Erro na comunicação com Mercado Pago'));
-        };
-
-        const payloadData = {
+        // Criar preferência de pagamento
+        const response = await mp.createPayment({
             transaction_amount: parseFloat(orderTotal),
-            payment_method_id: "pix",
-            date_of_expiration: new Date(Date.now() + 30 * 60000).toISOString(),
+            payment_method_id: 'pix',
             payer: {
-                email: customerEmail || "cliente@email.com",
+                email: customerEmail || 'cliente@email.com',
                 first_name: customerName,
-                last_name: "",
                 identification: {
-                    type: "CPF",
-                    number: "06561938402"
+                    type: 'CPF',
+                    number: '06561938402'
                 }
             },
-            description: "Pedido Cabana Açaí",
+            description: 'Pedido Cabana Açaí',
             external_reference: generateUniqueId()
-        };
+        });
 
-        console.log('Enviando payload:', payloadData);
-        xhr.send(JSON.stringify(payloadData));
-    });
+        console.log('Resposta MP:', response);
+        return response;
+
+    } catch (error) {
+        console.error('Erro detalhado Mercado Pago:', error);
+        throw error;
+    }
 }
 
 function displayPixPayment(paymentData) {
