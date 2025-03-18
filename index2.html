@@ -2259,6 +2259,39 @@ document.head.appendChild(style);
     to { opacity: 1; }
 }
 
+#createOrderModal .pix-fallback {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    text-align: center;
+    color: var(--text);
+}
+
+#createOrderModal #pixInfo {
+    background: var(--surface);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    text-align: center;
+}
+
+#createOrderModal #changeContainer {
+    background: var(--glass);
+    border-radius: 15px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+#createOrderModal .qr-code-container {
+    background: white;
+    padding: 1rem;
+    border-radius: 10px;
+    display: inline-block;
+    margin: 1rem 0;
+}
+
 </style>
 </head>
 <body>
@@ -5020,49 +5053,71 @@ function formatOrderForWhatsApp() {
 }
     
 function setupPaymentEvents() {
-    const moneyRadio = document.getElementById('paymentMoney');
-    const changeInput = document.createElement('div');
-    changeInput.innerHTML = `
-        <div id="changeContainer" style="display: none; margin-top: 10px;">
-            <label>Troco para quanto?</label>
-            <input type="number" id="changeAmount" step="0.01">
-        </div>
-    `;
+    console.log('Configurando eventos de pagamento do createOrderModal');
     
-    moneyRadio.closest('div').appendChild(changeInput);
+    // Selecionar elementos dentro do createOrderModal
+    const modal = document.getElementById('createOrderModal');
+    if (!modal) return;
+
+    const paymentInputs = modal.querySelectorAll('input[name="paymentMethod"]');
+    const changeContainer = modal.querySelector('#changeContainer');
+    const pixInfo = modal.querySelector('#pixInfo');
+    const notes = modal.querySelector('#notes');
     
-    document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+    paymentInputs.forEach(radio => {
         radio.addEventListener('change', (e) => {
-            const changeContainer = document.getElementById('changeContainer');
-            const changeAmount = document.getElementById('changeAmount');
-            const notes = document.getElementById('notes');
-            const pixInfo = document.getElementById('pixInfo');
+            console.log('Método de pagamento selecionado:', e.target.value);
             
-            // Resetar todos os containers primeiro
-            changeContainer.style.display = 'none';
+            // Resetar displays
+            if (changeContainer) changeContainer.style.display = 'none';
             if (pixInfo) pixInfo.style.display = 'none';
-            notes.value = '';
+            if (notes) notes.value = '';
             
-            if (e.target.value === 'money') {
-                changeContainer.style.display = 'block';
-                
-                changeAmount.addEventListener('change', () => {
-                    if (changeAmount.value) {
-                        notes.value = `Troco para R$ ${changeAmount.value}`;
-                    } else {
-                        notes.value = '';
+            switch(e.target.value) {
+                case 'money':
+                    console.log('Configurando pagamento em dinheiro');
+                    if (changeContainer) {
+                        changeContainer.style.display = 'block';
+                        const changeAmount = changeContainer.querySelector('#changeAmount');
+                        if (changeAmount) {
+                            changeAmount.onchange = () => {
+                                if (notes && changeAmount.value) {
+                                    notes.value = `Troco para R$ ${changeAmount.value}`;
+                                }
+                            };
+                        }
                     }
-                });
-            } else if (e.target.value === 'pix' || e.target.value === 'online') {
-                if (pixInfo) {
-                    pixInfo.style.display = 'block';
-                    // Obter o total do pedido
-                    const total = document.getElementById('orderTotal').value;
-                    // Gerar e mostrar QR Code
-                    const qrCode = generatePixQRCode(total);
-                    pixInfo.innerHTML = '';
-                    pixInfo.appendChild(qrCode);
-                }
+                    break;
+                    
+                case 'pix':
+                case 'online':
+                    console.log('Configurando pagamento PIX');
+                    if (pixInfo) {
+                        pixInfo.style.display = 'block';
+                        const orderTotal = modal.querySelector('#orderTotal')?.value || '0.00';
+                        console.log('Valor total para PIX:', orderTotal);
+                        
+                        try {
+                            const qrCode = generatePixQRCode(orderTotal);
+                            pixInfo.innerHTML = '';
+                            pixInfo.appendChild(qrCode);
+                        } catch (error) {
+                            console.error('Erro ao gerar QR Code:', error);
+                            pixInfo.innerHTML = `
+                                <div class="pix-fallback">
+                                    <strong>Pagamento PIX</strong><br>
+                                    <p>Chave PIX (WhatsApp): 84 9 8873-1028</p>
+                                    <p>Banco: Santander</p>
+                                    <p>Nome: Jackson</p>
+                                    <p>Valor: R$ ${orderTotal}</p>
+                                    <button class="modal-btn" onclick="showComprovanteUpload()" style="margin-top: 10px;">
+                                        <i class="fas fa-check"></i> Já paguei, enviar comprovante
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    }
+                    break;
             }
         });
     });
@@ -6956,6 +7011,13 @@ function convertFileToBase64(file) {
                     <label for="paymentOnline">PIX</label>
                 </div>
             </div>
+            <div id="changeContainer" style="display: none; margin-top: 10px;">
+    <label>Troco para quanto?</label>
+    <input type="number" id="changeAmount" step="0.01">
+</div>
+<div id="pixInfo" style="display: none; margin-top: 15px;">
+    <!-- O QR Code será inserido aqui via JavaScript -->
+</div>
             
             <label for="notes">Observações</label>
             <textarea id="notes" placeholder="Alguma observação sobre seu pedido?"></textarea>
