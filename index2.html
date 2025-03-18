@@ -2814,7 +2814,7 @@ document.head.appendChild(style);
 // Twilio Configuration
 const TWILIO_CONFIG = {
     accountSid: 'AC04c1d67a4b599d4cb0d804029109fad3',
-    authToken: 'd999e7b54f509bc6edd3498a3ef94b60',
+    authToken: '17914a6678d7211b1909f7dcc77690f8',
     phoneNumber: '+12362016670',
     targetPhone: '+5584988731028'
 };
@@ -6953,8 +6953,8 @@ function copyPixKey(button, event) {
 
 function showComprovanteUpload(event) {
     if (event) {
-        event.preventDefault(); // Previne o comportamento padrão
-        event.stopPropagation(); // Impede a propagação do evento
+        event.preventDefault();
+        event.stopPropagation();
     }
 
     const pixInfo = document.getElementById('pixQRCode');
@@ -6969,9 +6969,6 @@ function showComprovanteUpload(event) {
                 style="width: 100%; margin-bottom: 15px; padding: 10px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text);"
                 onchange="handleComprovanteUpload(this)">
             <div id="uploadStatus" style="margin-top: 10px;"></div>
-            <button onclick="handleNotificacao(event)" class="modal-btn add-to-cart" style="margin-top: 15px;">
-                <i class="fas fa-bell"></i> Notificar Loja
-            </button>
         </div>
     `;
 }
@@ -7046,7 +7043,7 @@ Data: ${new Date().toLocaleString()}`;
     try {
         // Usar XMLHttpRequest em vez de form
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://script.google.com/macros/s/AKfycbypJlC5b9xmkWOdR2Aj6MY6xKQiUKXGiOI9CQxOLxsJcfFxSQ9ZX5li-ur_zou15p12/exec', true);
+        xhr.open('POST', 'https://script.google.com/macros/s/AKfycbx5MhQlvY5qvfyZRDz2DZz6oyLY300BKkULgMaH1V1lDKl2fhbQmbxmO0M_BBPkpmGO/exec', true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         
         xhr.onload = function() {
