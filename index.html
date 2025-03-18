@@ -4899,6 +4899,12 @@ function setupPaymentEvents() {
     
 async function submitOrder() {
   try {
+          // Modificar o botão para "Aguarde..."
+    const submitButton = document.querySelector('#createOrderForm button[type="button"]');
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aguarde...';
+    submitButton.style.backgroundColor = '#888'; // Cor mais escura/cinza
+    submitButton.disabled = true; // Desabilita o botão para evitar múltiplos cliques
+      
     // Obter o contador atual do localStorage ou inicializar como 1
     let orderCounter = parseInt(localStorage.getItem('orderCounter') || '1');
     
@@ -5110,10 +5116,16 @@ async function submitOrder() {
         // Redirecionar para WhatsApp
         window.location.href = `https://wa.me/5584988731028?text=${encodeURIComponent(message)}`;
 
-    } catch (error) {
-        console.error('Erro ao processar pedido:', error);
-        alert('Erro ao processar pedido. Por favor, tente novamente.');
-    }
+  } catch (error) {
+    console.error('Erro ao processar pedido:', error);
+    alert('Erro ao processar pedido. Por favor, tente novamente.');
+    
+    // Restaurar o botão
+    const submitButton = document.querySelector('#createOrderForm button[type="button"]');
+    submitButton.innerHTML = 'Finalizar Pedido';
+    submitButton.style.backgroundColor = ''; // Remover o estilo de cor
+    submitButton.disabled = false; // Reabilitar o botão
+  }
 }
 
 // Modificar função submitOrder existente
@@ -6226,7 +6238,7 @@ async function validateAndStorePhone() {
 
 // Função para registrar carrinho abandonado na planilha
 async function recordAbandonedCart(data) {
-    const scriptUrl = 'https://script.google.com/macros/s/AKfycbyxs7wwFqPhPOQ5PIUuVHJHVHrudEeME7Wsccc1yMh7l8cFCW-T2acnSyUqpF9aGSUelQ/exec';
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbyCsrhKsKTDk6NEj5PaanzaFAvOQD4zPtumRyEgBuEZ-c0O7CGzlX_vM6XoJAmi3xbhhw/exec';
     
     const response = await fetch(scriptUrl, {
         method: 'POST',
