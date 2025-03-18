@@ -2804,6 +2804,70 @@ let mediaRecorder;
 let audioChunks = [];
 let isRecording = false;
 
+// Função para abrir produto a partir de parâmetro na URL
+window.openProductByUrlParam = function() {
+  // Obter os parâmetros da URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const produtoParam = urlParams.get('produto');
+  
+  // Se não houver parâmetro, não faz nada
+  if (!produtoParam) return;
+  
+  // Normalizar o nome do produto da URL (remover acentos, converter para minúsculas)
+  const normalizedParam = produtoParam.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "-");
+  
+  // Aguardar o carregamento dos produtos
+  const checkProductsLoaded = setInterval(() => {
+    if (currentProducts && currentProducts.length > 0) {
+      clearInterval(checkProductsLoaded);
+      
+      // Procurar o produto que corresponde ao parâmetro
+      const foundProduct = currentProducts.find(product => {
+        // Normalizar o nome do produto do catálogo
+        const normalizedName = product.name.toLowerCase()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]/g, "-");
+        
+        return normalizedName === normalizedParam;
+      });
+      
+      // Se encontrou o produto, abrir o modal
+      if (foundProduct) {
+        openProductModal(foundProduct);
+      } else {
+        console.log(`Produto '${produtoParam}' não encontrado no catálogo.`);
+      }
+    }
+  }, 500); // Verificar a cada 500ms
+};
+
+// Função para listar URLs de todos os produtos
+window.listAllProductUrls = function() {
+  if (!currentProducts || currentProducts.length === 0) {
+    console.log("Produtos ainda não foram carregados");
+    return;
+  }
+  
+  console.log("=== URLs DE COMPARTILHAMENTO PARA TODOS OS PRODUTOS ===");
+  console.log("Copie e cole estes links para compartilhar produtos específicos:");
+  
+  currentProducts.forEach(product => {
+    // Normalizar o nome do produto para a URL
+    const normalizedName = product.name.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "-");
+    
+    // Criar a URL completa
+    const fullUrl = `${window.location.origin}${window.location.pathname}?produto=${normalizedName}`;
+    
+    console.log(`${product.name}: ${fullUrl}`);
+  });
+  
+  console.log("===============================================");
+};
+
 function gravarAudio() {
     const audioButton = document.querySelector('.audio-button-full');
     const recordingIndicator = document.querySelector('.recording-indicator');
@@ -3307,11 +3371,14 @@ async function handleDeliveryInfo(e) {
 
 // Load products from Firebase
 function loadMenuProducts() {
-    realtimeDB.ref('menu/products').on('value', snapshot => {
-        const products = snapshot.val() || {};
-        currentProducts = Object.values(products).filter(product => product.status);
-        displayProducts(currentProducts);
-    });
+  realtimeDB.ref('menu/products').on('value', snapshot => {
+    const products = snapshot.val() || {};
+    currentProducts = Object.values(products).filter(product => product.status);
+    displayProducts(currentProducts);
+    
+    // Gerar lista de URLs no console
+    window.listAllProductUrls();
+  });
 }
 
 // Load categories from Firebase
@@ -5683,6 +5750,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+      // Adicione estas linhas no final, antes do fechamento da função
+  setTimeout(function() {
+    window.openProductByUrlParam();
+  }, 1000);
 }); // Fechamento do DOMContentLoaded
    
    // Categories
