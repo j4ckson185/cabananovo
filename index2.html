@@ -5279,26 +5279,44 @@ function setupPaymentEvents() {
 case 'pix':
 case 'online':
     console.log('Configurando pagamento PIX');
+    const pixInfo = modal.querySelector('#pixInfo');
     if (pixInfo) {
+        console.log('Elemento pixInfo encontrado');
+        
+        // Limpar conteúdo anterior e garantir visibilidade
+        pixInfo.innerHTML = '';
         pixInfo.style.display = 'block';
+        
+        // Mostrar loading
+        pixInfo.innerHTML = `
+            <div style="color: var(--text); padding: 10px; background: var(--glass); border-radius: 8px; text-align: center;">
+                <i class="fas fa-spinner fa-spin"></i> 
+                Gerando QR Code PIX...
+            </div>
+        `;
+
         const customerName = modal.querySelector('#customerName')?.value || 'Cliente';
         const orderTotal = modal.querySelector('#orderTotal')?.value || '0.00';
-        console.log('Valor total para PIX:', orderTotal);
+        console.log('Dados para PIX:', { customerName, orderTotal });
         
         try {
-            handlePixPayment(customerName, orderTotal);
+            const paymentData = await createPixPayment(orderTotal, customerName);
+            console.log('Dados do pagamento recebidos:', paymentData);
+            displayPixPayment(paymentData);
         } catch (error) {
             console.error('Erro ao gerar PIX:', error);
             pixInfo.innerHTML = `
-                <div class="pix-fallback">
-                    <strong>Erro ao gerar PIX</strong><br>
-                    <p>Por favor, tente novamente ou escolha outra forma de pagamento.</p>
-                    <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 10px;">
-                        <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
-                    </button>
+                <div style="color: var(--error); padding: 10px; background: var(--glass); border-radius: 8px; text-align: center;">
+                    <i class="fas fa-exclamation-circle"></i> 
+                    Erro ao gerar PIX. Por favor, tente novamente ou escolha outra forma de pagamento.
                 </div>
+                <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 10px;">
+                    <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
+                </button>
             `;
         }
+    } else {
+        console.error('Elemento pixInfo não encontrado');
     }
     break;
             }
