@@ -8,6 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
@@ -5035,6 +5036,12 @@ function setupPaymentEvents() {
             const changeContainer = document.getElementById('changeContainer');
             const changeAmount = document.getElementById('changeAmount');
             const notes = document.getElementById('notes');
+            const pixInfo = document.getElementById('pixInfo');
+            
+            // Resetar todos os containers primeiro
+            changeContainer.style.display = 'none';
+            if (pixInfo) pixInfo.style.display = 'none';
+            notes.value = '';
             
             if (e.target.value === 'money') {
                 changeContainer.style.display = 'block';
@@ -5046,9 +5053,16 @@ function setupPaymentEvents() {
                         notes.value = '';
                     }
                 });
-            } else {
-                changeContainer.style.display = 'none';
-                notes.value = '';
+            } else if (e.target.value === 'pix' || e.target.value === 'online') {
+                if (pixInfo) {
+                    pixInfo.style.display = 'block';
+                    // Obter o total do pedido
+                    const total = document.getElementById('orderTotal').value;
+                    // Gerar e mostrar QR Code
+                    const qrCode = generatePixQRCode(total);
+                    pixInfo.innerHTML = '';
+                    pixInfo.appendChild(qrCode);
+                }
             }
         });
     });
@@ -6715,6 +6729,131 @@ async function updateSMSStatus(phone, type) {
     };
 
     await recordAbandonedCart(data);
+}
+
+function generatePixQRCode(total) {
+    // Dados do PIX
+    const pixKey = "84988731028"; // Sua chave PIX
+    const merchantName = "Cabana Açaí";
+    const city = "Natal";
+    
+    // Formatar valor (remover R$ e trocar vírgula por ponto)
+    const amount = total.toString().replace("R$", "").replace(",", ".");
+    
+    // Gerar payload PIX
+    const pixPayload = {
+        keyType: "phone",
+        key: pixKey,
+        amount: amount,
+        merchant: merchantName,
+        city: city,
+        description: "Pedido Cabana Açaí",
+        uniquePayment: true
+    };
+    
+    // Criar container para o QR Code
+    const qrContainer = document.createElement('div');
+    qrContainer.id = 'pixQRCode';
+    qrContainer.style.textAlign = 'center';
+    qrContainer.style.marginTop = '20px';
+    
+    // Gerar QR Code
+    new QRCode(qrContainer, {
+        text: JSON.stringify(pixPayload),
+        width: 200,
+        height: 200
+    });
+    
+    // Adicionar botão de comprovante
+    const comprovateButton = document.createElement('button');
+    comprovateButton.className = 'modal-btn';
+    comprovateButton.innerHTML = 'Já paguei, enviar comprovante';
+    comprovateButton.onclick = () => showComprovanteUpload();
+    
+    // Adicionar botão para alterar forma de pagamento
+    const changePaymentButton = document.createElement('button');
+    changePaymentButton.className = 'modal-btn continue-shopping';
+    changePaymentButton.innerHTML = 'Alterar forma de pagamento';
+    changePaymentButton.onclick = () => changePaymentMethod();
+    
+    qrContainer.appendChild(document.createElement('br'));
+    qrContainer.appendChild(comprovateButton);
+    qrContainer.appendChild(changePaymentButton);
+    
+    return qrContainer;
+}
+
+function showComprovanteUpload() {
+    const uploadContainer = document.createElement('div');
+    uploadContainer.className = 'comprovante-upload';
+    uploadContainer.innerHTML = `
+        <div style="margin: 20px 0;">
+            <label for="comprovante" style="display: block; margin-bottom: 10px;">
+                Anexar comprovante (imagem ou PDF):
+            </label>
+            <input type="file" id="comprovante" accept="image/*,.pdf" 
+                style="width: 100%; margin-bottom: 10px;">
+            <div class="modal-buttons">
+                <button class="modal-btn" onclick="sendOrderWithComprovante()">
+                    Enviar Pedido
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Substituir QR Code pelo formulário de upload
+    const qrContainer = document.getElementById('pixQRCode');
+    qrContainer.parentNode.replaceChild(uploadContainer, qrContainer);
+}
+
+function changePaymentMethod() {
+    // Limpar QR Code e voltar para seleção de pagamento
+    const qrContainer = document.getElementById('pixQRCode');
+    if (qrContainer) {
+        qrContainer.remove();
+    }
+    
+    // Resetar seleção de pagamento
+    document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+        radio.checked = false;
+    });
+    
+    // Mostrar opções de pagamento novamente
+    document.querySelector('.payment-group').style.display = 'flex';
+}
+
+async function sendOrderWithComprovante() {
+    const comprovanteFile = document.getElementById('comprovante').files[0];
+    if (!comprovanteFile) {
+        showNotification('Por favor, anexe o comprovante');
+        return;
+    }
+    
+    try {
+        // Converter arquivo para base64
+        const base64File = await convertFileToBase64(comprovanteFile);
+        
+        // Modificar a mensagem do WhatsApp para incluir informação do pagamento
+        const originalMessage = formatOrderForWhatsApp();
+        const paymentInfo = "\n\n💳 *Pagamento via PIX*\nStatus: ✅ Pago\nComprovante: Anexado";
+        const fullMessage = originalMessage + paymentInfo;
+        
+        // Abrir WhatsApp com a mensagem modificada
+        window.location.href = `https://wa.me/5584988731028?text=${encodeURIComponent(fullMessage)}`;
+        
+    } catch (error) {
+        console.error('Erro ao processar comprovante:', error);
+        showNotification('Erro ao processar comprovante. Tente novamente.');
+    }
+}
+
+function convertFileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
 }
 
 </script>
