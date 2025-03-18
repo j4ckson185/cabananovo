@@ -5422,126 +5422,103 @@ function showOrderSummaryModal(onConfirmCallback) {
   });
 }
 
-async function createPagBankCheckout() {
-  try {
-    // Modificar o botão para "Aguarde..."
-    const submitButton = document.querySelector('#createOrderForm button[type="button"]');
-    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aguarde...';
-    submitButton.style.backgroundColor = '#888';
-    submitButton.disabled = true;
-
-    // Obter dados do formulário
-    const customerName = document.getElementById('customerName').value;
-    const customerPhone = document.getElementById('customerPhone').value;
-    const street = document.getElementById('street').value;
-    const streetNumber = document.getElementById('streetNumber').value;
-    const neighborhood = document.getElementById('neighborhood').value;
-    const complement = document.getElementById('complement').value || "";
-    const zipCode = document.getElementById('zipCode').value;
-
-    // Gerar ID de referência único para o pedido
-    const orderCounter = parseInt(localStorage.getItem('orderCounter') || '1');
-    const referenceId = `cabana_order_${orderCounter}_${Date.now()}`;
-
-    // Payload ajustado para a API /orders com QR code PIX
-    const checkoutData = {
-      reference_id: referenceId,
-      customer: {
-        name: customerName,
-        email: "teste@sandbox.pagseguro.com", // Use um e-mail de teste válido
-        tax_id: "12345678909", // CPF fictício para sandbox
-        phones: [{
-          country: "55",
-          area: customerPhone.slice(0, 2),
-          number: customerPhone.slice(2)
-        }]
-      },
-      items: [
-        {
-          reference_id: "item_001",
-          name: "Teste de Produto",
-          quantity: 1,
-          unit_amount: 1000 // 10,00 BRL em centavos
-        }
-      ],
-      qr_codes: [
-        {
-          amount: {
-            value: 1000 // Total em centavos (deve corresponder à soma dos itens)
-          },
-          expiration_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // Expira em 24h
-        }
-      ],
-      shipping: {
-        address: {
-          street: street,
-          number: streetNumber,
-          complement: complement,
-          locality: neighborhood,
-          city: "Natal",
-          region_code: "RN",
-          country: "BRA",
-          postal_code: zipCode.replace(/\D/g, '')
-        }
-      },
-      notification_urls: ["https://cabanaacai.netlify.app/api/notify"]
-    };
-
-    console.log("Dados enviados para o PagBank:", JSON.stringify(checkoutData, null, 2));
-
-    // Token do PagBank (sandbox)
-    const token = "6eddaeb6-b21e-4daf-911e-62daf20ff4e1d0e8199d44f5a94de6dbe3f18f6401327496-cd84-434f-80e8-aebb25c1d9b6";
-
-    // Requisição ao endpoint correto do sandbox
-    const response = await fetch("https://sandbox.api.pagseguro.com/orders", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-        "Accept": "application/json"
-      },
-      body: JSON.stringify(checkoutData)
-    });
-
-    const responseText = await response.text();
-    console.log("Resposta completa:", responseText);
-
-    if (!response.ok) {
-      throw new Error(`Erro ao criar pedido: ${response.status} - ${responseText}`);
-    }
-
-    let responseData;
-    try {
-      responseData = JSON.parse(responseText);
-    } catch (e) {
-      throw new Error(`Erro ao fazer parse da resposta: ${responseText}`);
-    }
-
-    // Incrementar o contador de pedidos
-    localStorage.setItem('orderCounter', orderCounter + 1);
-
-    // Verificar se há QR code ou link de pagamento
-    if (responseData.qr_codes && responseData.qr_codes.length > 0) {
-      const qrCodeLink = responseData.qr_codes[0].links.find(link => link.rel === "PAY");
-      if (qrCodeLink && qrCodeLink.href) {
-        window.location.href = qrCodeLink.href; // Redireciona para o QR code PIX
-      } else {
-        throw new Error("Link de pagamento QR code não encontrado na resposta");
-      }
-    } else {
-      throw new Error("QR code não encontrado na resposta");
-    }
-
-  } catch (error) {
-    console.error("Erro no processo de checkout:", error);
-    showNotification("Erro ao processar pagamento. Por favor, tente novamente.");
-
-    // Restaurar o botão
-    const submitButton = document.querySelector('#createOrderForm button[type="button"]');
-    submitButton.innerHTML = '<i class="fas fa-credit-card"></i> Pagar Online'; // Restaura o texto original
-    submitButton.style.backgroundColor = '#11A0EC'; // Restaura a cor original
-    submitButton.disabled = false;
+// Função para atualizar as opções de pagamento
+function updatePaymentOptions() {
+  const paymentContainer = document.getElementById('changeContainer');
+  const pixInfo = document.getElementById('pixInfo');
+  const pixOption = document.querySelector('input[name="payment"][value="pix"]');
+  
+  if (pixOption && pixOption.checked) {
+    // Limpar container anterior
+    pixInfo.style.display = 'block';
+    pixInfo.innerHTML = `
+      <div class="pix-payment-options">
+        <h3 style="color: white; margin-bottom: 1rem;">Escolha como pagar com PIX</h3>
+        
+        <div class="pix-methods" style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+          <button type="button" class="pix-method-btn" onclick="showPixData()" style="flex: 1; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); cursor: pointer;">
+            <i class="fas fa-copy"></i> Copiar dados
+          </button>
+          <button type="button" class="pix-method-btn" onclick="showPixQR()" style="flex: 1; padding: 0.8rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); cursor: pointer;">
+            <i class="fas fa-qrcode"></i> QR Code
+          </button>
+        </div>
+        
+        <div id="pixDataContainer" style="display: none; margin-top: 1rem;">
+          <p style="color: var(--text); margin-bottom: 0.5rem;">Dados para pagamento via PIX:</p>
+          <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+            <p style="color: white; margin-bottom: 0.5rem;"><strong>Chave PIX:</strong> 84 988731028</p>
+            <p style="color: white; margin-bottom: 0.5rem;"><strong>Banco:</strong> Santander</p>
+            <p style="color: white;"><strong>Nome:</strong> Jackson</p>
+          </div>
+          <button type="button" onclick="copyPixKey()" class="modal-btn" style="width: 100%; background: var(--gradient);">
+            <i class="fas fa-copy"></i> Copiar Chave PIX
+          </button>
+        </div>
+        
+        <div id="pixQrContainer" style="display: none; margin-top: 1rem; text-align: center;">
+          <p style="color: var(--text); margin-bottom: 1rem;">Escaneie o QR Code com o app do seu banco:</p>
+          <div id="pixQrCode" style="width: 200px; height: 200px; background: white; margin: 0 auto 1rem auto; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+            <!-- QR code será gerado aqui -->
+          </div>
+          <p style="color: var(--accent); font-size: 0.9rem;">A confirmação do pagamento pode levar alguns instantes.</p>
+        </div>
+        
+        <div style="margin-top: 1.5rem;">
+          <p style="color: var(--text); font-size: 0.9rem;">Após realizar o pagamento, por favor continue para finalizar seu pedido. Enviaremos seu comprovante por WhatsApp.</p>
+        </div>
+      </div>
+    `;
+  } else {
+    pixInfo.style.display = 'none';
   }
+  
+  // Mostrar container de troco se pagamento for dinheiro
+  if (document.querySelector('input[name="payment"][value="money"]')?.checked) {
+    paymentContainer.style.display = 'block';
+  } else {
+    paymentContainer.style.display = 'none';
+  }
+}
+
+// Função para mostrar os dados do PIX
+function showPixData() {
+  document.getElementById('pixDataContainer').style.display = 'block';
+  document.getElementById('pixQrContainer').style.display = 'none';
+}
+
+// Função para mostrar o QR code do PIX
+function showPixQR() {
+  document.getElementById('pixDataContainer').style.display = 'none';
+  document.getElementById('pixQrContainer').style.display = 'block';
+  
+  // Gerar QR code
+  const qrContainer = document.getElementById('pixQrCode');
+  
+  // Valores dinâmicos para o QR code
+  const subtotal = cart.reduce((total, item) => total + item.price, 0);
+  const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+  const deliveryFee = 3.00;
+  const total = subtotal - discount + deliveryFee;
+  
+  // Gere o QR code usando uma biblioteca como qrcode.js
+  // Aqui usamos uma imagem estática apenas para ilustração
+  qrContainer.innerHTML = `
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=00020126580014BR.GOV.BCB.PIX0114+5584988731028520400005303986540${total.toFixed(2).replace('.', '')}5802BR5913Jackson%20Freire6008Natal%20RN62070503***" alt="QR Code PIX" style="width: 100%; height: 100%;">
+  `;
+}
+
+// Função para copiar a chave PIX
+function copyPixKey() {
+  const pixKey = "84988731028";
+  
+  // Copiar para a área de transferência
+  navigator.clipboard.writeText(pixKey).then(() => {
+    showNotification("Chave PIX copiada!");
+  }).catch(err => {
+    console.error('Erro ao copiar chave PIX: ', err);
+    showNotification("Não foi possível copiar a chave PIX. Tente copiar manualmente.");
+  });
 }
 
 // Função para validação de endereço
@@ -6165,6 +6142,14 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(function() {
     window.openProductByUrlParam();
   }, 1000);
+
+    // Adicionar listener para mudanças nas opções de pagamento
+document.querySelectorAll('input[name="payment"]').forEach(radio => {
+  radio.addEventListener('change', updatePaymentOptions);
+});
+
+    // Inicializar as opções de pagamento
+updatePaymentOptions();
 }); // Fechamento do DOMContentLoaded
    
    // Categories
@@ -6899,14 +6884,7 @@ async function updateSMSStatus(phone, type) {
             <label for="notes">Observações</label>
             <textarea id="notes" placeholder="Alguma observação sobre seu pedido?"></textarea>
             
-           <div class="payment-group" style="margin-top: 1rem; display: flex; gap: 1rem;">
-  <button type="button" onclick="submitOrder()" class="modal-btn" style="flex: 1; background: var(--gradient);">
-    <i class="fas fa-motorcycle"></i> Pagar na Entrega
-  </button>
-  <button type="button" onclick="createPagBankCheckout()" class="modal-btn" style="flex: 1; background: #11A0EC;">
-    <i class="fas fa-credit-card"></i> Pagar Online
-  </button>
-</div>
+            <button type="button" onclick="submitOrder()">Finalizar Pedido</button>
         </form>
     </div>
 </div>
