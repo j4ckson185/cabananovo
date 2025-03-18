@@ -6816,31 +6816,54 @@ function generatePixQRCode(total) {
 
     // Criar payload seguindo especificação do Bacen
     const payload = [
-        createEMV('00', '01'),                     // Versão do payload
-        createEMV('01', '12'),                     // 12 = Pagamento único
-        createEMV('26', [                          // Merchant Account Info
-            createEMV('00', 'br.gov.bcb.pix'),     // PIX
-            createEMV('01', pixKey),               // Chave PIX
+        createEMV('00', '01'),                     
+        createEMV('01', '12'),                     
+        createEMV('26', [                          
+            createEMV('00', 'br.gov.bcb.pix'),     
+            createEMV('01', pixKey),               
         ].join('')),
-        createEMV('52', '0000'),                   // Categoria: Comerciante
-        createEMV('53', '986'),                    // Moeda: BRL = 986
-        createEMV('54', amount),                   // Valor
-        createEMV('58', 'BR'),                     // País
-        createEMV('59', merchantName),             // Nome do comerciante
-        createEMV('60', city),                     // Cidade
-        createEMV('62', createEMV('05', '***')),   // Referência do pagamento
-        '6304'                                     // CRC16 (será calculado)
+        createEMV('52', '0000'),                   
+        createEMV('53', '986'),                    
+        createEMV('54', amount),                   
+        createEMV('58', 'BR'),                     
+        createEMV('59', merchantName),             
+        createEMV('60', city),                     
+        createEMV('62', createEMV('05', '***')),   
+        '6304'                                     
     ].join('');
 
     // Calcular e adicionar CRC16
     const crc16 = calculateCRC16(payload);
     const finalPayload = payload + crc16.toString(16).toUpperCase().padStart(4, '0');
 
-    // Resto do código para gerar o QR Code permanece o mesmo...
+    // Criar container principal
     const qrContainer = document.createElement('div');
-    // ... (mantenha o resto do código igual)
+    qrContainer.id = 'pixQRCode';
+    qrContainer.style.cssText = `
+        text-align: center;
+        padding: 15px;
+        background: var(--glass);
+        border-radius: 15px;
+        border: 1px solid var(--glass-border);
+        max-width: 100%;
+        margin: 0 auto;
+    `;
 
-    // Gerar QR Code com o novo payload
+    qrContainer.innerHTML = `<h3 style="margin-bottom: 10px; color: white;">Pagamento via PIX</h3>`;
+
+    // Criar container do QR Code
+    const qrElement = document.createElement('div');
+    qrElement.style.cssText = `
+        background: white;
+        padding: 10px;
+        border-radius: 10px;
+        display: inline-block;
+        margin: 10px auto;
+        max-width: 100%;
+    `;
+    qrContainer.appendChild(qrElement);
+
+    // Gerar QR Code
     new QRCode(qrElement, {
         text: finalPayload,
         width: 150,
@@ -6848,26 +6871,40 @@ function generatePixQRCode(total) {
         correctLevel: QRCode.CorrectLevel.H
     });
 
-    return qrContainer;
-}
+    // Adicionar informações
+    const infoDiv = document.createElement('div');
+    infoDiv.innerHTML = `
+        <div style="margin: 15px 0; padding: 10px; background: var(--surface); border-radius: 10px;">
+            <div style="margin-bottom: 10px;">
+                <strong>Dados da Chave PIX</strong><br>
+                <span style="color: var(--text);">
+                    Chave PIX: ${pixKey}<br>
+                    Banco: Santander<br>
+                    Nome: Jackson<br>
+                    Valor: R$ ${amount}
+                </span>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <strong>Chave PIX</strong>
+                <div style="position: relative; margin-top: 5px;">
+                    <input type="text" value="${pixKey}" 
+                        readonly 
+                        style="width: 100%; padding: 8px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); font-size: 12px;">
+                    <button onclick="copyPixKey(this, event)" 
+                        style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--accent); color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">
+                        Copiar
+                    </button>
+                </div>
+            </div>
+        </div>
+        <button class="modal-btn add-to-cart" onclick="showComprovanteUpload(event)">
+            <i class="fas fa-check"></i> Já paguei, enviar comprovante
+        </button>
+    `;
+    qrContainer.appendChild(infoDiv);
 
-// Função para calcular CRC16
-function calculateCRC16(str) {
-    const polynomial = 0x1021;
-    let crc = 0xFFFF;
-    
-    for (let i = 0; i < str.length; i++) {
-        crc ^= (str.charCodeAt(i) << 8);
-        for (let j = 0; j < 8; j++) {
-            if (crc & 0x8000) {
-                crc = ((crc << 1) ^ polynomial) & 0xFFFF;
-            } else {
-                crc = (crc << 1) & 0xFFFF;
-            }
-        }
-    }
-    
-    return crc;
+    return qrContainer;
 }
 
 // Função atualizada para copiar a chave PIX
@@ -6966,49 +7003,39 @@ async function notificarLojaPagamento() {
         </div>
     `;
 
-    // Criar formulário para envio
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = 'https://script.google.com/macros/s/AKfycbzVyAGKPNJTTfjq9lwOzggqFC69Tuffm1HQjZVnCBMdnlhRG3Dcc3yil4fvGme3_hoa/exec';  // Substitua pela sua URL
-    
-    // Preparar a mensagem
     const message = `Novo Pagamento PIX Recebido!
 Cliente: ${customerName}
 Valor: R$ ${orderTotal}
 Data: ${new Date().toLocaleString()}`;
 
-    // Adicionar campo da mensagem
-    const messageInput = document.createElement('input');
-    messageInput.type = 'hidden';
-    messageInput.name = 'message';
-    messageInput.value = message;
-    form.appendChild(messageInput);
-
-    // Criar iframe para receber resposta
-    const iframe = document.createElement('iframe');
-    iframe.name = 'hidden_iframe';
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-
-    // Configurar formulário para usar o iframe
-    form.target = 'hidden_iframe';
-    document.body.appendChild(form);
-
     try {
-        form.submit();
+        // Usar XMLHttpRequest em vez de form
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://script.google.com/macros/s/AKfycbzVyAGKPNJTTfjq9lwOzggqFC69Tuffm1HQjZVnCBMdnlhRG3Dcc3yil4fvGme3_hoa/exec', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         
-        // Aguardar um pouco para garantir o envio
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                uploadStatus.innerHTML = `
+                    <div style="color: #4CAF50; padding: 10px; background: var(--glass); border-radius: 8px;">
+                        <i class="fas fa-check-circle"></i> 
+                        Loja notificada sobre seu pagamento!
+                        <p style="margin-top: 10px; font-size: 0.9em;">
+                            Você pode continuar com seu pedido normalmente.
+                        </p>
+                    </div>
+                `;
+            } else {
+                throw new Error('Falha ao enviar notificação');
+            }
+        };
+        
+        xhr.onerror = function() {
+            throw new Error('Erro de rede ao enviar notificação');
+        };
+        
+        xhr.send('message=' + encodeURIComponent(message));
 
-        uploadStatus.innerHTML = `
-            <div style="color: #4CAF50; padding: 10px; background: var(--glass); border-radius: 8px;">
-                <i class="fas fa-check-circle"></i> 
-                Loja notificada sobre seu pagamento!
-                <p style="margin-top: 10px; font-size: 0.9em;">
-                    Você pode continuar com seu pedido normalmente.
-                </p>
-            </div>
-        `;
     } catch (error) {
         console.error('Erro ao notificar:', error);
         uploadStatus.innerHTML = `
@@ -7017,12 +7044,6 @@ Data: ${new Date().toLocaleString()}`;
                 Erro ao notificar a loja. Por favor, continue com seu pedido normalmente.
             </div>
         `;
-    } finally {
-        // Limpar elementos
-        setTimeout(() => {
-            document.body.removeChild(form);
-            document.body.removeChild(iframe);
-        }, 3000);
     }
 }
 
