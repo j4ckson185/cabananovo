@@ -5121,9 +5121,11 @@ function displayPixPayment(paymentData) {
     const pixInfo = document.getElementById('pixInfo');
     if (!pixInfo) return;
 
+    // Extrair dados importantes
     const qrCodeBase64 = paymentData.point_of_interaction.transaction_data.qr_code_base64;
     const qrCodeText = paymentData.point_of_interaction.transaction_data.qr_code;
     const expirationTime = new Date(paymentData.date_of_expiration);
+    const amount = paymentData.transaction_amount.toFixed(2);
 
     pixInfo.innerHTML = `
         <div style="padding: 15px; background: var(--surface); border-radius: 10px; text-align: center;">
@@ -5136,6 +5138,10 @@ function displayPixPayment(paymentData) {
             </div>
 
             <div style="margin: 15px 0; padding: 10px; background: var(--glass); border-radius: 10px;">
+                <div style="margin-bottom: 10px; color: white;">
+                    <strong>Valor a pagar:</strong> R$ ${amount}
+                </div>
+
                 <strong style="color: white;">Pix Copia e Cola:</strong>
                 <div style="position: relative; margin-top: 10px;">
                     <input type="text" 
@@ -5150,13 +5156,13 @@ function displayPixPayment(paymentData) {
             </div>
 
             <div style="color: var(--text); margin: 15px 0;">
-                <p>Expira em: <span id="pixCountdown"></span></p>
-                <small>Após o pagamento, você receberá a confirmação automaticamente.</small>
+                <p>QR Code expira em: <span id="pixCountdown"></span></p>
+                <p style="font-size: 0.9em;">Após o pagamento, você receberá a confirmação automaticamente.</p>
             </div>
 
-            <div class="countdown-timer" style="margin-top: 15px;">
-                <div class="time-remaining" id="timeRemaining">30:00</div>
-            </div>
+            <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 10px;">
+                <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
+            </button>
         </div>
     `;
 
