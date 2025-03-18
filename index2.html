@@ -6677,7 +6677,7 @@ async function validateAndStorePhone() {
 
 // Função para registrar carrinho abandonado na planilha
 async function recordAbandonedCart(data) {
-    const scriptUrl = 'https://script.google.com/macros/s/AKfycbwTGXyecGFipaEf_5p_oCb39vMeUxRW1qML0CnwLETjsQ3XbejSSSio_H1YcpBzLSZeDw/exec';
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbwDEoDYgD1wGZl7sN-p3D1fQIRT8qVD4M9mFAFmHS8HoJ6lXxyIZTaK904q3tqmuKco/exec';
     
     const response = await fetch(scriptUrl, {
         method: 'POST',
@@ -6981,24 +6981,40 @@ async function notificarLojaPagamento() {
     `;
 
     try {
-        const message = `Novo comprovante PIX recebido!\nCliente: ${customerName}\nValor: R$ ${orderTotal}`;
+        const message = `Novo comprovante PIX recebido!
+Cliente: ${customerName}
+Valor: R$ ${orderTotal}
+Data: ${new Date().toLocaleString()}`;
+
+        // Criar um formulário oculto
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = 'SUA_URL_DO_APPS_SCRIPT'; // Substitua pela sua URL
+        form.target = 'hiddenFrame';
+
+        // Adicionar campo de mensagem
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'message';
+        input.value = message;
+        form.appendChild(input);
+
+        // Criar iframe oculto para resposta
+        const iframe = document.createElement('iframe');
+        iframe.name = 'hiddenFrame';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+
+        // Adicionar o formulário, enviar e depois remover
+        document.body.appendChild(form);
+        form.submit();
         
-        // Substitua URL_DO_SEU_APPS_SCRIPT pela URL que você copiou
-        const response = await fetch('https://script.google.com/macros/s/AKfycbx6d177F3gleUlKka7QBzLDPJLzH19iS3GTS0pC1hIcr8L9LA33vISlPJWgvrONYyTj/exec', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                message: message
-            })
-        });
+        // Aguardar um pouco para garantir que o envio foi processado
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
-        const result = await response.json();
-
-        if (!result.success) {
-            throw new Error(result.error || 'Erro ao enviar notificação');
-        }
+        // Limpar elementos temporários
+        document.body.removeChild(form);
+        document.body.removeChild(iframe);
 
         uploadStatus.innerHTML = `
             <div style="color: #4CAF50; padding: 10px; background: var(--glass); border-radius: 8px;">
