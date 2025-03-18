@@ -5422,7 +5422,6 @@ function showOrderSummaryModal(onConfirmCallback) {
   });
 }
 
-// Função para criar um checkout no PagBank
 async function createPagBankCheckout() {
   try {
     // Modificar o botão para "Aguarde..."
@@ -5440,71 +5439,47 @@ async function createPagBankCheckout() {
     const complement = document.getElementById('complement').value || "";
     const zipCode = document.getElementById('zipCode').value;
     
-    // Validar endereço
-    const addressValidation = validateAddress(street, streetNumber, neighborhood, zipCode);
-    if (!addressValidation.valid) {
-      showNotification(addressValidation.message);
-      highlightErrorField(addressValidation.field);
-      
-      // Restaurar o botão
-      submitButton.innerHTML = 'Finalizar Pedido';
-      submitButton.style.backgroundColor = '';
-      submitButton.disabled = false;
-      
-      return;
-    }
-    
-    // Calcular valores
-    const subtotal = cart.reduce((total, item) => total + item.price, 0);
-    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-    const deliveryFee = 3.00; // Taxa de entrega
-    const total = subtotal - discount + deliveryFee;
-    
-    // Formatar o valor total em centavos conforme requerido pela API
-    const totalInCents = Math.round(total * 100);
-    
     // Gerar ID de referência único para o pedido
     const orderCounter = parseInt(localStorage.getItem('orderCounter') || '1');
     const referenceId = `cabana_order_${orderCounter}_${Date.now()}`;
     
-    // Versão simplificada do payload para teste
+    // Payload simplificado ainda mais para focar apenas nos campos essenciais
     const checkoutData = {
       reference_id: referenceId,
-      customer: {
-        name: customerName,
-        email: `${customerPhone.replace(/\D/g, '')}@email.placeholder`,
-        tax_id: "00000000000"
-      },
       items: [
         {
-          reference_id: "item_1",
           name: "Teste de Produto",
           quantity: 1,
-          unit_amount: 1000 // R$ 10.00
+          unit_amount: 1000
+        }
+      ],
+      qr_codes: [
+        {
+          amount: {
+            value: 1000
+          }
         }
       ],
       shipping: {
         address: {
           street: street,
           number: streetNumber,
-          locality: neighborhood,
           city: "Natal",
           region_code: "RN",
           country: "BRA",
           postal_code: zipCode.replace(/\D/g, '')
         }
       },
-      notification_urls: ["https://cabanaacai.netlify.app/api/pagbank-notification"],
-      redirect_url: "https://cabanaacai.netlify.app/?pagamento=concluido"
+      notification_urls: ["https://cabanaacai.netlify.app/api/notify"]
     };
     
     console.log("Dados enviados para o PagBank:", JSON.stringify(checkoutData, null, 2));
     
-    // Seu token do PagBank
+    // Token do PagBank - verificar se está correto
     const token = "6eddaeb6-b21e-4daf-911e-62daf20ff4e1d0e8199d44f5a94de6dbe3f18f6401327496-cd84-434f-80e8-aebb25c1d9b6";
     
-    // Chamar a API do PagBank usando o ambiente sandbox
-    const response = await fetch("https://cors-anywhere.herokuapp.com/https://sandbox.api.pagseguro.com/checkouts", {
+    // Tentar endpoint alternativo - order em vez de checkouts
+    const response = await fetch("https://cors-anywhere.herokuapp.com/https://sandbox.api.pagseguro.com/orders", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -5527,41 +5502,9 @@ async function createPagBankCheckout() {
       throw new Error(`Erro ao fazer parse da resposta: ${responseText}`);
     }
     
-    // Armazenar dados do pedido no Firebase antes de redirecionar
-    const orderData = {
-      timestamp: firebase.database.ServerValue.TIMESTAMP,
-      status: 'pending_payment',
-      customer: {
-        name: customerName,
-        phone: customerPhone
-      },
-      address: {
-        street,
-        number: streetNumber,
-        neighborhood,
-        complement: complement || '',
-        zipCode,
-        city: 'Natal',
-        state: 'RN'
-      },
-      items: cart,
-      subtotal,
-      deliveryFee,
-      discount,
-      total,
-      pagBankReferenceId: referenceId,
-      checkoutId: responseData.id || "" // ID do checkout retornado pelo PagBank
-    };
-    
-    // Salvar no Firebase
-    await realtimeDB.ref('orders').push(orderData);
-    
-    // Incrementar o contador de pedidos
-    localStorage.setItem('orderCounter', (orderCounter + 1).toString());
-    
     // Redirecionar o usuário para a página de checkout do PagBank
     if (responseData.links && responseData.links.length > 0) {
-      const checkoutLink = responseData.links.find(link => link.rel === "CHECKOUT" || link.rel === "payment");
+      const checkoutLink = responseData.links.find(link => link.rel === "PAY" || link.rel === "payment");
       
       if (checkoutLink && checkoutLink.href) {
         window.location.href = checkoutLink.href;
