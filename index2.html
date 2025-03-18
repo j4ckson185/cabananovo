@@ -5422,11 +5422,13 @@ function showOrderSummaryModal(onConfirmCallback) {
   });
 }
 
-// Função para atualizar as opções de pagamento
 function updatePaymentOptions() {
+  console.log("updatePaymentOptions chamada");
   const paymentContainer = document.getElementById('changeContainer');
   const pixInfo = document.getElementById('pixInfo');
+  console.log("pixInfo element:", pixInfo);
   const pixOption = document.querySelector('input[name="payment"][value="pix"]');
+  console.log("pixOption:", pixOption);
   
   if (pixOption && pixOption.checked) {
     // Limpar container anterior
@@ -6112,6 +6114,18 @@ document.addEventListener('DOMContentLoaded', () => {
     checkStoreStatus();
     setInterval(checkStoreStatus, 60000);
     setupPaymentEvents();
+
+      // Verificar se pixInfo existe, caso contrário, criar
+  if (!document.getElementById('pixInfo')) {
+    console.log("Criando div pixInfo");
+    const paymentOptions = document.querySelector('.payment-options') || document.querySelector('.payment-group');
+    if (paymentOptions) {
+      const pixInfoDiv = document.createElement('div');
+      pixInfoDiv.id = 'pixInfo';
+      pixInfoDiv.style.display = 'none';
+      paymentOptions.parentNode.insertBefore(pixInfoDiv, paymentOptions.nextSibling);
+    }
+  }
 
     // Configuração do Intersection Observer para o mascote
     const mascotVideo = document.querySelector('.mascot-video');
