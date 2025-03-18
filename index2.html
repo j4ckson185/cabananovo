@@ -6802,15 +6802,15 @@ function generatePixQRCode(total) {
     
     // Criar payload PIX seguindo padrão EMV
     const payload = [
-        createEMV('00', '01'),                     // Payload Format Indicator
-        createEMV('26', createEMV('00', 'BR.GOV.BCB.PIX') + // PIX GUI
-                       createEMV('01', pixKey)),   // Chave PIX
-        createEMV('52', '0000'),                   // Merchant Category Code
-        createEMV('53', '986'),                    // Currency (BRL = 986)
-        createEMV('54', amount),                   // Amount
-        createEMV('59', merchantName),             // Merchant Name
-        createEMV('60', 'NATAL'),                  // Merchant City
-        createEMV('62', createEMV('05', 'PEDIDO')), // Reference Label
+        createEMV('00', '01'),
+        createEMV('26', createEMV('00', 'BR.GOV.BCB.PIX') + 
+                       createEMV('01', pixKey)),
+        createEMV('52', '0000'),
+        createEMV('53', '986'),
+        createEMV('54', amount),
+        createEMV('59', merchantName),
+        createEMV('60', 'NATAL'),
+        createEMV('62', createEMV('05', 'PEDIDO')),
     ].join('');
     
     // Criar container para o QR Code
@@ -6833,6 +6833,13 @@ function generatePixQRCode(total) {
     
     // Container para o QR Code
     const qrElement = document.createElement('div');
+    qrElement.style.cssText = `
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        display: inline-block;
+        margin: 10px 0;
+    `;
     qrContainer.appendChild(qrElement);
     
     // Gerar QR Code
@@ -6845,19 +6852,55 @@ function generatePixQRCode(total) {
         correctLevel: QRCode.CorrectLevel.M
     });
     
-    // Adicionar chave PIX
-    const pixKeyInfo = document.createElement('div');
-    pixKeyInfo.innerHTML = `
-        <p style="margin: 15px 0;">
-            <strong>Chave PIX (WhatsApp):</strong><br>
-            ${pixKey}
-        </p>
-        <p style="margin: 15px 0;">
-            <strong>Valor:</strong><br>
-            R$ ${amount}
-        </p>
+    // Adicionar informações do PIX
+    const pixInfo = document.createElement('div');
+    pixInfo.style.cssText = `
+        margin: 15px 0;
+        padding: 15px;
+        background: var(--surface);
+        border-radius: 10px;
     `;
-    qrContainer.appendChild(pixKeyInfo);
+    
+    pixInfo.innerHTML = `
+        <div style="margin-bottom: 15px;">
+            <strong>Dados da Chave PIX</strong><br>
+            <span style="color: var(--text);">
+                WhatsApp: ${pixKey}<br>
+                Banco: Santander<br>
+                Nome: Jackson<br>
+                Valor: R$ ${amount}
+            </span>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <strong>PIX Copia e Cola</strong><br>
+            <div style="position: relative; margin-top: 10px;">
+                <input type="text" value="${payload}" 
+                    readonly 
+                    style="width: 100%; 
+                           padding: 8px; 
+                           background: var(--glass);
+                           border: 1px solid var(--glass-border);
+                           border-radius: 8px;
+                           color: var(--text);
+                           font-size: 12px;">
+                <button onclick="copyPixCode(this)" 
+                    style="position: absolute; 
+                           right: 5px; 
+                           top: 50%; 
+                           transform: translateY(-50%);
+                           background: var(--accent);
+                           color: white;
+                           border: none;
+                           border-radius: 5px;
+                           padding: 5px 10px;
+                           cursor: pointer;">
+                    Copiar
+                </button>
+            </div>
+        </div>
+    `;
+    qrContainer.appendChild(pixInfo);
     
     // Botões de ação
     const buttonsContainer = document.createElement('div');
@@ -6880,6 +6923,23 @@ function generatePixQRCode(total) {
     qrContainer.appendChild(buttonsContainer);
     
     return qrContainer;
+}
+
+// Função para copiar o código PIX
+function copyPixCode(button) {
+    const input = button.parentElement.querySelector('input');
+    input.select();
+    document.execCommand('copy');
+    
+    // Feedback visual
+    const originalText = button.textContent;
+    button.textContent = 'Copiado!';
+    button.style.background = '#4CAF50';
+    
+    setTimeout(() => {
+        button.textContent = originalText;
+        button.style.background = 'var(--accent)';
+    }, 2000);
 }
 
 function showComprovanteUpload() {
