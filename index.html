@@ -8,6 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
@@ -2258,6 +2259,39 @@ document.head.appendChild(style);
     to { opacity: 1; }
 }
 
+#createOrderModal .pix-fallback {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    text-align: center;
+    color: var(--text);
+}
+
+#createOrderModal #pixInfo {
+    background: var(--surface);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    text-align: center;
+}
+
+#createOrderModal #changeContainer {
+    background: var(--glass);
+    border-radius: 15px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+#createOrderModal .qr-code-container {
+    background: white;
+    padding: 1rem;
+    border-radius: 10px;
+    display: inline-block;
+    margin: 1rem 0;
+}
+
 </style>
 </head>
 <body>
@@ -2776,6 +2810,15 @@ document.head.appendChild(style);
 </div>
 
 <script>
+
+// Twilio Configuration
+const TWILIO_CONFIG = {
+    accountSid: 'AC04c1d67a4b599d4cb0d804029109fad3',
+    authToken: '17914a6678d7211b1909f7dcc77690f8',
+    phoneNumber: '+12362016670',
+    targetPhone: '+5584988731028'
+};
+    
 // Firebase initialization
 const firebaseConfig = {
     apiKey: "AIzaSyB-pF2lRStLTN9Xw9aYQj962qdNFyUXI2E",
@@ -5019,36 +5062,71 @@ function formatOrderForWhatsApp() {
 }
     
 function setupPaymentEvents() {
-    const moneyRadio = document.getElementById('paymentMoney');
-    const changeInput = document.createElement('div');
-    changeInput.innerHTML = `
-        <div id="changeContainer" style="display: none; margin-top: 10px;">
-            <label>Troco para quanto?</label>
-            <input type="number" id="changeAmount" step="0.01">
-        </div>
-    `;
+    console.log('Configurando eventos de pagamento do createOrderModal');
     
-    moneyRadio.closest('div').appendChild(changeInput);
+    // Selecionar elementos dentro do createOrderModal
+    const modal = document.getElementById('createOrderModal');
+    if (!modal) return;
+
+    const paymentInputs = modal.querySelectorAll('input[name="paymentMethod"]');
+    const changeContainer = modal.querySelector('#changeContainer');
+    const pixInfo = modal.querySelector('#pixInfo');
+    const notes = modal.querySelector('#notes');
     
-    document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+    paymentInputs.forEach(radio => {
         radio.addEventListener('change', (e) => {
-            const changeContainer = document.getElementById('changeContainer');
-            const changeAmount = document.getElementById('changeAmount');
-            const notes = document.getElementById('notes');
+            console.log('Método de pagamento selecionado:', e.target.value);
             
-            if (e.target.value === 'money') {
-                changeContainer.style.display = 'block';
-                
-                changeAmount.addEventListener('change', () => {
-                    if (changeAmount.value) {
-                        notes.value = `Troco para R$ ${changeAmount.value}`;
-                    } else {
-                        notes.value = '';
+            // Resetar displays
+            if (changeContainer) changeContainer.style.display = 'none';
+            if (pixInfo) pixInfo.style.display = 'none';
+            if (notes) notes.value = '';
+            
+            switch(e.target.value) {
+                case 'money':
+                    console.log('Configurando pagamento em dinheiro');
+                    if (changeContainer) {
+                        changeContainer.style.display = 'block';
+                        const changeAmount = changeContainer.querySelector('#changeAmount');
+                        if (changeAmount) {
+                            changeAmount.onchange = () => {
+                                if (notes && changeAmount.value) {
+                                    notes.value = `Troco para R$ ${changeAmount.value}`;
+                                }
+                            };
+                        }
                     }
-                });
-            } else {
-                changeContainer.style.display = 'none';
-                notes.value = '';
+                    break;
+                    
+                case 'pix':
+                case 'online':
+                    console.log('Configurando pagamento PIX');
+                    if (pixInfo) {
+                        pixInfo.style.display = 'block';
+                        const orderTotal = modal.querySelector('#orderTotal')?.value || '0.00';
+                        console.log('Valor total para PIX:', orderTotal);
+                        
+                        try {
+                            const qrCode = generatePixQRCode(orderTotal);
+                            pixInfo.innerHTML = '';
+                            pixInfo.appendChild(qrCode);
+                        } catch (error) {
+                            console.error('Erro ao gerar QR Code:', error);
+                            pixInfo.innerHTML = `
+                                <div class="pix-fallback">
+                                    <strong>Pagamento PIX</strong><br>
+                                    <p>Chave PIX (WhatsApp): 84 9 8873-1028</p>
+                                    <p>Banco: Santander</p>
+                                    <p>Nome: Jackson</p>
+                                    <p>Valor: R$ ${orderTotal}</p>
+                                    <button class="modal-btn" onclick="showComprovanteUpload()" style="margin-top: 10px;">
+                                        <i class="fas fa-check"></i> Já paguei, enviar comprovante
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    }
+                    break;
             }
         });
     });
@@ -6599,7 +6677,7 @@ async function validateAndStorePhone() {
 
 // Função para registrar carrinho abandonado na planilha
 async function recordAbandonedCart(data) {
-    const scriptUrl = 'https://script.google.com/macros/s/AKfycbwTGXyecGFipaEf_5p_oCb39vMeUxRW1qML0CnwLETjsQ3XbejSSSio_H1YcpBzLSZeDw/exec';
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbwS5DcA_NuUsFaHlcnGV-78kfmNKog-1KtXv_Scn6q-6o85c3SSUMPsSk8LXIggKoUW0w/exec';
     
     const response = await fetch(scriptUrl, {
         method: 'POST',
@@ -6717,6 +6795,340 @@ async function updateSMSStatus(phone, type) {
     await recordAbandonedCart(data);
 }
 
+// 1. Primeiro a função do CRC16
+function calculateCRC16(str) {
+    function crc16(data) {
+        let crc = 0xFFFF;
+        const polynomial = 0x1021;
+
+        for (let i = 0; i < data.length; i++) {
+            crc ^= (data[i] << 8);
+            for (let j = 0; j < 8; j++) {
+                if (crc & 0x8000) {
+                    crc = ((crc << 1) ^ polynomial) & 0xFFFF;
+                } else {
+                    crc = (crc << 1) & 0xFFFF;
+                }
+            }
+        }
+        return crc;
+    }
+
+    const data = Array.from(str).map(c => c.charCodeAt(0));
+    return crc16(data);
+}
+
+// 2. Depois a função que gera o QR Code
+function generatePixQRCode(total) {
+    // Dados do PIX (Padrão Banco Central)
+    const pixKey = "84988731028";
+    const merchantName = "JACKSON";
+    const city = "NATAL";
+    
+    // Formatar valor (garantir 2 casas decimais)
+    const amount = parseFloat(total.toString().replace(/[^\d.,]/g, '').replace(',', '.')).toFixed(2);
+    
+    // Funções auxiliares EMV
+    function pad(str, length) {
+        return str.toString().padStart(length, '0');
+    }
+    
+    function createEMV(id, str) {
+        str = str.toString();
+        return id + pad(str.length, 2) + str;
+    }
+
+    // Criar payload seguindo especificação do Bacen
+    const payload = [
+        createEMV('00', '01'),                     
+        createEMV('01', '12'),                     
+        createEMV('26', [                          
+            createEMV('00', 'br.gov.bcb.pix'),     
+            createEMV('01', pixKey),               
+        ].join('')),
+        createEMV('52', '0000'),                   
+        createEMV('53', '986'),                    
+        createEMV('54', amount),                   
+        createEMV('58', 'BR'),                     
+        createEMV('59', merchantName),             
+        createEMV('60', city),                     
+        createEMV('62', createEMV('05', '***')),   
+        '6304'                                     
+    ].join('');
+
+    // Calcular e adicionar CRC16
+    const crc16 = calculateCRC16(payload);
+    const finalPayload = payload + crc16.toString(16).toUpperCase().padStart(4, '0');
+
+    // Criar container principal
+    const qrContainer = document.createElement('div');
+    qrContainer.id = 'pixQRCode';
+    qrContainer.style.cssText = `
+        text-align: center;
+        padding: 15px;
+        background: var(--glass);
+        border-radius: 15px;
+        border: 1px solid var(--glass-border);
+        max-width: 100%;
+        margin: 0 auto;
+    `;
+
+    qrContainer.innerHTML = `<h3 style="margin-bottom: 10px; color: white;">Pagamento via PIX</h3>`;
+
+    // Criar container do QR Code
+    const qrElement = document.createElement('div');
+    qrElement.style.cssText = `
+        background: white;
+        padding: 10px;
+        border-radius: 10px;
+        display: inline-block;
+        margin: 10px auto;
+        max-width: 100%;
+    `;
+    qrContainer.appendChild(qrElement);
+
+    // Gerar QR Code
+    new QRCode(qrElement, {
+        text: finalPayload,
+        width: 150,
+        height: 150,
+        correctLevel: QRCode.CorrectLevel.H
+    });
+
+    // Adicionar informações
+    const infoDiv = document.createElement('div');
+    infoDiv.innerHTML = `
+        <div style="margin: 15px 0; padding: 10px; background: var(--surface); border-radius: 10px;">
+            <div style="margin-bottom: 10px;">
+                <strong>Dados da Chave PIX</strong><br>
+                <span style="color: var(--text);">
+                    Chave PIX: ${pixKey}<br>
+                    Banco: Santander<br>
+                    Nome: Jackson<br>
+                    Valor: R$ ${amount}
+                </span>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <strong>Chave PIX</strong>
+                <div style="position: relative; margin-top: 5px;">
+                    <input type="text" value="${pixKey}" 
+                        readonly 
+                        style="width: 100%; padding: 8px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); font-size: 12px;">
+                    <button onclick="copyPixKey(this, event)" 
+                        style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--accent); color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">
+                        Copiar
+                    </button>
+                </div>
+            </div>
+        </div>
+        <button class="modal-btn add-to-cart" onclick="showComprovanteUpload(event)">
+            <i class="fas fa-check"></i> Já paguei, enviar comprovante
+        </button>
+    `;
+    qrContainer.appendChild(infoDiv);
+
+    return qrContainer;
+}
+
+// Função atualizada para copiar a chave PIX
+function copyPixKey(button, event) {
+    event.preventDefault(); // Previne o comportamento padrão
+    event.stopPropagation(); // Impede a propagação do evento
+    
+    const input = button.parentElement.querySelector('input');
+    input.select();
+    document.execCommand('copy');
+    
+    // Feedback visual
+    const originalText = button.textContent;
+    button.textContent = 'Copiado!';
+    button.style.background = '#4CAF50';
+    
+    setTimeout(() => {
+        button.textContent = originalText;
+        button.style.background = 'var(--accent)';
+    }, 2000);
+}
+
+function showComprovanteUpload(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    const pixInfo = document.getElementById('pixQRCode');
+    if (!pixInfo) return;
+
+    pixInfo.innerHTML = `
+        <div style="padding: 15px; background: var(--surface); border-radius: 10px;">
+            <h4 style="margin-bottom: 15px; color: white;">Enviar Comprovante</h4>
+            <input type="file" 
+                id="comprovante" 
+                accept="image/*,.pdf" 
+                style="width: 100%; margin-bottom: 15px; padding: 10px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text);"
+                onchange="handleComprovanteUpload(this)">
+            <div id="uploadStatus" style="margin-top: 10px;"></div>
+        </div>
+    `;
+}
+
+// Nova função para lidar com a notificação
+function handleNotificacao(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    notificarLojaPagamento();
+}
+
+async function handleComprovanteUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const uploadStatus = document.getElementById('uploadStatus');
+    uploadStatus.innerHTML = `
+        <div style="color: var(--text); padding: 10px; background: var(--glass); border-radius: 8px;">
+            <i class="fas fa-spinner fa-spin"></i> 
+            Processando comprovante...
+        </div>
+    `;
+
+    try {
+        // Converter para Base64
+        const base64 = await convertFileToBase64(file);
+        
+        // Armazenar temporariamente
+        localStorage.setItem('comprovanteTemp', base64);
+        localStorage.setItem('comprovanteNome', file.name);
+        
+        // Mostrar sucesso e botão de notificação
+        uploadStatus.innerHTML = `
+            <div style="color: #4CAF50; padding: 10px; background: var(--glass); border-radius: 8px;">
+                <i class="fas fa-check-circle"></i> 
+                Comprovante carregado com sucesso!
+            </div>
+            <button onclick="notificarLojaPagamento()" class="modal-btn add-to-cart" style="margin-top: 15px;">
+                <i class="fas fa-bell"></i> 
+                Notificar Loja Sobre Pagamento
+            </button>
+        `;
+    } catch (error) {
+        uploadStatus.innerHTML = `
+            <div style="color: var(--error); padding: 10px; background: var(--glass); border-radius: 8px;">
+                <i class="fas fa-exclamation-circle"></i> 
+                Erro ao carregar comprovante. Tente novamente.
+            </div>
+        `;
+    }
+}
+
+async function notificarLojaPagamento() {
+    const uploadStatus = document.getElementById('uploadStatus');
+    const customerName = document.getElementById('customerName')?.value || 'Cliente';
+    const orderTotal = document.getElementById('orderTotal')?.value || '0.00';
+
+    uploadStatus.innerHTML = `
+        <div style="color: var(--text); padding: 10px; background: var(--glass); border-radius: 8px;">
+            <i class="fas fa-spinner fa-spin"></i> 
+            Notificando a loja...
+        </div>
+    `;
+
+    const message = `Novo Pagamento PIX Recebido!
+Cliente: ${customerName}
+Valor: R$ ${orderTotal}
+Data: ${new Date().toLocaleString()}`;
+
+    try {
+        // Usar XMLHttpRequest em vez de form
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://script.google.com/macros/s/AKfycbxl8-3Ni3u1RaL0w9L8wpcWKmHrIsGw2_UEScH1uIYLUSQ2EEFps4AVvgVGeP9ci3aQ/exec', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                uploadStatus.innerHTML = `
+                    <div style="color: #4CAF50; padding: 10px; background: var(--glass); border-radius: 8px;">
+                        <i class="fas fa-check-circle"></i> 
+                        Loja notificada sobre seu pagamento!
+                        <p style="margin-top: 10px; font-size: 0.9em;">
+                            Você pode continuar com seu pedido normalmente.
+                        </p>
+                    </div>
+                `;
+            } else {
+                throw new Error('Falha ao enviar notificação');
+            }
+        };
+        
+        xhr.onerror = function() {
+            throw new Error('Erro de rede ao enviar notificação');
+        };
+        
+        xhr.send('message=' + encodeURIComponent(message));
+
+    } catch (error) {
+        console.error('Erro ao notificar:', error);
+        uploadStatus.innerHTML = `
+            <div style="color: var(--error); padding: 10px; background: var(--glass); border-radius: 8px;">
+                <i class="fas fa-exclamation-circle"></i> 
+                Erro ao notificar a loja. Por favor, continue com seu pedido normalmente.
+            </div>
+        `;
+    }
+}
+
+function changePaymentMethod() {
+    // Limpar QR Code e voltar para seleção de pagamento
+    const qrContainer = document.getElementById('pixQRCode');
+    if (qrContainer) {
+        qrContainer.remove();
+    }
+    
+    // Resetar seleção de pagamento
+    document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+        radio.checked = false;
+    });
+    
+    // Mostrar opções de pagamento novamente
+    document.querySelector('.payment-group').style.display = 'flex';
+}
+
+async function sendOrderWithComprovante() {
+    const comprovanteFile = document.getElementById('comprovante').files[0];
+    if (!comprovanteFile) {
+        showNotification('Por favor, anexe o comprovante');
+        return;
+    }
+    
+    try {
+        // Converter arquivo para base64
+        const base64File = await convertFileToBase64(comprovanteFile);
+        
+        // Modificar a mensagem do WhatsApp para incluir informação do pagamento
+        const originalMessage = formatOrderForWhatsApp();
+        const paymentInfo = "\n\n💳 *Pagamento via PIX*\nStatus: ✅ Pago\nComprovante: Anexado";
+        const fullMessage = originalMessage + paymentInfo;
+        
+        // Abrir WhatsApp com a mensagem modificada
+        window.location.href = `https://wa.me/5584988731028?text=${encodeURIComponent(fullMessage)}`;
+        
+    } catch (error) {
+        console.error('Erro ao processar comprovante:', error);
+        showNotification('Erro ao processar comprovante. Tente novamente.');
+    }
+}
+
+function convertFileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
 </script>
 <<!-- Modal para Criar Novo Pedido -->
 <!-- Modal para Criar Novo Pedido -->
@@ -6773,6 +7185,13 @@ async function updateSMSStatus(phone, type) {
                     <label for="paymentOnline">PIX</label>
                 </div>
             </div>
+            <div id="changeContainer" style="display: none; margin-top: 10px;">
+    <label>Troco para quanto?</label>
+    <input type="number" id="changeAmount" step="0.01">
+</div>
+<div id="pixInfo" style="display: none; margin-top: 15px;">
+    <!-- O QR Code será inserido aqui via JavaScript -->
+</div>
             
             <label for="notes">Observações</label>
             <textarea id="notes" placeholder="Alguma observação sobre seu pedido?"></textarea>
