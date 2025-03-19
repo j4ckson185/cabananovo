@@ -5158,12 +5158,13 @@ async function handlePixPayment(customerName, orderTotal) {
     // Mostrar loading
     pixInfo.style.display = 'block';
     pixInfo.innerHTML = `
-        <div style="padding: 15px; text-align: center;">
-            <i class="fas fa-spinner fa-spin"></i> Gerando PIX...
+        <div style="color: var(--text); padding: 10px; text-align: center;">
+            <i class="fas fa-spinner fa-spin"></i> Gerando QR Code PIX...
         </div>
     `;
 
     try {
+        // 1. Criar dados do pagamento
         const payloadData = {
             transaction_amount: Number(orderTotal),
             description: "Pedido Cabana Açaí",
@@ -5178,10 +5179,13 @@ async function handlePixPayment(customerName, orderTotal) {
             }
         };
 
-        // Usando o Apps Script como proxy
+        // 2. Fazer log dos dados enviados
+        logToSheet('DADOS_ENVIADOS', payloadData);
+
+        // 3. Enviar para o Apps Script (que já está funcionando corretamente)
         const response = await fetch('https://script.google.com/macros/s/AKfycbzCrbXgKa0nyrcS0_vix6orqvyIJ-aUbu8EyFl0mRN6rWQboGi_pauAOhIlV7O-82wNCg/exec', {
             method: 'POST',
-            mode: 'no-cors', // Importante!
+            mode: 'no-cors',
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -5189,13 +5193,13 @@ async function handlePixPayment(customerName, orderTotal) {
         });
 
         const responseData = await response.json();
-        
-        // Log da resposta
         logToSheet('RESPOSTA_MP', responseData);
 
+        // 4. Verificar os dados do QR Code e exibir
         if (responseData.point_of_interaction?.transaction_data) {
             const qrData = responseData.point_of_interaction.transaction_data;
             
+            // Atualizar o conteúdo do pixInfo
             pixInfo.innerHTML = `
                 <div style="padding: 20px; background: var(--surface); border-radius: 15px; text-align: center;">
                     <h3 style="color: white; margin-bottom: 20px;">Pagamento via PIX</h3>
@@ -5220,7 +5224,7 @@ async function handlePixPayment(customerName, orderTotal) {
                                        style="width: 100%; padding: 10px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); font-size: 0.9em;">
                                 <button onclick="copyPixCode(this)" 
                                         style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--accent); color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">
-                                    Copiar
+                                    Copiar Código
                                 </button>
                             </div>
                         </div>
@@ -5236,7 +5240,9 @@ async function handlePixPayment(customerName, orderTotal) {
         }
 
     } catch (error) {
+        console.error('Erro no PIX:', error);
         logToSheet('ERRO', error.toString());
+        
         pixInfo.innerHTML = `
             <div style="color: var(--error); padding: 15px; background: var(--glass); border-radius: 8px; text-align: center;">
                 <i class="fas fa-exclamation-circle"></i> 
