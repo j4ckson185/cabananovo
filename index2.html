@@ -5070,16 +5070,14 @@ function generateUniqueId() {
     return `ord-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
 }
 
-async function createPixPayment(orderTotal, customerName, customerEmail) {
+async function createPixPayment(orderTotal, customerName) {
     try {
-        console.log('Iniciando criação do pagamento PIX...');
-        
         const payloadData = {
             transaction_amount: Number(orderTotal),
             description: 'Pedido Cabana Açaí',
             payment_method_id: 'pix',
             payer: {
-                email: customerEmail || 'cliente@email.com',
+                email: 'cliente@email.com',
                 first_name: customerName,
                 identification: {
                     type: 'CPF',
@@ -5103,7 +5101,24 @@ async function createPixPayment(orderTotal, customerName, customerEmail) {
         });
 
         const responseData = await response.json();
-        console.log('Resposta MP:', responseData);
+
+        // Log na planilha
+        await fetch('URL_DO_SEU_APPS_SCRIPT', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'log',
+                type: response.ok ? 'success' : 'error',
+                request: {
+                    value: orderTotal,
+                    customer: customerName,
+                    payload: payloadData
+                },
+                response: responseData
+            })
+        });
 
         if (!response.ok) {
             throw new Error(responseData.message || 'Erro ao criar pagamento');
@@ -5112,7 +5127,23 @@ async function createPixPayment(orderTotal, customerName, customerEmail) {
         return responseData;
 
     } catch (error) {
-        console.error('Erro detalhado Mercado Pago:', error);
+        // Log do erro na planilha
+        await fetch('https://script.google.com/macros/s/AKfycbx2ACp0g5ZMxMEtkTxjWBnQKFKnyqrUbjCgLTS_DSxFKeEg_EiIOhYUNm7aGGlof3nBcQ/exec', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'log',
+                type: 'error',
+                request: {
+                    value: orderTotal,
+                    customer: customerName
+                },
+                error: error.toString()
+            })
+        });
+
         throw error;
     }
 }
