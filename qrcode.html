@@ -35,14 +35,17 @@
         const renderPaymentBrick = async () => {
             const settings = {
                 initialization: {
-                    amount: 25.00
+                    amount: 25.00,
+                    paymentMethods: {
+                        types: ["pix"]
+                    }
                 },
                 callbacks: {
                     onReady: () => {
                         console.log('Brick pronto');
                     },
-                    onSubmit: async (cardFormData) => {
-                        console.log('Dados do pagamento:', cardFormData);
+                    onSubmit: async (data) => {
+                        console.log('Dados do pagamento:', data);
                     },
                     onError: (error) => {
                         console.error('Erro:', error);
@@ -56,9 +59,8 @@
                         }
                     },
                     paymentMethods: {
-                        maxInstallments: 1,
-                        excludedPaymentMethods: ['credit_card', 'debit_card'],
-                        excludedPaymentTypes: ['credit_card', 'debit_card']
+                        types: ["pix"],
+                        maxInstallments: 1
                     }
                 }
             };
