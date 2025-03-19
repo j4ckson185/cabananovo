@@ -12,10 +12,8 @@
             margin: 20px auto;
             padding: 20px;
         }
-        #payment-form {
+        #wallet-brick {
             margin-top: 20px;
-        }
-        #payment-brick {
             padding: 20px;
             border: 1px solid #ccc;
             border-radius: 8px;
@@ -24,9 +22,7 @@
 </head>
 <body>
     <h1>Teste PIX</h1>
-    <div id="payment-form">
-        <div id="payment-brick"></div>
-    </div>
+    <div id="wallet-brick"></div>
 
     <script>
         const mp = new MercadoPago('APP_USR-813bb304-1460-4892-bc0f-9b2522655bc3');
@@ -47,18 +43,12 @@
                             unit_price: 25.00
                         }],
                         payment_methods: {
-                            default_payment_method_id: 'pix',
-                            excluded_payment_types: [
-                                { id: "credit_card" },
-                                { id: "debit_card" }
-                            ]
+                            default_payment_method_id: "pix",
+                            payment_types: [{ id: "pix" }],
+                            default_installments: 1
                         }
                     })
                 });
-
-                if (!response.ok) {
-                    throw new Error('Erro ao criar preferência');
-                }
 
                 const preference = await response.json();
                 console.log('Preferência criada:', preference);
@@ -69,38 +59,37 @@
             }
         }
 
-        async function initPaymentBrick(preferenceId) {
+        async function initWalletBrick(preferenceId) {
             const settings = {
                 initialization: {
-                    amount: 25.00, // Adicionado o amount
                     preferenceId: preferenceId
                 },
                 callbacks: {
                     onReady: () => {
                         console.log('Brick pronto');
                     },
-                    onSubmit: async (data) => {
+                    onSubmit: (data) => {
                         console.log('Pagamento submetido:', data);
                     },
                     onError: (error) => {
                         console.error('Erro no brick:', error);
-                    }
-                },
-                locale: 'pt-BR',
-                customization: {
-                    paymentMethods: {
-                        maxInstallments: 1
+                        document.getElementById('wallet-brick').innerHTML = `
+                            <div style="color: red; padding: 20px; text-align: center;">
+                                <p>Erro ao processar pagamento</p>
+                                <small style="display: block; margin-top: 10px;">${error.message}</small>
+                            </div>
+                        `;
                     }
                 }
             };
 
             try {
                 const brickBuilder = mp.bricks();
-                const brick = await brickBuilder.create('payment', 'payment-brick', settings);
+                await brickBuilder.create('wallet', 'wallet-brick', settings);
                 console.log('Brick criado com sucesso');
             } catch (error) {
                 console.error('Erro ao criar brick:', error);
-                document.getElementById('payment-brick').innerHTML = `
+                document.getElementById('wallet-brick').innerHTML = `
                     <div style="color: red; padding: 20px; text-align: center;">
                         <p>Erro ao inicializar pagamento</p>
                         <small style="display: block; margin-top: 10px;">${error.message}</small>
@@ -109,9 +98,8 @@
             }
         }
 
-        // Iniciar quando a página carregar
         window.addEventListener('load', async () => {
-            document.getElementById('payment-brick').innerHTML = `
+            document.getElementById('wallet-brick').innerHTML = `
                 <div style="text-align: center; padding: 20px;">
                     <p>Inicializando pagamento...</p>
                 </div>
@@ -119,10 +107,10 @@
 
             try {
                 const preferenceId = await createPreference();
-                await initPaymentBrick(preferenceId);
+                await initWalletBrick(preferenceId);
             } catch (error) {
                 console.error('Erro na inicialização:', error);
-                document.getElementById('payment-brick').innerHTML = `
+                document.getElementById('wallet-brick').innerHTML = `
                     <div style="color: red; padding: 20px; text-align: center;">
                         <p>Erro ao iniciar pagamento</p>
                         <small style="display: block; margin-top: 10px;">${error.message}</small>
