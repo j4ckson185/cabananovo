@@ -2674,20 +2674,20 @@ document.head.appendChild(style);
             </div>
             <div class="form-group">
                 <label>Forma de Pagamento</label>
-                <div class="payment-options">
-                    <label>
-                        <input type="radio" name="payment" value="money">
-                        <i class="fas fa-money-bill"></i> Dinheiro
-                    </label>
-                    <label>
-                        <input type="radio" name="payment" value="card">
-                        <i class="fas fa-credit-card"></i> Cartão na Entrega
-                    </label>
-                    <label>
-                        <input type="radio" name="payment" value="pix">
-                        <i class="fas fa-qrcode"></i> PIX
-                    </label>
-                </div>
+<div class="payment-options">
+    <label>
+        <input type="radio" name="paymentMethod" value="money">
+        <i class="fas fa-money-bill"></i> Dinheiro
+    </label>
+    <label>
+        <input type="radio" name="paymentMethod" value="card">
+        <i class="fas fa-credit-card"></i> Cartão na Entrega
+    </label>
+    <label>
+        <input type="radio" name="paymentMethod" value="pix"> <!-- Mudado de 'online' para 'pix' -->
+        <i class="fas fa-qrcode"></i> PIX
+    </label>
+</div>
             </div>
             <div id="changeContainer" style="display: none;">
                 <label>Troco para quanto?</label>
@@ -5396,10 +5396,9 @@ function setupPaymentEvents() {
                     }
                     break;
                     
-                case 'pix':
-                case 'online':
+                case 'online':  // Aqui quando seleciona 'online' é PIX
+                case 'pix':     // Adicionado 'pix' também para compatibilidade
                     console.log('Configurando pagamento PIX');
-                    const pixInfo = document.getElementById('pixInfo');
                     if (pixInfo) {
                         console.log('Elemento pixInfo encontrado');
                         pixInfo.style.display = 'block';
@@ -5408,7 +5407,6 @@ function setupPaymentEvents() {
                         const orderTotal = document.getElementById('orderTotal')?.value || '0.00';
                         console.log('Dados para PIX:', { customerName, orderTotal });
                         
-                        // Chamar diretamente handlePixPayment
                         handlePixPayment(customerName, orderTotal);
                     } else {
                         console.error('Elemento pixInfo não encontrado');
