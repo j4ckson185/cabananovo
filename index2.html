@@ -5149,35 +5149,14 @@ async function createPixPayment(orderTotal, customerName) {
 }
 
 async function handlePixPayment(customerName, orderTotal) {
-    // Função para log na planilha
-    async function logToSheet(error, details) {
-        try {
-            const formData = new FormData();
-            formData.append('timestamp', new Date().toISOString());
-            formData.append('error', error);
-            formData.append('details', JSON.stringify(details));
-
-            await fetch('https://script.google.com/macros/s/AKfycbxl8-3Ni3u1RaL0w9L8wpcWKmHrIsGw2_UEScH1uIYLUSQ2EEFps4AVvgVGeP9ci3aQ/exec', {
-                method: 'POST',
-                mode: 'no-cors',
-                body: formData
-            });
-        } catch (e) {
-            console.error('Erro ao registrar log:', e);
-        }
-    }
-
     const pixInfo = document.getElementById('pixInfo');
     if (!pixInfo) {
-        await logToSheet('ERRO_ELEMENTO', { message: 'Elemento pixInfo não encontrado' });
+        logToSheet('ERRO_ELEMENTO', 'Elemento pixInfo não encontrado');
         return;
     }
 
     // Log inicial
-    await logToSheet('INICIO_PIX', { 
-        cliente: customerName, 
-        valor: orderTotal 
-    });
+    logToSheet('INICIO_PIX', { cliente: customerName, valor: orderTotal });
 
     pixInfo.innerHTML = `
         <div style="color: var(--text); padding: 10px; background: var(--glass); border-radius: 8px; text-align: center;">
@@ -5187,11 +5166,11 @@ async function handlePixPayment(customerName, orderTotal) {
     `;
 
     try {
-        // Converter para número e formatar para 2 casas decimais
-        const amount = Number(orderTotal).toFixed(2);
+        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+        const mpUrl = 'https://api.mercadopago.com/v1/payments';
 
         const payloadData = {
-            transaction_amount: Number(amount),
+            transaction_amount: Number(orderTotal),
             description: "Pedido Cabana Açaí",
             payment_method_id: "pix",
             payer: {
@@ -5204,15 +5183,19 @@ async function handlePixPayment(customerName, orderTotal) {
             }
         };
 
-        // Log do payload
-        await logToSheet('PAYLOAD_PIX', payloadData);
+        // Log antes da chamada
+        logToSheet('TENTATIVA_MP', {
+            url: mpUrl,
+            payload: payloadData
+        });
 
-        const response = await fetch('https://api.mercadopago.com/v1/payments', {
+        const response = await fetch(proxyUrl + mpUrl, {
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer APP_USR-5690418429869747-031817-f6ee6e1b8317cfd7526ff7bd547728e7-257593839',
                 'Content-Type': 'application/json',
-                'x-idempotency-key': `${Date.now()}-${Math.random().toString(36).substring(2)}`
+                'Origin': window.location.origin,
+                'X-Idempotency-Key': `${Date.now()}-${Math.random().toString(36).substring(2)}`
             },
             body: JSON.stringify(payloadData)
         });
@@ -5220,20 +5203,20 @@ async function handlePixPayment(customerName, orderTotal) {
         const responseData = await response.json();
         
         // Log da resposta
-        await logToSheet('RESPOSTA_MP', responseData);
+        logToSheet('RESPOSTA_MP', responseData);
 
         if (!response.ok) {
-            throw new Error(`Erro MP: ${responseData.message || 'Erro desconhecido'}`);
+            throw new Error(`Erro MP: ${JSON.stringify(responseData)}`);
         }
 
         if (responseData.point_of_interaction?.transaction_data?.qr_code) {
-            displayPixPayment(responseData);
+            pixInfo.innerHTML = generatePixQRCode(responseData);
         } else {
             throw new Error('QR Code não gerado');
         }
 
     } catch (error) {
-        await logToSheet('ERRO_FINAL', {
+        logToSheet('ERRO_FINAL', {
             mensagem: error.toString(),
             cliente: customerName,
             valor: orderTotal
@@ -5250,27 +5233,70 @@ async function handlePixPayment(customerName, orderTotal) {
         `;
     }
 }
-// Função auxiliar para fazer log na planilha
+
+// Função para log na planilha
 function logToSheet(erro, detalhes) {
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = 'https://script.google.com/macros/s/AKfycbxl8-3Ni3u1RaL0w9L8wpcWKmHrIsGw2_UEScH1uIYLUSQ2EEFps4AVvgVGeP9ci3aQ/exec';
-    
-    const errorInput = document.createElement('input');
-    errorInput.type = 'hidden';
-    errorInput.name = 'erro';
-    errorInput.value = erro;
-    form.appendChild(errorInput);
+    try {
+        const form = new FormData();
+        form.append('erro', erro);
+        form.append('detalhes', JSON.stringify(detalhes));
+        
+        fetch('https://script.google.com/macros/s/AKfycbyorwEKsdwcALZaEn2WYhbpplMPzE6_hh__1lG0IGY12pexDw823pIah1XcufDHX8t64A/exec', {
+            method: 'POST',
+            mode: 'no-cors',
+            body: form
+        }).catch(console.error);
+        
+        // Log também no console para debug
+        console.log('LOG:', erro, detalhes);
+    } catch (error) {
+        console.error('Erro ao fazer log:', error);
+    }
+}
 
-    const detailsInput = document.createElement('input');
-    detailsInput.type = 'hidden';
-    detailsInput.name = 'detalhes';
-    detailsInput.value = JSON.stringify(detalhes);
-    form.appendChild(detailsInput);
+// Função para gerar o HTML do QR Code
+function generatePixQRCode(responseData) {
+    const qrCodeBase64 = responseData.point_of_interaction.transaction_data.qr_code_base64;
+    const qrCodeText = responseData.point_of_interaction.transaction_data.qr_code;
+    const amount = responseData.transaction_amount.toFixed(2);
 
-    document.body.appendChild(form);
-    form.submit();
-    setTimeout(() => document.body.removeChild(form), 1000);
+    return `
+        <div style="padding: 15px; background: var(--surface); border-radius: 10px; text-align: center;">
+            <h3 style="color: white; margin-bottom: 15px;">Pagamento via PIX</h3>
+            
+            <div style="background: white; padding: 15px; border-radius: 10px; display: inline-block; margin-bottom: 15px;">
+                <img src="data:image/png;base64,${qrCodeBase64}" 
+                     alt="QR Code PIX" 
+                     style="max-width: 200px; height: auto;">
+            </div>
+
+            <div style="margin: 15px 0; padding: 10px; background: var(--glass); border-radius: 10px;">
+                <div style="margin-bottom: 10px; color: white;">
+                    <strong>Valor a pagar:</strong> R$ ${amount}
+                </div>
+
+                <strong style="color: white;">Pix Copia e Cola:</strong>
+                <div style="position: relative; margin-top: 10px;">
+                    <input type="text" 
+                           value="${qrCodeText}" 
+                           readonly 
+                           style="width: 100%; padding: 8px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); font-size: 12px;">
+                    <button onclick="copyPixCode(this)" 
+                            style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--accent); color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">
+                        Copiar
+                    </button>
+                </div>
+            </div>
+
+            <div style="color: var(--text); margin: 15px 0;">
+                <p style="font-size: 0.9em;">Após o pagamento, você receberá a confirmação automaticamente.</p>
+            </div>
+
+            <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 10px;">
+                <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
+            </button>
+        </div>
+    `;
 }
 
 function displayPixPayment(paymentData) {
@@ -5365,85 +5391,48 @@ function copyPixCode(button) {
 }
     
 function setupPaymentEvents() {
-    console.log('Configurando eventos de pagamento do createOrderModal');
-    
-    // Selecionar elementos dentro do createOrderModal
-    const modal = document.getElementById('createOrderModal');
-    if (!modal) return;
-
-    const paymentInputs = modal.querySelectorAll('input[name="paymentMethod"]');
-    const changeContainer = modal.querySelector('#changeContainer');
-    const pixInfo = modal.querySelector('#pixInfo');
-    const notes = modal.querySelector('#notes');
+    const paymentInputs = document.querySelectorAll('input[name="paymentMethod"]');
+    const changeContainer = document.getElementById('changeContainer');
+    const pixInfo = document.getElementById('pixInfo');
     
     paymentInputs.forEach(radio => {
-        radio.addEventListener('change', (e) => {
+        radio.addEventListener('change', async (e) => {
             console.log('Método de pagamento selecionado:', e.target.value);
             
             // Resetar displays
             if (changeContainer) changeContainer.style.display = 'none';
             if (pixInfo) pixInfo.style.display = 'none';
-            if (notes) notes.value = '';
             
             switch(e.target.value) {
                 case 'money':
-                    console.log('Configurando pagamento em dinheiro');
                     if (changeContainer) {
                         changeContainer.style.display = 'block';
-                        const changeAmount = changeContainer.querySelector('#changeAmount');
-                        if (changeAmount) {
-                            changeAmount.onchange = () => {
-                                if (notes && changeAmount.value) {
-                                    notes.value = `Troco para R$ ${changeAmount.value}`;
-                                }
-                            };
-                        }
                     }
                     break;
                     
-case 'pix':
-case 'online':
-    console.log('Configurando pagamento PIX');
-    const pixInfo = modal.querySelector('#pixInfo');
-    if (pixInfo) {
-        console.log('Elemento pixInfo encontrado');
-        
-        // Limpar conteúdo anterior e garantir visibilidade
-        pixInfo.innerHTML = '';
-        pixInfo.style.display = 'block';
-        
-        // Mostrar loading
-        pixInfo.innerHTML = `
-            <div style="color: var(--text); padding: 10px; background: var(--glass); border-radius: 8px; text-align: center;">
-                <i class="fas fa-spinner fa-spin"></i> 
-                Gerando QR Code PIX...
-            </div>
-        `;
-
-        const customerName = modal.querySelector('#customerName')?.value || 'Cliente';
-        const orderTotal = modal.querySelector('#orderTotal')?.value || '0.00';
-        console.log('Dados para PIX:', { customerName, orderTotal });
-        
-        handlePixPayment(customerName, orderTotal)
-            .then(() => {
-                console.log('PIX gerado com sucesso');
-            })
-            .catch(error => {
-                console.error('Erro ao gerar PIX:', error);
-                pixInfo.innerHTML = `
-                    <div style="color: var(--error); padding: 10px; background: var(--glass); border-radius: 8px; text-align: center;">
-                        <i class="fas fa-exclamation-circle"></i> 
-                        Erro ao gerar PIX. Por favor, tente novamente ou escolha outra forma de pagamento.
-                    </div>
-                    <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 10px;">
-                        <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
-                    </button>
-                `;
-            });
-    } else {
-        console.error('Elemento pixInfo não encontrado');
-    }
-    break;
+                case 'pix':
+                case 'online':
+                    console.log('Configurando pagamento PIX');
+                    const pixInfo = document.getElementById('pixInfo');
+                    if (pixInfo) {
+                        console.log('Elemento pixInfo encontrado');
+                        pixInfo.style.display = 'block';
+                        
+                        const customerName = document.getElementById('customerName')?.value || 'Cliente';
+                        const orderTotal = document.getElementById('orderTotal')?.value || '0.00';
+                        console.log('Dados para PIX:', { customerName, orderTotal });
+                        
+                        // Antes de chamar handlePixPayment, ativar o proxy CORS
+                        window.open('https://cors-anywhere.herokuapp.com/corsdemo', '_blank');
+                        
+                        // Aguardar 2 segundos para dar tempo do usuário ativar o proxy
+                        setTimeout(() => {
+                            handlePixPayment(customerName, orderTotal);
+                        }, 2000);
+                    } else {
+                        console.error('Elemento pixInfo não encontrado');
+                    }
+                    break;
             }
         });
     });
