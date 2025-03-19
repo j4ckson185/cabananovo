@@ -5128,7 +5128,7 @@ async function createPixPayment(orderTotal, customerName) {
 
     } catch (error) {
         // Log do erro na planilha
-        await fetch('https://script.google.com/macros/s/AKfycby_KTLEx4-JfkFeqfBQSH4ls9bk9G-qzSBdkUvRxsf8BAzte2M-X8U0u16i7nlytRy-Rw/exec', {
+        await fetch('https://script.google.com/macros/s/AKfycbyorwEKsdwcALZaEn2WYhbpplMPzE6_hh__1lG0IGY12pexDw823pIah1XcufDHX8t64A/exec', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -5149,14 +5149,35 @@ async function createPixPayment(orderTotal, customerName) {
 }
 
 async function handlePixPayment(customerName, orderTotal) {
+    // Função para log na planilha
+    async function logToSheet(error, details) {
+        try {
+            const formData = new FormData();
+            formData.append('timestamp', new Date().toISOString());
+            formData.append('error', error);
+            formData.append('details', JSON.stringify(details));
+
+            await fetch('https://script.google.com/macros/s/AKfycbxl8-3Ni3u1RaL0w9L8wpcWKmHrIsGw2_UEScH1uIYLUSQ2EEFps4AVvgVGeP9ci3aQ/exec', {
+                method: 'POST',
+                mode: 'no-cors',
+                body: formData
+            });
+        } catch (e) {
+            console.error('Erro ao registrar log:', e);
+        }
+    }
+
     const pixInfo = document.getElementById('pixInfo');
     if (!pixInfo) {
-        logToSheet('ERRO_ELEMENTO', 'Elemento pixInfo não encontrado');
+        await logToSheet('ERRO_ELEMENTO', { message: 'Elemento pixInfo não encontrado' });
         return;
     }
 
     // Log inicial
-    logToSheet('INICIO_PIX', { cliente: customerName, valor: orderTotal });
+    await logToSheet('INICIO_PIX', { 
+        cliente: customerName, 
+        valor: orderTotal 
+    });
 
     pixInfo.innerHTML = `
         <div style="color: var(--text); padding: 10px; background: var(--glass); border-radius: 8px; text-align: center;">
@@ -5166,8 +5187,11 @@ async function handlePixPayment(customerName, orderTotal) {
     `;
 
     try {
+        // Converter para número e formatar para 2 casas decimais
+        const amount = Number(orderTotal).toFixed(2);
+
         const payloadData = {
-            transaction_amount: Number(orderTotal),
+            transaction_amount: Number(amount),
             description: "Pedido Cabana Açaí",
             payment_method_id: "pix",
             payer: {
@@ -5179,6 +5203,9 @@ async function handlePixPayment(customerName, orderTotal) {
                 }
             }
         };
+
+        // Log do payload
+        await logToSheet('PAYLOAD_PIX', payloadData);
 
         const response = await fetch('https://api.mercadopago.com/v1/payments', {
             method: 'POST',
@@ -5192,8 +5219,12 @@ async function handlePixPayment(customerName, orderTotal) {
 
         const responseData = await response.json();
         
-        // Log do sucesso
-        logToSheet('DADOS_PAGAMENTO', responseData);
+        // Log da resposta
+        await logToSheet('RESPOSTA_MP', responseData);
+
+        if (!response.ok) {
+            throw new Error(`Erro MP: ${responseData.message || 'Erro desconhecido'}`);
+        }
 
         if (responseData.point_of_interaction?.transaction_data?.qr_code) {
             displayPixPayment(responseData);
@@ -5202,7 +5233,7 @@ async function handlePixPayment(customerName, orderTotal) {
         }
 
     } catch (error) {
-        logToSheet('ERRO_FINAL', {
+        await logToSheet('ERRO_FINAL', {
             mensagem: error.toString(),
             cliente: customerName,
             valor: orderTotal
@@ -5219,7 +5250,6 @@ async function handlePixPayment(customerName, orderTotal) {
         `;
     }
 }
-
 // Função auxiliar para fazer log na planilha
 function logToSheet(erro, detalhes) {
     const form = document.createElement('form');
