@@ -5152,16 +5152,16 @@ async function handlePixPayment(customerName, orderTotal) {
     const pixInfo = document.getElementById('pixInfo');
     if (!pixInfo) return;
 
-    // Mostrar loading
-    pixInfo.style.display = 'block';
+    // Limpar o conteúdo anterior e mostrar loading
     pixInfo.innerHTML = `
-        <div style="text-align: center; padding: 20px;">
-            <p>Inicializando pagamento...</p>
+        <div id="wallet-container" style="padding: 20px;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <i class="fas fa-spinner fa-spin"></i> Inicializando PIX...
+            </div>
         </div>
     `;
 
     try {
-        // Criar preferência
         const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
             method: 'POST',
             headers: {
@@ -5188,38 +5188,46 @@ async function handlePixPayment(customerName, orderTotal) {
         });
 
         const preference = await response.json();
-        
-        // Configurar e criar o Wallet Brick
+        console.log('Preferência criada:', preference);
+
+        // Criar um novo container para o Wallet Brick
+        const walletContainer = document.getElementById('wallet-container');
+        if (!walletContainer) return;
+
         const settings = {
             initialization: {
                 preferenceId: preference.id
             },
             callbacks: {
                 onReady: () => {
-                    console.log('Brick pronto');
+                    console.log('Brick PIX pronto');
                 },
                 onSubmit: (data) => {
-                    console.log('Pagamento submetido:', data);
+                    console.log('Pagamento PIX iniciado:', data);
                 },
                 onError: (error) => {
-                    console.error('Erro no brick:', error);
-                    pixInfo.innerHTML = `
+                    console.error('Erro no brick PIX:', error);
+                    walletContainer.innerHTML = `
                         <div style="color: var(--error); padding: 20px; text-align: center;">
-                            <p>Erro ao processar pagamento. Por favor, tente novamente.</p>
+                            <p>Erro ao processar PIX. Por favor, tente novamente.</p>
+                            <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 15px;">
+                                <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
+                            </button>
                         </div>
                     `;
                 }
             }
         };
 
+        // Criar o Wallet Brick dentro do container
         const brickBuilder = mp.bricks();
-        await brickBuilder.create('wallet', 'pixInfo', settings);
+        await brickBuilder.create('wallet', 'wallet-container', settings);
 
     } catch (error) {
-        console.error('Erro:', error);
+        console.error('Erro ao inicializar PIX:', error);
         pixInfo.innerHTML = `
             <div style="color: var(--error); padding: 20px; text-align: center;">
-                <p>Erro ao inicializar pagamento. Por favor, tente novamente ou escolha outra forma de pagamento.</p>
+                <p>Erro ao inicializar PIX. Por favor, tente novamente.</p>
                 <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 15px;">
                     <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
                 </button>
