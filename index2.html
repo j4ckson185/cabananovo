@@ -3297,15 +3297,12 @@ function showCreateOrderModal() {
    const createOrderModal = document.getElementById('createOrderModal');
    const modalContent = createOrderModal.querySelector('.modal-content');
 
-   // Obter o contador atual do localStorage ou inicializar como 1
    let orderCounter = parseInt(localStorage.getItem('orderCounter') || '1');
    
-   // Verificar se o contador está dentro do intervalo (1-9)
    if (orderCounter > 9) {
-       orderCounter = 1; // Reiniciar para 1 quando atingir 9
+       orderCounter = 1;
    }
    
-   // Gerar o ID do pedido com o formato 5555X
    const orderId = `5555${orderCounter}`;
 
    document.getElementById('orderId').value = orderId;
@@ -3320,9 +3317,9 @@ function showCreateOrderModal() {
    document.getElementById('zipCode').value = '';
    document.getElementById('notes').value = '';
    
-   document.getElementById('paymentMoney').checked = false;
-   document.getElementById('paymentCard').checked = false;
-   document.getElementById('paymentOnline').checked = false;
+   // Corrigir seleção dos radio buttons - AQUI ESTAVA O ERRO
+   const paymentRadios = document.querySelectorAll('input[name="paymentMethod"]');
+   paymentRadios.forEach(radio => radio.checked = false);
 
    const subtotal = cart.reduce((total, item) => total + item.price, 0);
    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
@@ -3351,11 +3348,10 @@ function showCreateOrderModal() {
 
    if (createOrderModal) {
        createOrderModal.style.display = 'block';
-   } else {
-       console.error('Modal não encontrado');
    }
 
    setupPaymentEvents();
+}
 
    // Adicionar o evento de submit no botão
    const submitButton = document.querySelector('#createOrderForm button[type="button"]');
