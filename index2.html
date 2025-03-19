@@ -8,8 +8,6 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-<script src="https://sdk.mercadopago.com/js/v2"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
@@ -2294,74 +2292,6 @@ document.head.appendChild(style);
     margin: 1rem 0;
 }
 
-#pixPaymentModal .modal-content {
-    background: var(--surface);
-    border: 1px solid var(--glass-border);
-    border-radius: 15px;
-    animation: modalSlide 0.3s ease;
-}
-
-#pixPaymentModal .modal-header {
-    border-bottom: 1px solid var(--glass-border);
-    padding: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-#pixPaymentModal .modal-header h2 {
-    color: white;
-    font-size: 1.5rem;
-    margin: 0;
-}
-
-#pixPaymentModal .close-modal {
-    background: none;
-    border: none;
-    color: var(--text);
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0.5rem;
-    transition: all 0.3s ease;
-}
-
-#pixPaymentModal .close-modal:hover {
-    color: var(--accent);
-    transform: rotate(90deg);
-}
-
-#pixPaymentModal .pix-status {
-    transition: all 0.3s ease;
-}
-
-#pixPaymentModal .modal-btn {
-    transition: all 0.3s ease;
-}
-
-#pixPaymentModal .modal-btn:hover {
-    transform: translateY(-2px);
-}
-
-#pixPaymentModal .modal-btn.add-to-cart {
-    background: var(--gradient);
-}
-
-#pixPaymentModal .modal-btn.continue-shopping {
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-}
-
-@keyframes modalSlide {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 </style>
 </head>
 <body>
@@ -2743,20 +2673,20 @@ document.head.appendChild(style);
             </div>
             <div class="form-group">
                 <label>Forma de Pagamento</label>
-<div class="payment-options">
-    <label>
-        <input type="radio" name="paymentMethod" value="money">
-        <i class="fas fa-money-bill"></i> Dinheiro
-    </label>
-    <label>
-        <input type="radio" name="paymentMethod" value="card">
-        <i class="fas fa-credit-card"></i> Cartão na Entrega
-    </label>
-    <label>
-        <input type="radio" name="paymentMethod" value="pix"> <!-- Mudado de 'online' para 'pix' -->
-        <i class="fas fa-qrcode"></i> PIX
-    </label>
-</div>
+                <div class="payment-options">
+                    <label>
+                        <input type="radio" name="payment" value="money">
+                        <i class="fas fa-money-bill"></i> Dinheiro
+                    </label>
+                    <label>
+                        <input type="radio" name="payment" value="card">
+                        <i class="fas fa-credit-card"></i> Cartão na Entrega
+                    </label>
+                    <label>
+                        <input type="radio" name="payment" value="pix">
+                        <i class="fas fa-qrcode"></i> PIX
+                    </label>
+                </div>
             </div>
             <div id="changeContainer" style="display: none;">
                 <label>Troco para quanto?</label>
@@ -3365,12 +3295,15 @@ function showCreateOrderModal() {
    const createOrderModal = document.getElementById('createOrderModal');
    const modalContent = createOrderModal.querySelector('.modal-content');
 
+   // Obter o contador atual do localStorage ou inicializar como 1
    let orderCounter = parseInt(localStorage.getItem('orderCounter') || '1');
    
+   // Verificar se o contador está dentro do intervalo (1-9)
    if (orderCounter > 9) {
-       orderCounter = 1;
+       orderCounter = 1; // Reiniciar para 1 quando atingir 9
    }
    
+   // Gerar o ID do pedido com o formato 5555X
    const orderId = `5555${orderCounter}`;
 
    document.getElementById('orderId').value = orderId;
@@ -3385,9 +3318,9 @@ function showCreateOrderModal() {
    document.getElementById('zipCode').value = '';
    document.getElementById('notes').value = '';
    
-   // Corrigir seleção dos radio buttons
-   const paymentRadios = document.querySelectorAll('input[name="paymentMethod"]');
-   paymentRadios.forEach(radio => radio.checked = false);
+   document.getElementById('paymentMoney').checked = false;
+   document.getElementById('paymentCard').checked = false;
+   document.getElementById('paymentOnline').checked = false;
 
    const subtotal = cart.reduce((total, item) => total + item.price, 0);
    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
@@ -3416,63 +3349,25 @@ function showCreateOrderModal() {
 
    if (createOrderModal) {
        createOrderModal.style.display = 'block';
+   } else {
+       console.error('Modal não encontrado');
    }
 
-   // Configurar eventos de pagamento
    setupPaymentEvents();
-
-   // Configurar o botão de submit
-   const submitButton = document.querySelector('#createOrderForm button[type="button"]');
-   submitButton.onclick = async function() {
-       try {
-           // Mostrar loading
-           submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aguarde...';
-           submitButton.disabled = true;
-
-           // Validar campos
-           const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
-           if (!paymentMethod) {
-               throw new Error('Selecione uma forma de pagamento');
-           }
-
-           // Se for PIX, mostrar aviso
-           if (paymentMethod === 'pix') {
-               const result = await Swal.fire({
-                   title: 'Pagamento via PIX',
-                   html: `
-                       <p>Após finalizar seu pedido:</p>
-                       <p>1. Você será redirecionado para a página de pagamento PIX do Mercado Pago</p>
-                       <p>2. Após o pagamento, será direcionado automaticamente para o WhatsApp para acompanhar seu pedido</p>
-                   `,
-                   icon: 'info',
-                   showCancelButton: true,
-                   confirmButtonText: 'Continuar',
-                   cancelButtonText: 'Cancelar'
-               });
-
-               if (!result.isConfirmed) {
-                   submitButton.innerHTML = 'Finalizar Pedido';
-                   submitButton.disabled = false;
-                   return;
-               }
-           }
-
-           // Prosseguir com o envio normal do pedido
-           submitOrder();
-
-       } catch (error) {
-           console.error('Erro:', error);
-           submitButton.innerHTML = 'Finalizar Pedido';
-           submitButton.disabled = false;
-
-           Swal.fire({
-               title: 'Erro',
-               text: error.message || 'Erro ao processar pedido. Tente novamente.',
-               icon: 'error'
-           });
-       }
-   };
 }
+
+// Adicionar event listener para o botão de checkout
+document.addEventListener('DOMContentLoaded', () => {
+    const checkoutButton = document.querySelector('.checkout');
+    if (checkoutButton) {
+        checkoutButton.addEventListener('click', () => {
+            console.log('Botão de checkout clicado');
+            showCreateOrderModal();
+        });
+    } else {
+        console.error('Botão de checkout não encontrado');
+    }
+});
 
 // Replace the handleDeliveryInfo function in your digital menu with this version:
 async function handleDeliveryInfo(e) {
@@ -5165,505 +5060,71 @@ function formatOrderForWhatsApp() {
         return 'Erro ao formatar pedido. Por favor, tente novamente.';
     }
 }
-
-// Inicialização do Mercado Pago
-const mp = new MercadoPago("APP_USR-813bb304-1460-4892-bc0f-9b2522655bc3");
-
-// Função auxiliar para gerar ID único para idempotência
-function generateUniqueId() {
-    return `ord-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-}
-
-async function createPixPayment(orderTotal, customerName) {
-    try {
-        const payloadData = {
-            transaction_amount: Number(orderTotal),
-            description: 'Pedido Cabana Açaí',
-            payment_method_id: 'pix',
-            payer: {
-                email: 'cliente@email.com',
-                first_name: customerName,
-                identification: {
-                    type: 'CPF',
-                    number: '06561938402'
-                }
-            }
-        };
-
-        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-        const mpUrl = 'https://api.mercadopago.com/v1/payments';
-        
-        const response = await fetch(proxyUrl + mpUrl, {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer APP_USR-5690418429869747-031817-f6ee6e1b8317cfd7526ff7bd547728e7-257593839',
-                'Content-Type': 'application/json',
-                'Origin': window.location.origin,
-                'X-Idempotency-Key': `${Date.now()}-${Math.random().toString(36).substring(2)}`
-            },
-            body: JSON.stringify(payloadData)
-        });
-
-        const responseData = await response.json();
-
-        // Log na planilha
-        await fetch('https://script.google.com/macros/s/AKfycbwPSO2dVhZZKPcOWZ4JQbPOXBJ10RdihiJrysOX4rLyXh6_ZOwdGX1HFnCUc5onSKjGEg/exec', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                action: 'log',
-                type: response.ok ? 'success' : 'error',
-                request: {
-                    value: orderTotal,
-                    customer: customerName,
-                    payload: payloadData
-                },
-                response: responseData
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(responseData.message || 'Erro ao criar pagamento');
-        }
-
-        return responseData;
-
-    } catch (error) {
-        // Log do erro na planilha
-        await fetch('https://script.google.com/macros/s/AKfycbyorwEKsdwcALZaEn2WYhbpplMPzE6_hh__1lG0IGY12pexDw823pIah1XcufDHX8t64A/exec', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                action: 'log',
-                type: 'error',
-                request: {
-                    value: orderTotal,
-                    customer: customerName
-                },
-                error: error.toString()
-            })
-        });
-
-        throw error;
-    }
-}
-
-async function handlePixPayment(customerName, orderTotal) {
-    const pixInfo = document.getElementById('pixInfo');
-    if (!pixInfo) return;
-
-    // Limpar o conteúdo anterior e mostrar loading
-    pixInfo.innerHTML = `
-        <div id="wallet-container" style="padding: 20px;">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <i class="fas fa-spinner fa-spin"></i> Inicializando PIX...
-            </div>
-        </div>
-    `;
-
-    try {
-        const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer APP_USR-5690418429869747-031817-f6ee6e1b8317cfd7526ff7bd547728e7-257593839',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                items: [{
-                    title: "Pedido Cabana Açaí",
-                    quantity: 1,
-                    currency_id: 'BRL',
-                    unit_price: Number(orderTotal)
-                }],
-                payment_methods: {
-                    default_payment_method_id: "pix",
-                    payment_types: [{ id: "pix" }],
-                    default_installments: 1
-                },
-                payer: {
-                    email: "cliente@email.com",
-                    first_name: customerName
-                }
-            })
-        });
-
-        const preference = await response.json();
-        console.log('Preferência criada:', preference);
-
-        // Criar um novo container para o Wallet Brick
-        const walletContainer = document.getElementById('wallet-container');
-        if (!walletContainer) return;
-
-        const settings = {
-            initialization: {
-                preferenceId: preference.id
-            },
-            callbacks: {
-                onReady: () => {
-                    console.log('Brick PIX pronto');
-                },
-                onSubmit: (data) => {
-                    console.log('Pagamento PIX iniciado:', data);
-                },
-                onError: (error) => {
-                    console.error('Erro no brick PIX:', error);
-                    walletContainer.innerHTML = `
-                        <div style="color: var(--error); padding: 20px; text-align: center;">
-                            <p>Erro ao processar PIX. Por favor, tente novamente.</p>
-                            <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 15px;">
-                                <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
-                            </button>
-                        </div>
-                    `;
-                }
-            }
-        };
-
-        // Criar o Wallet Brick dentro do container
-        const brickBuilder = mp.bricks();
-        await brickBuilder.create('wallet', 'wallet-container', settings);
-
-    } catch (error) {
-        console.error('Erro ao inicializar PIX:', error);
-        pixInfo.innerHTML = `
-            <div style="color: var(--error); padding: 20px; text-align: center;">
-                <p>Erro ao inicializar PIX. Por favor, tente novamente.</p>
-                <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 15px;">
-                    <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
-                </button>
-            </div>
-        `;
-    }
-}
-
-// Função atualizada para gerar pagamento PIX
-async function generatePixPayment(customerName, orderTotal) {
-    try {
-        // Criar o payload do pagamento
-        const payloadData = {
-            transaction_amount: Number(orderTotal),
-            description: `Pedido Cabana Açaí - ${customerName}`,
-            payment_method_id: 'pix',
-            payer: {
-                email: 'cliente@email.com',
-                first_name: customerName,
-                identification: {
-                    type: 'CPF',
-                    number: '06561938402'
-                }
-            }
-        };
-
-        // Fazer requisição direta para API do Mercado Pago
-        const response = await fetch('https://api.mercadopago.com/v1/payments', {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer APP_USR-5690418429869747-031817-f6ee6e1b8317cfd7526ff7bd547728e7-257593839',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payloadData)
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        if (!data.point_of_interaction?.transaction_data?.qr_code) {
-            throw new Error('QR Code não gerado pelo Mercado Pago');
-        }
-
-        return data;
-
-    } catch (error) {
-        console.error('Erro detalhado do pagamento:', error);
-        throw new Error('Erro ao gerar pagamento PIX. Por favor, tente novamente.');
-    }
-}
-
-// Função atualizada para mostrar o modal do PIX
-function showPixPaymentModal(paymentData, orderTotal, orderId) {
-    const pixInfo = document.getElementById('pixInfo');
-    if (!pixInfo) {
-        console.error('Elemento pixInfo não encontrado');
-        return;
-    }
-
-    const qrCodeBase64 = paymentData.point_of_interaction.transaction_data.qr_code_base64;
-    const qrCodeText = paymentData.point_of_interaction.transaction_data.qr_code;
-
-    pixInfo.innerHTML = `
-        <div style="padding: 15px; background: var(--surface); border-radius: 10px; text-align: center;">
-            <h3 style="color: white; margin-bottom: 15px;">Pagamento via PIX</h3>
-            
-            <div style="background: white; padding: 15px; border-radius: 10px; display: inline-block; margin-bottom: 15px;">
-                <img src="data:image/png;base64,${qrCodeBase64}" 
-                     alt="QR Code PIX" 
-                     style="max-width: 200px; height: auto;">
-            </div>
-
-            <div style="margin: 15px 0; padding: 10px; background: var(--glass); border-radius: 10px;">
-                <div style="margin-bottom: 10px; color: white;">
-                    <strong>Valor a pagar:</strong> R$ ${orderTotal}
-                </div>
-
-                <strong style="color: white;">Pix Copia e Cola:</strong>
-                <div style="position: relative; margin-top: 10px;">
-                    <input type="text" 
-                           value="${qrCodeText}" 
-                           readonly 
-                           style="width: 100%; padding: 8px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); font-size: 12px;">
-                    <button onclick="copyPixCode(this)" 
-                            style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--accent); color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">
-                        Copiar
-                    </button>
-                </div>
-            </div>
-
-            <div style="color: var(--text); margin: 15px 0;">
-                <p style="font-size: 0.9em;">Após o pagamento, clique no botão abaixo para continuar.</p>
-            </div>
-
-            <button class="modal-btn add-to-cart" onclick="confirmPixPayment('${orderId}')" style="margin-top: 10px; width: 100%;">
-                <i class="fas fa-check"></i> Já realizei o pagamento
-            </button>
-
-            <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 10px; width: 100%;">
-                <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
-            </button>
-        </div>
-    `;
-}
-
-// Função atualizada para confirmar o pagamento PIX
-async function confirmPixPayment(orderId) {
-    try {
-        // Atualizar status do pedido no Firebase
-        await firebase.database().ref(`orders/${orderId}`).update({
-            status: 'payment_confirmed',
-            paymentConfirmedAt: firebase.database.ServerValue.TIMESTAMP
-        });
-
-        // Formatar mensagem para WhatsApp
-        const message = formatOrderForWhatsApp() + "\n\n💳 *Pagamento via PIX*\nStatus: ✅ Pagamento Realizado";
-
-        // Redirecionar para WhatsApp
-        window.location.href = `https://wa.me/5584988731028?text=${encodeURIComponent(message)}`;
-
-    } catch (error) {
-        console.error('Erro ao confirmar pagamento:', error);
-        showNotification('Erro ao confirmar pagamento. Tente novamente.');
-    }
-}
-
-// Função para copiar código PIX
-function copyPixCode(button) {
-    const input = button.parentElement.querySelector('input');
-    input.select();
-    document.execCommand('copy');
-    
-    // Feedback visual
-    const originalText = button.textContent;
-    button.textContent = 'Copiado!';
-    button.style.background = '#4CAF50';
-    
-    setTimeout(() => {
-        button.textContent = originalText;
-        button.style.background = 'var(--accent)';
-    }, 2000);
-}
-
-// Função para trocar método de pagamento
-function changePaymentMethod() {
-    // Remover modal do PIX
-    const pixModal = document.getElementById('pixPaymentModal');
-    if (pixModal) {
-        pixModal.remove();
-    }
-
-    // Resetar seleção de método de pagamento
-    const paymentInputs = document.querySelectorAll('input[name="paymentMethod"]');
-    paymentInputs.forEach(input => input.checked = false);
-
-    // Mostrar modal de criação de pedido novamente
-    const createOrderModal = document.getElementById('createOrderModal');
-    if (createOrderModal) {
-        createOrderModal.style.display = 'block';
-    }
-}
-
-function logToSheet(erro, detalhes) {
-    const form = new FormData();
-    form.append('erro', erro);
-    form.append('detalhes', JSON.stringify(detalhes));
-    
-    fetch('https://script.google.com/macros/s/AKfycbwPSO2dVhZZKPcOWZ4JQbPOXBJ10RdihiJrysOX4rLyXh6_ZOwdGX1HFnCUc5onSKjGEg/exec', {
-        method: 'POST',
-        mode: 'no-cors',
-        body: form
-    }).catch(console.error);
-}
-
-// Função para gerar o HTML do QR Code
-function generatePixQRCode(responseData) {
-    const qrCodeBase64 = responseData.point_of_interaction.transaction_data.qr_code_base64;
-    const qrCodeText = responseData.point_of_interaction.transaction_data.qr_code;
-    const amount = responseData.transaction_amount.toFixed(2);
-
-    return `
-        <div style="padding: 15px; background: var(--surface); border-radius: 10px; text-align: center;">
-            <h3 style="color: white; margin-bottom: 15px;">Pagamento via PIX</h3>
-            
-            <div style="background: white; padding: 15px; border-radius: 10px; display: inline-block; margin-bottom: 15px;">
-                <img src="data:image/png;base64,${qrCodeBase64}" 
-                     alt="QR Code PIX" 
-                     style="max-width: 200px; height: auto;">
-            </div>
-
-            <div style="margin: 15px 0; padding: 10px; background: var(--glass); border-radius: 10px;">
-                <div style="margin-bottom: 10px; color: white;">
-                    <strong>Valor a pagar:</strong> R$ ${amount}
-                </div>
-
-                <strong style="color: white;">Pix Copia e Cola:</strong>
-                <div style="position: relative; margin-top: 10px;">
-                    <input type="text" 
-                           value="${qrCodeText}" 
-                           readonly 
-                           style="width: 100%; padding: 8px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); font-size: 12px;">
-                    <button onclick="copyPixCode(this)" 
-                            style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--accent); color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">
-                        Copiar
-                    </button>
-                </div>
-            </div>
-
-            <div style="color: var(--text); margin: 15px 0;">
-                <p style="font-size: 0.9em;">Após o pagamento, você receberá a confirmação automaticamente.</p>
-            </div>
-
-            <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 10px;">
-                <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
-            </button>
-        </div>
-    `;
-}
-
-function displayPixPayment(paymentData) {
-    const pixInfo = document.getElementById('pixInfo');
-    if (!pixInfo) {
-        console.error('Elemento pixInfo não encontrado em displayPixPayment');
-        return;
-    }
-
-    // Extrair dados importantes
-    const qrCodeBase64 = paymentData.point_of_interaction.transaction_data.qr_code_base64;
-    const qrCodeText = paymentData.point_of_interaction.transaction_data.qr_code;
-    const expirationTime = new Date(paymentData.date_of_expiration);
-    const amount = paymentData.transaction_amount.toFixed(2);
-
-    pixInfo.innerHTML = `
-        <div style="padding: 15px; background: var(--surface); border-radius: 10px; text-align: center;">
-            <h3 style="color: white; margin-bottom: 15px;">Pagamento via PIX</h3>
-            
-            <div style="background: white; padding: 15px; border-radius: 10px; display: inline-block; margin-bottom: 15px;">
-                <img src="data:image/png;base64,${qrCodeBase64}" 
-                     alt="QR Code PIX" 
-                     style="max-width: 200px; height: auto;">
-            </div>
-
-            <div style="margin: 15px 0; padding: 10px; background: var(--glass); border-radius: 10px;">
-                <div style="margin-bottom: 10px; color: white;">
-                    <strong>Valor a pagar:</strong> R$ ${amount}
-                </div>
-
-                <strong style="color: white;">Pix Copia e Cola:</strong>
-                <div style="position: relative; margin-top: 10px;">
-                    <input type="text" 
-                           value="${qrCodeText}" 
-                           readonly 
-                           style="width: 100%; padding: 8px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); font-size: 12px;">
-                    <button onclick="copyPixCode(this)" 
-                            style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--accent); color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">
-                        Copiar
-                    </button>
-                </div>
-            </div>
-
-            <div style="color: var(--text); margin: 15px 0;">
-                <p>QR Code expira em: <span id="pixCountdown"></span></p>
-                <p style="font-size: 0.9em;">Após o pagamento, você receberá a confirmação automaticamente.</p>
-            </div>
-
-            <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 10px;">
-                <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
-            </button>
-        </div>
-    `;
-
-    // Iniciar countdown
-    startPixCountdown(expirationTime);
-}
-
-function startPixCountdown(expirationTime) {
-    const countdownElement = document.getElementById('pixCountdown');
-    
-    const countdown = setInterval(() => {
-        const now = new Date().getTime();
-        const expiration = new Date(expirationTime).getTime();
-        const distance = expiration - now;
-
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-        countdownElement.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-
-        if (distance < 0) {
-            clearInterval(countdown);
-            countdownElement.textContent = 'Expirado';
-        }
-    }, 1000);
-}
     
 function setupPaymentEvents() {
-    const paymentInputs = document.querySelectorAll('input[name="paymentMethod"]');
-    const changeContainer = document.getElementById('changeContainer');
-    const pixInfo = document.getElementById('pixInfo');
+    console.log('Configurando eventos de pagamento do createOrderModal');
+    
+    // Selecionar elementos dentro do createOrderModal
+    const modal = document.getElementById('createOrderModal');
+    if (!modal) return;
+
+    const paymentInputs = modal.querySelectorAll('input[name="paymentMethod"]');
+    const changeContainer = modal.querySelector('#changeContainer');
+    const pixInfo = modal.querySelector('#pixInfo');
+    const notes = modal.querySelector('#notes');
     
     paymentInputs.forEach(radio => {
-        radio.addEventListener('change', async (e) => {
+        radio.addEventListener('change', (e) => {
             console.log('Método de pagamento selecionado:', e.target.value);
             
             // Resetar displays
             if (changeContainer) changeContainer.style.display = 'none';
             if (pixInfo) pixInfo.style.display = 'none';
+            if (notes) notes.value = '';
             
             switch(e.target.value) {
                 case 'money':
+                    console.log('Configurando pagamento em dinheiro');
                     if (changeContainer) {
                         changeContainer.style.display = 'block';
+                        const changeAmount = changeContainer.querySelector('#changeAmount');
+                        if (changeAmount) {
+                            changeAmount.onchange = () => {
+                                if (notes && changeAmount.value) {
+                                    notes.value = `Troco para R$ ${changeAmount.value}`;
+                                }
+                            };
+                        }
                     }
                     break;
                     
-                case 'online':  // Aqui quando seleciona 'online' é PIX
-                case 'pix':     // Adicionado 'pix' também para compatibilidade
+                case 'pix':
+                case 'online':
                     console.log('Configurando pagamento PIX');
                     if (pixInfo) {
-                        console.log('Elemento pixInfo encontrado');
                         pixInfo.style.display = 'block';
+                        const orderTotal = modal.querySelector('#orderTotal')?.value || '0.00';
+                        console.log('Valor total para PIX:', orderTotal);
                         
-                        const customerName = document.getElementById('customerName')?.value || 'Cliente';
-                        const orderTotal = document.getElementById('orderTotal')?.value || '0.00';
-                        console.log('Dados para PIX:', { customerName, orderTotal });
-                        
-                        handlePixPayment(customerName, orderTotal);
-                    } else {
-                        console.error('Elemento pixInfo não encontrado');
+                        try {
+                            const qrCode = generatePixQRCode(orderTotal);
+                            pixInfo.innerHTML = '';
+                            pixInfo.appendChild(qrCode);
+                        } catch (error) {
+                            console.error('Erro ao gerar QR Code:', error);
+                            pixInfo.innerHTML = `
+                                <div class="pix-fallback">
+                                    <strong>Pagamento PIX</strong><br>
+                                    <p>Chave PIX (WhatsApp): 84 9 8873-1028</p>
+                                    <p>Banco: Santander</p>
+                                    <p>Nome: Jackson</p>
+                                    <p>Valor: R$ ${orderTotal}</p>
+                                    <button class="modal-btn" onclick="showComprovanteUpload()" style="margin-top: 10px;">
+                                        <i class="fas fa-check"></i> Já paguei, enviar comprovante
+                                    </button>
+                                </div>
+                            `;
+                        }
                     }
                     break;
             }
@@ -5671,83 +5132,260 @@ function setupPaymentEvents() {
     });
 }
     
+// Versão corrigida da função submitOrder
 async function submitOrder() {
+  try {
+    // Modificar o botão para "Aguarde..."
     const submitButton = document.querySelector('#createOrderForm button[type="button"]');
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aguarde...';
+    submitButton.style.backgroundColor = '#888'; // Cor mais escura/cinza
+    submitButton.disabled = true; // Desabilita o botão para evitar múltiplos cliques
     
-    try {
-        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aguarde...';
-        submitButton.disabled = true;
-
-        // Obter dados do formulário
-        const customerName = document.getElementById('customerName').value;
-        const customerPhone = document.getElementById('customerPhone').value;
-        const street = document.getElementById('street').value;
-        const streetNumber = document.getElementById('streetNumber').value;
-        const neighborhood = document.getElementById('neighborhood').value;
-        const zipCode = document.getElementById('zipCode').value;
-        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
-        const orderTotal = document.getElementById('orderTotal').value;
-
-        // Validações
-        if (!customerName || !customerPhone || !street || !streetNumber || !neighborhood || !zipCode || !paymentMethod) {
-            throw new Error('Por favor, preencha todos os campos obrigatórios');
-        }
-
-        // Dados do pedido
-        const orderData = {
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            customerInfo: {
-                name: customerName,
-                phone: customerPhone
-            },
-            deliveryInfo: {
-                street,
-                number: streetNumber,
-                neighborhood,
-                zipCode,
-                complement: document.getElementById('complement')?.value || ''
-            },
-            items: cart,
-            paymentMethod,
-            total: parseFloat(orderTotal),
-            status: paymentMethod === 'pix' ? 'pending_payment' : 'open'
-        };
-
-        // Salvar pedido no Firebase
-        const orderRef = await firebase.database().ref('orders').push(orderData);
-
-        // Se for PIX, iniciar fluxo de pagamento
-        if (paymentMethod === 'pix') {
-            try {
-                // Gerar pagamento PIX
-                const paymentData = await generatePixPayment(customerName, orderTotal);
-                
-                // Mostrar QR Code
-                showPixPaymentModal(paymentData, orderTotal, orderRef.key);
-
-            } catch (error) {
-                console.error('Erro no pagamento PIX:', error);
-                // Atualizar status do pedido para falha
-                await orderRef.update({ status: 'payment_failed' });
-                throw error;
-            }
-        } else {
-            // Fluxo normal para outros métodos de pagamento
-            const message = formatOrderForWhatsApp();
-            window.location.href = `https://wa.me/5584988731028?text=${encodeURIComponent(message)}`;
-        }
-
-    } catch (error) {
-        console.error('Erro:', error);
-        submitButton.disabled = false;
-        submitButton.innerHTML = 'Finalizar Pedido';
-        
-        Swal.fire({
-            title: 'Erro',
-            text: error.message || 'Erro ao processar pedido. Tente novamente.',
-            icon: 'error'
-        });
+    // Obter dados do formulário para validação
+    const street = document.getElementById('street').value;
+    const streetNumber = document.getElementById('streetNumber').value;
+    const neighborhood = document.getElementById('neighborhood').value;
+    const zipCode = document.getElementById('zipCode').value;
+    
+    // Validar o endereço
+    const addressValidation = validateAddress(street, streetNumber, neighborhood, zipCode);
+    if (!addressValidation.valid) {
+      showNotification(addressValidation.message);
+      highlightErrorField(addressValidation.field);
+      
+      // Restaurar o botão
+      submitButton.innerHTML = 'Finalizar Pedido';
+      submitButton.style.backgroundColor = '';
+      submitButton.disabled = false;
+      
+      return;
     }
+    
+    // Se o endereço for válido, mostrar resumo do pedido
+    showOrderSummaryModal(async function() {
+      // ESTE CÓDIGO ORIGINAL É MANTIDO INTACTO
+      // Obter o contador atual do localStorage ou inicializar como 1
+      let orderCounter = parseInt(localStorage.getItem('orderCounter') || '1');
+      
+      // Verificar se o contador está dentro do intervalo (1-9)
+      if (orderCounter > 9) {
+          orderCounter = 1; // Reiniciar para 1 quando atingir 9
+      }
+      
+      // Gerar o ID do pedido com o formato 5555X
+      const orderId = `5555${orderCounter}`;
+      
+      // Incrementar o contador para o próximo pedido
+      localStorage.setItem('orderCounter', (orderCounter + 1).toString());
+          
+      // Mapear métodos de pagamento
+      const paymentMethodMap = {
+          'money': 'Dinheiro',
+          'card': 'Cartão',
+          'online': 'PIX',
+          'pix': 'PIX'
+      };
+
+      // Verificar se o carrinho está vazio
+      if (!cart || cart.length === 0) {
+          alert('Seu carrinho está vazio!');
+          return;
+      }
+
+      // Ler dados diretamente do formulário
+      const customerName = document.getElementById('customerName').value;
+      const customerPhone = document.getElementById('customerPhone').value;
+      const street = document.getElementById('street').value;
+      const streetNumber = document.getElementById('streetNumber').value;
+      const neighborhood = document.getElementById('neighborhood').value;
+      const complement = document.getElementById('complement').value;
+      const zipCode = document.getElementById('zipCode').value;
+      const notes = document.getElementById('notes').value;
+      const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'money';
+      
+      // Validar campos obrigatórios
+      if (!customerName || !customerPhone || !street || !streetNumber || !neighborhood || !zipCode) {
+          alert('Por favor, preencha todos os campos obrigatórios');
+          return;
+      }
+
+      // Calcular valores
+      const subtotal = cart.reduce((total, item) => total + item.price, 0);
+      const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+      const deliveryFee = 3.00;
+      const total = subtotal - discount + deliveryFee;
+
+      // Preparar objeto para a API no formato original
+      const order = {
+          id: orderId, // Usando o novo ID gerado com número sequencial
+          status: "open",
+          paymentMethod: paymentMethod === 'pix' ? 'online' : paymentMethod,
+          orderTotal: total,
+          orderDetails: cart.map(item => `${item.name} - R$ ${item.price.toFixed(2)}`).join('\n'),
+          notes: notes || '',
+          deliveryPoint: {
+              address: `${street}, ${streetNumber}, ${neighborhood}`,
+              street: street,
+              houseNumber: streetNumber,
+              complement: complement || '',
+              postalCode: zipCode,
+              city: "Natal",
+              region: "RN",
+              country: "BR"
+          },
+          customer: {
+              customerPhone: customerPhone,
+              customerName: customerName
+          }
+      };
+
+      // Enviar para API primeiro, mas com timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 segundos timeout
+
+      try {
+          const response = await fetch('https://us-central1-cabana-8d55e.cloudfunctions.net/foodyDeliveryApi/createOrder', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': '8d7c77946d534444a168bb7da794febf'
+              },
+              body: JSON.stringify(order),
+              signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+              throw new Error(`Erro HTTP! status: ${response.status}`);
+          }
+          
+          const result = await response.json();
+          console.log('Pedido criado:', result);
+      } catch (error) {
+          if (error.name === 'AbortError') {
+              console.log('Timeout na API, continuando com WhatsApp...');
+          } else {
+              console.error('Erro na API:', error);
+          }
+          // Continua o fluxo mesmo com erro na API
+      }
+
+      // Construir mensagem WhatsApp
+      let message = `*🛍️ Novo Pedido Nº ${orderId} - Cabana Açaí*\n\n`;
+      
+      // Dados do cliente
+      message += `*Cliente:* ${customerName}\n`;
+      message += `*WhatsApp:* ${customerPhone}\n\n`;
+      
+      // Endereço
+      message += `*📍 Endereço de Entrega:*\n`;
+      message += `${street}, ${streetNumber}\n`;
+      if (complement) {
+          message += `Complemento: ${complement}\n`;
+      }
+      message += `Bairro: ${neighborhood}\n`;
+      message += `CEP: ${zipCode}\n\n`;
+      
+      // Itens do pedido
+      message += `*🍨 Itens do Pedido:*\n`;
+      cart.forEach((item, index) => {
+          message += `${index + 1}. ${item.name}\n`;
+          if (item.selectedToppings && item.selectedToppings.length > 0) {
+              message += `   Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
+          }
+          if (item.selectedExtras && item.selectedExtras.length > 0) {
+              message += `   Extras: ${item.selectedExtras.join(', ')}\n`;
+          }
+          message += `   Valor: R$ ${item.price.toFixed(2)}\n\n`;
+      });
+      
+      // Resumo financeiro
+      message += `*💰 Resumo do Pedido:*\n`;
+      message += `Subtotal: R$ ${subtotal.toFixed(2)}\n`;
+      if (discount > 0) {
+          message += `Desconto: -R$ ${discount.toFixed(2)}\n`;
+      }
+      message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
+      message += `*Total: R$ ${total.toFixed(2)}*\n\n`;
+      
+      // Pagamento
+      message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod]}\n`;
+      
+      // Se for dinheiro, verificar troco
+      if (paymentMethod === 'money') {
+          const changeAmount = document.getElementById('changeAmount')?.value;
+          if (changeAmount) {
+              message += `Troco para: R$ ${changeAmount}\n`;
+          }
+      }
+      
+      // Observações
+      if (notes?.trim()) {
+          message += `\n*📝 Observações:* ${notes}\n`;
+      }
+
+      // Salvar no Firebase
+      const orderData = {
+          timestamp: firebase.database.ServerValue.TIMESTAMP,
+          status: 'new',
+          customer: {
+              name: customerName,
+              phone: customerPhone
+          },
+          address: {
+              street,
+              number: streetNumber,
+              neighborhood,
+              complement: complement || '',
+              zipCode,
+              city: 'Natal',
+              state: 'RN'
+          },
+          payment: {
+              method: paymentMethod,
+              change: document.getElementById('changeAmount')?.value || null
+          },
+          items: cart,
+          subtotal,
+          deliveryFee,
+          total,
+          notes: notes || ''
+      };
+
+      const newOrderRef = await realtimeDB.ref('orders').push(orderData);
+      
+      if (!newOrderRef.key) {
+          throw new Error('Falha ao salvar o pedido');
+      }
+
+      // Se houver cupom aplicado, registrar seu uso
+      if (appliedCoupon && appliedCoupon.isFirstPurchase) {
+          const usedCouponData = {
+              couponCode: appliedCoupon.code,
+              deviceFingerprint: window.deviceFingerprint,
+              userIP: window.userIP,
+              usedAt: firebase.database.ServerValue.TIMESTAMP,
+              orderTotal: total
+          };
+
+          await realtimeDB.ref('usedCoupons').push(usedCouponData);
+      }
+
+      // Redirecionar para WhatsApp
+      window.location.href = `https://wa.me/5584988731028?text=${encodeURIComponent(message)}`;
+    });
+
+  } catch (error) {
+    console.error('Erro ao processar pedido:', error);
+    alert('Erro ao processar pedido. Por favor, tente novamente.');
+    
+    // Restaurar o botão
+    const submitButton = document.querySelector('#createOrderForm button[type="button"]');
+    submitButton.innerHTML = 'Finalizar Pedido';
+    submitButton.style.backgroundColor = '';
+    submitButton.disabled = false;
+  }
 }
 
 // Função para mostrar o resumo do pedido em um modal
@@ -7180,49 +6818,16 @@ function calculateCRC16(str) {
     return crc16(data);
 }
 
-// 2. Depois a função que gera o QR Code
 function generatePixQRCode(total) {
-    // Dados do PIX (Padrão Banco Central)
-    const pixKey = "84988731028";
+    // Dados do PIX atualizados
+    const pixKey = "06561938402";
     const merchantName = "JACKSON";
     const city = "NATAL";
     
-    // Formatar valor (garantir 2 casas decimais)
+    // Formatar valor
     const amount = parseFloat(total.toString().replace(/[^\d.,]/g, '').replace(',', '.')).toFixed(2);
     
-    // Funções auxiliares EMV
-    function pad(str, length) {
-        return str.toString().padStart(length, '0');
-    }
-    
-    function createEMV(id, str) {
-        str = str.toString();
-        return id + pad(str.length, 2) + str;
-    }
-
-    // Criar payload seguindo especificação do Bacen
-    const payload = [
-        createEMV('00', '01'),                     
-        createEMV('01', '12'),                     
-        createEMV('26', [                          
-            createEMV('00', 'br.gov.bcb.pix'),     
-            createEMV('01', pixKey),               
-        ].join('')),
-        createEMV('52', '0000'),                   
-        createEMV('53', '986'),                    
-        createEMV('54', amount),                   
-        createEMV('58', 'BR'),                     
-        createEMV('59', merchantName),             
-        createEMV('60', city),                     
-        createEMV('62', createEMV('05', '***')),   
-        '6304'                                     
-    ].join('');
-
-    // Calcular e adicionar CRC16
-    const crc16 = calculateCRC16(payload);
-    const finalPayload = payload + crc16.toString(16).toUpperCase().padStart(4, '0');
-
-    // Criar container principal
+    // Container principal
     const qrContainer = document.createElement('div');
     qrContainer.id = 'pixQRCode';
     qrContainer.style.cssText = `
@@ -7235,37 +6840,17 @@ function generatePixQRCode(total) {
         margin: 0 auto;
     `;
 
-    qrContainer.innerHTML = `<h3 style="margin-bottom: 10px; color: white;">Pagamento via PIX</h3>`;
-
-    // Criar container do QR Code
-    const qrElement = document.createElement('div');
-    qrElement.style.cssText = `
-        background: white;
-        padding: 10px;
-        border-radius: 10px;
-        display: inline-block;
-        margin: 10px auto;
-        max-width: 100%;
-    `;
-    qrContainer.appendChild(qrElement);
-
-    // Gerar QR Code
-    new QRCode(qrElement, {
-        text: finalPayload,
-        width: 150,
-        height: 150,
-        correctLevel: QRCode.CorrectLevel.H
-    });
-
-    // Adicionar informações
-    const infoDiv = document.createElement('div');
-    infoDiv.innerHTML = `
+    qrContainer.innerHTML = `
+        <h3 style="margin-bottom: 10px; color: white;">Pagamento via PIX</h3>
+        <div id="paymentStatus" style="margin-bottom: 15px; color: var(--text);">
+            Selecione como deseja pagar
+        </div>
         <div style="margin: 15px 0; padding: 10px; background: var(--surface); border-radius: 10px;">
             <div style="margin-bottom: 10px;">
                 <strong>Dados da Chave PIX</strong><br>
                 <span style="color: var(--text);">
                     Chave PIX: ${pixKey}<br>
-                    Banco: Santander<br>
+                    Banco: Mercado Pago<br>
                     Nome: Jackson<br>
                     Valor: R$ ${amount}
                 </span>
@@ -7284,13 +6869,132 @@ function generatePixQRCode(total) {
                 </div>
             </div>
         </div>
-        <button class="modal-btn add-to-cart" onclick="showComprovanteUpload(event)">
-            <i class="fas fa-check"></i> Já paguei, enviar comprovante
+        <button onclick="initializePixPayment(${amount})" class="modal-btn add-to-cart" style="margin-top: 15px;">
+            <i class="fas fa-money-bill"></i> Enviar PIX
         </button>
     `;
-    qrContainer.appendChild(infoDiv);
 
     return qrContainer;
+}
+
+async function initializePixPayment(amount) {
+    // Mostrar status de aguardando
+    const statusDiv = document.getElementById('paymentStatus');
+    statusDiv.innerHTML = `
+        <div style="color: #FFA500;">
+            <i class="fas fa-spinner fa-spin"></i> Aguardando pagamento...
+        </div>
+    `;
+
+    try {
+        // Gerar ID único para o pagamento
+        const paymentId = 'PIX_' + Date.now();
+        
+        // Salvar ID na sessão para verificação posterior
+        sessionStorage.setItem('currentPaymentId', paymentId);
+        
+        // Criar deep link para apps de banco
+        const pixDeepLink = `pix://qr/${btoa(JSON.stringify({
+            key: '06561938402',
+            amount: amount,
+            reference: paymentId,
+            name: 'JACKSON',
+            bank: 'MERCADO PAGO'
+        }))}`;
+
+        // Abrir menu de seleção de app
+        window.open(pixDeepLink, '_blank');
+
+        // Iniciar verificação de pagamento
+        startPaymentCheck(paymentId);
+
+    } catch (error) {
+        console.error('Erro ao iniciar pagamento:', error);
+        statusDiv.innerHTML = `
+            <div style="color: var(--error);">
+                <i class="fas fa-exclamation-circle"></i> 
+                Erro ao iniciar pagamento. Tente novamente.
+            </div>
+        `;
+    }
+}
+
+    function startPaymentCheck(paymentId) {
+    // URL do Google Apps Script que fará a verificação - mostrar pagamento confirmado pix
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbyHSVjxuz2Xj8-sej48ZwQYvaBKwUUhKV759nZJReHJl7PbAtJucZMNltQN6ZO3u1lQqA/exec';
+    
+    let checkCount = 0;
+    const maxChecks = 60; // 5 minutos (verificando a cada 5 segundos)
+    
+    const checkInterval = setInterval(async () => {
+        checkCount++;
+        
+        try {
+            const response = await fetch(`${webhookUrl}?paymentId=${paymentId}`, {
+                method: 'GET',
+                mode: 'no-cors' // Evitar erros de CORS
+            });
+            
+            // Como estamos usando no-cors, vamos verificar via sessionStorage
+            const paymentStatus = sessionStorage.getItem(`payment_${paymentId}`);
+            
+            if (paymentStatus === 'approved') {
+                clearInterval(checkInterval);
+                updatePaymentStatus('success');
+                // Habilitar continuação do checkout
+                enableCheckoutContinuation();
+            } else if (checkCount >= maxChecks) {
+                clearInterval(checkInterval);
+                updatePaymentStatus('timeout');
+            }
+            
+        } catch (error) {
+            console.error('Erro ao verificar pagamento:', error);
+            if (checkCount >= maxChecks) {
+                clearInterval(checkInterval);
+                updatePaymentStatus('error');
+            }
+        }
+    }, 5000); // Verificar a cada 5 segundos
+}
+
+function updatePaymentStatus(status) {
+    const statusDiv = document.getElementById('paymentStatus');
+    
+    switch(status) {
+        case 'success':
+            statusDiv.innerHTML = `
+                <div style="color: #4CAF50;">
+                    <i class="fas fa-check-circle"></i> 
+                    Pagamento confirmado com sucesso!
+                </div>
+            `;
+            // Habilitar botão de continuar
+            const submitButton = document.querySelector('#createOrderForm button[type="button"]');
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.style.opacity = '1';
+            }
+            break;
+            
+        case 'timeout':
+            statusDiv.innerHTML = `
+                <div style="color: var(--error);">
+                    <i class="fas fa-exclamation-circle"></i> 
+                    Tempo de espera esgotado. Se você já pagou, continue com o pedido normalmente.
+                </div>
+            `;
+            break;
+            
+        case 'error':
+            statusDiv.innerHTML = `
+                <div style="color: var(--error);">
+                    <i class="fas fa-exclamation-circle"></i> 
+                    Erro ao verificar pagamento. Se você já pagou, continue com o pedido normalmente.
+                </div>
+            `;
+            break;
+    }
 }
 
 // Função atualizada para copiar a chave PIX
@@ -7496,10 +7200,8 @@ function convertFileToBase64(file) {
 <!-- Modal para Criar Novo Pedido -->
 <div id="createOrderModal" class="modal">
     <div class="modal-content">
-        <div class="modal-header">
-            <h2>Finalizar Pedido</h2>
-            <button class="close" onclick="closeCreateOrderModal()">&times;</button>
-        </div>
+        <button class="close" onclick="closeCreateOrderModal()">&times;</button>
+        <h2>Finalizar Pedido</h2>
         <form id="createOrderForm">
             <!-- Campos ocultos -->
             <input type="hidden" id="orderId">
@@ -7507,85 +7209,60 @@ function convertFileToBase64(file) {
             <input type="hidden" id="orderTotal">
             
             <!-- Dados do Cliente -->
-            <div class="form-group">
-                <label for="customerName">Nome Completo*</label>
-                <input type="text" id="customerName" required>
-            </div>
+            <label for="customerName">Nome Completo*</label>
+            <input type="text" id="customerName" required placeholder="Digite seu nome completo">
             
-            <div class="form-group">
-                <label for="customerPhone">WhatsApp*</label>
-                <input type="tel" id="customerPhone" required>
-            </div>
+            <label for="customerPhone">WhatsApp*</label>
+            <input type="text" id="customerPhone" required placeholder="(84) 98888-8888">
             
             <!-- Endereço -->
-            <div class="form-group">
-                <label for="street">Logradouro*</label>
-                <input type="text" id="street" required>
-            </div>
+            <label for="street">Logradouro*</label>
+            <input type="text" id="street" required placeholder="Nome da rua">
             
-            <div class="form-group">
-                <label for="streetNumber">Número*</label>
-                <input type="text" id="streetNumber" required>
-            </div>
+            <label for="streetNumber">Número*</label>
+            <input type="text" id="streetNumber" required placeholder="Número da casa/apto">
             
-            <div class="form-group">
-                <label for="neighborhood">Bairro*</label>
-                <input type="text" id="neighborhood" required>
-            </div>
+            <label for="neighborhood">Bairro*</label>
+            <input type="text" id="neighborhood" required placeholder="Seu bairro">
             
-            <div class="form-group">
-                <label for="complement">Complemento</label>
-                <input type="text" id="complement">
-            </div>
+            <label for="complement">Complemento</label>
+            <input type="text" id="complement" placeholder="Apto, bloco, referência...">
             
-            <div class="form-group">
-                <label for="zipCode">CEP*</label>
-                <input type="text" id="zipCode" required>
-            </div>
-
+            <label for="zipCode">CEP*</label>
+            <input type="text" id="zipCode" required placeholder="59000-000">
+            
             <!-- Detalhes do Pedido -->
-            <div class="form-group">
-                <label for="orderDetails">Itens do Pedido</label>
-                <textarea id="orderDetails" readonly></textarea>
-            </div>
+            <label for="orderDetails">Itens do Pedido</label>
+            <textarea id="orderDetails" readonly></textarea>
             
             <!-- Método de Pagamento -->
-            <div class="form-group">
-                <label>Forma de Pagamento*</label>
-                <div class="payment-options">
-                    <label class="payment-option">
-                        <input type="radio" name="paymentMethod" value="money" required>
-                        <i class="fas fa-money-bill"></i> Dinheiro
-                    </label>
-                    <label class="payment-option">
-                        <input type="radio" name="paymentMethod" value="card">
-                        <i class="fas fa-credit-card"></i> Cartão na Entrega
-                    </label>
-                    <label class="payment-option">
-                        <input type="radio" name="paymentMethod" value="pix">
-                        <i class="fas fa-qrcode"></i> PIX
-                        <small style="display: block; margin-top: 5px; color: var(--text);">
-                            Após finalizar, você será redirecionado para pagamento
-                        </small>
-                    </label>
+            <label>Forma de Pagamento*</label>
+            <div class="payment-group">
+                <div class="payment-option">
+                    <input type="radio" id="paymentMoney" name="paymentMethod" value="money" required>
+                    <label for="paymentMoney">Dinheiro</label>
+                </div>
+                <div class="payment-option">
+                    <input type="radio" id="paymentCard" name="paymentMethod" value="card">
+                    <label for="paymentCard">Cartão</label>
+                </div>
+                <div class="payment-option">
+                    <input type="radio" id="paymentOnline" name="paymentMethod" value="online">
+                    <label for="paymentOnline">PIX</label>
                 </div>
             </div>
-
-            <!-- Container para troco -->
-            <div id="changeContainer" style="display: none;">
-                <label>Troco para quanto?</label>
-                <input type="number" id="changeAmount" step="0.01">
-            </div>
-
-            <!-- Observações -->
-            <div class="form-group">
-                <label for="notes">Observações</label>
-                <textarea id="notes" placeholder="Alguma observação sobre seu pedido?"></textarea>
-            </div>
+            <div id="changeContainer" style="display: none; margin-top: 10px;">
+    <label>Troco para quanto?</label>
+    <input type="number" id="changeAmount" step="0.01">
+</div>
+<div id="pixInfo" style="display: none; margin-top: 15px;">
+    <!-- O QR Code será inserido aqui via JavaScript -->
+</div>
             
-            <button type="button" onclick="submitOrder()" class="modal-btn">
-                Finalizar Pedido
-            </button>
+            <label for="notes">Observações</label>
+            <textarea id="notes" placeholder="Alguma observação sobre seu pedido?"></textarea>
+            
+            <button type="button" onclick="submitOrder()">Finalizar Pedido</button>
         </form>
     </div>
 </div>
