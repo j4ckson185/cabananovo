@@ -6842,9 +6842,13 @@ function generatePixQRCode(total) {
 
     qrContainer.innerHTML = `
         <h3 style="margin-bottom: 10px; color: white;">Pagamento via PIX</h3>
-        <div id="paymentStatus" style="margin-bottom: 15px; color: var(--text);">
-            Selecione como deseja pagar
+        <div id="paymentStatus" style="margin-bottom: 15px; color: var(--text);"></div>
+        
+        <!-- Container do QR Code -->
+        <div style="background: white; padding: 10px; border-radius: 10px; display: inline-block; margin: 10px auto;">
+            <div id="qrCodeElement"></div>
         </div>
+
         <div style="margin: 15px 0; padding: 10px; background: var(--surface); border-radius: 10px;">
             <div style="margin-bottom: 10px;">
                 <strong>Dados da Chave PIX</strong><br>
@@ -6869,54 +6873,129 @@ function generatePixQRCode(total) {
                 </div>
             </div>
         </div>
-        <button onclick="initializePixPayment(${amount})" class="modal-btn add-to-cart" style="margin-top: 15px;">
-            <i class="fas fa-money-bill"></i> Enviar PIX
+        <button onclick="initializePixPayment('${amount}')" class="modal-btn add-to-cart" style="margin-top: 15px;">
+            <i class="fas fa-money-bill"></i> Já realizei o pagamento
         </button>
     `;
+
+    // Gerar QR Code após inserir no DOM
+    setTimeout(() => {
+        new QRCode(qrContainer.querySelector('#qrCodeElement'), {
+            text: `00020126580014BR.GOV.BCB.PIX0136${pixKey}5204000053039865802BR5913${merchantName}6006${city}62070503***6304${calculateCRC16(generatePixString(pixKey, merchantName, city, amount))}`,
+            width: 200,
+            height: 200,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    }, 100);
 
     return qrContainer;
 }
 
-async function initializePixPayment(amount) {
-    // Mostrar status de aguardando
+function initializePixPayment(amount) {
     const statusDiv = document.getElementById('paymentStatus');
+    
+    // Gerar ID único para o pedido
+    const orderId = Date.now().toString();
+    sessionStorage.setItem('currentPixOrder', orderId);
+    
+    // Exibir status de aguardando
     statusDiv.innerHTML = `
-        <div style="color: #FFA500;">
-            <i class="fas fa-spinner fa-spin"></i> Aguardando pagamento...
+        <div style="color: #FFA500; margin: 10px 0;">
+            <i class="fas fa-spinner fa-spin"></i> Verificando pagamento...
         </div>
     `;
 
-    try {
-        // Gerar ID único para o pagamento
-        const paymentId = 'PIX_' + Date.now();
+    // Iniciar verificação
+    checkPaymentStatus(orderId, amount);
+}
+
+function checkPaymentStatus(orderId, amount) {
+    const statusDiv = document.getElementById('paymentStatus');
+    
+    // URL do seu Google Apps Script implantado
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbxD7gJy1NwRJ3VPmMd4hf9Gf53q-N4jpkl5G9LAZbXxtnD7Iu214IiNR0dNU2QiBkPHlw/exec';
+    
+    // Atualizar status para "verificando"
+    statusDiv.innerHTML = `
+        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+            <i class="fas fa-spinner fa-spin"></i> 
+            Verificando pagamento...
+        </div>
+    `;
+
+    // Registrar verificação na planilha
+    fetch(`${webhookUrl}?orderId=${orderId}&amount=${amount}`, {
+        method: 'GET',
+        mode: 'no-cors'
+    }).then(() => {
+        // Iniciar verificações periódicas
+        let checkCount = 0;
+        const maxChecks = 24; // 2 minutos (5s * 24)
         
-        // Salvar ID na sessão para verificação posterior
-        sessionStorage.setItem('currentPaymentId', paymentId);
+        const checkInterval = setInterval(() => {
+            checkCount++;
+            
+            fetch(`${webhookUrl}?action=check&orderId=${orderId}`, {
+                method: 'GET',
+                mode: 'no-cors'
+            }).then(() => {
+                // Verificar status armazenado no sessionStorage
+                const status = sessionStorage.getItem(`payment_${orderId}`);
+                
+                if (status === 'approved') {
+                    clearInterval(checkInterval);
+                    statusDiv.innerHTML = `
+                        <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 8px; margin: 10px 0;">
+                            <i class="fas fa-check-circle"></i> 
+                            Pagamento confirmado! Você pode continuar com seu pedido.
+                        </div>
+                    `;
+                    
+                    // Habilitar botão de finalizar pedido
+                    const submitButton = document.querySelector('#createOrderForm button[type="button"]');
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = 'Finalizar Pedido';
+                        submitButton.style.opacity = '1';
+                    }
+                    
+                } else if (checkCount >= maxChecks) {
+                    clearInterval(checkInterval);
+                    statusDiv.innerHTML = `
+                        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                            <i class="fas fa-info-circle"></i> 
+                            Não recebemos a confirmação do pagamento ainda. Se você já realizou o pagamento, 
+                            pode continuar com seu pedido normalmente. A confirmação será validada em seguida.
+                        </div>
+                    `;
+                }
+            }).catch(error => {
+                console.error('Erro na verificação:', error);
+                if (checkCount >= maxChecks) {
+                    clearInterval(checkInterval);
+                    statusDiv.innerHTML = `
+                        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            Erro ao verificar o pagamento. Se você já realizou o pagamento, 
+                            pode continuar com seu pedido normalmente.
+                        </div>
+                    `;
+                }
+            });
+        }, 5000); // Verificar a cada 5 segundos
         
-        // Criar deep link para apps de banco
-        const pixDeepLink = `pix://qr/${btoa(JSON.stringify({
-            key: '06561938402',
-            amount: amount,
-            reference: paymentId,
-            name: 'JACKSON',
-            bank: 'MERCADO PAGO'
-        }))}`;
-
-        // Abrir menu de seleção de app
-        window.open(pixDeepLink, '_blank');
-
-        // Iniciar verificação de pagamento
-        startPaymentCheck(paymentId);
-
-    } catch (error) {
-        console.error('Erro ao iniciar pagamento:', error);
+    }).catch(error => {
+        console.error('Erro ao iniciar verificação:', error);
         statusDiv.innerHTML = `
-            <div style="color: var(--error);">
+            <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
                 <i class="fas fa-exclamation-circle"></i> 
-                Erro ao iniciar pagamento. Tente novamente.
+                Erro ao verificar pagamento. Se você já realizou o pagamento, 
+                pode continuar com seu pedido normalmente.
             </div>
         `;
-    }
+    });
 }
 
     function startPaymentCheck(paymentId) {
