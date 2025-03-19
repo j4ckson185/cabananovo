@@ -5462,15 +5462,13 @@ function setupPaymentEvents() {
 }
     
 async function submitOrder() {
-    const form = document.getElementById('createOrderForm');
-    const submitButton = form.querySelector('button[type="button"]');
+    const submitButton = document.querySelector('#createOrderForm button[type="button"]');
     
     try {
-        // Mostrar loading
         submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aguarde...';
         submitButton.disabled = true;
 
-        // Validar campos
+        // Obter dados do formulário
         const customerName = document.getElementById('customerName').value;
         const customerPhone = document.getElementById('customerPhone').value;
         const street = document.getElementById('street').value;
@@ -5478,40 +5476,38 @@ async function submitOrder() {
         const neighborhood = document.getElementById('neighborhood').value;
         const zipCode = document.getElementById('zipCode').value;
         const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+        const total = document.getElementById('orderTotal').value;
 
+        // Validações
         if (!customerName || !customerPhone || !street || !streetNumber || !neighborhood || !zipCode || !paymentMethod) {
             throw new Error('Por favor, preencha todos os campos obrigatórios');
         }
 
-        // Se for PIX, mostrar aviso
-        if (paymentMethod === 'pix') {
-            const result = await Swal.fire({
-                title: 'Pagamento via PIX',
-                html: `
-                    <p>Após finalizar seu pedido:</p>
-                    <p>1. Você será redirecionado para a página de pagamento PIX do Mercado Pago</p>
-                    <p>2. Após o pagamento, será direcionado automaticamente para o WhatsApp para acompanhar seu pedido</p>
-                `,
-                icon: 'info',
-                showCancelButton: true,
-                confirmButtonText: 'Continuar',
-                cancelButtonText: 'Cancelar'
-            });
-
-            if (!result.isConfirmed) {
-                throw new Error('Operação cancelada');
-            }
-        }
-
-        // Criar pedido
+        // Criar pedido no Firebase
         const orderData = {
-            // ... seus dados atuais do pedido ...
+            id: document.getElementById('orderId').value,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
             status: paymentMethod === 'pix' ? 'pending_payment' : 'open',
-            paymentMethod: paymentMethod
+            paymentMethod: paymentMethod,
+            orderTotal: Number(total),
+            items: cart,
+            customer: {
+                name: customerName,
+                phone: customerPhone
+            },
+            deliveryPoint: {
+                address: `${street}, ${streetNumber}, ${neighborhood}`,
+                street: street,
+                number: streetNumber,
+                complement: document.getElementById('complement').value || '',
+                neighborhood: neighborhood,
+                zipCode: zipCode
+            },
+            notes: document.getElementById('notes').value || ''
         };
 
         // Salvar no Firebase
-        const ref = await realtimeDB.ref('orders').push(orderData);
+        const newOrderRef = await realtimeDB.ref('orders').push(orderData);
 
         // Se for PIX, redirecionar para pagamento
         if (paymentMethod === 'pix') {
@@ -5523,18 +5519,19 @@ async function submitOrder() {
                 },
                 body: JSON.stringify({
                     items: [{
-                        title: `Pedido Cabana Açaí #${ref.key}`,
+                        title: `Pedido Cabana Açaí #${orderData.id}`,
                         quantity: 1,
                         currency_id: 'BRL',
-                        unit_price: Number(orderTotal)
+                        unit_price: Number(total)
                     }],
                     payment_methods: {
                         default_payment_method_id: "pix",
                         payment_types: [{ id: "pix" }]
                     },
+                    external_reference: newOrderRef.key,
                     back_urls: {
-                        success: `https://wa.me/5584988731028?text=Olá! Realizei o pagamento PIX do pedido ${ref.key}`,
-                        pending: `https://wa.me/5584988731028?text=Olá! Preciso de ajuda com meu pagamento PIX do pedido ${ref.key}`
+                        success: `https://wa.me/5584988731028?text=Olá! Realizei o pagamento PIX do pedido ${orderData.id}`,
+                        pending: `https://wa.me/5584988731028?text=Olá! Preciso de ajuda com meu pagamento PIX do pedido ${orderData.id}`
                     }
                 })
             });
