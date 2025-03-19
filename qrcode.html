@@ -29,19 +29,16 @@
     </div>
 
     <script>
-        // Inicializar o MP com sua public key
         const mp = new MercadoPago('APP_USR-813bb304-1460-4892-bc0f-9b2522655bc3');
-
         const bricksBuilder = mp.bricks();
 
         const renderPaymentBrick = async () => {
             const settings = {
                 initialization: {
-                    amount: 25.00 // valor fixo para teste
+                    amount: 25.00
                 },
                 callbacks: {
                     onReady: () => {
-                        // brick pronto para usar
                         console.log('Brick pronto');
                     },
                     onSubmit: async (cardFormData) => {
@@ -53,20 +50,33 @@
                 },
                 locale: 'pt-BR',
                 customization: {
-                    paymentMethods: {
-                        pix: "all", // mostrar apenas PIX
-                        creditCard: "none",
-                        debitCard: "none",
-                        mercadoPago: "none"
+                    visual: {
+                        style: {
+                            theme: 'default'
+                        }
                     },
+                    paymentMethods: {
+                        maxInstallments: 1,
+                        excludedPaymentMethods: ['credit_card', 'debit_card'],
+                        excludedPaymentTypes: ['credit_card', 'debit_card']
+                    }
                 }
             };
 
-            window.paymentBrickController = await bricksBuilder.create(
-                'payment',
-                'payment-brick',
-                settings
-            );
+            try {
+                window.paymentBrickController = await bricksBuilder.create(
+                    'payment',
+                    'payment-brick',
+                    settings
+                );
+            } catch (error) {
+                console.error('Erro ao criar brick:', error);
+                document.getElementById('payment-brick').innerHTML = `
+                    <div style="color: red; padding: 20px;">
+                        Erro ao inicializar pagamento: ${error.message}
+                    </div>
+                `;
+            }
         };
 
         renderPaymentBrick();
