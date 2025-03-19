@@ -6873,8 +6873,8 @@ function generatePixQRCode(total) {
                 </div>
             </div>
         </div>
-        <button onclick="initializePixPayment('${amount}')" class="modal-btn add-to-cart" style="margin-top: 15px;">
-            <i class="fas fa-money-bill"></i> Já realizei o pagamento
+        <button onclick="openPaymentApp('${amount}')" class="modal-btn add-to-cart" style="margin-top: 15px;">
+            <i class="fas fa-paper-plane"></i> Enviar PIX
         </button>
     `;
 
@@ -6891,6 +6891,66 @@ function generatePixQRCode(total) {
     }, 100);
 
     return qrContainer;
+}
+
+function openPaymentApp(amount) {
+    // URLs dos principais bancos
+    const bankUrls = {
+        nubank: `https://nubank.com.br/pagar/pix/${amount}`,
+        itau: 'https://www.itau.com.br/pix',
+        santander: 'https://www.santander.com.br/pix',
+        bradesco: 'https://banco.bradesco/pix',
+        bb: 'https://www.bb.com.br/pix',
+        caixa: 'https://www.caixa.gov.br/pix',
+        inter: 'https://www.bancointer.com.br/pix',
+    };
+
+    // Criar modal de seleção de banco
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--surface);
+        padding: 20px;
+        border-radius: 15px;
+        z-index: 10000;
+        width: 90%;
+        max-width: 400px;
+        border: 1px solid var(--glass-border);
+    `;
+
+    modal.innerHTML = `
+        <h3 style="color: white; margin-bottom: 15px; text-align: center;">Escolha seu banco</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px;">
+            ${Object.entries(bankUrls).map(([bank, url]) => `
+                <button onclick="window.open('${url}', '_blank')" 
+                    style="background: var(--glass); border: 1px solid var(--glass-border); color: white; 
+                    padding: 10px; border-radius: 8px; cursor: pointer; text-transform: capitalize;">
+                    ${bank}
+                </button>
+            `).join('')}
+        </div>
+        <button onclick="this.parentElement.remove()" 
+            style="width: 100%; margin-top: 15px; background: var(--accent); color: white; 
+            border: none; padding: 10px; border-radius: 8px; cursor: pointer;">
+            Fechar
+        </button>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Atualizar status
+    const statusDiv = document.getElementById('paymentStatus');
+    statusDiv.innerHTML = `
+        <div style="color: #FFA500;">
+            <i class="fas fa-info-circle"></i> Após realizar o pagamento, aguarde a confirmação automática.
+        </div>
+    `;
+
+    // Iniciar verificação de pagamento
+    initializePixPayment(amount);
 }
 
 function initializePixPayment(amount) {
