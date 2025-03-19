@@ -6815,7 +6815,7 @@ function calculateCRC16(str) {
     }
 
     const data = Array.from(str).map(c => c.charCodeAt(0));
-    return crc16(data);
+    return crc16(data).toString(16).toUpperCase().padStart(4, '0');
 }
 
 function generatePixQRCode(total) {
@@ -6909,6 +6909,31 @@ function initializePixPayment(amount) {
 
     // Iniciar verificação
     checkPaymentStatus(orderId, amount);
+}
+
+function generatePixString(pixKey, merchantName, city, amount) {
+    // Função para formatar tamanho do campo (ID + tamanho + valor)
+    function formatField(id, value) {
+        const len = value.length.toString().padStart(2, '0');
+        return `${id}${len}${value}`;
+    }
+
+    // Campos obrigatórios do PIX
+    const fields = [
+        formatField('00', '01'),                     // Versão do payload
+        formatField('01', '12'),                     // Tipo de chave PIX
+        formatField('26', formatField('00', 'br.gov.bcb.pix') + 
+                         formatField('01', pixKey)),  // Chave PIX
+        formatField('52', '0000'),                   // Categoria comerciante
+        formatField('53', '986'),                    // Moeda (BRL = 986)
+        formatField('54', amount.toString()),        // Valor da transação
+        formatField('58', 'BR'),                     // País
+        formatField('59', merchantName),             // Nome do comerciante
+        formatField('60', city),                     // Cidade do comerciante
+        formatField('62', formatField('05', '***'))  // ID da transação
+    ];
+
+    return fields.join('');
 }
 
 function checkPaymentStatus(orderId, amount) {
