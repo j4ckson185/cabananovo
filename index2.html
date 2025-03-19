@@ -5164,7 +5164,7 @@ async function handlePixPayment(customerName, orderTotal) {
     `;
 
     try {
-        // 1. Criar dados do pagamento
+        // Dados do pagamento
         const payloadData = {
             transaction_amount: Number(orderTotal),
             description: "Pedido Cabana Açaí",
@@ -5179,64 +5179,71 @@ async function handlePixPayment(customerName, orderTotal) {
             }
         };
 
-        // 2. Fazer log dos dados enviados
+        // Log dos dados enviados
         logToSheet('DADOS_ENVIADOS', payloadData);
 
-        // 3. Enviar para o Apps Script (que já está funcionando corretamente)
-        const response = await fetch('https://script.google.com/macros/s/AKfycbzCrbXgKa0nyrcS0_vix6orqvyIJ-aUbu8EyFl0mRN6rWQboGi_pauAOhIlV7O-82wNCg/exec', {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payloadData)
-        });
+        try {
+            await fetch('https://script.google.com/macros/s/AKfycbwcmLGYpwJH1YV4l5CSLsfJQHeoeniyWG63EDsHM3efTFXDfLZs_sTwKxd9uuRPNYaZ/exec', {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payloadData)
+            });
 
-        const responseData = await response.json();
-        logToSheet('RESPOSTA_MP', responseData);
+            // Esperar 2 segundos para o log ser gravado na planilha
+            await new Promise(resolve => setTimeout(resolve, 2000));
 
-        // 4. Verificar os dados do QR Code e exibir
-        if (responseData.point_of_interaction?.transaction_data) {
-            const qrData = responseData.point_of_interaction.transaction_data;
-            
-            // Atualizar o conteúdo do pixInfo
-            pixInfo.innerHTML = `
-                <div style="padding: 20px; background: var(--surface); border-radius: 15px; text-align: center;">
-                    <h3 style="color: white; margin-bottom: 20px;">Pagamento via PIX</h3>
-                    
-                    <div style="background: white; padding: 20px; border-radius: 10px; display: inline-block; margin-bottom: 20px;">
-                        <img src="data:image/png;base64,${qrData.qr_code_base64}" 
-                             alt="QR Code PIX" 
-                             style="width: 200px; height: 200px;">
-                    </div>
+            // Buscar os dados diretamente na planilha via nova chamada
+            const response = await fetch('https://script.google.com/macros/s/AKfycbwcmLGYpwJH1YV4l5CSLsfJQHeoeniyWG63EDsHM3efTFXDfLZs_sTwKxd9uuRPNYaZ/exec?action=getLastResponse', {
+                method: 'GET'
+            });
 
-                    <div style="margin: 20px 0; padding: 15px; background: var(--glass); border-radius: 10px;">
-                        <div style="margin-bottom: 15px; color: white;">
-                            <strong>Valor a pagar:</strong> R$ ${orderTotal}
+            const responseData = await response.json();
+
+            if (responseData.point_of_interaction?.transaction_data) {
+                const qrData = responseData.point_of_interaction.transaction_data;
+                
+                pixInfo.innerHTML = `
+                    <div style="padding: 20px; background: var(--surface); border-radius: 15px; text-align: center;">
+                        <h3 style="color: white; margin-bottom: 20px;">Pagamento via PIX</h3>
+                        
+                        <div style="background: white; padding: 20px; border-radius: 10px; display: inline-block; margin-bottom: 20px;">
+                            <img src="data:image/png;base64,${qrData.qr_code_base64}" 
+                                 alt="QR Code PIX" 
+                                 style="width: 200px; height: 200px;">
                         </div>
 
-                        <div style="margin: 15px 0;">
-                            <strong style="color: white;">PIX Copia e Cola:</strong>
-                            <div style="position: relative; margin-top: 10px;">
-                                <input type="text" 
-                                       value="${qrData.qr_code}" 
-                                       readonly 
-                                       style="width: 100%; padding: 10px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); font-size: 0.9em;">
-                                <button onclick="copyPixCode(this)" 
-                                        style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--accent); color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">
-                                    Copiar Código
-                                </button>
+                        <div style="margin: 20px 0; padding: 15px; background: var(--glass); border-radius: 10px;">
+                            <div style="margin-bottom: 15px; color: white;">
+                                <strong>Valor a pagar:</strong> R$ ${orderTotal}
+                            </div>
+
+                            <div style="margin: 15px 0;">
+                                <strong style="color: white;">PIX Copia e Cola:</strong>
+                                <div style="position: relative; margin-top: 10px;">
+                                    <input type="text" 
+                                           value="${qrData.qr_code}" 
+                                           readonly 
+                                           style="width: 100%; padding: 10px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); font-size: 0.9em;">
+                                    <button onclick="copyPixCode(this)" 
+                                            style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--accent); color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">
+                                        Copiar Código
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div style="color: var(--text); margin-top: 15px;">
-                        <p>Após o pagamento, você receberá a confirmação automaticamente</p>
+                        <div style="color: var(--text); margin-top: 15px;">
+                            <p>Após o pagamento, você receberá a confirmação automaticamente</p>
+                        </div>
                     </div>
-                </div>
-            `;
-        } else {
-            throw new Error('QR Code não encontrado na resposta');
+                `;
+            }
+
+        } catch (error) {
+            throw new Error('Erro ao processar resposta do PIX: ' + error.message);
         }
 
     } catch (error) {
