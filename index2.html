@@ -5118,26 +5118,30 @@ async function createPixPayment(orderTotal, customerName, customerEmail) {
 }
 
 async function handlePixPayment(customerName, orderTotal) {
-   console.log('Iniciando handlePixPayment');
-   const pixInfo = document.getElementById('pixInfo');
-   
-   if (!pixInfo) {
-       console.error('Elemento pixInfo não encontrado');
-       return;
-   }
+    console.log('1. Iniciando handlePixPayment');
+    const pixInfo = document.getElementById('pixInfo');
+    console.log('2. Elemento pixInfo:', pixInfo);
+    
+    if (!pixInfo) {
+        console.error('3. Elemento pixInfo não encontrado');
+        return;
+    }
 
-   pixInfo.innerHTML = `
-       <div style="color: var(--text); padding: 10px; background: var(--glass); border-radius: 8px; text-align: center;">
-           <i class="fas fa-spinner fa-spin"></i> 
-           Gerando QR Code PIX...
-       </div>
-   `;
+    pixInfo.innerHTML = `
+        <div style="color: var(--text); padding: 10px; background: var(--glass); border-radius: 8px; text-align: center;">
+            <i class="fas fa-spinner fa-spin"></i> 
+            Gerando QR Code PIX...
+        </div>
+    `;
+    console.log('4. Loading exibido');
 
-   try {
-       // Criar pagamento no Mercado Pago
-       const paymentData = await createPixPayment(orderTotal, customerName);
-       console.log('Pagamento criado:', paymentData);
-       console.log('Point of interaction:', paymentData.point_of_interaction);
+    try {
+        // Criar pagamento no Mercado Pago
+        console.log('5. Iniciando createPixPayment com:', { customerName, orderTotal });
+        const paymentData = await createPixPayment(orderTotal, customerName);
+        console.log('6. Resposta do createPixPayment:', paymentData);
+        console.log('7. Point of interaction:', paymentData.point_of_interaction);
+        console.log('8. Transaction data:', paymentData.point_of_interaction?.transaction_data);
 
        if (!paymentData.point_of_interaction?.transaction_data) {
            throw new Error('Dados do QR Code não encontrados');
