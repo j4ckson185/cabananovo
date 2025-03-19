@@ -14,88 +14,62 @@
         }
         #payment-form {
             margin-top: 20px;
+        }
+        #payment-brick {
             padding: 20px;
             border: 1px solid #ccc;
             border-radius: 8px;
-        }
-        .qr-container {
-            text-align: center;
-            margin: 20px 0;
-            padding: 20px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
         }
     </style>
 </head>
 <body>
     <h1>Teste PIX</h1>
     <div id="payment-form">
-        <div id="qr-container"></div>
-        <button onclick="gerarPix()">Gerar PIX R$ 25,00</button>
+        <div id="payment-brick"></div>
     </div>
 
     <script>
-        // Inicializar o Mercado Pago
+        // Inicializar o MP com sua public key
         const mp = new MercadoPago('APP_USR-813bb304-1460-4892-bc0f-9b2522655bc3');
 
-        async function gerarPix() {
-            const qrContainer = document.getElementById('qr-container');
-            qrContainer.innerHTML = 'Gerando PIX...';
+        const bricksBuilder = mp.bricks();
 
-            try {
-                // Primeiro criar uma preferência
-                const preference = await mp.createPayment({
-                    transaction_amount: 25,
-                    description: "Teste PIX",
-                    payment_method_id: "pix",
-                    payer: {
-                        email: "cliente@teste.com"
-                    }
-                });
+        const renderPaymentBrick = async () => {
+            const settings = {
+                initialization: {
+                    amount: 25.00 // valor fixo para teste
+                },
+                callbacks: {
+                    onReady: () => {
+                        // brick pronto para usar
+                        console.log('Brick pronto');
+                    },
+                    onSubmit: async (cardFormData) => {
+                        console.log('Dados do pagamento:', cardFormData);
+                    },
+                    onError: (error) => {
+                        console.error('Erro:', error);
+                    },
+                },
+                locale: 'pt-BR',
+                customization: {
+                    paymentMethods: {
+                        pix: "all", // mostrar apenas PIX
+                        creditCard: "none",
+                        debitCard: "none",
+                        mercadoPago: "none"
+                    },
+                }
+            };
 
-                console.log('Preferência criada:', preference);
+            window.paymentBrickController = await bricksBuilder.create(
+                'payment',
+                'payment-brick',
+                settings
+            );
+        };
 
-                // Gerar o QR Code
-                qrContainer.innerHTML = `
-                    <div class="qr-container">
-                        <h3>Escaneie o QR Code</h3>
-                        <img src="${preference.point_of_interaction.transaction_data.qr_code_base64}" 
-                             alt="QR Code PIX"
-                             style="width: 200px; height: 200px;">
-                        <div style="margin-top: 20px;">
-                            <p><strong>Ou copie o código PIX:</strong></p>
-                            <input type="text" 
-                                   value="${preference.point_of_interaction.transaction_data.qr_code}" 
-                                   readonly 
-                                   style="width: 100%; padding: 10px;">
-                            <button onclick="copiarCodigo(this)">Copiar</button>
-                        </div>
-                    </div>
-                `;
-
-            } catch (error) {
-                console.error('Erro:', error);
-                qrContainer.innerHTML = `
-                    <div style="color: red; padding: 20px;">
-                        Erro ao gerar PIX. Tente novamente.
-                    </div>
-                `;
-            }
-        }
-
-        function copiarCodigo(button) {
-            const input = button.previousElementSibling;
-            input.select();
-            document.execCommand('copy');
-            button.textContent = 'Copiado!';
-            setTimeout(() => button.textContent = 'Copiar', 2000);
-        }
+        renderPaymentBrick();
     </script>
 </body>
 </html>
