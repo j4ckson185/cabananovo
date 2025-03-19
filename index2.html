@@ -5429,13 +5429,8 @@ function setupPaymentEvents() {
                         const orderTotal = document.getElementById('orderTotal')?.value || '0.00';
                         console.log('Dados para PIX:', { customerName, orderTotal });
                         
-                        // Antes de chamar handlePixPayment, ativar o proxy CORS
-                        window.open('https://cors-anywhere.herokuapp.com/corsdemo', '_blank');
-                        
-                        // Aguardar 2 segundos para dar tempo do usuário ativar o proxy
-                        setTimeout(() => {
-                            handlePixPayment(customerName, orderTotal);
-                        }, 2000);
+                        // Chamar diretamente handlePixPayment
+                        handlePixPayment(customerName, orderTotal);
                     } else {
                         console.error('Elemento pixInfo não encontrado');
                     }
