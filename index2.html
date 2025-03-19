@@ -5117,9 +5117,102 @@ async function createPixPayment(orderTotal, customerName, customerEmail) {
     }
 }
 
+async function handlePixPayment(customerName, orderTotal) {
+   console.log('Iniciando handlePixPayment');
+   const pixInfo = document.getElementById('pixInfo');
+   
+   if (!pixInfo) {
+       console.error('Elemento pixInfo não encontrado');
+       return;
+   }
+
+   pixInfo.innerHTML = `
+       <div style="color: var(--text); padding: 10px; background: var(--glass); border-radius: 8px; text-align: center;">
+           <i class="fas fa-spinner fa-spin"></i> 
+           Gerando QR Code PIX...
+       </div>
+   `;
+
+   try {
+       // Criar pagamento no Mercado Pago
+       const paymentData = await createPixPayment(orderTotal, customerName);
+       console.log('Pagamento criado:', paymentData);
+       console.log('Point of interaction:', paymentData.point_of_interaction);
+
+       if (!paymentData.point_of_interaction?.transaction_data) {
+           throw new Error('Dados do QR Code não encontrados');
+       }
+
+       // Exibe QR Code e instruções
+       const qrCodeBase64 = paymentData.point_of_interaction.transaction_data.qr_code_base64;
+       const qrCodeText = paymentData.point_of_interaction.transaction_data.qr_code;
+       const expirationTime = new Date(paymentData.date_of_expiration);
+
+       pixInfo.innerHTML = `
+           <div style="padding: 15px; background: var(--surface); border-radius: 10px; text-align: center;">
+               <h3 style="color: white; margin-bottom: 15px;">Pagamento via PIX</h3>
+               
+               <div style="background: white; padding: 15px; border-radius: 10px; display: inline-block; margin-bottom: 15px;">
+                   <img src="data:image/png;base64,${qrCodeBase64}" 
+                        alt="QR Code PIX" 
+                        style="max-width: 200px; height: auto;">
+               </div>
+
+               <div style="margin: 15px 0; padding: 10px; background: var(--glass); border-radius: 10px;">
+                   <div style="margin-bottom: 10px; color: white;">
+                       <strong>Valor a pagar:</strong> R$ ${orderTotal}
+                   </div>
+
+                   <strong style="color: white;">Pix Copia e Cola:</strong>
+                   <div style="position: relative; margin-top: 10px;">
+                       <input type="text" 
+                              value="${qrCodeText}" 
+                              readonly 
+                              style="width: 100%; padding: 8px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); font-size: 12px;">
+                       <button onclick="copyPixCode(this)" 
+                               style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--accent); color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">
+                           Copiar
+                       </button>
+                   </div>
+               </div>
+
+               <div style="color: var(--text); margin: 15px 0;">
+                   <p>QR Code expira em: <span id="pixCountdown"></span></p>
+                   <p style="font-size: 0.9em;">Após o pagamento, você receberá a confirmação automaticamente.</p>
+               </div>
+
+               <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 10px;">
+                   <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
+               </button>
+           </div>
+       `;
+
+       // Iniciar countdown
+       startPixCountdown(expirationTime);
+
+   } catch (error) {
+       console.error('Erro ao gerar PIX:', error);
+       pixInfo.innerHTML = `
+           <div style="color: var(--error); padding: 10px; background: var(--glass); border-radius: 8px; text-align: center;">
+               <i class="fas fa-exclamation-circle"></i> 
+               Erro ao gerar PIX. Por favor, tente novamente ou escolha outra forma de pagamento.
+           </div>
+           <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 10px;">
+               <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
+           </button>
+       `;
+   }
+}
+
 function displayPixPayment(paymentData) {
+    console.log('Iniciando displayPixPayment');
+    console.log('Dados recebidos:', paymentData);
+    
     const pixInfo = document.getElementById('pixInfo');
-    if (!pixInfo) return;
+    if (!pixInfo) {
+        console.error('Elemento pixInfo não encontrado em displayPixPayment');
+        return;
+    }
 
     // Extrair dados importantes
     const qrCodeBase64 = paymentData.point_of_interaction.transaction_data.qr_code_base64;
@@ -5203,46 +5296,6 @@ function copyPixCode(button) {
         button.textContent = originalText;
         button.style.background = 'var(--accent)';
     }, 2000);
-}
-
-async function handlePixPayment(customerName, orderTotal) {
-    const pixInfo = document.getElementById('pixInfo');
-    
-    if (!pixInfo) return;
-
-    pixInfo.innerHTML = `
-        <div style="color: var(--text); padding: 10px; background: var(--glass); border-radius: 8px;">
-            <i class="fas fa-spinner fa-spin"></i> 
-            Gerando QR Code PIX...
-        </div>
-    `;
-
-    try {
-        // Criar pagamento no Mercado Pago
-        const paymentData = await createPixPayment(orderTotal, customerName);
-        console.log('Pagamento criado:', paymentData);
-
-        // Aqui está a mudança importante - chamada direta do displayPixPayment
-        if (paymentData && paymentData.point_of_interaction) {
-            displayPixPayment(paymentData);
-            return paymentData; // Retorna os dados para o then()
-        } else {
-            throw new Error('Dados do PIX incompletos');
-        }
-
-    } catch (error) {
-        console.error('Erro ao gerar PIX:', error);
-        pixInfo.innerHTML = `
-            <div style="color: var(--error); padding: 10px; background: var(--glass); border-radius: 8px;">
-                <i class="fas fa-exclamation-circle"></i> 
-                Erro ao gerar PIX. Por favor, tente novamente ou escolha outra forma de pagamento.
-            </div>
-            <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 10px;">
-                <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
-            </button>
-        `;
-        throw error; // Propaga o erro para o catch()
-    }
 }
     
 function setupPaymentEvents() {
