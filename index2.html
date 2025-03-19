@@ -5149,9 +5149,31 @@ async function createPixPayment(orderTotal, customerName) {
 }
 
 async function handlePixPayment(customerName, orderTotal) {
+    const logToSheet = async (erro, detalhes) => {
+        try {
+            await fetch('https://script.google.com/macros/s/AKfycbwUNrr_pNMC6neoGvBa4m7QSioYknJ0BlbFnskIKxyDcEfXnOmT4_p_JEg-BRpcPSr9Ng/exec', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    erro: erro,
+                    detalhes: detalhes
+                })
+            });
+        } catch (e) {
+            console.error('Erro ao logar:', e);
+        }
+    };
+
     const pixInfo = document.getElementById('pixInfo');
-    
-    if (!pixInfo) return;
+    if (!pixInfo) {
+        await logToSheet('ERRO_ELEMENTO', 'Elemento pixInfo não encontrado');
+        return;
+    }
+
+    // Log inicial
+    await logToSheet('INICIO_PIX', { customerName, orderTotal });
 
     pixInfo.innerHTML = `
         <div style="color: var(--text); padding: 10px; background: var(--glass); border-radius: 8px; text-align: center;">
@@ -5160,58 +5182,28 @@ async function handlePixPayment(customerName, orderTotal) {
         </div>
     `;
 
-    // Enviar log inicial para o Apps Script
     try {
-        await fetch('https://script.google.com/macros/s/AKfycbwUNrr_pNMC6neoGvBa4m7QSioYknJ0BlbFnskIKxyDcEfXnOmT4_p_JEg-BRpcPSr9Ng/exec', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                event: 'PIX_INICIADO',
-                customerName: customerName,
-                orderTotal: orderTotal,
-                timestamp: new Date().toISOString()
-            })
-        });
-
-        // Criar pagamento no Mercado Pago
         const paymentData = await createPixPayment(orderTotal, customerName);
+        await logToSheet('PAYMENT_DATA', paymentData);
 
-        // Log do sucesso
-        await fetch('https://script.google.com/macros/s/AKfycbwUNrr_pNMC6neoGvBa4m7QSioYknJ0BlbFnskIKxyDcEfXnOmT4_p_JEg-BRpcPSr9Ng/exec', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                event: 'PIX_CRIADO',
-                response: paymentData,
-                timestamp: new Date().toISOString()
-            })
-        });
-
-        if (paymentData.point_of_interaction?.transaction_data) {
-            // ... resto do código para exibir o QR Code ...
+        if (!paymentData.point_of_interaction?.transaction_data) {
+            throw new Error('Dados do QR Code não encontrados');
         }
 
+        // Extrair dados do pagamento
+        const qrCodeBase64 = paymentData.point_of_interaction.transaction_data.qr_code_base64;
+        const qrCodeText = paymentData.point_of_interaction.transaction_data.qr_code;
+
+        await logToSheet('QR_CODE_GERADO', { qrCodeText });
+
+        // [resto do código HTML do QR Code...]
+
     } catch (error) {
-        // Log do erro
-        await fetch('https://script.google.com/macros/s/AKfycbwUNrr_pNMC6neoGvBa4m7QSioYknJ0BlbFnskIKxyDcEfXnOmT4_p_JEg-BRpcPSr9Ng/exec', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                event: 'PIX_ERRO',
-                error: error.toString(),
-                details: {
-                    customerName,
-                    orderTotal,
-                    errorMessage: error.message
-                },
-                timestamp: new Date().toISOString()
-            })
+        await logToSheet('ERRO_FINAL', {
+            erro: error.toString(),
+            customerName,
+            orderTotal,
+            stack: error.stack
         });
 
         pixInfo.innerHTML = `
