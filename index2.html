@@ -5151,13 +5151,11 @@ async function createPixPayment(orderTotal, customerName) {
 async function handlePixPayment(customerName, orderTotal) {
     const pixInfo = document.getElementById('pixInfo');
     if (!pixInfo) {
-        logToSheet('ERRO_ELEMENTO', 'Elemento pixInfo não encontrado');
+        console.error('Elemento pixInfo não encontrado');
         return;
     }
 
-    // Log inicial
-    logToSheet('INICIO_PIX', { cliente: customerName, valor: orderTotal });
-
+    pixInfo.style.display = 'block';
     pixInfo.innerHTML = `
         <div style="color: var(--text); padding: 10px; background: var(--glass); border-radius: 8px; text-align: center;">
             <i class="fas fa-spinner fa-spin"></i> 
@@ -5183,12 +5181,6 @@ async function handlePixPayment(customerName, orderTotal) {
             }
         };
 
-        // Log antes da chamada
-        logToSheet('TENTATIVA_MP', {
-            url: mpUrl,
-            payload: payloadData
-        });
-
         const response = await fetch(proxyUrl + mpUrl, {
             method: 'POST',
             headers: {
@@ -5201,37 +5193,89 @@ async function handlePixPayment(customerName, orderTotal) {
         });
 
         const responseData = await response.json();
-        
-        // Log da resposta
-        logToSheet('RESPOSTA_MP', responseData);
+        console.log('Resposta MP:', responseData);
 
-        if (!response.ok) {
-            throw new Error(`Erro MP: ${JSON.stringify(responseData)}`);
-        }
+        // Se tiver os dados do PIX
+        if (responseData.point_of_interaction?.transaction_data) {
+            const pixData = responseData.point_of_interaction.transaction_data;
+            
+            pixInfo.innerHTML = `
+                <div style="padding: 20px; background: var(--surface); border-radius: 15px; text-align: center;">
+                    <h3 style="color: white; margin-bottom: 20px;">Pagamento via PIX</h3>
+                    
+                    <div style="background: white; padding: 20px; border-radius: 10px; display: inline-block; margin-bottom: 20px;">
+                        <img src="data:image/png;base64,${pixData.qr_code_base64}" 
+                             alt="QR Code PIX" 
+                             style="width: 200px; height: 200px;">
+                    </div>
 
-        if (responseData.point_of_interaction?.transaction_data?.qr_code) {
-            pixInfo.innerHTML = generatePixQRCode(responseData);
+                    <div style="margin: 20px 0; padding: 15px; background: var(--glass); border-radius: 10px;">
+                        <div style="margin-bottom: 15px; color: white;">
+                            <strong>Valor a pagar:</strong> R$ ${orderTotal}
+                        </div>
+
+                        <div style="margin: 15px 0;">
+                            <strong style="color: white;">PIX Copia e Cola:</strong>
+                            <div style="position: relative; margin-top: 10px;">
+                                <input type="text" 
+                                       value="${pixData.qr_code}" 
+                                       readonly 
+                                       style="width: 100%; padding: 10px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); font-size: 0.9em;">
+                                <button onclick="copyPixCode(this)" 
+                                        style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--accent); color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">
+                                    Copiar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="color: var(--text); margin-top: 15px;">
+                        <p>Após o pagamento, você receberá a confirmação automaticamente</p>
+                        <p style="font-size: 0.9em; margin-top: 10px;">
+                            QR Code válido por 24 horas
+                        </p>
+                    </div>
+
+                    <button class="modal-btn continue-shopping" 
+                            onclick="changePaymentMethod()" 
+                            style="margin-top: 20px; width: 100%;">
+                        <i class="fas fa-exchange-alt"></i> 
+                        Alterar forma de pagamento
+                    </button>
+                </div>
+            `;
         } else {
-            throw new Error('QR Code não gerado');
+            throw new Error('Dados do PIX não encontrados na resposta');
         }
 
     } catch (error) {
-        logToSheet('ERRO_FINAL', {
-            mensagem: error.toString(),
-            cliente: customerName,
-            valor: orderTotal
-        });
-
+        console.error('Erro ao gerar PIX:', error);
         pixInfo.innerHTML = `
-            <div style="color: var(--error); padding: 10px; background: var(--glass); border-radius: 8px; text-align: center;">
+            <div style="color: var(--error); padding: 15px; background: var(--glass); border-radius: 8px; text-align: center;">
                 <i class="fas fa-exclamation-circle"></i> 
                 Erro ao gerar PIX. Por favor, tente novamente ou escolha outra forma de pagamento.
+                <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 15px; width: 100%;">
+                    <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
+                </button>
             </div>
-            <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 10px;">
-                <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
-            </button>
         `;
     }
+}
+
+// Função para copiar o código PIX
+function copyPixCode(button) {
+    const input = button.parentElement.querySelector('input');
+    input.select();
+    document.execCommand('copy');
+    
+    const originalText = button.textContent;
+    button.textContent = 'Copiado!';
+    button.style.background = '#4CAF50';
+    
+    setTimeout(() => {
+        button.textContent = originalText;
+        button.style.background = 'var(--accent)';
+    }, 2000);
 }
 
 // Função para log na planilha
@@ -5373,21 +5417,6 @@ function startPixCountdown(expirationTime) {
             countdownElement.textContent = 'Expirado';
         }
     }, 1000);
-}
-
-function copyPixCode(button) {
-    const input = button.parentElement.querySelector('input');
-    input.select();
-    document.execCommand('copy');
-
-    const originalText = button.textContent;
-    button.textContent = 'Copiado!';
-    button.style.background = '#4CAF50';
-
-    setTimeout(() => {
-        button.textContent = originalText;
-        button.style.background = 'var(--accent)';
-    }, 2000);
 }
     
 function setupPaymentEvents() {
