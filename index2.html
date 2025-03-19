@@ -7376,8 +7376,10 @@ function convertFileToBase64(file) {
 <!-- Modal para Criar Novo Pedido -->
 <div id="createOrderModal" class="modal">
     <div class="modal-content">
-        <button class="close" onclick="closeCreateOrderModal()">&times;</button>
-        <h2>Finalizar Pedido</h2>
+        <div class="modal-header">
+            <h2>Finalizar Pedido</h2>
+            <button class="close" onclick="closeCreateOrderModal()">&times;</button>
+        </div>
         <form id="createOrderForm">
             <!-- Campos ocultos -->
             <input type="hidden" id="orderId">
@@ -7385,57 +7387,85 @@ function convertFileToBase64(file) {
             <input type="hidden" id="orderTotal">
             
             <!-- Dados do Cliente -->
-            <label for="customerName">Nome Completo*</label>
-            <input type="text" id="customerName" required placeholder="Digite seu nome completo">
+            <div class="form-group">
+                <label for="customerName">Nome Completo*</label>
+                <input type="text" id="customerName" required>
+            </div>
             
-            <label for="customerPhone">WhatsApp*</label>
-            <input type="text" id="customerPhone" required placeholder="(84) 98888-8888">
+            <div class="form-group">
+                <label for="customerPhone">WhatsApp*</label>
+                <input type="tel" id="customerPhone" required>
+            </div>
             
             <!-- Endereço -->
-            <label for="street">Logradouro*</label>
-            <input type="text" id="street" required placeholder="Nome da rua">
+            <div class="form-group">
+                <label for="street">Logradouro*</label>
+                <input type="text" id="street" required>
+            </div>
             
-            <label for="streetNumber">Número*</label>
-            <input type="text" id="streetNumber" required placeholder="Número da casa/apto">
+            <div class="form-group">
+                <label for="streetNumber">Número*</label>
+                <input type="text" id="streetNumber" required>
+            </div>
             
-            <label for="neighborhood">Bairro*</label>
-            <input type="text" id="neighborhood" required placeholder="Seu bairro">
+            <div class="form-group">
+                <label for="neighborhood">Bairro*</label>
+                <input type="text" id="neighborhood" required>
+            </div>
             
-            <label for="complement">Complemento</label>
-            <input type="text" id="complement" placeholder="Apto, bloco, referência...">
+            <div class="form-group">
+                <label for="complement">Complemento</label>
+                <input type="text" id="complement">
+            </div>
             
-            <label for="zipCode">CEP*</label>
-            <input type="text" id="zipCode" required placeholder="59000-000">
-            
+            <div class="form-group">
+                <label for="zipCode">CEP*</label>
+                <input type="text" id="zipCode" required>
+            </div>
+
             <!-- Detalhes do Pedido -->
-            <label for="orderDetails">Itens do Pedido</label>
-            <textarea id="orderDetails" readonly></textarea>
+            <div class="form-group">
+                <label for="orderDetails">Itens do Pedido</label>
+                <textarea id="orderDetails" readonly></textarea>
+            </div>
             
             <!-- Método de Pagamento -->
-            <label>Forma de Pagamento*</label>
-            <div class="payment-group">
-                <div class="payment-option">
-                    <input type="radio" id="paymentMoney" name="paymentMethod" value="money" required>
-                    <label for="paymentMoney">Dinheiro</label>
-                </div>
-                <div class="payment-option">
-                    <input type="radio" id="paymentCard" name="paymentMethod" value="card">
-                    <label for="paymentCard">Cartão</label>
-                </div>
-                <div class="payment-option">
-                    <input type="radio" id="paymentOnline" name="paymentMethod" value="online">
-                    <label for="paymentOnline">PIX</label>
+            <div class="form-group">
+                <label>Forma de Pagamento*</label>
+                <div class="payment-options">
+                    <label class="payment-option">
+                        <input type="radio" name="paymentMethod" value="money" required>
+                        <i class="fas fa-money-bill"></i> Dinheiro
+                    </label>
+                    <label class="payment-option">
+                        <input type="radio" name="paymentMethod" value="card">
+                        <i class="fas fa-credit-card"></i> Cartão na Entrega
+                    </label>
+                    <label class="payment-option">
+                        <input type="radio" name="paymentMethod" value="pix">
+                        <i class="fas fa-qrcode"></i> PIX
+                        <small style="display: block; margin-top: 5px; color: var(--text);">
+                            Após finalizar, você será redirecionado para pagamento
+                        </small>
+                    </label>
                 </div>
             </div>
-            <div id="changeContainer" style="display: none; margin-top: 10px;">
-    <label>Troco para quanto?</label>
-    <input type="number" id="changeAmount" step="0.01">
-</div>
+
+            <!-- Container para troco -->
+            <div id="changeContainer" style="display: none;">
+                <label>Troco para quanto?</label>
+                <input type="number" id="changeAmount" step="0.01">
+            </div>
+
+            <!-- Observações -->
+            <div class="form-group">
+                <label for="notes">Observações</label>
+                <textarea id="notes" placeholder="Alguma observação sobre seu pedido?"></textarea>
+            </div>
             
-            <label for="notes">Observações</label>
-            <textarea id="notes" placeholder="Alguma observação sobre seu pedido?"></textarea>
-            
-            <button type="button" onclick="submitOrder()">Finalizar Pedido</button>
+            <button type="button" onclick="submitOrder()" class="modal-btn">
+                Finalizar Pedido
+            </button>
         </form>
     </div>
 </div>
