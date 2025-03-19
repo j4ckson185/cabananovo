@@ -5103,7 +5103,7 @@ async function createPixPayment(orderTotal, customerName) {
         const responseData = await response.json();
 
         // Log na planilha
-        await fetch('URL_DO_SEU_APPS_SCRIPT', {
+        await fetch('https://script.google.com/macros/s/AKfycby9-XSxWvAWdASCJIYhSS31KrZsa7JZGrTe5pLPzKIX5NgCro7m-5Ui7pADnWT9lBb7cw/exec', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -5267,7 +5267,7 @@ function logToSheet(erro, detalhes) {
     form.append('erro', erro);
     form.append('detalhes', JSON.stringify(detalhes));
     
-    fetch('https://script.google.com/macros/s/AKfycbyorwEKsdwcALZaEn2WYhbpplMPzE6_hh__1lG0IGY12pexDw823pIah1XcufDHX8t64A/exec', {
+    fetch('https://script.google.com/macros/s/AKfycby9-XSxWvAWdASCJIYhSS31KrZsa7JZGrTe5pLPzKIX5NgCro7m-5Ui7pADnWT9lBb7cw/exec', {
         method: 'POST',
         mode: 'no-cors',
         body: form
