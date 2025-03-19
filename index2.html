@@ -5120,10 +5120,9 @@ async function createPixPayment(orderTotal, customerName, customerEmail) {
 async function handlePixPayment(customerName, orderTotal) {
     console.log('1. Iniciando handlePixPayment');
     const pixInfo = document.getElementById('pixInfo');
-    console.log('2. Elemento pixInfo:', pixInfo);
     
     if (!pixInfo) {
-        console.error('3. Elemento pixInfo não encontrado');
+        console.error('2. Elemento pixInfo não encontrado');
         return;
     }
 
@@ -5133,79 +5132,72 @@ async function handlePixPayment(customerName, orderTotal) {
             Gerando QR Code PIX...
         </div>
     `;
-    console.log('4. Loading exibido');
 
     try {
-        // Criar pagamento no Mercado Pago
-        console.log('5. Iniciando createPixPayment com:', { customerName, orderTotal });
         const paymentData = await createPixPayment(orderTotal, customerName);
-        console.log('6. Resposta do createPixPayment:', paymentData);
-        console.log('7. Point of interaction:', paymentData.point_of_interaction);
-        console.log('8. Transaction data:', paymentData.point_of_interaction?.transaction_data);
+        console.log('3. Pagamento criado:', paymentData);
 
-       if (!paymentData.point_of_interaction?.transaction_data) {
-           throw new Error('Dados do QR Code não encontrados');
-       }
+        // Extrair dados necessários
+        const qrCodeBase64 = paymentData.point_of_interaction.transaction_data.qr_code_base64;
+        const qrCodeText = paymentData.point_of_interaction.transaction_data.qr_code;
+        const ticketUrl = paymentData.point_of_interaction.transaction_data.ticket_url;
+        const expirationDate = new Date(paymentData.date_of_expiration);
 
-       // Exibe QR Code e instruções
-       const qrCodeBase64 = paymentData.point_of_interaction.transaction_data.qr_code_base64;
-       const qrCodeText = paymentData.point_of_interaction.transaction_data.qr_code;
-       const expirationTime = new Date(paymentData.date_of_expiration);
+        pixInfo.innerHTML = `
+            <div style="padding: 15px; background: var(--surface); border-radius: 10px; text-align: center;">
+                <h3 style="color: white; margin-bottom: 15px;">Pagamento via PIX</h3>
+                
+                <!-- QR Code -->
+                <div style="background: white; padding: 15px; border-radius: 10px; display: inline-block; margin-bottom: 15px;">
+                    <img src="data:image/png;base64,${qrCodeBase64}" 
+                         alt="QR Code PIX" 
+                         style="max-width: 200px; height: auto;">
+                </div>
 
-       pixInfo.innerHTML = `
-           <div style="padding: 15px; background: var(--surface); border-radius: 10px; text-align: center;">
-               <h3 style="color: white; margin-bottom: 15px;">Pagamento via PIX</h3>
-               
-               <div style="background: white; padding: 15px; border-radius: 10px; display: inline-block; margin-bottom: 15px;">
-                   <img src="data:image/png;base64,${qrCodeBase64}" 
-                        alt="QR Code PIX" 
-                        style="max-width: 200px; height: auto;">
-               </div>
+                <!-- Valor e Pix Copia e Cola -->
+                <div style="margin: 15px 0; padding: 10px; background: var(--glass); border-radius: 10px;">
+                    <div style="margin-bottom: 10px; color: white;">
+                        <strong>Valor a pagar:</strong> R$ ${orderTotal}
+                    </div>
 
-               <div style="margin: 15px 0; padding: 10px; background: var(--glass); border-radius: 10px;">
-                   <div style="margin-bottom: 10px; color: white;">
-                       <strong>Valor a pagar:</strong> R$ ${orderTotal}
-                   </div>
+                    <strong style="color: white;">Pix Copia e Cola:</strong>
+                    <div style="position: relative; margin-top: 10px;">
+                        <input type="text" 
+                               value="${qrCodeText}" 
+                               readonly 
+                               style="width: 100%; padding: 8px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); font-size: 12px;">
+                        <button onclick="copyPixCode(this)" 
+                                style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--accent); color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">
+                            Copiar
+                        </button>
+                    </div>
+                </div>
 
-                   <strong style="color: white;">Pix Copia e Cola:</strong>
-                   <div style="position: relative; margin-top: 10px;">
-                       <input type="text" 
-                              value="${qrCodeText}" 
-                              readonly 
-                              style="width: 100%; padding: 8px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); font-size: 12px;">
-                       <button onclick="copyPixCode(this)" 
-                               style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--accent); color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">
-                           Copiar
-                       </button>
-                   </div>
-               </div>
+                <!-- Informações e Expiração -->
+                <div style="color: var(--text); margin: 15px 0;">
+                    <p>Expira em: ${expirationDate.toLocaleString()}</p>
+                    <small>Após o pagamento, você receberá a confirmação automaticamente.</small>
+                </div>
 
-               <div style="color: var(--text); margin: 15px 0;">
-                   <p>QR Code expira em: <span id="pixCountdown"></span></p>
-                   <p style="font-size: 0.9em;">Após o pagamento, você receberá a confirmação automaticamente.</p>
-               </div>
+                <!-- Botões -->
+                <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 10px;">
+                    <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
+                </button>
+            </div>
+        `;
 
-               <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 10px;">
-                   <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
-               </button>
-           </div>
-       `;
-
-       // Iniciar countdown
-       startPixCountdown(expirationTime);
-
-   } catch (error) {
-       console.error('Erro ao gerar PIX:', error);
-       pixInfo.innerHTML = `
-           <div style="color: var(--error); padding: 10px; background: var(--glass); border-radius: 8px; text-align: center;">
-               <i class="fas fa-exclamation-circle"></i> 
-               Erro ao gerar PIX. Por favor, tente novamente ou escolha outra forma de pagamento.
-           </div>
-           <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 10px;">
-               <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
-           </button>
-       `;
-   }
+    } catch (error) {
+        console.error('4. Erro ao gerar PIX:', error);
+        pixInfo.innerHTML = `
+            <div style="color: var(--error); padding: 10px; background: var(--glass); border-radius: 8px; text-align: center;">
+                <i class="fas fa-exclamation-circle"></i> 
+                Erro ao gerar PIX. Por favor, tente novamente ou escolha outra forma de pagamento.
+            </div>
+            <button class="modal-btn continue-shopping" onclick="changePaymentMethod()" style="margin-top: 10px;">
+                <i class="fas fa-exchange-alt"></i> Alterar forma de pagamento
+            </button>
+        `;
+    }
 }
 
 function displayPixPayment(paymentData) {
