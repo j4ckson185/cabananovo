@@ -2294,6 +2294,74 @@ document.head.appendChild(style);
     margin: 1rem 0;
 }
 
+#pixPaymentModal .modal-content {
+    background: var(--surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    animation: modalSlide 0.3s ease;
+}
+
+#pixPaymentModal .modal-header {
+    border-bottom: 1px solid var(--glass-border);
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#pixPaymentModal .modal-header h2 {
+    color: white;
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+#pixPaymentModal .close-modal {
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+#pixPaymentModal .close-modal:hover {
+    color: var(--accent);
+    transform: rotate(90deg);
+}
+
+#pixPaymentModal .pix-status {
+    transition: all 0.3s ease;
+}
+
+#pixPaymentModal .modal-btn {
+    transition: all 0.3s ease;
+}
+
+#pixPaymentModal .modal-btn:hover {
+    transform: translateY(-2px);
+}
+
+#pixPaymentModal .modal-btn.add-to-cart {
+    background: var(--gradient);
+}
+
+#pixPaymentModal .modal-btn.continue-shopping {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+}
+
+@keyframes modalSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 </style>
 </head>
 <body>
@@ -5272,11 +5340,135 @@ async function handlePixPayment(customerName, orderTotal) {
     }
 }
 
+// Função principal para gerar pagamento PIX
+async function generatePixPayment(customerName, orderTotal) {
+    try {
+        const response = await fetch('https://api.mercadopago.com/v1/payments', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer APP_USR-5690418429869747-031817-f6ee6e1b8317cfd7526ff7bd547728e7-257593839',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                transaction_amount: Number(orderTotal),
+                description: `Pedido Cabana Açaí - ${customerName}`,
+                payment_method_id: 'pix',
+                payer: {
+                    email: 'cliente@email.com',
+                    first_name: customerName
+                }
+            })
+        });
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Erro ao gerar pagamento:', error);
+        throw error;
+    }
+}
+
+// Função para exibir o QR Code do PIX
+function showPixPaymentModal(paymentData, orderTotal, orderId) {
+    const modal = document.createElement('div');
+    modal.id = 'pixPaymentModal';
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    
+    const qrCodeBase64 = paymentData.point_of_interaction.transaction_data.qr_code_base64;
+    const qrCodeText = paymentData.point_of_interaction.transaction_data.qr_code;
+    
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Pagamento PIX</h2>
+                <button class="close-modal" onclick="changePaymentMethod()">&times;</button>
+            </div>
+            
+            <div style="padding: 1.5rem; text-align: center;">
+                <div style="background: white; padding: 1rem; border-radius: 8px; display: inline-block; margin-bottom: 1rem;">
+                    <img src="data:image/png;base64,${qrCodeBase64}" 
+                         alt="QR Code PIX" 
+                         style="width: 200px; height: 200px;">
+                </div>
+                
+                <div style="margin: 1rem 0; padding: 1rem; background: var(--glass); border-radius: 8px;">
+                    <p style="margin-bottom: 0.5rem;">
+                        <strong>Valor:</strong> R$ ${orderTotal}
+                    </p>
+                    <p style="color: var(--text); margin: 1rem 0;">
+                        Escaneie o QR Code acima ou copie o código PIX abaixo:
+                    </p>
+                    <div style="position: relative;">
+                        <input type="text" 
+                               value="${qrCodeText}" 
+                               readonly
+                               style="width: 100%; padding: 0.5rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 4px; color: var(--text);">
+                        <button onclick="copyPixCode(this)" 
+                                style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--accent); color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">
+                            Copiar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pix-status" style="margin: 1rem 0; padding: 1rem; background: var(--glass); border-radius: 8px;">
+                    <p style="color: var(--text);">
+                        <i class="fas fa-info-circle"></i>
+                        Após realizar o pagamento, clique no botão abaixo para continuar seu pedido
+                    </p>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button onclick="confirmPixPayment('${orderId}')" 
+                            class="modal-btn add-to-cart" style="flex: 1;">
+                        <i class="fas fa-check"></i> Já realizei o pagamento
+                    </button>
+                    <button onclick="changePaymentMethod()" 
+                            class="modal-btn continue-shopping" style="flex: 1;">
+                        <i class="fas fa-exchange-alt"></i> Trocar forma de pagamento
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+}
+
+// Função para lidar com a confirmação do pagamento
+async function confirmPixPayment(orderId) {
+    try {
+        // Atualizar status do pedido no Firebase
+        await firebase.database().ref(`orders/${orderId}`).update({
+            status: 'pending_confirmation',
+            paymentConfirmedAt: firebase.database.ServerValue.TIMESTAMP
+        });
+
+        // Remover modal do PIX
+        const pixModal = document.getElementById('pixPaymentModal');
+        if (pixModal) {
+            pixModal.remove();
+        }
+
+        // Formatar mensagem para o WhatsApp
+        const message = formatOrderForWhatsApp() + "\n\n💳 *Pagamento via PIX*\nStatus: ✅ Pagamento Realizado";
+
+        // Redirecionar para WhatsApp
+        window.location.href = `https://wa.me/5584988731028?text=${encodeURIComponent(message)}`;
+
+    } catch (error) {
+        console.error('Erro ao confirmar pagamento:', error);
+        showNotification('Erro ao confirmar pagamento. Tente novamente.');
+    }
+}
+
+// Função para copiar código PIX
 function copyPixCode(button) {
     const input = button.parentElement.querySelector('input');
     input.select();
     document.execCommand('copy');
     
+    // Feedback visual
     const originalText = button.textContent;
     button.textContent = 'Copiado!';
     button.style.background = '#4CAF50';
@@ -5285,6 +5477,25 @@ function copyPixCode(button) {
         button.textContent = originalText;
         button.style.background = 'var(--accent)';
     }, 2000);
+}
+
+// Função para trocar método de pagamento
+function changePaymentMethod() {
+    // Remover modal do PIX
+    const pixModal = document.getElementById('pixPaymentModal');
+    if (pixModal) {
+        pixModal.remove();
+    }
+
+    // Resetar seleção de método de pagamento
+    const paymentInputs = document.querySelectorAll('input[name="paymentMethod"]');
+    paymentInputs.forEach(input => input.checked = false);
+
+    // Mostrar modal de criação de pedido novamente
+    const createOrderModal = document.getElementById('createOrderModal');
+    if (createOrderModal) {
+        createOrderModal.style.display = 'block';
+    }
 }
 
 function logToSheet(erro, detalhes) {
@@ -5476,70 +5687,60 @@ async function submitOrder() {
         const neighborhood = document.getElementById('neighborhood').value;
         const zipCode = document.getElementById('zipCode').value;
         const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
-        const total = document.getElementById('orderTotal').value;
+        const orderTotal = document.getElementById('orderTotal').value;
 
         // Validações
         if (!customerName || !customerPhone || !street || !streetNumber || !neighborhood || !zipCode || !paymentMethod) {
             throw new Error('Por favor, preencha todos os campos obrigatórios');
         }
 
-        // Criar pedido no Firebase
+        // Dados básicos do pedido
         const orderData = {
-            id: document.getElementById('orderId').value,
             timestamp: firebase.database.ServerValue.TIMESTAMP,
-            status: paymentMethod === 'pix' ? 'pending_payment' : 'open',
-            paymentMethod: paymentMethod,
-            orderTotal: Number(total),
-            items: cart,
-            customer: {
+            customerInfo: {
                 name: customerName,
                 phone: customerPhone
             },
-            deliveryPoint: {
-                address: `${street}, ${streetNumber}, ${neighborhood}`,
-                street: street,
+            deliveryInfo: {
+                street,
                 number: streetNumber,
-                complement: document.getElementById('complement').value || '',
-                neighborhood: neighborhood,
-                zipCode: zipCode
+                neighborhood,
+                zipCode,
+                complement: document.getElementById('complement')?.value || ''
             },
-            notes: document.getElementById('notes').value || ''
+            items: cart,
+            paymentMethod,
+            total: parseFloat(orderTotal),
+            status: paymentMethod === 'pix' ? 'pending_payment' : 'open'
         };
 
-        // Salvar no Firebase
-        const newOrderRef = await realtimeDB.ref('orders').push(orderData);
+        // Salvar pedido no Firebase
+        const orderRef = await firebase.database().ref('orders').push(orderData);
 
-        // Se for PIX, redirecionar para pagamento
+        // Se for PIX, iniciar fluxo de pagamento transparente
         if (paymentMethod === 'pix') {
-            const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer APP_USR-5690418429869747-031817-f6ee6e1b8317cfd7526ff7bd547728e7-257593839',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    items: [{
-                        title: `Pedido Cabana Açaí #${orderData.id}`,
-                        quantity: 1,
-                        currency_id: 'BRL',
-                        unit_price: Number(total)
-                    }],
-                    payment_methods: {
-                        default_payment_method_id: "pix",
-                        payment_types: [{ id: "pix" }]
-                    },
-                    external_reference: newOrderRef.key,
-                    back_urls: {
-                        success: `https://wa.me/5584988731028?text=Olá! Realizei o pagamento PIX do pedido ${orderData.id}`,
-                        pending: `https://wa.me/5584988731028?text=Olá! Preciso de ajuda com meu pagamento PIX do pedido ${orderData.id}`
-                    }
-                })
-            });
+            try {
+                // Fechar modal atual
+                document.getElementById('createOrderModal').style.display = 'none';
 
-            const preference = await response.json();
-            window.location.href = preference.init_point;
+                // Gerar pagamento PIX
+                const paymentData = await generatePixPayment(customerName, orderTotal);
+
+                if (paymentData.point_of_interaction?.transaction_data?.qr_code) {
+                    // Mostrar modal com QR Code
+                    showPixPaymentModal(paymentData, orderTotal, orderRef.key);
+                } else {
+                    throw new Error('Erro ao gerar QR Code PIX');
+                }
+
+            } catch (error) {
+                console.error('Erro no pagamento PIX:', error);
+                // Reverter status do pedido
+                await orderRef.update({ status: 'failed_payment' });
+                throw new Error('Erro ao processar pagamento PIX. Tente novamente.');
+            }
         } else {
-            // Fluxo normal para WhatsApp
+            // Fluxo normal para outros métodos de pagamento
             const message = formatOrderForWhatsApp();
             window.location.href = `https://wa.me/5584988731028?text=${encodeURIComponent(message)}`;
         }
