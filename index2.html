@@ -5149,15 +5149,44 @@ async function createPixPayment(orderTotal, customerName) {
 }
 
 async function handlePixPayment(customerName, orderTotal) {
-    const logToSheet = (erro, detalhes) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://script.google.com/macros/s/AKfycbwUNrr_pNMC6neoGvBa4m7QSioYknJ0BlbFnskIKxyDcEfXnOmT4_p_JEg-BRpcPSr9Ng/exec', true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.send(JSON.stringify({
-            erro: erro,
-            detalhes: JSON.stringify(detalhes)
-        }));
-    };
+    // Função para logar na planilha
+    function logToSheet(erro, detalhes) {
+        // Criar um formulário invisível
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = 'https://script.google.com/macros/s/AKfycbwUNrr_pNMC6neoGvBa4m7QSioYknJ0BlbFnskIKxyDcEfXnOmT4_p_JEg-BRpcPSr9Ng/exec';
+        form.target = 'hidden-iframe';
+
+        // Adicionar dados como campos ocultos
+        const errorInput = document.createElement('input');
+        errorInput.type = 'hidden';
+        errorInput.name = 'erro';
+        errorInput.value = erro;
+        form.appendChild(errorInput);
+
+        const detailsInput = document.createElement('input');
+        detailsInput.type = 'hidden';
+        detailsInput.name = 'detalhes';
+        detailsInput.value = JSON.stringify(detalhes);
+        form.appendChild(detailsInput);
+
+        // Criar iframe oculto para receber resposta
+        let iframe = document.getElementById('hidden-iframe');
+        if (!iframe) {
+            iframe = document.createElement('iframe');
+            iframe.name = 'hidden-iframe';
+            iframe.id = 'hidden-iframe';
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+        }
+
+        // Adicionar e submeter form
+        document.body.appendChild(form);
+        form.submit();
+
+        // Limpar form
+        setTimeout(() => document.body.removeChild(form), 1000);
+    }
 
     const pixInfo = document.getElementById('pixInfo');
     if (!pixInfo) {
@@ -5166,7 +5195,7 @@ async function handlePixPayment(customerName, orderTotal) {
     }
 
     // Log inicial
-    logToSheet('INICIO_PIX', { customerName, orderTotal });
+    logToSheet('INICIO_PIX', { cliente: customerName, valor: orderTotal });
 
     pixInfo.innerHTML = `
         <div style="color: var(--text); padding: 10px; background: var(--glass); border-radius: 8px; text-align: center;">
@@ -5177,25 +5206,20 @@ async function handlePixPayment(customerName, orderTotal) {
 
     try {
         const paymentData = await createPixPayment(orderTotal, customerName);
-        logToSheet('PAYMENT_DATA', paymentData);
+        logToSheet('DADOS_PAGAMENTO', paymentData);
 
         if (!paymentData.point_of_interaction?.transaction_data) {
+            logToSheet('ERRO_DADOS', 'Dados do QR Code não encontrados');
             throw new Error('Dados do QR Code não encontrados');
         }
-
-        const qrCodeBase64 = paymentData.point_of_interaction.transaction_data.qr_code_base64;
-        const qrCodeText = paymentData.point_of_interaction.transaction_data.qr_code;
-
-        logToSheet('QR_CODE_GERADO', { qrCodeText });
 
         // ... resto do código ...
 
     } catch (error) {
         logToSheet('ERRO_FINAL', {
-            erro: error.toString(),
-            customerName,
-            orderTotal,
-            stack: error.stack
+            mensagem: error.toString(),
+            cliente: customerName,
+            valor: orderTotal
         });
 
         pixInfo.innerHTML = `
