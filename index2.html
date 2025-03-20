@@ -7048,26 +7048,21 @@ function handlePixResponse(response) {
 function startPaymentCheck(amount) {
     const statusDiv = document.getElementById('paymentStatus');
     let checkCount = 0;
-    const maxChecks = 120; // 10 minutos
+    const maxChecks = 120; // 10 minutos (5s * 120)
     const webhookUrl = 'https://script.google.com/macros/s/AKfycbzqJku4pT0YIXUCDTITzcbI6zSF2d1FZMn5z69pPD6f50Al2zapj2PX1CYvxHeXbKeAaQ/exec';
-
-    // Guardar ID da transação atual
-    let currentTransactionId = null;
 
     const checkInterval = setInterval(async () => {
         checkCount++;
         
         try {
-            const response = await fetch(`${webhookUrl}?action=check_payment&amount=${amount}`, {
-                method: 'GET'
-            });
-
+            const response = await fetch(`${webhookUrl}?action=check_payment&amount=${amount}`);
             const data = await response.text();
             
-            // Se encontrou pagamento novo
-            if (data.includes('approved')) {
+            // Se encontrou "approved" na resposta
+            if(data.includes('"status":"approved"')) {
                 clearInterval(checkInterval);
                 
+                // Atualizar interface
                 statusDiv.innerHTML = `
                     <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 8px; margin: 10px 0;">
                         <i class="fas fa-check-circle"></i> 
@@ -7082,17 +7077,19 @@ function startPaymentCheck(amount) {
                     submitButton.innerHTML = 'Finalizar Pedido';
                     submitButton.style.opacity = '1';
                 }
-
+                
                 return;
             }
-            
-            // Se ainda não encontrou
+
+            // Se ainda não aprovado
             if (checkCount >= maxChecks) {
                 clearInterval(checkInterval);
                 statusDiv.innerHTML = `
                     <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
                         <i class="fas fa-info-circle"></i> 
                         Tempo limite excedido. Se você já pagou, o pedido será confirmado em breve.
+                        <br>
+                        <small>Você pode acompanhar o status do pagamento pelo app do Mercado Pago.</small>
                     </div>
                 `;
             } else {
@@ -7100,11 +7097,11 @@ function startPaymentCheck(amount) {
                     <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
                         <i class="fas fa-spinner fa-spin"></i> 
                         Aguardando confirmação do PIX... (${Math.floor(checkCount/12)}min)
-                        <br><small>Não feche esta janela até a confirmação.</small>
+                        <br>
+                        <small>Não feche esta janela até a confirmação.</small>
                     </div>
                 `;
             }
-
         } catch (error) {
             console.error('Erro ao verificar pagamento:', error);
         }
