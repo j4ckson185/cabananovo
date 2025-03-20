@@ -6992,44 +6992,38 @@ async function initializePixPayment(amount, event) {
     const statusDiv = document.getElementById('paymentStatus');
     const webhookUrl = 'https://script.google.com/macros/s/AKfycbxIk5sTH4qF9QCGX9XqaZO9ocr0_mc9M0yhQuaNEeWC3eIei-s3yu4K5RAC4RJH2Ynanw/exec';
     
-    // Mostrar status inicial
-    statusDiv.innerHTML = `
-        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-            <i class="fas fa-spinner fa-spin"></i> 
-            Gerando pagamento PIX...
-        </div>
-    `;
-
     try {
-        // Criar pagamento
+        // Atualizar status
+        statusDiv.innerHTML = `
+            <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                <i class="fas fa-spinner fa-spin"></i> 
+                Iniciando pagamento...
+            </div>
+        `;
+
+        // Criar pagamento através do Apps Script
         await fetch(`${webhookUrl}?action=create_payment&amount=${amount}`, {
             method: 'GET',
             mode: 'no-cors'
         });
 
-        // Aguardar um pouco para o pagamento ser registrado
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Verificar se o botão foi clicado (evita múltiplos cliques)
+        const button = event.target;
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+        }
 
-        // Buscar detalhes do pagamento criado
-        await fetch(`${webhookUrl}?action=get_last_payment`, {
-            method: 'GET',
-            mode: 'no-cors'
-        });
+        // Iniciar verificação de pagamento
+        startPaymentCheck(amount);
 
-        // Aguardar mais um pouco para garantir
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        // Atualizar status
         statusDiv.innerHTML = `
             <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
                 <i class="fas fa-qrcode"></i> 
-                QR Code PIX gerado! Escaneie para pagar.
+                QR Code PIX gerado! Faça o pagamento.
                 <br><small>Após o pagamento, aguarde a confirmação automática.</small>
             </div>
         `;
-
-        // Iniciar monitoramento de pagamento
-        startPaymentCheck(amount);
 
     } catch (error) {
         console.error('Erro ao iniciar pagamento:', error);
@@ -7039,6 +7033,13 @@ async function initializePixPayment(amount, event) {
                 Erro ao processar pagamento. Tente novamente.
             </div>
         `;
+
+        // Reabilitar botão em caso de erro
+        const button = event.target;
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar PIX';
+        }
     }
 }
     
