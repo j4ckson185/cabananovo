@@ -232,37 +232,39 @@
             addLog('Chave PIX copiada para área de transferência', 'success');
         }
 
-        // Função para criar uma chamada JSONP
         function jsonpRequest(url, callback) {
-            // Criar nome de função único para cada chamada
-            const callbackName = 'jsonpCallback_' + callbackCount++;
-            
-            // Criar função global temporária que será chamada pelo script
-            window[callbackName] = function(data) {
-                // Remover script após uso
-                document.body.removeChild(script);
-                // Remover função global após uso
-                delete window[callbackName];
-                // Chamar callback com os dados
-                callback(data);
-            };
-            
-            // Adicionar parâmetro de callback à URL
-            const scriptUrl = url + (url.includes('?') ? '&' : '?') + 'callback=' + callbackName;
-            
-            // Criar e adicionar tag de script
-            const script = document.createElement('script');
-            script.src = scriptUrl;
-            script.onerror = function() {
-                // Remover script em caso de erro
-                document.body.removeChild(script);
-                delete window[callbackName];
-                callback({ error: 'Failed to load script' });
-            };
-            
-            // Adicionar script à página
-            document.body.appendChild(script);
+    // Criar iframe oculto
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+    
+    // ID único para esta chamada
+    const requestId = 'request_' + callbackCount++;
+    
+    // Armazenar callback para acesso posterior
+    window[requestId] = function(data) {
+        // Limpar
+        setTimeout(() => {
+            document.body.removeChild(iframe);
+            delete window[requestId];
+        }, 100);
+        
+        // Chamar callback
+        callback(data);
+    };
+    
+    // Navegar para URL com mensageria de eventos
+    iframe.src = url + (url.includes('?') ? '&' : '?') + 'iframe=true&requestId=' + requestId;
+    
+    // Se falhar após 5 segundos, reportar erro
+    setTimeout(() => {
+        if (window[requestId]) {
+            callback({ error: 'Request timeout' });
+            document.body.removeChild(iframe);
+            delete window[requestId];
         }
+    }, 5000);
+}
         
         // Função para gerar CRC16
         function calculateCRC16(str) {
