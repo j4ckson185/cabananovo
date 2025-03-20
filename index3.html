@@ -6990,7 +6990,7 @@ async function initializePixPayment(amount, event) {
     }
 
     const statusDiv = document.getElementById('paymentStatus');
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbwnTQwP_GCGveSxhIO__H6hPiLGyGwx0V8x2acHFvt2WU956x-hgk8ng4DnItoaipsPBw/exec';
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbwjnulslmhsOnPYGu28FUEswDClJMGoLqZZWDGaY_5WXWJYqNLN9vVE68Qq13gOwvtC/exec';
     
     try {
         statusDiv.innerHTML = `
@@ -7000,14 +7000,11 @@ async function initializePixPayment(amount, event) {
             </div>
         `;
 
-        // Criar pagamento
-        await fetch(`${webhookUrl}?action=create_payment&amount=${amount}`, {
+        // Gerar QR Code PIX
+        await fetch(`${webhookUrl}?action=generate_pix&amount=${amount}`, {
             method: 'GET',
             mode: 'no-cors'
         });
-
-        // Aguardar um pouco para o QR Code ser gerado
-        await new Promise(resolve => setTimeout(resolve, 1000));
 
         statusDiv.innerHTML = `
             <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
@@ -7021,7 +7018,7 @@ async function initializePixPayment(amount, event) {
         startPaymentCheck(amount);
 
     } catch (error) {
-        console.error('Erro ao iniciar pagamento:', error);
+        console.error('Erro ao gerar PIX:', error);
         statusDiv.innerHTML = `
             <div style="background: var(--error); padding: 10px; border-radius: 8px; margin: 10px 0; color: white;">
                 <i class="fas fa-exclamation-circle"></i> 
@@ -7035,26 +7032,22 @@ function startPaymentCheck(amount) {
     const statusDiv = document.getElementById('paymentStatus');
     let checkCount = 0;
     const maxChecks = 120; // 10 minutos (5s * 120)
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbwnTQwP_GCGveSxhIO__H6hPiLGyGwx0V8x2acHFvt2WU956x-hgk8ng4DnItoaipsPBw/exec';
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbwjnulslmhsOnPYGu28FUEswDClJMGoLqZZWDGaY_5WXWJYqNLN9vVE68Qq13gOwvtC/exec';
 
-    // Começar verificação
     const checkInterval = setInterval(async () => {
         checkCount++;
         
         try {
             // Verificar pagamento
-            const response = await fetch(`${webhookUrl}?action=check_payment&amount=${amount}`, {
+            await fetch(`${webhookUrl}?action=check_payment&amount=${amount}`, {
                 method: 'GET',
                 mode: 'no-cors'
             });
 
             // Verificar localStorage
-            const paymentData = JSON.parse(localStorage.getItem('last_payment_data') || '{}');
+            const paymentStatus = localStorage.getItem('last_payment_status');
             
-            if (paymentData.status === 'approved' && 
-                (paymentData.operation_type === 'money_transfer' || 
-                 paymentData.operation_type === 'account_fund')) {
-                
+            if (paymentStatus === 'approved') {
                 clearInterval(checkInterval);
                 
                 statusDiv.innerHTML = `
@@ -7095,14 +7088,8 @@ function startPaymentCheck(amount) {
 
         } catch (error) {
             console.error('Erro ao verificar pagamento:', error);
-            statusDiv.innerHTML = `
-                <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                    <i class="fas fa-sync"></i> 
-                    Verificando pagamento...
-                </div>
-            `;
         }
-    }, 5000); // Verifica a cada 5 segundos
+    }, 5000);
 }
     
 function generatePixString(pixKey, merchantName, city, amount) {
