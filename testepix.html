@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teste de Pagamento PIX</title>
+    <title>Teste de Pagamento PIX (com Proxy)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
@@ -158,15 +158,25 @@
             padding: 5px 10px;
             font-size: 14px;
         }
+
+        #directCheck {
+            background: #3A0CA3;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Teste de Pagamento PIX</h1>
+        <h1>Teste de Pagamento PIX (com Proxy)</h1>
         
         <div>
             <label for="amount">Valor a ser pago:</label>
             <input type="number" id="amount" step="0.01" min="0.01" value="1.00">
+        </div>
+        
+        <div>
+            <label for="endpointUrl">URL do Webhook:</label>
+            <input type="text" id="endpointUrl" value="https://script.google.com/macros/s/AKfycbznSr1yXI4iMaqN43QADrAElary-oDMWHI17lglRJHNwKmdBfFkOENLqMZq72iAVmEWvA/exec">
         </div>
         
         <button id="generateBtn" onclick="generatePixQRCode()">Gerar QR Code</button>
@@ -191,6 +201,7 @@
             </div>
             
             <button onclick="checkPaymentManually()">Verificar Pagamento Manualmente</button>
+            <button id="directCheck" onclick="checkDirect()">Verificar Diretamente (sem proxy)</button>
         </div>
     </div>
     
@@ -201,12 +212,8 @@
     </div>
 
     <script>
-        // URL do seu Google Apps Script
-        const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbz27k4KvF5_P9LTqk-qBLzNRKP8o8KHX5vk-Y6O_CcUXuKv9boBRZpMopkevfwNODzyXg/exec';
-        
         let checkInterval;
         let amount = 0;
-        let callbackCount = 0;
         
         // Função para adicionar logs
         function addLog(message, type = 'info') {
@@ -216,6 +223,7 @@
             logEl.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
             logsEl.appendChild(logEl);
             logsEl.scrollTop = logsEl.scrollHeight;
+            console.log(`[${type}] ${message}`);
         }
         
         // Limpar logs
@@ -231,40 +239,6 @@
             
             addLog('Chave PIX copiada para área de transferência', 'success');
         }
-
-        function jsonpRequest(url, callback) {
-    // Criar iframe oculto
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-    
-    // ID único para esta chamada
-    const requestId = 'request_' + callbackCount++;
-    
-    // Armazenar callback para acesso posterior
-    window[requestId] = function(data) {
-        // Limpar
-        setTimeout(() => {
-            document.body.removeChild(iframe);
-            delete window[requestId];
-        }, 100);
-        
-        // Chamar callback
-        callback(data);
-    };
-    
-    // Navegar para URL com mensageria de eventos
-    iframe.src = url + (url.includes('?') ? '&' : '?') + 'iframe=true&requestId=' + requestId;
-    
-    // Se falhar após 5 segundos, reportar erro
-    setTimeout(() => {
-        if (window[requestId]) {
-            callback({ error: 'Request timeout' });
-            document.body.removeChild(iframe);
-            delete window[requestId];
-        }
-    }, 5000);
-}
         
         // Função para gerar CRC16
         function calculateCRC16(str) {
@@ -312,6 +286,97 @@
             ];
 
             return fields.join('');
+        }
+        
+        // Função para fazer solicitação através de um proxy CORS
+        async function fetchWithProxy(url) {
+            try {
+                // Tentar com proxy AllOrigins
+                const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+                addLog(`Tentando com proxy: ${proxyUrl}`);
+                
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+                
+                const data = await response.json();
+                
+                if (data.contents) {
+                    try {
+                        // Tentar analisar o conteúdo como JSON
+                        return JSON.parse(data.contents);
+                    } catch (e) {
+                        // Se não for JSON válido, pode ser JSONP
+                        const contents = data.contents;
+                        if (contents.startsWith('callback(') && contents.endsWith(')')) {
+                            return JSON.parse(contents.substring(9, contents.length - 1));
+                        }
+                        addLog(`Conteúdo não é JSON válido: ${contents}`, 'error');
+                        throw new Error('Resposta não é JSON válido');
+                    }
+                } else {
+                    throw new Error('Resposta vazia do proxy');
+                }
+            } catch (error) {
+                // Tentar com proxy cors.sh como fallback
+                addLog(`Tentando com proxy alternativo...`, 'info');
+                try {
+                    const corsProxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+                    const response = await fetch(corsProxyUrl);
+                    if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+                    
+                    const text = await response.text();
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        // Se não for JSON válido, pode ser JSONP
+                        if (text.startsWith('callback(') && text.endsWith(')')) {
+                            return JSON.parse(text.substring(9, text.length - 1));
+                        }
+                        addLog(`Conteúdo não é JSON válido: ${text}`, 'error');
+                        throw new Error('Resposta não é JSON válido');
+                    }
+                } catch (fallbackError) {
+                    addLog(`Erro no proxy alternativo: ${fallbackError.message}`, 'error');
+                    return { error: 'Falha em todos os proxies: ' + fallbackError.message };
+                }
+            }
+        }
+
+        // Verificação direta (só funciona se o script tiver CORS habilitado)
+        async function checkDirect() {
+            try {
+                const webhookUrl = document.getElementById('endpointUrl').value;
+                const url = `${webhookUrl}?action=check_payment&amount=${amount}&nocache=${Date.now()}`;
+                
+                addLog(`Tentando acessar diretamente: ${url}`);
+                
+                const response = await fetch(url);
+                const text = await response.text();
+                
+                addLog(`Resposta direta: ${text}`);
+                
+                let data;
+                try {
+                    // Tentar como JSON
+                    data = JSON.parse(text);
+                } catch (e) {
+                    // Tentar como JSONP
+                    if (text.startsWith('callback(') && text.endsWith(')')) {
+                        const jsonStr = text.substring(9, text.length - 1);
+                        data = JSON.parse(jsonStr);
+                        addLog('Extraído JSON de resposta JSONP');
+                    } else {
+                        throw new Error('Resposta não é JSON nem JSONP válido');
+                    }
+                }
+                
+                updatePaymentStatus(data);
+            } catch (error) {
+                addLog(`Erro no acesso direto: ${error.message}`, 'error');
+                const statusEl = document.getElementById('paymentStatus');
+                statusEl.className = 'payment-status error';
+                statusEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Erro: ${error.message}`;
+            }
         }
         
         // Função para gerar QR Code PIX
@@ -367,6 +432,32 @@
             startPaymentCheck();
         }
         
+        // Função para atualizar o status do pagamento na UI
+        function updatePaymentStatus(data) {
+            const statusEl = document.getElementById('paymentStatus');
+            
+            if (data.status === 'approved') {
+                statusEl.className = 'payment-status success';
+                statusEl.innerHTML = `<i class="fas fa-check-circle"></i> Pagamento confirmado!`;
+                addLog('Pagamento confirmado com sucesso!', 'success');
+                if (checkInterval) {
+                    clearInterval(checkInterval);
+                    checkInterval = null;
+                }
+                return true;
+            } else if (data.error) {
+                statusEl.className = 'payment-status error';
+                statusEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Erro: ${data.error}`;
+                addLog(`Erro: ${data.error}`, 'error');
+                return false;
+            } else {
+                statusEl.className = 'payment-status pending';
+                statusEl.innerHTML = `<i class="fas fa-info-circle"></i> Pagamento ainda não confirmado.`;
+                addLog('Pagamento ainda não confirmado', 'info');
+                return false;
+            }
+        }
+        
         // Função para verificar pagamento
         function startPaymentCheck() {
             const statusEl = document.getElementById('paymentStatus');
@@ -379,40 +470,53 @@
             addLog('Iniciando verificação de pagamento');
             
             // Função para verificar o pagamento
-            const checkPayment = () => {
+            const checkPayment = async () => {
+                const webhookUrl = document.getElementById('endpointUrl').value;
                 addLog(`Verificando pagamento (tentativa ${checkCount + 1})`);
                 
                 // Criar URL única para evitar cache
-                const url = `${WEBHOOK_URL}?action=check_payment&amount=${amount}&nocache=${Date.now()}`;
+                const url = `${webhookUrl}?action=check_payment&amount=${amount}&nocache=${Date.now()}`;
                 
-                // Fazer requisição JSONP
-                jsonpRequest(url, function(data) {
-                    console.log('Resposta recebida:', data);
+                try {
+                    // Tentar com proxy CORS
+                    const data = await fetchWithProxy(url);
                     addLog(`Resposta: ${JSON.stringify(data)}`);
                     
-                    if (data.status === 'approved') {
+                    const isConfirmed = updatePaymentStatus(data);
+                    
+                    if (isConfirmed) {
                         clearInterval(checkInterval);
-                        statusEl.className = 'payment-status success';
-                        statusEl.innerHTML = `<i class="fas fa-check-circle"></i> Pagamento confirmado!`;
-                        addLog('Pagamento confirmado com sucesso!', 'success');
-                    } else {
-                        checkCount++;
-                        
-                        if (checkCount >= maxChecks) {
-                            clearInterval(checkInterval);
-                            statusEl.innerHTML = `
-                                <i class="fas fa-info-circle"></i> Tempo limite excedido. 
-                                Se você já pagou, o pagamento será confirmado em breve.
-                            `;
-                            addLog('Tempo limite de verificação excedido', 'error');
-                        } else {
-                            statusEl.innerHTML = `
-                                <i class="fas fa-spinner"></i> Aguardando confirmação do PIX... 
-                                (${Math.floor(checkCount/20)} min ${(checkCount % 20) * 3} s)
-                            `;
-                        }
+                        return;
                     }
-                });
+                    
+                    checkCount++;
+                    if (checkCount >= maxChecks) {
+                        clearInterval(checkInterval);
+                        statusEl.innerHTML = `
+                            <i class="fas fa-info-circle"></i> Tempo limite excedido. 
+                            Se você já pagou, o pagamento será confirmado em breve.
+                        `;
+                        addLog('Tempo limite de verificação excedido', 'error');
+                    } else {
+                        statusEl.innerHTML = `
+                            <i class="fas fa-spinner"></i> Aguardando confirmação do PIX... 
+                            (${Math.floor(checkCount/20)} min ${(checkCount % 20) * 3} s)
+                        `;
+                    }
+                } catch (error) {
+                    console.error('Erro:', error);
+                    addLog(`Erro: ${error.message}`, 'error');
+                    
+                    checkCount++;
+                    if (checkCount >= maxChecks) {
+                        clearInterval(checkInterval);
+                        statusEl.className = 'payment-status error';
+                        statusEl.innerHTML = `
+                            <i class="fas fa-exclamation-circle"></i> Erro ao verificar pagamento. 
+                            Se você já pagou, o pagamento será processado normalmente.
+                        `;
+                    }
+                }
             };
             
             // Verificar imediatamente e depois a cada 3 segundos
@@ -421,7 +525,7 @@
         }
         
         // Função para verificar pagamento manualmente
-        function checkPaymentManually() {
+        async function checkPaymentManually() {
             addLog('Verificação manual de pagamento iniciada');
             
             const statusEl = document.getElementById('paymentStatus');
@@ -429,23 +533,21 @@
             statusEl.innerHTML = `<i class="fas fa-spinner"></i> Verificando pagamento...`;
             
             // URL para verificação
-            const url = `${WEBHOOK_URL}?action=check_payment&amount=${amount}&nocache=${Date.now()}`;
+            const webhookUrl = document.getElementById('endpointUrl').value;
+            const url = `${webhookUrl}?action=check_payment&amount=${amount}&nocache=${Date.now()}`;
             
-            // Fazer requisição JSONP
-            jsonpRequest(url, function(data) {
-                console.log('Resposta manual recebida:', data);
+            try {
+                // Tentar com proxy CORS
+                const data = await fetchWithProxy(url);
                 addLog(`Resposta manual: ${JSON.stringify(data)}`);
+                updatePaymentStatus(data);
+            } catch (error) {
+                console.error('Erro na verificação manual:', error);
+                addLog(`Erro na verificação manual: ${error.message}`, 'error');
                 
-                if (data.status === 'approved') {
-                    statusEl.className = 'payment-status success';
-                    statusEl.innerHTML = `<i class="fas fa-check-circle"></i> Pagamento confirmado!`;
-                    addLog('Pagamento confirmado com sucesso!', 'success');
-                } else {
-                    statusEl.className = 'payment-status pending';
-                    statusEl.innerHTML = `<i class="fas fa-info-circle"></i> Pagamento ainda não confirmado.`;
-                    addLog('Pagamento ainda não confirmado', 'info');
-                }
-            });
+                statusEl.className = 'payment-status error';
+                statusEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Erro ao verificar pagamento.`;
+            }
         }
         
         // Adicionar log inicial
