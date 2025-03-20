@@ -7048,30 +7048,6 @@ function handlePaymentCheck(response) {
         }
     }
 }
-
-// Função que recebe resposta do check
-function handlePaymentCheck(response) {
-    const statusDiv = document.getElementById('paymentStatus');
-    
-    if (response.status === 'approved') {
-        clearInterval(window.currentCheckInterval);
-        
-        statusDiv.innerHTML = `
-            <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 8px; margin: 10px 0;">
-                <i class="fas fa-check-circle"></i> 
-                Pagamento PIX recebido! Você pode continuar com seu pedido.
-            </div>
-        `;
-
-        // Habilitar botão de finalizar
-        const submitButton = document.querySelector('#createOrderForm button[type="button"]');
-        if (submitButton) {
-            submitButton.disabled = false;
-            submitButton.innerHTML = 'Finalizar Pedido';
-            submitButton.style.opacity = '1';
-        }
-    }
-}
     
 function generatePixString(pixKey, merchantName, city, amount) {
     // Função para formatar tamanho do campo (ID + tamanho + valor)
