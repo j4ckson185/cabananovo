@@ -6991,7 +6991,7 @@ async function initializePixPayment(amount) {
         const orderId = `ORDER_${Date.now()}`;
         
         // Configurar webhook URL
-        const webhookUrl = 'https://script.google.com/macros/s/AKfycbyyJUZcPWbX0Ly4Rjbze1pPhXC9Uv6wJbYYemH-7c97nzHuRy3eW7S0zXWNQOt0eIi6/exec';
+        const webhookUrl = 'https://script.google.com/macros/s/AKfycbxr1r9FI0rYhX1_s4B_VDtSQEj5nTxrPn0f3DQYyOn5bMRVvymtMvw5RqAYYkpcG9pjeA/exec';
 
         // Criar preferência de pagamento
         const preferenceUrl = 'https://api.mercadopago.com/v1/payments';
@@ -7071,7 +7071,7 @@ function checkPaymentStatus(orderId, amount) {
     const statusDiv = document.getElementById('paymentStatus');
     
     // URL do seu Google Apps Script implantado
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbxD7gJy1NwRJ3VPmMd4hf9Gf53q-N4jpkl5G9LAZbXxtnD7Iu214IiNR0dNU2QiBkPHlw/exec';
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbxr1r9FI0rYhX1_s4B_VDtSQEj5nTxrPn0f3DQYyOn5bMRVvymtMvw5RqAYYkpcG9pjeA/exec';
     
     // Atualizar status para "verificando"
     statusDiv.innerHTML = `
