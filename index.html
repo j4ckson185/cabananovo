@@ -6815,52 +6815,367 @@ function calculateCRC16(str) {
     }
 
     const data = Array.from(str).map(c => c.charCodeAt(0));
-    return crc16(data);
+    return crc16(data).toString(16).toUpperCase().padStart(4, '0');
 }
 
-// 2. Depois a função que gera o QR Code
+function openPaymentApp(amount, event) {
+    // Prevenir comportamento padrão
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    // URLs dos principais bancos
+    const bankUrls = {
+        nubank: `https://nubank.com.br/pagar/pix/${amount}`,
+        itau: 'https://www.itau.com.br/pix',
+        santander: 'https://www.santander.com.br/pix',
+        bradesco: 'https://banco.bradesco/pix',
+        bb: 'https://www.bb.com.br/pix',
+        caixa: 'https://www.caixa.gov.br/pix',
+        inter: 'https://www.bancointer.com.br/pix',
+    };
+
+    // Criar modal de seleção de banco
+    const bankModal = document.createElement('div');
+    bankModal.id = 'bankSelectionModal';
+    bankModal.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--surface);
+        padding: 20px;
+        border-radius: 15px;
+        z-index: 10000;
+        width: 90%;
+        max-width: 400px;
+        border: 1px solid var(--glass-border);
+    `;
+
+    bankModal.innerHTML = `
+        <h3 style="color: white; margin-bottom: 15px; text-align: center;">Escolha seu banco</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px;">
+            ${Object.entries(bankUrls).map(([bank, url]) => `
+                <button onclick="openBankUrl('${url}', event)" 
+                    style="background: var(--glass); border: 1px solid var(--glass-border); color: white; 
+                    padding: 10px; border-radius: 8px; cursor: pointer; text-transform: capitalize;">
+                    ${bank}
+                </button>
+            `).join('')}
+        </div>
+        <button onclick="closeBankModal(event)" 
+            style="width: 100%; margin-top: 15px; background: var(--accent); color: white; 
+            border: none; padding: 10px; border-radius: 8px; cursor: pointer;">
+            Fechar
+        </button>
+    `;
+
+    document.body.appendChild(bankModal);
+
+    // Atualizar status
+    const statusDiv = document.getElementById('paymentStatus');
+    if (statusDiv) {
+        statusDiv.innerHTML = `
+            <div style="color: #FFA500;">
+                <i class="fas fa-info-circle"></i> Após realizar o pagamento, aguarde a confirmação automática.
+            </div>
+        `;
+    }
+
+    // Iniciar verificação de pagamento
+    initializePixPayment(amount);
+}
+
+// Função para abrir URL do banco em nova aba
+function openBankUrl(url, event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    window.open(url, '_blank');
+}
+
+// Função para fechar modal de seleção de banco
+function closeBankModal(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    const bankModal = document.getElementById('bankSelectionModal');
+    if (bankModal) {
+        bankModal.remove();
+    }
+}
+
+function initializePixPayment(amount, event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    // Adicione estas duas linhas no início para gerar um novo ID de sessão
+    window.currentSessionId = generateSessionId();
+    console.log("Nova sessão de pagamento iniciada: " + window.currentSessionId);
+
+    const statusDiv = document.getElementById('paymentStatus');
+    
+    statusDiv.innerHTML = `
+        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+            <i class="fas fa-qrcode"></i> 
+            QR Code PIX gerado! Escaneie e faça o pagamento.
+            <br><small>Após o pagamento, aguarde a confirmação automática.</small>
+        </div>
+    `;
+
+    // Iniciar verificação
+    startPaymentCheck(amount);
+}
+
+// Função que recebe resposta do PIX
+function handlePixResponse(response) {
+    const statusDiv = document.getElementById('paymentStatus');
+    
+    if (response.error) {
+        statusDiv.innerHTML = `
+            <div style="background: var(--error); padding: 10px; border-radius: 8px; margin: 10px 0; color: white;">
+                <i class="fas fa-exclamation-circle"></i> 
+                Erro ao gerar QR Code. Tente novamente.
+            </div>
+        `;
+        return;
+    }
+
+    statusDiv.innerHTML = `
+        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+            <i class="fas fa-qrcode"></i> 
+            QR Code PIX gerado! Escaneie e faça o pagamento.
+            <br><small>Após o pagamento, aguarde a confirmação automática.</small>
+        </div>
+    `;
+}
+
+function startPaymentCheck(amount) {
+    const statusDiv = document.getElementById('paymentStatus');
+    const statusDetailDiv = document.getElementById('paymentStatusDetail');
+    let checkCount = 0;
+    const maxChecks = 120; // 6 minutos (3s * 120)
+    
+    // Obter ou criar ID de sessão
+    if (!window.currentSessionId) {
+        window.currentSessionId = generateSessionId();
+        console.log("Novo ID de sessão criado: " + window.currentSessionId);
+    }
+    const sessionId = window.currentSessionId;
+    
+    // Substituir pela URL correta do seu script
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbxudaDaCy9jnqswuw9JR7OAdScJQTFSO5Vs_msLH0Sbqd5OQrGtzQ9Ypkcz0QUVuBKOIA/exec';
+    
+    // Mostrar status inicial
+    statusDiv.innerHTML = `
+        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+            <i class="fas fa-spinner fa-spin"></i> 
+            Aguardando confirmação do PIX...
+            <br><small>Não feche esta janela até a confirmação.</small>
+        </div>
+    `;
+    
+    // Exibir o contêiner de detalhes caso esteja escondido
+    if (statusDetailDiv) {
+        statusDetailDiv.style.display = 'block';
+        statusDetailDiv.innerHTML = `
+            <div style="text-align: center;">
+                <p>Iniciando verificação de pagamento...</p>
+                <small>ID de Sessão: ${sessionId.substring(0, 8)}...</small>
+            </div>
+        `;
+    }
+    
+    // Função para verificar o pagamento
+    const checkPayment = () => {
+        console.log(`Verificação ${checkCount+1} para valor ${amount}, sessão ${sessionId}`);
+        
+        // Adicionar timestamp e ID de sessão para evitar cache
+        const url = `${webhookUrl}?action=check_payment&amount=${amount}&session=${sessionId}&cache=${Date.now()}`;
+        
+        fetch(url)
+            .then(response => response.text())
+            .then(text => {
+                try {
+                    // Tentar analisar como JSON
+                    let data;
+                    try {
+                        data = JSON.parse(text);
+                        console.log("Resposta recebida:", data);
+                        
+                        // Se for aprovado
+                        if (data.status === 'approved') {
+                            // Mostrar quando o pagamento foi aprovado
+                            const timeAgo = data.timeAgo ? `(há ${data.timeAgo} segundos)` : '';
+                            
+                            if (statusDetailDiv) {
+                                statusDetailDiv.innerHTML = `
+                                    <div style="color: #4CAF50; text-align: center;">
+                                        <i class="fas fa-check-circle" style="font-size: 2rem;"></i>
+                                        <h3 style="margin: 10px 0;">Pagamento Confirmado! ${timeAgo}</h3>
+                                        <p>Recebemos seu pagamento com sucesso.</p>
+                                        <p>Seu pedido está sendo processado.</p>
+                                        <small>ID de Sessão: ${sessionId.substring(0, 8)}...</small>
+                                    </div>
+                                `;
+                            }
+                            
+                            // Também atualizar o status principal
+                            statusDiv.innerHTML = `
+                                <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 8px; margin: 10px 0;">
+                                    <i class="fas fa-check-circle"></i> 
+                                    Pagamento PIX recebido! Você pode continuar com seu pedido.
+                                </div>
+                            `;
+                            
+                            // Habilitar botão de finalizar
+                            const submitButton = document.querySelector('#createOrderForm button[type="button"]');
+                            if (submitButton) {
+                                submitButton.disabled = false;
+                                submitButton.innerHTML = 'Finalizar Pedido';
+                                submitButton.style.backgroundColor = '';
+                                submitButton.style.opacity = '1';
+                            }
+                            
+                            // Parar de verificar
+                            clearInterval(checkInterval);
+                            return;
+                        } else {
+                            // Status pendente
+                            if (statusDetailDiv) {
+                                statusDetailDiv.innerHTML = `
+                                    <div style="text-align: center;">
+                                        <i class="fas fa-clock" style="font-size: 1.5rem;"></i>
+                                        <p style="margin: 10px 0;">Ainda estamos aguardando a confirmação do seu pagamento.</p>
+                                        <small>Status: ${data.status || 'pendente'}</small>
+                                        <br><small>ID de Sessão: ${sessionId.substring(0, 8)}...</small>
+                                    </div>
+                                `;
+                            }
+                        }
+                    } catch (e) {
+                        // Se não for JSON, mostra o texto como está
+                        console.error("Erro ao analisar JSON:", e, "Texto recebido:", text);
+                        if (statusDetailDiv) {
+                            statusDetailDiv.innerHTML = `
+                                <div style="color: var(--error); text-align: center;">
+                                    <p>Aguardando confirmação do servidor...</p>
+                                    <small>Resposta do servidor não é um formato válido</small>
+                                    <br><small>ID de Sessão: ${sessionId.substring(0, 8)}...</small>
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    // Continuar verificando
+                    checkCount++;
+                    
+                    if (checkCount >= maxChecks) {
+                        clearInterval(checkInterval);
+                        statusDiv.innerHTML = `
+                            <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                                <i class="fas fa-info-circle"></i> 
+                                Tempo limite excedido. Se você já pagou, clique no botão abaixo para continuar.
+                                <button onclick="continueAfterPix()" style="margin-top: 10px; width: 100%; padding: 8px; background: var(--accent); color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                    Já realizei o pagamento
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        // Apenas atualizar tempo decorrido
+                        statusDiv.innerHTML = `
+                            <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                                <i class="fas fa-spinner fa-spin"></i> 
+                                Aguardando confirmação do PIX... (${Math.floor(checkCount/20)}min ${(checkCount % 20) * 3}s)
+                                <br><small>Não feche esta janela até a confirmação.</small>
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    console.error("Erro ao processar resposta:", error);
+                    if (statusDetailDiv) {
+                        statusDetailDiv.innerHTML = `
+                            <div style="color: var(--error); text-align: center;">
+                                <p>Erro ao verificar pagamento: ${error.message}</p>
+                                <small>ID de Sessão: ${sessionId.substring(0, 8)}...</small>
+                            </div>
+                        `;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error("Erro na verificação:", error);
+                checkCount++;
+                
+                if (checkCount >= maxChecks) {
+                    clearInterval(checkInterval);
+                    statusDiv.innerHTML = `
+                        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                            <i class="fas fa-exclamation-circle"></i> 
+                            Erro ao verificar pagamento. Se você já pagou, clique no botão abaixo para continuar.
+                            <button onclick="continueAfterPix()" style="margin-top: 10px; width: 100%; padding: 8px; background: var(--accent); color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                Já realizei o pagamento
+                            </button>
+                        </div>
+                    `;
+                }
+            });
+    };
+    
+    // Verificar imediatamente
+    checkPayment();
+    
+    // E então a cada 3 segundos
+    const checkInterval = setInterval(checkPayment, 3000);
+}
+
+// Função para permitir continuar sem confirmação
+function continueAfterPix() {
+    const submitButton = document.querySelector('#createOrderForm button[type="button"]');
+    if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Finalizar Pedido';
+        submitButton.style.backgroundColor = '';
+        submitButton.style.opacity = '1';
+    }
+    
+    const statusDiv = document.getElementById('paymentStatus');
+    statusDiv.innerHTML = `
+        <div style="background: #FFA500; color: white; padding: 10px; border-radius: 8px; margin: 10px 0;">
+            <i class="fas fa-info-circle"></i> 
+            Continuando sem confirmação automática. Se você já realizou o pagamento, prossiga normalmente.
+        </div>
+    `;
+}
+
+// Adicione esta função para gerar IDs únicos
+function generateSessionId() {
+    return Date.now().toString() + Math.random().toString(36).substring(2, 9);
+}
+
+// Modifique a função generatePixQRCode para criar um ID de sessão
 function generatePixQRCode(total) {
-    // Dados do PIX (Padrão Banco Central)
-    const pixKey = "84988731028";
+    // Gerar ID de sessão único
+    const sessionId = generateSessionId();
+    // Armazenar o ID na janela para uso posterior
+    window.currentSessionId = sessionId;
+    
+    console.log("Nova sessão de pagamento criada: " + sessionId);
+    
+    // Dados do PIX atualizados
+    const pixKey = "06561938402";
     const merchantName = "JACKSON";
     const city = "NATAL";
     
-    // Formatar valor (garantir 2 casas decimais)
+    // Formatar valor
     const amount = parseFloat(total.toString().replace(/[^\d.,]/g, '').replace(',', '.')).toFixed(2);
     
-    // Funções auxiliares EMV
-    function pad(str, length) {
-        return str.toString().padStart(length, '0');
-    }
-    
-    function createEMV(id, str) {
-        str = str.toString();
-        return id + pad(str.length, 2) + str;
-    }
-
-    // Criar payload seguindo especificação do Bacen
-    const payload = [
-        createEMV('00', '01'),                     
-        createEMV('01', '12'),                     
-        createEMV('26', [                          
-            createEMV('00', 'br.gov.bcb.pix'),     
-            createEMV('01', pixKey),               
-        ].join('')),
-        createEMV('52', '0000'),                   
-        createEMV('53', '986'),                    
-        createEMV('54', amount),                   
-        createEMV('58', 'BR'),                     
-        createEMV('59', merchantName),             
-        createEMV('60', city),                     
-        createEMV('62', createEMV('05', '***')),   
-        '6304'                                     
-    ].join('');
-
-    // Calcular e adicionar CRC16
-    const crc16 = calculateCRC16(payload);
-    const finalPayload = payload + crc16.toString(16).toUpperCase().padStart(4, '0');
-
-    // Criar container principal
+    // Container principal
     const qrContainer = document.createElement('div');
     qrContainer.id = 'pixQRCode';
     qrContainer.style.cssText = `
@@ -6873,37 +7188,24 @@ function generatePixQRCode(total) {
         margin: 0 auto;
     `;
 
-    qrContainer.innerHTML = `<h3 style="margin-bottom: 10px; color: white;">Pagamento via PIX</h3>`;
+    qrContainer.innerHTML = `
+        <h3 style="margin-bottom: 10px; color: white;">Pagamento via PIX</h3>
+        <div id="paymentStatus" style="margin-bottom: 15px; color: var(--text);"></div>
 
-    // Criar container do QR Code
-    const qrElement = document.createElement('div');
-    qrElement.style.cssText = `
-        background: white;
-        padding: 10px;
-        border-radius: 10px;
-        display: inline-block;
-        margin: 10px auto;
-        max-width: 100%;
-    `;
-    qrContainer.appendChild(qrElement);
+         <!-- Adicionar este novo elemento para o status detalhado -->
+        <div id="paymentStatusDetail" style="margin-bottom: 15px; background: var(--glass); padding: 10px; border-radius: 8px; display: none;"></div>
+        
+        <!-- Container do QR Code -->
+        <div style="background: white; padding: 10px; border-radius: 10px; display: inline-block; margin: 10px auto;">
+            <div id="qrCodeElement"></div>
+        </div>
 
-    // Gerar QR Code
-    new QRCode(qrElement, {
-        text: finalPayload,
-        width: 150,
-        height: 150,
-        correctLevel: QRCode.CorrectLevel.H
-    });
-
-    // Adicionar informações
-    const infoDiv = document.createElement('div');
-    infoDiv.innerHTML = `
         <div style="margin: 15px 0; padding: 10px; background: var(--surface); border-radius: 10px;">
             <div style="margin-bottom: 10px;">
                 <strong>Dados da Chave PIX</strong><br>
                 <span style="color: var(--text);">
                     Chave PIX: ${pixKey}<br>
-                    Banco: Santander<br>
+                    Banco: Mercado Pago<br>
                     Nome: Jackson<br>
                     Valor: R$ ${amount}
                 </span>
@@ -6922,13 +7224,112 @@ function generatePixQRCode(total) {
                 </div>
             </div>
         </div>
-        <button class="modal-btn add-to-cart" onclick="showComprovanteUpload(event)">
-            <i class="fas fa-check"></i> Já paguei, enviar comprovante
-        </button>
     `;
-    qrContainer.appendChild(infoDiv);
+
+    // Gerar QR Code após inserir no DOM
+    setTimeout(() => {
+        new QRCode(qrContainer.querySelector('#qrCodeElement'), {
+            text: `00020126580014BR.GOV.BCB.PIX0136${pixKey}5204000053039865802BR5913${merchantName}6006${city}62070503***6304${calculateCRC16(generatePixString(pixKey, merchantName, city, amount))}`,
+            width: 200,
+            height: 200,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        
+        // Iniciar verificação de pagamento automaticamente
+        startPaymentCheck(amount);
+    }, 100);
 
     return qrContainer;
+}
+
+// Função que recebe resposta do check
+function handlePaymentCheck(response) {
+    const statusDiv = document.getElementById('paymentStatus');
+    
+    if (response.status === 'approved') {
+        clearInterval(window.currentCheckInterval);
+        
+        statusDiv.innerHTML = `
+            <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 8px; margin: 10px 0;">
+                <i class="fas fa-check-circle"></i> 
+                Pagamento PIX recebido! Você pode continuar com seu pedido.
+            </div>
+        `;
+
+        // Habilitar botão de finalizar
+        const submitButton = document.querySelector('#createOrderForm button[type="button"]');
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'Finalizar Pedido';
+            submitButton.style.opacity = '1';
+        }
+    }
+}
+    
+function generatePixString(pixKey, merchantName, city, amount) {
+    // Função para formatar tamanho do campo (ID + tamanho + valor)
+    function formatField(id, value) {
+        const len = value.length.toString().padStart(2, '0');
+        return `${id}${len}${value}`;
+    }
+
+    // Campos obrigatórios do PIX
+    const fields = [
+        formatField('00', '01'),                     // Versão do payload
+        formatField('01', '12'),                     // Tipo de chave PIX
+        formatField('26', formatField('00', 'br.gov.bcb.pix') + 
+                         formatField('01', pixKey)),  // Chave PIX
+        formatField('52', '0000'),                   // Categoria comerciante
+        formatField('53', '986'),                    // Moeda (BRL = 986)
+        formatField('54', amount.toString()),        // Valor da transação
+        formatField('58', 'BR'),                     // País
+        formatField('59', merchantName),             // Nome do comerciante
+        formatField('60', city),                     // Cidade do comerciante
+        formatField('62', formatField('05', '***'))  // ID da transação
+    ];
+
+    return fields.join('');
+}
+
+function updatePaymentStatus(status) {
+    const statusDiv = document.getElementById('paymentStatus');
+    
+    switch(status) {
+        case 'success':
+            statusDiv.innerHTML = `
+                <div style="color: #4CAF50;">
+                    <i class="fas fa-check-circle"></i> 
+                    Pagamento confirmado com sucesso!
+                </div>
+            `;
+            // Habilitar botão de continuar
+            const submitButton = document.querySelector('#createOrderForm button[type="button"]');
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.style.opacity = '1';
+            }
+            break;
+            
+        case 'timeout':
+            statusDiv.innerHTML = `
+                <div style="color: var(--error);">
+                    <i class="fas fa-exclamation-circle"></i> 
+                    Tempo de espera esgotado. Se você já pagou, continue com o pedido normalmente.
+                </div>
+            `;
+            break;
+            
+        case 'error':
+            statusDiv.innerHTML = `
+                <div style="color: var(--error);">
+                    <i class="fas fa-exclamation-circle"></i> 
+                    Erro ao verificar pagamento. Se você já pagou, continue com o pedido normalmente.
+                </div>
+            `;
+            break;
+    }
 }
 
 // Função atualizada para copiar a chave PIX
