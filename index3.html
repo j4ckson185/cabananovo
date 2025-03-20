@@ -6990,7 +6990,7 @@ async function initializePixPayment(amount, event) {
     }
 
     const statusDiv = document.getElementById('paymentStatus');
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbx6XOEuxNiiON_jTHIikK8M25yPpcFHExUhjqJ0HMoyoPvTokzEciym_NgYO7iafVckng/exec';
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbxIk5sTH4qF9QCGX9XqaZO9ocr0_mc9M0yhQuaNEeWC3eIei-s3yu4K5RAC4RJH2Ynanw/exec';
     
     // Mostrar status inicial
     statusDiv.innerHTML = `
@@ -7123,7 +7123,7 @@ function startPaymentCheck(amount) {
     const statusDiv = document.getElementById('paymentStatus');
     let checkCount = 0;
     const maxChecks = 60; // 5 minutos (verificando a cada 5 segundos)
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbx6XOEuxNiiON_jTHIikK8M25yPpcFHExUhjqJ0HMoyoPvTokzEciym_NgYO7iafVckng/exec';
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbxIk5sTH4qF9QCGX9XqaZO9ocr0_mc9M0yhQuaNEeWC3eIei-s3yu4K5RAC4RJH2Ynanw/exec';
 
     const checkInterval = setInterval(async () => {
         checkCount++;
