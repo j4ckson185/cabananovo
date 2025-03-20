@@ -6951,13 +6951,16 @@ function handlePixResponse(response) {
     `;
 }
 
-// Função aprimorada para verificação do status de pagamento PIX
 function startPaymentCheck(amount) {
     const statusDiv = document.getElementById('paymentStatus');
+    const statusDetailDiv = document.getElementById('paymentStatusDetail');
     let checkCount = 0;
-    const maxChecks = 120; // 6 minutos (checando a cada 3 segundos)
+    const maxChecks = 120; // 6 minutos (3s * 120)
     
-    // Mostrar status inicial de verificação
+    // URL do webhook
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbzaqoLMBcFI9EAUBego-g5kb_A_EkH2Cuu6rNOPByA4BcqshEvqRZcXUuh7p9dCNPJmuQ/exec';
+    
+    // Mostrar status inicial
     statusDiv.innerHTML = `
         <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
             <i class="fas fa-spinner fa-spin"></i> 
@@ -6966,25 +6969,37 @@ function startPaymentCheck(amount) {
         </div>
     `;
     
-    // Função para verificar o pagamento usando AJAX
+    // Função para verificar o pagamento
     const checkPayment = () => {
-        // Criar URL única para evitar cache
-        const uniqueUrl = `https://script.google.com/macros/s/AKfycbz27k4KvF5_P9LTqk-qBLzNRKP8o8KHX5vk-Y6O_CcUXuKv9boBRZpMopkevfwNODzyXg/exec?action=get_last_status&amount=${amount}&nocache=${Date.now()}`;
+        console.log(`Verificação ${checkCount+1} para valor ${amount}`);
         
-        // Usar XMLHttpRequest para maior compatibilidade
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', uniqueUrl, true);
+        // Adicionar timestamp para evitar cache
+        const url = `${webhookUrl}?action=check_payment&amount=${amount}&cache=${Date.now()}`;
         
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4) {
-                if (xhr.status === 200) {
+        fetch(url)
+            .then(response => response.text())
+            .then(text => {
+                try {
+                    // Mostrar o texto bruto no elemento de detalhes
+                    statusDetailDiv.style.display = 'block';
+                    
+                    // Tentar analisar como JSON
+                    let data;
                     try {
-                        const response = JSON.parse(xhr.responseText);
-                        console.log('Resposta da verificação:', response);
+                        data = JSON.parse(text);
                         
-                        // Se o pagamento foi aprovado
-                        if (response.status === 'approved') {
-                            // Atualizar UI para mostrar sucesso
+                        // Se for aprovado
+                        if (data.status === 'approved') {
+                            statusDetailDiv.innerHTML = `
+                                <div style="color: #4CAF50; text-align: center;">
+                                    <i class="fas fa-check-circle" style="font-size: 2rem;"></i>
+                                    <h3 style="margin: 10px 0;">Pagamento Confirmado!</h3>
+                                    <p>Recebemos seu pagamento com sucesso.</p>
+                                    <p>Seu pedido está sendo processado.</p>
+                                </div>
+                            `;
+                            
+                            // Também atualizar o status principal
                             statusDiv.innerHTML = `
                                 <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 8px; margin: 10px 0;">
                                     <i class="fas fa-check-circle"></i> 
@@ -7004,64 +7019,82 @@ function startPaymentCheck(amount) {
                             // Parar de verificar
                             clearInterval(checkInterval);
                             return;
+                        } else {
+                            // Status pendente
+                            statusDetailDiv.innerHTML = `
+                                <div style="text-align: center;">
+                                    <i class="fas fa-clock" style="font-size: 1.5rem;"></i>
+                                    <p style="margin: 10px 0;">Ainda estamos aguardando a confirmação do seu pagamento.</p>
+                                    <small>Status: ${data.status || 'pendente'}</small>
+                                </div>
+                            `;
                         }
-                    } catch (error) {
-                        console.error('Erro ao processar resposta:', error);
+                    } catch (e) {
+                        // Se não for JSON, mostra o texto como está
+                        statusDetailDiv.innerHTML = `
+                            <div style="color: var(--error); text-align: center;">
+                                <p>Aguardando confirmação do servidor...</p>
+                            </div>
+                        `;
                     }
+                    
+                    // Continuar verificando
+                    checkCount++;
+                    
+                    if (checkCount >= maxChecks) {
+                        clearInterval(checkInterval);
+                        statusDiv.innerHTML = `
+                            <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                                <i class="fas fa-info-circle"></i> 
+                                Tempo limite excedido. Se você já pagou, clique no botão abaixo para continuar.
+                                <button onclick="continueAfterPix()" style="margin-top: 10px; width: 100%; padding: 8px; background: var(--accent); color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                    Já realizei o pagamento
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        // Apenas atualizar tempo decorrido
+                        statusDiv.innerHTML = `
+                            <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                                <i class="fas fa-spinner fa-spin"></i> 
+                                Aguardando confirmação do PIX... (${Math.floor(checkCount/20)}min ${(checkCount % 20) * 3}s)
+                                <br><small>Não feche esta janela até a confirmação.</small>
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    console.error("Erro ao processar resposta:", error);
+                    statusDetailDiv.style.display = 'block';
+                    statusDetailDiv.innerHTML = `
+                        <div style="color: var(--error); text-align: center;">
+                            <p>Erro ao verificar pagamento: ${error.message}</p>
+                        </div>
+                    `;
                 }
-                
-                // Continuar verificando
+            })
+            .catch(error => {
+                console.error("Erro na verificação:", error);
                 checkCount++;
                 
                 if (checkCount >= maxChecks) {
                     clearInterval(checkInterval);
                     statusDiv.innerHTML = `
                         <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                            <i class="fas fa-info-circle"></i> 
-                            Tempo limite excedido. Se você já pagou, o pedido será confirmado em breve.
-                            <button onclick="continueAfterPix()" class="modal-btn" style="margin-top: 10px; width: 100%;">
-                                Já paguei, continuar com o pedido
+                            <i class="fas fa-exclamation-circle"></i> 
+                            Erro ao verificar pagamento. Se você já pagou, clique no botão abaixo para continuar.
+                            <button onclick="continueAfterPix()" style="margin-top: 10px; width: 100%; padding: 8px; background: var(--accent); color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                Já realizei o pagamento
                             </button>
                         </div>
                     `;
-                } else {
-                    // Atualizar mensagem de verificação com o tempo decorrido
-                    statusDiv.innerHTML = `
-                        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                            <i class="fas fa-spinner fa-spin"></i> 
-                            Aguardando confirmação do PIX... (${Math.floor(checkCount/12)}min)
-                            <br><small>Não feche esta janela até a confirmação.</small>
-                        </div>
-                    `;
                 }
-            }
-        };
-        
-        xhr.onerror = function() {
-            console.error('Erro na requisição');
-            checkCount++;
-            
-            if (checkCount >= maxChecks) {
-                clearInterval(checkInterval);
-                statusDiv.innerHTML = `
-                    <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                        <i class="fas fa-exclamation-circle"></i> 
-                        Erro ao verificar pagamento. Se você já pagou, continue com seu pedido normalmente.
-                        <button onclick="continueAfterPix()" class="modal-btn" style="margin-top: 10px; width: 100%;">
-                            Já paguei, continuar com o pedido
-                        </button>
-                    </div>
-                `;
-            }
-        };
-        
-        xhr.send();
+            });
     };
     
-    // Verificar imediatamente pela primeira vez
+    // Verificar imediatamente
     checkPayment();
     
-    // Continuar verificando a cada 3 segundos
+    // E então a cada 3 segundos
     const checkInterval = setInterval(checkPayment, 3000);
 }
 
@@ -7109,6 +7142,9 @@ function generatePixQRCode(total) {
     qrContainer.innerHTML = `
         <h3 style="margin-bottom: 10px; color: white;">Pagamento via PIX</h3>
         <div id="paymentStatus" style="margin-bottom: 15px; color: var(--text);"></div>
+
+         <!-- Adicionar este novo elemento para o status detalhado -->
+        <div id="paymentStatusDetail" style="margin-bottom: 15px; background: var(--glass); padding: 10px; border-radius: 8px; display: none;"></div>
         
         <!-- Container do QR Code -->
         <div style="background: white; padding: 10px; border-radius: 10px; display: inline-block; margin: 10px auto;">
