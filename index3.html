@@ -6990,7 +6990,7 @@ async function initializePixPayment(amount, event) {
     }
 
     const statusDiv = document.getElementById('paymentStatus');
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbw4ZssaL3qRq_ZKBV278zLFay_eLU3SzY5qrtI4cus1tz_KJOrYzyFvGnBriyVPsTRS_A/exec';
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbzcIwexI1IHd_ZXa1motaidhOuzXJ0VDj-waly617L2jGNfEDiKg7BXgSzZF5Svr5t9pw/exec';
     
     // Mostrar status inicial
     statusDiv.innerHTML = `
@@ -7067,98 +7067,63 @@ function generatePixString(pixKey, merchantName, city, amount) {
     return fields.join('');
 }
 
-function checkPaymentStatus(orderId, amount) {
-    const statusDiv = document.getElementById('paymentStatus');
+function checkPayment(paymentId) {
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getActiveSheet();
+  
+  try {
+    // Buscar detalhes do pagamento no Mercado Pago
+    const response = UrlFetchApp.fetch(
+      `https://api.mercadopago.com/v1/payments/${paymentId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${MP_ACCESS_TOKEN}`
+        },
+        muteHttpExceptions: true
+      }
+    );
     
-    // URL do seu Google Apps Script implantado
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbw4ZssaL3qRq_ZKBV278zLFay_eLU3SzY5qrtI4cus1tz_KJOrYzyFvGnBriyVPsTRS_A/exec';
+    const paymentData = JSON.parse(response.getContentText());
     
-    // Atualizar status para "verificando"
-    statusDiv.innerHTML = `
-        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-            <i class="fas fa-spinner fa-spin"></i> 
-            Verificando pagamento...
-        </div>
-    `;
+    // Log do status do pagamento
+    sheet.appendRow([
+      new Date().toISOString(),
+      'payment_status_check',
+      paymentId,
+      paymentData.transaction_amount || '',
+      paymentData.status || '',
+      JSON.stringify({
+        qr_code: paymentData.point_of_interaction?.transaction_data?.qr_code,
+        status: paymentData.status,
+        status_detail: paymentData.status_detail
+      })
+    ]);
 
-    // Registrar verificação na planilha
-    fetch(`${webhookUrl}?orderId=${orderId}&amount=${amount}`, {
-        method: 'GET',
-        mode: 'no-cors'
-    }).then(() => {
-        // Iniciar verificações periódicas
-        let checkCount = 0;
-        const maxChecks = 24; // 2 minutos (5s * 24)
-        
-        const checkInterval = setInterval(() => {
-            checkCount++;
-            
-            fetch(`${webhookUrl}?action=check&orderId=${orderId}`, {
-                method: 'GET',
-                mode: 'no-cors'
-            }).then(() => {
-                // Verificar status armazenado no sessionStorage
-                const status = sessionStorage.getItem(`payment_${orderId}`);
-                
-                if (status === 'approved') {
-                    clearInterval(checkInterval);
-                    statusDiv.innerHTML = `
-                        <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 8px; margin: 10px 0;">
-                            <i class="fas fa-check-circle"></i> 
-                            Pagamento confirmado! Você pode continuar com seu pedido.
-                        </div>
-                    `;
-                    
-                    // Habilitar botão de finalizar pedido
-                    const submitButton = document.querySelector('#createOrderForm button[type="button"]');
-                    if (submitButton) {
-                        submitButton.disabled = false;
-                        submitButton.innerHTML = 'Finalizar Pedido';
-                        submitButton.style.opacity = '1';
-                    }
-                    
-                } else if (checkCount >= maxChecks) {
-                    clearInterval(checkInterval);
-                    statusDiv.innerHTML = `
-                        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                            <i class="fas fa-info-circle"></i> 
-                            Não recebemos a confirmação do pagamento ainda. Se você já realizou o pagamento, 
-                            pode continuar com seu pedido normalmente. A confirmação será validada em seguida.
-                        </div>
-                    `;
-                }
-            }).catch(error => {
-                console.error('Erro na verificação:', error);
-                if (checkCount >= maxChecks) {
-                    clearInterval(checkInterval);
-                    statusDiv.innerHTML = `
-                        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                            <i class="fas fa-exclamation-triangle"></i> 
-                            Erro ao verificar o pagamento. Se você já realizou o pagamento, 
-                            pode continuar com seu pedido normalmente.
-                        </div>
-                    `;
-                }
-            });
-        }, 5000); // Verificar a cada 5 segundos
-        
-    }).catch(error => {
-        console.error('Erro ao iniciar verificação:', error);
-        statusDiv.innerHTML = `
-            <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                <i class="fas fa-exclamation-circle"></i> 
-                Erro ao verificar pagamento. Se você já realizou o pagamento, 
-                pode continuar com seu pedido normalmente.
-            </div>
-        `;
-    });
+    return ContentService.createTextOutput(JSON.stringify({
+      payment_id: paymentId,
+      status: paymentData.status,
+      qr_code: paymentData.point_of_interaction?.transaction_data?.qr_code
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    sheet.appendRow([
+      new Date().toISOString(),
+      'error_checking_payment',
+      paymentId,
+      '',
+      error.toString()
+    ]);
+    
+    return ContentService.createTextOutput(JSON.stringify({
+      error: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
 function startPaymentCheck(amount) {
     const statusDiv = document.getElementById('paymentStatus');
     let checkCount = 0;
     const maxChecks = 60; // 5 minutos (verificando a cada 5 segundos)
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbw4ZssaL3qRq_ZKBV278zLFay_eLU3SzY5qrtI4cus1tz_KJOrYzyFvGnBriyVPsTRS_A/exec';
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbzcIwexI1IHd_ZXa1motaidhOuzXJ0VDj-waly617L2jGNfEDiKg7BXgSzZF5Svr5t9pw/exec';
 
     const checkInterval = setInterval(async () => {
         checkCount++;
