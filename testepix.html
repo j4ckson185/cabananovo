@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Pagamento PIX</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary: #7209B7;
+            --secondary: #3A0CA3;
+            --accent: #F72585;
+            --background: #10002B;
+            --surface: #240046;
+            --text: #E0AAFF;
+            --gradient: linear-gradient(135deg, #F72585 0%, #7209B7 50%, #3A0CA3 100%);
+            --glass: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --error: #FF5252;
+        }
+        
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: var(--surface);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+        
+        h1, h2 {
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .logs {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .logs p {
+            margin: 5px 0;
+            padding: 5px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        
+        .logs .error {
+            color: var(--error);
+        }
+        
+        .logs .success {
+            color: #4CAF50;
+        }
+        
+        .logs .info {
+            color: #2196F3;
+        }
+        
+        button {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
+        }
+        
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass);
+            color: white;
+            box-sizing: border-box;
+        }
+        
+        .payment-status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .pending {
+            background: var(--glass);
+        }
+        
+        .success {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .error {
+            background: var(--error);
+            color: white;
+        }
+        
+        .qr-container {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px auto;
+            width: fit-content;
+        }
+        
+        .info-container {
+            background: var(--glass);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .copy-container {
+            position: relative;
+            margin-top: 15px;
+        }
+        
+        .copy-container input {
+            padding-right: 70px;
+        }
+        
+        .copy-container button {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            margin: 0;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Teste de Pagamento PIX</h1>
+        
+        <div>
+            <label for="amount">Valor a ser pago:</label>
+            <input type="number" id="amount" step="0.01" min="0.01" value="1.00">
+        </div>
+        
+        <button id="generateBtn" onclick="generatePixQRCode()">Gerar QR Code</button>
+        
+        <div id="qrCodeContainer" style="display: none;">
+            <div class="qr-container">
+                <div id="qrcode"></div>
+            </div>
+            
+            <div class="info-container">
+                <strong>Dados do PIX:</strong><br>
+                <div id="pixInfo"></div>
+                
+                <div class="copy-container">
+                    <input type="text" id="pixKey" readonly>
+                    <button onclick="copyPixKey()">Copiar</button>
+                </div>
+            </div>
+            
+            <div id="paymentStatus" class="payment-status pending">
+                <i class="fas fa-spinner"></i> Aguardando pagamento...
+            </div>
+            
+            <button onclick="checkPaymentManually()">Verificar Pagamento Manualmente</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h2>Logs</h2>
+        <div id="logs" class="logs"></div>
+        <button onclick="clearLogs()">Limpar Logs</button>
+    </div>
+
+    <script>
+        // URL do seu Google Apps Script
+        const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzDQvZ0F4MdvTpybQD7HbYen3HLtxhdvpoYD4GcTxMRdWkUpveRgAUxlC6QGsHtLO4lXg/exec';
+        
+        let checkInterval;
+        let amount = 0;
+        
+        // Função para adicionar logs
+        function addLog(message, type = 'info') {
+            const logsEl = document.getElementById('logs');
+            const logEl = document.createElement('p');
+            logEl.className = type;
+            logEl.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logsEl.appendChild(logEl);
+            logsEl.scrollTop = logsEl.scrollHeight;
+        }
+        
+        // Limpar logs
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+        
+        // Função para copiar chave PIX
+        function copyPixKey() {
+            const input = document.getElementById('pixKey');
+            input.select();
+            document.execCommand('copy');
+            
+            addLog('Chave PIX copiada para área de transferência', 'success');
+        }
+        
+        // Função para gerar CRC16
+        function calculateCRC16(str) {
+            function crc16(data) {
+                let crc = 0xFFFF;
+                const polynomial = 0x1021;
+
+                for (let i = 0; i < data.length; i++) {
+                    crc ^= (data[i] << 8);
+                    for (let j = 0; j < 8; j++) {
+                        if (crc & 0x8000) {
+                            crc = ((crc << 1) ^ polynomial) & 0xFFFF;
+                        } else {
+                            crc = (crc << 1) & 0xFFFF;
+                        }
+                    }
+                }
+                return crc;
+            }
+
+            const data = Array.from(str).map(c => c.charCodeAt(0));
+            return crc16(data).toString(16).toUpperCase().padStart(4, '0');
+        }
+        
+        // Função para formatar tamanho do campo PIX
+        function formatPixField(id, value) {
+            const len = value.length.toString().padStart(2, '0');
+            return `${id}${len}${value}`;
+        }
+        
+        // Função para gerar a string PIX
+        function generatePixString(pixKey, merchantName, city, amount) {
+            const fields = [
+                formatPixField('00', '01'),
+                formatPixField('01', '12'),
+                formatPixField('26', formatPixField('00', 'br.gov.bcb.pix') + 
+                                    formatPixField('01', pixKey)),
+                formatPixField('52', '0000'),
+                formatPixField('53', '986'),
+                formatPixField('54', amount.toString()),
+                formatPixField('58', 'BR'),
+                formatPixField('59', merchantName),
+                formatPixField('60', city),
+                formatPixField('62', formatPixField('05', '***'))
+            ];
+
+            return fields.join('');
+        }
+        
+        // Função para gerar QR Code PIX
+        function generatePixQRCode() {
+            // Limpar intervalo anterior se existir
+            if (checkInterval) {
+                clearInterval(checkInterval);
+            }
+            
+            // Obter valor
+            amount = document.getElementById('amount').value;
+            if (!amount || parseFloat(amount) <= 0) {
+                addLog('Por favor, informe um valor válido', 'error');
+                return;
+            }
+            
+            amount = parseFloat(amount).toFixed(2);
+            
+            // Dados do PIX
+            const pixKey = "06561938402";
+            const merchantName = "JACKSON";
+            const city = "NATAL";
+            
+            addLog(`Gerando QR Code para pagamento de R$ ${amount}`);
+            
+            // Exibir container do QR Code
+            document.getElementById('qrCodeContainer').style.display = 'block';
+            
+            // Limpar QR Code anterior
+            document.getElementById('qrcode').innerHTML = '';
+            
+            // Gerar QR Code
+            new QRCode(document.getElementById('qrcode'), {
+                text: `00020126580014BR.GOV.BCB.PIX0136${pixKey}5204000053039865802BR5913${merchantName}6006${city}62070503***6304${calculateCRC16(generatePixString(pixKey, merchantName, city, amount))}`,
+                width: 200,
+                height: 200,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            // Exibir informações do PIX
+            document.getElementById('pixInfo').innerHTML = `
+                Chave PIX: ${pixKey}<br>
+                Banco: Mercado Pago<br>
+                Nome: Jackson<br>
+                Valor: R$ ${amount}
+            `;
+            
+            document.getElementById('pixKey').value = pixKey;
+            
+            // Iniciar verificação de pagamento
+            startPaymentCheck();
+        }
+        
+        // Função para verificar pagamento
+        function startPaymentCheck() {
+            const statusEl = document.getElementById('paymentStatus');
+            let checkCount = 0;
+            const maxChecks = 120; // 6 minutos (3s * 120)
+            
+            statusEl.className = 'payment-status pending';
+            statusEl.innerHTML = `<i class="fas fa-spinner"></i> Aguardando confirmação do PIX...`;
+            
+            addLog('Iniciando verificação de pagamento');
+            
+            // Função para verificar o pagamento
+            const checkPayment = () => {
+                addLog(`Verificando pagamento (tentativa ${checkCount + 1})`);
+                
+                // Criar URL única para evitar cache
+                const url = `${WEBHOOK_URL}?action=get_last_status&amount=${amount}&nocache=${Date.now()}`;
+                
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Erro HTTP: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Resposta recebida:', data);
+                        addLog(`Resposta: ${JSON.stringify(data)}`);
+                        
+                        if (data.status === 'approved') {
+                            clearInterval(checkInterval);
+                            statusEl.className = 'payment-status success';
+                            statusEl.innerHTML = `<i class="fas fa-check-circle"></i> Pagamento confirmado!`;
+                            addLog('Pagamento confirmado com sucesso!', 'success');
+                        } else {
+                            checkCount++;
+                            
+                            if (checkCount >= maxChecks) {
+                                clearInterval(checkInterval);
+                                statusEl.innerHTML = `
+                                    <i class="fas fa-info-circle"></i> Tempo limite excedido. 
+                                    Se você já pagou, o pagamento será confirmado em breve.
+                                `;
+                                addLog('Tempo limite de verificação excedido', 'error');
+                            } else {
+                                statusEl.innerHTML = `
+                                    <i class="fas fa-spinner"></i> Aguardando confirmação do PIX... 
+                                    (${Math.floor(checkCount/20)} min ${(checkCount % 20) * 3} s)
+                                `;
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro na verificação:', error);
+                        addLog(`Erro na verificação: ${error.message}`, 'error');
+                        
+                        checkCount++;
+                        if (checkCount >= maxChecks) {
+                            clearInterval(checkInterval);
+                            statusEl.className = 'payment-status error';
+                            statusEl.innerHTML = `
+                                <i class="fas fa-exclamation-circle"></i> Erro ao verificar pagamento. 
+                                Se você já pagou, o pagamento será processado normalmente.
+                            `;
+                        }
+                    });
+            };
+            
+            // Verificar imediatamente e depois a cada 3 segundos
+            checkPayment();
+            checkInterval = setInterval(checkPayment, 3000);
+        }
+        
+        // Função para verificar pagamento manualmente
+        function checkPaymentManually() {
+            addLog('Verificação manual de pagamento iniciada');
+            
+            const statusEl = document.getElementById('paymentStatus');
+            statusEl.className = 'payment-status pending';
+            statusEl.innerHTML = `<i class="fas fa-spinner"></i> Verificando pagamento...`;
+            
+            // URL para verificação
+            const url = `${WEBHOOK_URL}?action=get_last_status&amount=${amount}&nocache=${Date.now()}`;
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Erro HTTP: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Resposta manual recebida:', data);
+                    addLog(`Resposta manual: ${JSON.stringify(data)}`);
+                    
+                    if (data.status === 'approved') {
+                        statusEl.className = 'payment-status success';
+                        statusEl.innerHTML = `<i class="fas fa-check-circle"></i> Pagamento confirmado!`;
+                        addLog('Pagamento confirmado com sucesso!', 'success');
+                    } else {
+                        statusEl.className = 'payment-status pending';
+                        statusEl.innerHTML = `<i class="fas fa-info-circle"></i> Pagamento ainda não confirmado.`;
+                        addLog('Pagamento ainda não confirmado', 'info');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro na verificação manual:', error);
+                    addLog(`Erro na verificação manual: ${error.message}`, 'error');
+                    
+                    statusEl.className = 'payment-status error';
+                    statusEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Erro ao verificar pagamento.`;
+                });
+        }
+        
+        // Adicionar log inicial
+        addLog('Página de teste carregada');
+    </script>
+</body>
+</html>
