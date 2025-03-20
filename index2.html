@@ -6818,81 +6818,6 @@ function calculateCRC16(str) {
     return crc16(data).toString(16).toUpperCase().padStart(4, '0');
 }
 
-function generatePixQRCode(total) {
-    // Dados do PIX atualizados
-    const pixKey = "06561938402";
-    const merchantName = "JACKSON";
-    const city = "NATAL";
-    
-    // Formatar valor
-    const amount = parseFloat(total.toString().replace(/[^\d.,]/g, '').replace(',', '.')).toFixed(2);
-    
-    // Container principal
-    const qrContainer = document.createElement('div');
-    qrContainer.id = 'pixQRCode';
-    qrContainer.style.cssText = `
-        text-align: center;
-        padding: 15px;
-        background: var(--glass);
-        border-radius: 15px;
-        border: 1px solid var(--glass-border);
-        max-width: 100%;
-        margin: 0 auto;
-    `;
-
-    qrContainer.innerHTML = `
-        <h3 style="margin-bottom: 10px; color: white;">Pagamento via PIX</h3>
-        <div id="paymentStatus" style="margin-bottom: 15px; color: var(--text);"></div>
-        
-        <!-- Container do QR Code -->
-        <div style="background: white; padding: 10px; border-radius: 10px; display: inline-block; margin: 10px auto;">
-            <div id="qrCodeElement"></div>
-        </div>
-
-        <div style="margin: 15px 0; padding: 10px; background: var(--surface); border-radius: 10px;">
-            <div style="margin-bottom: 10px;">
-                <strong>Dados da Chave PIX</strong><br>
-                <span style="color: var(--text);">
-                    Chave PIX: ${pixKey}<br>
-                    Banco: Mercado Pago<br>
-                    Nome: Jackson<br>
-                    Valor: R$ ${amount}
-                </span>
-            </div>
-            
-            <div style="margin-top: 15px;">
-                <strong>Chave PIX</strong>
-                <div style="position: relative; margin-top: 5px;">
-                    <input type="text" value="${pixKey}" 
-                        readonly 
-                        style="width: 100%; padding: 8px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); font-size: 12px;">
-                    <button onclick="copyPixKey(this, event)" 
-                        style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--accent); color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">
-                        Copiar
-                    </button>
-                </div>
-            </div>
-        </div>
-<button onclick="initializePixPayment('${amount}', event)" class="modal-btn add-to-cart" style="margin-top: 15px; width: 100%;">
-    <i class="fas fa-paper-plane"></i> Enviar PIX
-</button>
-    `;
-
-    // Gerar QR Code após inserir no DOM
-    setTimeout(() => {
-        new QRCode(qrContainer.querySelector('#qrCodeElement'), {
-            text: `00020126580014BR.GOV.BCB.PIX0136${pixKey}5204000053039865802BR5913${merchantName}6006${city}62070503***6304${calculateCRC16(generatePixString(pixKey, merchantName, city, amount))}`,
-            width: 200,
-            height: 200,
-            colorDark: "#000000",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.H
-        });
-    }, 100);
-
-    return qrContainer;
-}
-
 function openPaymentApp(amount, event) {
     // Prevenir comportamento padrão
     if (event) {
@@ -7049,63 +6974,66 @@ function startPaymentCheck(amount) {
     const statusDiv = document.getElementById('paymentStatus');
     let checkCount = 0;
     const maxChecks = 120; // 10 minutos (5s * 120)
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbzqJku4pT0YIXUCDTITzcbI6zSF2d1FZMn5z69pPD6f50Al2zapj2PX1CYvxHeXbKeAaQ/exec';
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbyyJUZcPWbX0Ly4Rjbze1pPhXC9Uv6wJbYYemH-7c97nzHuRy3eW7S0zXWNQOt0eIi6/exec';
 
-    const checkInterval = setInterval(async () => {
+    const checkInterval = setInterval(() => {
         checkCount++;
-        
-        try {
-            const response = await fetch(`${webhookUrl}?action=check_payment&amount=${amount}`);
-            const data = await response.text();
-            
-            // Se encontrou "approved" na resposta
-            if(data.includes('"status":"approved"')) {
-                clearInterval(checkInterval);
-                
-                // Atualizar interface
-                statusDiv.innerHTML = `
-                    <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 8px; margin: 10px 0;">
-                        <i class="fas fa-check-circle"></i> 
-                        Pagamento PIX recebido! Você pode continuar com seu pedido.
-                    </div>
-                `;
 
-                // Habilitar botão de finalizar pedido
-                const submitButton = document.querySelector('#createOrderForm button[type="button"]');
-                if (submitButton) {
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = 'Finalizar Pedido';
-                    submitButton.style.opacity = '1';
-                }
-                
-                return;
-            }
+        // Criar elemento script para JSONP
+        const script = document.createElement('script');
+        script.src = `${webhookUrl}?action=check_payment&amount=${amount}&callback=handlePaymentCheck`;
+        document.body.appendChild(script);
+        script.onload = () => document.body.removeChild(script);
 
-            // Se ainda não aprovado
-            if (checkCount >= maxChecks) {
-                clearInterval(checkInterval);
-                statusDiv.innerHTML = `
-                    <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                        <i class="fas fa-info-circle"></i> 
-                        Tempo limite excedido. Se você já pagou, o pedido será confirmado em breve.
-                        <br>
-                        <small>Você pode acompanhar o status do pagamento pelo app do Mercado Pago.</small>
-                    </div>
-                `;
-            } else {
-                statusDiv.innerHTML = `
-                    <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                        <i class="fas fa-spinner fa-spin"></i> 
-                        Aguardando confirmação do PIX... (${Math.floor(checkCount/12)}min)
-                        <br>
-                        <small>Não feche esta janela até a confirmação.</small>
-                    </div>
-                `;
-            }
-        } catch (error) {
-            console.error('Erro ao verificar pagamento:', error);
+        // Se atingir limite de tempo
+        if (checkCount >= maxChecks) {
+            clearInterval(checkInterval);
+            statusDiv.innerHTML = `
+                <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                    <i class="fas fa-info-circle"></i> 
+                    Tempo limite excedido. Se você já pagou, o pedido será confirmado em breve.
+                    <br>
+                    <small>Você pode acompanhar o status do pagamento pelo app do Mercado Pago.</small>
+                </div>
+            `;
+        } else {
+            statusDiv.innerHTML = `
+                <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                    <i class="fas fa-spinner fa-spin"></i> 
+                    Aguardando confirmação do PIX... (${Math.floor(checkCount/12)}min)
+                    <br>
+                    <small>Não feche esta janela até a confirmação.</small>
+                </div>
+            `;
         }
     }, 5000);
+
+    // Salvar intervalo para poder cancelar depois
+    window.currentCheckInterval = checkInterval;
+}
+
+// Função que recebe resposta do check
+function handlePaymentCheck(response) {
+    const statusDiv = document.getElementById('paymentStatus');
+    
+    if (response.status === 'approved') {
+        clearInterval(window.currentCheckInterval);
+        
+        statusDiv.innerHTML = `
+            <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 8px; margin: 10px 0;">
+                <i class="fas fa-check-circle"></i> 
+                Pagamento PIX recebido! Você pode continuar com seu pedido.
+            </div>
+        `;
+
+        // Habilitar botão de finalizar
+        const submitButton = document.querySelector('#createOrderForm button[type="button"]');
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'Finalizar Pedido';
+            submitButton.style.opacity = '1';
+        }
+    }
 }
 
 // Função que recebe resposta do check
