@@ -6984,63 +6984,109 @@ function closeBankModal(event) {
 }
 
 async function initializePixPayment(amount, event) {
-    if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-    }
+   if (event) {
+       event.preventDefault();
+       event.stopPropagation();
+   }
 
-    const statusDiv = document.getElementById('paymentStatus');
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbxIk5sTH4qF9QCGX9XqaZO9ocr0_mc9M0yhQuaNEeWC3eIei-s3yu4K5RAC4RJH2Ynanw/exec';
-    
-    try {
-        // Atualizar status
-        statusDiv.innerHTML = `
-            <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                <i class="fas fa-spinner fa-spin"></i> 
-                Iniciando pagamento...
-            </div>
-        `;
+   const statusDiv = document.getElementById('paymentStatus');
+   const webhookUrl = 'https://script.google.com/macros/s/AKfycbwtmWXALdZNXuk8fz2pJkzBR3Q1lnsvgusFekS5MuPwxrkGzRMqF5biNjfiUuM8rZ8xUA/exec';
+   
+   try {
+       statusDiv.innerHTML = `
+           <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+               <i class="fas fa-spinner fa-spin"></i> 
+               Gerando QR Code PIX...
+           </div>
+       `;
 
-        // Criar pagamento através do Apps Script
-        await fetch(`${webhookUrl}?action=create_payment&amount=${amount}`, {
-            method: 'GET',
-            mode: 'no-cors'
-        });
+       // Criar pagamento
+       await fetch(`${webhookUrl}?action=create_payment&amount=${amount}`, {
+           method: 'GET',
+           mode: 'no-cors'
+       });
 
-        // Verificar se o botão foi clicado (evita múltiplos cliques)
-        const button = event.target;
-        if (button) {
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
-        }
+       // Iniciar monitoramento do pagamento
+       startPaymentCheck(amount);
 
-        // Iniciar verificação de pagamento
-        startPaymentCheck(amount);
+       statusDiv.innerHTML = `
+           <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+               <i class="fas fa-qrcode"></i> 
+               QR Code PIX gerado! Escaneie e faça o pagamento.
+               <br><small>Após o pagamento, aguarde a confirmação automática.</small>
+           </div>
+       `;
 
-        statusDiv.innerHTML = `
-            <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                <i class="fas fa-qrcode"></i> 
-                QR Code PIX gerado! Faça o pagamento.
-                <br><small>Após o pagamento, aguarde a confirmação automática.</small>
-            </div>
-        `;
+   } catch (error) {
+       console.error('Erro ao iniciar pagamento:', error);
+       statusDiv.innerHTML = `
+           <div style="background: var(--error); padding: 10px; border-radius: 8px; margin: 10px 0; color: white;">
+               <i class="fas fa-exclamation-circle"></i> 
+               Erro ao gerar QR Code. Tente novamente.
+           </div>
+       `;
+   }
+}
 
-    } catch (error) {
-        console.error('Erro ao iniciar pagamento:', error);
-        statusDiv.innerHTML = `
-            <div style="background: var(--error); padding: 10px; border-radius: 8px; margin: 10px 0; color: white;">
-                <i class="fas fa-exclamation-circle"></i> 
-                Erro ao processar pagamento. Tente novamente.
-            </div>
-        `;
+function startPaymentCheck(amount) {
+   const statusDiv = document.getElementById('paymentStatus');
+   let checkCount = 0;
+   const maxChecks = 120; // 10 minutos (5s * 120)
+   const webhookUrl = 'https://script.google.com/macros/s/AKfycbwtmWXALdZNXuk8fz2pJkzBR3Q1lnsvgusFekS5MuPwxrkGzRMqF5biNjfiUuM8rZ8xUA/exec';
 
-        // Reabilitar botão em caso de erro
-        const button = event.target;
-        if (button) {
-            button.disabled = false;
-            button.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar PIX';
-        }
-    }
+   const checkInterval = setInterval(async () => {
+       checkCount++;
+       
+       try {
+           // Verificar pagamento
+           await fetch(`${webhookUrl}?action=check_payment&amount=${amount}`, {
+               method: 'GET',
+               mode: 'no-cors'
+           });
+
+           // Verificar status no localStorage
+           const paymentStatus = localStorage.getItem('payment_status');
+           
+           if (paymentStatus === 'approved') {
+               clearInterval(checkInterval);
+               
+               statusDiv.innerHTML = `
+                   <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 8px; margin: 10px 0;">
+                       <i class="fas fa-check-circle"></i> 
+                       Pagamento confirmado! Você pode continuar com seu pedido.
+                   </div>
+               `;
+
+               // Habilitar botão de finalizar pedido
+               const submitButton = document.querySelector('#createOrderForm button[type="button"]');
+               if (submitButton) {
+                   submitButton.disabled = false;
+                   submitButton.innerHTML = 'Finalizar Pedido';
+                   submitButton.style.opacity = '1';
+               }
+
+           } else if (checkCount >= maxChecks) {
+               clearInterval(checkInterval);
+               statusDiv.innerHTML = `
+                   <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                       <i class="fas fa-info-circle"></i> 
+                       Tempo limite excedido. Se você já pagou, o pedido será confirmado em breve.
+                       <br><small>Você pode continuar com o pedido normalmente.</small>
+                   </div>
+               `;
+           } else {
+               statusDiv.innerHTML = `
+                   <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                       <i class="fas fa-spinner fa-spin"></i> 
+                       Aguardando confirmação do pagamento... (${Math.floor(checkCount/12)}min)
+                   </div>
+               `;
+           }
+
+       } catch (error) {
+           console.error('Erro ao verificar pagamento:', error);
+       }
+   }, 5000); // Verifica a cada 5 segundos
 }
     
 function generatePixString(pixKey, merchantName, city, amount) {
@@ -7118,66 +7164,6 @@ function checkPayment(paymentId) {
       error: error.toString()
     })).setMimeType(ContentService.MimeType.JSON);
   }
-}
-
-function startPaymentCheck(amount) {
-    const statusDiv = document.getElementById('paymentStatus');
-    let checkCount = 0;
-    const maxChecks = 60; // 5 minutos (verificando a cada 5 segundos)
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbxIk5sTH4qF9QCGX9XqaZO9ocr0_mc9M0yhQuaNEeWC3eIei-s3yu4K5RAC4RJH2Ynanw/exec';
-
-    const checkInterval = setInterval(async () => {
-        checkCount++;
-        
-        try {
-            // Buscar último pagamento
-            await fetch(`${webhookUrl}?action=get_last_payment`, {
-                method: 'GET',
-                mode: 'no-cors'
-            });
-
-            // Verificar status no localStorage
-            const status = localStorage.getItem('last_payment_status');
-            
-            if (status === 'approved') {
-                clearInterval(checkInterval);
-                
-                statusDiv.innerHTML = `
-                    <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 8px; margin: 10px 0;">
-                        <i class="fas fa-check-circle"></i> 
-                        Pagamento confirmado! Você pode continuar com seu pedido.
-                    </div>
-                `;
-
-                // Habilitar botão de finalizar pedido
-                const submitButton = document.querySelector('#createOrderForm button[type="button"]');
-                if (submitButton) {
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = 'Finalizar Pedido';
-                    submitButton.style.opacity = '1';
-                }
-
-            } else if (checkCount >= maxChecks) {
-                clearInterval(checkInterval);
-                statusDiv.innerHTML = `
-                    <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                        <i class="fas fa-info-circle"></i> 
-                        O pagamento ainda não foi confirmado. Se você já pagou, aguarde alguns instantes.
-                    </div>
-                `;
-            } else {
-                statusDiv.innerHTML = `
-                    <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                        <i class="fas fa-spinner fa-spin"></i> 
-                        Verificando pagamento... (${checkCount}/${maxChecks})
-                    </div>
-                `;
-            }
-
-        } catch (error) {
-            console.error('Erro ao verificar pagamento:', error);
-        }
-    }, 5000);
 }
 
 function updatePaymentStatus(status) {
