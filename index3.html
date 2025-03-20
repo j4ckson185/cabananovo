@@ -6990,7 +6990,7 @@ async function initializePixPayment(amount, event) {
     }
 
     const statusDiv = document.getElementById('paymentStatus');
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbwjnulslmhsOnPYGu28FUEswDClJMGoLqZZWDGaY_5WXWJYqNLN9vVE68Qq13gOwvtC/exec';
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycby5UIN5aJHQk8CrqziHBl62jGJc9Lqxf4ZloskWaME-P1MxiPKrCmdsicBsk5qlVRod/exec';
     
     try {
         statusDiv.innerHTML = `
@@ -7000,19 +7000,13 @@ async function initializePixPayment(amount, event) {
             </div>
         `;
 
-        // Gerar QR Code PIX
-        await fetch(`${webhookUrl}?action=generate_pix&amount=${amount}`, {
-            method: 'GET',
-            mode: 'no-cors'
-        });
+        // Criar elemento script para JSONP
+        const script = document.createElement('script');
+        script.src = `${webhookUrl}?action=generate_pix&amount=${amount}&callback=handlePixResponse`;
+        document.body.appendChild(script);
 
-        statusDiv.innerHTML = `
-            <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                <i class="fas fa-qrcode"></i> 
-                QR Code PIX gerado! Escaneie e faça o pagamento.
-                <br><small>Após o pagamento, aguarde a confirmação automática.</small>
-            </div>
-        `;
+        // Remover script após execução
+        script.onload = () => document.body.removeChild(script);
 
         // Iniciar verificação
         startPaymentCheck(amount);
@@ -7028,68 +7022,93 @@ async function initializePixPayment(amount, event) {
     }
 }
 
+// Função que recebe resposta do PIX
+function handlePixResponse(response) {
+    const statusDiv = document.getElementById('paymentStatus');
+    
+    if (response.error) {
+        statusDiv.innerHTML = `
+            <div style="background: var(--error); padding: 10px; border-radius: 8px; margin: 10px 0; color: white;">
+                <i class="fas fa-exclamation-circle"></i> 
+                Erro ao gerar QR Code. Tente novamente.
+            </div>
+        `;
+        return;
+    }
+
+    statusDiv.innerHTML = `
+        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+            <i class="fas fa-qrcode"></i> 
+            QR Code PIX gerado! Escaneie e faça o pagamento.
+            <br><small>Após o pagamento, aguarde a confirmação automática.</small>
+        </div>
+    `;
+}
+
 function startPaymentCheck(amount) {
     const statusDiv = document.getElementById('paymentStatus');
     let checkCount = 0;
     const maxChecks = 120; // 10 minutos (5s * 120)
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbwjnulslmhsOnPYGu28FUEswDClJMGoLqZZWDGaY_5WXWJYqNLN9vVE68Qq13gOwvtC/exec';
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycby5UIN5aJHQk8CrqziHBl62jGJc9Lqxf4ZloskWaME-P1MxiPKrCmdsicBsk5qlVRod/exec';
 
-    const checkInterval = setInterval(async () => {
+    const checkInterval = setInterval(() => {
         checkCount++;
-        
-        try {
-            // Verificar pagamento
-            await fetch(`${webhookUrl}?action=check_payment&amount=${amount}`, {
-                method: 'GET',
-                mode: 'no-cors'
-            });
 
-            // Verificar localStorage
-            const paymentStatus = localStorage.getItem('last_payment_status');
-            
-            if (paymentStatus === 'approved') {
-                clearInterval(checkInterval);
-                
-                statusDiv.innerHTML = `
-                    <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 8px; margin: 10px 0;">
-                        <i class="fas fa-check-circle"></i> 
-                        Pagamento PIX recebido! Você pode continuar com seu pedido.
-                    </div>
-                `;
+        // Criar elemento script para JSONP
+        const script = document.createElement('script');
+        script.src = `${webhookUrl}?action=check_payment&amount=${amount}&callback=handlePaymentCheck`;
+        document.body.appendChild(script);
+        script.onload = () => document.body.removeChild(script);
 
-                // Habilitar botão de finalizar
-                const submitButton = document.querySelector('#createOrderForm button[type="button"]');
-                if (submitButton) {
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = 'Finalizar Pedido';
-                    submitButton.style.opacity = '1';
-                }
-
-            } else if (checkCount >= maxChecks) {
-                clearInterval(checkInterval);
-                statusDiv.innerHTML = `
-                    <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                        <i class="fas fa-info-circle"></i> 
-                        Tempo limite excedido. Se você já pagou, o pedido será confirmado em breve.
-                        <br>
-                        <small>Você pode acompanhar o status do pagamento pelo app do Mercado Pago.</small>
-                    </div>
-                `;
-            } else {
-                statusDiv.innerHTML = `
-                    <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                        <i class="fas fa-spinner fa-spin"></i> 
-                        Aguardando confirmação do PIX... (${Math.floor(checkCount/12)}min)
-                        <br>
-                        <small>Não feche esta janela até a confirmação.</small>
-                    </div>
-                `;
-            }
-
-        } catch (error) {
-            console.error('Erro ao verificar pagamento:', error);
+        // Se atingir limite de tempo
+        if (checkCount >= maxChecks) {
+            clearInterval(checkInterval);
+            statusDiv.innerHTML = `
+                <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                    <i class="fas fa-info-circle"></i> 
+                    Tempo limite excedido. Se você já pagou, o pedido será confirmado em breve.
+                    <br>
+                    <small>Você pode acompanhar o status do pagamento pelo app do Mercado Pago.</small>
+                </div>
+            `;
+        } else {
+            statusDiv.innerHTML = `
+                <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                    <i class="fas fa-spinner fa-spin"></i> 
+                    Aguardando confirmação do PIX... (${Math.floor(checkCount/12)}min)
+                    <br>
+                    <small>Não feche esta janela até a confirmação.</small>
+                </div>
+            `;
         }
     }, 5000);
+
+    // Salvar intervalo para poder cancelar depois
+    window.currentCheckInterval = checkInterval;
+}
+
+// Função que recebe resposta do check
+function handlePaymentCheck(response) {
+    const statusDiv = document.getElementById('paymentStatus');
+    
+    if (response.status === 'approved') {
+        clearInterval(window.currentCheckInterval);
+        
+        statusDiv.innerHTML = `
+            <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 8px; margin: 10px 0;">
+                <i class="fas fa-check-circle"></i> 
+                Pagamento PIX recebido! Você pode continuar com seu pedido.
+            </div>
+        `;
+
+        // Habilitar botão de finalizar
+        const submitButton = document.querySelector('#createOrderForm button[type="button"]');
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'Finalizar Pedido';
+            submitButton.style.opacity = '1';
+        }
+    }
 }
     
 function generatePixString(pixKey, merchantName, city, amount) {
