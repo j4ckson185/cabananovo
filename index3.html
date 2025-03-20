@@ -6873,9 +6873,9 @@ function generatePixQRCode(total) {
                 </div>
             </div>
         </div>
-        <button onclick="initializePixPayment('${amount}', event)" class="modal-btn add-to-cart" style="margin-top: 15px; width: 100%;">
-            <i class="fas fa-paper-plane"></i> Enviar PIX
-        </button>
+<button onclick="initializePixPayment('${amount}', event)" class="modal-btn add-to-cart" style="margin-top: 15px; width: 100%;">
+    <i class="fas fa-paper-plane"></i> Enviar PIX
+</button>
     `;
 
     // Gerar QR Code após inserir no DOM
@@ -6983,24 +6983,43 @@ function closeBankModal(event) {
     }
 }
 
-function initializePixPayment(amount, event) {
+async function initializePixPayment(amount, event) {
     if (event) {
         event.preventDefault();
         event.stopPropagation();
     }
 
     const statusDiv = document.getElementById('paymentStatus');
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbyEaQdGMK4xQGndHHabvNDlU2gkxg3bps_SbWEbYw7DGQ54YQaW6o2dNpWopL9IVKeqnQ/exec';
     
-    statusDiv.innerHTML = `
-        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-            <i class="fas fa-qrcode"></i> 
-            QR Code PIX gerado! Escaneie e faça o pagamento.
-            <br><small>Após o pagamento, aguarde a confirmação automática.</small>
-        </div>
-    `;
+    try {
+        statusDiv.innerHTML = `
+            <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                <i class="fas fa-spinner fa-spin"></i> 
+                Gerando QR Code PIX...
+            </div>
+        `;
 
-    // Iniciar verificação
-    startPaymentCheck(amount);
+        // Criar elemento script para JSONP
+        const script = document.createElement('script');
+        script.src = `${webhookUrl}?action=generate_pix&amount=${amount}&callback=handlePixResponse`;
+        document.body.appendChild(script);
+
+        // Remover script após execução
+        script.onload = () => document.body.removeChild(script);
+
+        // Iniciar verificação
+        startPaymentCheck(amount);
+
+    } catch (error) {
+        console.error('Erro ao gerar PIX:', error);
+        statusDiv.innerHTML = `
+            <div style="background: var(--error); padding: 10px; border-radius: 8px; margin: 10px 0; color: white;">
+                <i class="fas fa-exclamation-circle"></i> 
+                Erro ao gerar QR Code. Tente novamente.
+            </div>
+        `;
+    }
 }
 
 // Função que recebe resposta do PIX
