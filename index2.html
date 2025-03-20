@@ -6915,7 +6915,7 @@ async function initializePixPayment(amount, event) {
     }
 
     const statusDiv = document.getElementById('paymentStatus');
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycby7c2tzwqkKCmwW7i6-ctbaFF9nOzHJ3BpqHGYU3tJLKQU6GWp2E-yLAsWmCF7cc4wmcg/exec';
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbym_hnN3XieTgv_aYeyQxwqqbzQhw7lhC1LmW0_gae3Ac0bKMHO7tQZfrOc6iQWquiwkQ/exec';
     
     try {
         statusDiv.innerHTML = `
@@ -6970,11 +6970,24 @@ function handlePixResponse(response) {
     `;
 }
 
+function generatePixQRCode(amount) {
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbym_hnN3XieTgv_aYeyQxwqqbzQhw7lhC1LmW0_gae3Ac0bKMHO7tQZfrOc6iQWquiwkQ/exec';
+    
+    // Criar elemento script para JSONP
+    const script = document.createElement('script');
+    script.src = `${webhookUrl}?action=generate_pix&amount=${amount}&callback=handlePixResponse`;
+    document.body.appendChild(script);
+    script.onload = () => document.body.removeChild(script);
+    
+    // Iniciar verificação de pagamento
+    startPaymentCheck(amount);
+}
+
 function startPaymentCheck(amount) {
     const statusDiv = document.getElementById('paymentStatus');
     let checkCount = 0;
     const maxChecks = 120; // 10 minutos (5s * 120)
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycby7c2tzwqkKCmwW7i6-ctbaFF9nOzHJ3BpqHGYU3tJLKQU6GWp2E-yLAsWmCF7cc4wmcg/exec';
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbym_hnN3XieTgv_aYeyQxwqqbzQhw7lhC1LmW0_gae3Ac0bKMHO7tQZfrOc6iQWquiwkQ/exec';
 
     const checkInterval = setInterval(() => {
         checkCount++;
