@@ -6991,7 +6991,7 @@ async function initializePixPayment(amount, event) {
     }
 
     const statusDiv = document.getElementById('paymentStatus');
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbxbct9KmNQ4hyrVI8aQTEjZj-Hyf5PB_5Dm3eIgBHT_gm0Zhv4JNi3cvH-mGKd7N8HBrA/exec';
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbwHLdmkhFd2w97onOSGSPmz9Z1sppxoLQnFh9yINSNnLpBHHrYmsTxraKkU980fiKUEAQ/exec';
     
     try {
         // Atualizar status
@@ -7058,7 +7058,7 @@ function checkPaymentStatus(orderId, amount) {
     const statusDiv = document.getElementById('paymentStatus');
     
     // URL do seu Google Apps Script implantado
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbxbct9KmNQ4hyrVI8aQTEjZj-Hyf5PB_5Dm3eIgBHT_gm0Zhv4JNi3cvH-mGKd7N8HBrA/exec';
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbwHLdmkhFd2w97onOSGSPmz9Z1sppxoLQnFh9yINSNnLpBHHrYmsTxraKkU980fiKUEAQ/exec';
     
     // Atualizar status para "verificando"
     statusDiv.innerHTML = `
@@ -7145,7 +7145,7 @@ function startPaymentCheck(paymentId) {
     const statusDiv = document.getElementById('paymentStatus');
     let checkCount = 0;
     const maxChecks = 60; // 5 minutos (verificando a cada 5 segundos)
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbxbct9KmNQ4hyrVI8aQTEjZj-Hyf5PB_5Dm3eIgBHT_gm0Zhv4JNi3cvH-mGKd7N8HBrA/exec';
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbwHLdmkhFd2w97onOSGSPmz9Z1sppxoLQnFh9yINSNnLpBHHrYmsTxraKkU980fiKUEAQ/exec';
 
     console.log('Iniciando verificação para payment ID:', paymentId);
 
