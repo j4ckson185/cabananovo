@@ -6984,44 +6984,57 @@ function closeBankModal(event) {
 }
 
 async function initializePixPayment(amount, event) {
-    // Prevenir comportamento padrão
     if (event) {
         event.preventDefault();
         event.stopPropagation();
     }
 
     const statusDiv = document.getElementById('paymentStatus');
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbwHLdmkhFd2w97onOSGSPmz9Z1sppxoLQnFh9yINSNnLpBHHrYmsTxraKkU980fiKUEAQ/exec';
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbw4ZssaL3qRq_ZKBV278zLFay_eLU3SzY5qrtI4cus1tz_KJOrYzyFvGnBriyVPsTRS_A/exec';
     
-    try {
-        // Atualizar status
-        statusDiv.innerHTML = `
-            <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                <i class="fas fa-spinner fa-spin"></i> 
-                Iniciando pagamento...
-            </div>
-        `;
+    // Mostrar status inicial
+    statusDiv.innerHTML = `
+        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+            <i class="fas fa-spinner fa-spin"></i> 
+            Gerando pagamento PIX...
+        </div>
+    `;
 
-        // Criar pagamento através do Apps Script
-        const response = await fetch(`${webhookUrl}?action=create_payment&amount=${amount}`, {
+    try {
+        // Criar pagamento
+        await fetch(`${webhookUrl}?action=create_payment&amount=${amount}`, {
             method: 'GET',
             mode: 'no-cors'
         });
 
-        // Verificar se o paymentId foi salvo no localStorage pelo Apps Script
-        const paymentId = localStorage.getItem('current_payment_id');
+        // Aguardar um pouco para o pagamento ser registrado
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
-        if (paymentId) {
-            console.log('Payment ID:', paymentId);
-            startPaymentCheck(paymentId);
-        } else {
-            throw new Error('Não foi possível criar o pagamento');
-        }
+        // Buscar detalhes do pagamento criado
+        await fetch(`${webhookUrl}?action=get_last_payment`, {
+            method: 'GET',
+            mode: 'no-cors'
+        });
+
+        // Aguardar mais um pouco para garantir
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Atualizar status
+        statusDiv.innerHTML = `
+            <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                <i class="fas fa-qrcode"></i> 
+                QR Code PIX gerado! Escaneie para pagar.
+                <br><small>Após o pagamento, aguarde a confirmação automática.</small>
+            </div>
+        `;
+
+        // Iniciar monitoramento de pagamento
+        startPaymentCheck(amount);
 
     } catch (error) {
         console.error('Erro ao iniciar pagamento:', error);
         statusDiv.innerHTML = `
-            <div style="background: var(--error); padding: 10px; border-radius: 8px; margin: 10px 0;">
+            <div style="background: var(--error); padding: 10px; border-radius: 8px; margin: 10px 0; color: white;">
                 <i class="fas fa-exclamation-circle"></i> 
                 Erro ao processar pagamento. Tente novamente.
             </div>
@@ -7058,7 +7071,7 @@ function checkPaymentStatus(orderId, amount) {
     const statusDiv = document.getElementById('paymentStatus');
     
     // URL do seu Google Apps Script implantado
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbwHLdmkhFd2w97onOSGSPmz9Z1sppxoLQnFh9yINSNnLpBHHrYmsTxraKkU980fiKUEAQ/exec';
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbw4ZssaL3qRq_ZKBV278zLFay_eLU3SzY5qrtI4cus1tz_KJOrYzyFvGnBriyVPsTRS_A/exec';
     
     // Atualizar status para "verificando"
     statusDiv.innerHTML = `
@@ -7141,26 +7154,24 @@ function checkPaymentStatus(orderId, amount) {
     });
 }
 
-function startPaymentCheck(paymentId) {
+function startPaymentCheck(amount) {
     const statusDiv = document.getElementById('paymentStatus');
     let checkCount = 0;
     const maxChecks = 60; // 5 minutos (verificando a cada 5 segundos)
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbwHLdmkhFd2w97onOSGSPmz9Z1sppxoLQnFh9yINSNnLpBHHrYmsTxraKkU980fiKUEAQ/exec';
-
-    console.log('Iniciando verificação para payment ID:', paymentId);
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbw4ZssaL3qRq_ZKBV278zLFay_eLU3SzY5qrtI4cus1tz_KJOrYzyFvGnBriyVPsTRS_A/exec';
 
     const checkInterval = setInterval(async () => {
         checkCount++;
         
         try {
-            // Verificar status através do Apps Script
-            await fetch(`${webhookUrl}?action=check_payment&paymentId=${paymentId}`, {
+            // Buscar último pagamento
+            await fetch(`${webhookUrl}?action=get_last_payment`, {
                 method: 'GET',
                 mode: 'no-cors'
             });
 
-            // Verificar status no localStorage (atualizado pelo Apps Script)
-            const status = localStorage.getItem(`payment_status_${paymentId}`);
+            // Verificar status no localStorage
+            const status = localStorage.getItem('last_payment_status');
             
             if (status === 'approved') {
                 clearInterval(checkInterval);
@@ -7186,7 +7197,6 @@ function startPaymentCheck(paymentId) {
                     <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
                         <i class="fas fa-info-circle"></i> 
                         O pagamento ainda não foi confirmado. Se você já pagou, aguarde alguns instantes.
-                        <br><small>ID do Pagamento: ${paymentId}</small>
                     </div>
                 `;
             } else {
@@ -7194,7 +7204,6 @@ function startPaymentCheck(paymentId) {
                     <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
                         <i class="fas fa-spinner fa-spin"></i> 
                         Verificando pagamento... (${checkCount}/${maxChecks})
-                        <br><small>ID do Pagamento: ${paymentId}</small>
                     </div>
                 `;
             }
