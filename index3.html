@@ -6914,6 +6914,10 @@ function initializePixPayment(amount, event) {
         event.stopPropagation();
     }
 
+    // Adicione estas duas linhas no início para gerar um novo ID de sessão
+    window.currentSessionId = generateSessionId();
+    console.log("Nova sessão de pagamento iniciada: " + window.currentSessionId);
+
     const statusDiv = document.getElementById('paymentStatus');
     
     statusDiv.innerHTML = `
@@ -6957,8 +6961,15 @@ function startPaymentCheck(amount) {
     let checkCount = 0;
     const maxChecks = 120; // 6 minutos (3s * 120)
     
+    // Obter ou criar ID de sessão
+    if (!window.currentSessionId) {
+        window.currentSessionId = generateSessionId();
+        console.log("Novo ID de sessão criado: " + window.currentSessionId);
+    }
+    const sessionId = window.currentSessionId;
+    
     // Substituir pela URL correta do seu script
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbwOrWy3V11c5NWcanao1s4gS2-TOoS6pc_25uZREjVjPtotdIDJVMotQ9NCZBa6gl5v9w/exec';
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbwnorXKMEAy3QyfL2NKKCqN1r1bE_hAr7QoNZO6NGGS9zewN-zVvc0N409IM5CwFzqWtg/exec';
     
     // Mostrar status inicial
     statusDiv.innerHTML = `
@@ -6975,16 +6986,17 @@ function startPaymentCheck(amount) {
         statusDetailDiv.innerHTML = `
             <div style="text-align: center;">
                 <p>Iniciando verificação de pagamento...</p>
+                <small>ID de Sessão: ${sessionId.substring(0, 8)}...</small>
             </div>
         `;
     }
     
     // Função para verificar o pagamento
     const checkPayment = () => {
-        console.log(`Verificação ${checkCount+1} para valor ${amount}`);
+        console.log(`Verificação ${checkCount+1} para valor ${amount}, sessão ${sessionId}`);
         
-        // Adicionar timestamp para evitar cache
-        const url = `${webhookUrl}?action=check_payment&amount=${amount}&cache=${Date.now()}`;
+        // Adicionar timestamp e ID de sessão para evitar cache
+        const url = `${webhookUrl}?action=check_payment&amount=${amount}&session=${sessionId}&cache=${Date.now()}`;
         
         fetch(url)
             .then(response => response.text())
@@ -6994,6 +7006,7 @@ function startPaymentCheck(amount) {
                     let data;
                     try {
                         data = JSON.parse(text);
+                        console.log("Resposta recebida:", data);
                         
                         // Se for aprovado
                         if (data.status === 'approved') {
@@ -7007,6 +7020,7 @@ function startPaymentCheck(amount) {
                                         <h3 style="margin: 10px 0;">Pagamento Confirmado! ${timeAgo}</h3>
                                         <p>Recebemos seu pagamento com sucesso.</p>
                                         <p>Seu pedido está sendo processado.</p>
+                                        <small>ID de Sessão: ${sessionId.substring(0, 8)}...</small>
                                     </div>
                                 `;
                             }
@@ -7039,18 +7053,20 @@ function startPaymentCheck(amount) {
                                         <i class="fas fa-clock" style="font-size: 1.5rem;"></i>
                                         <p style="margin: 10px 0;">Ainda estamos aguardando a confirmação do seu pagamento.</p>
                                         <small>Status: ${data.status || 'pendente'}</small>
+                                        <br><small>ID de Sessão: ${sessionId.substring(0, 8)}...</small>
                                     </div>
                                 `;
                             }
                         }
                     } catch (e) {
                         // Se não for JSON, mostra o texto como está
-                        console.error("Erro ao analisar JSON:", e);
+                        console.error("Erro ao analisar JSON:", e, "Texto recebido:", text);
                         if (statusDetailDiv) {
                             statusDetailDiv.innerHTML = `
                                 <div style="color: var(--error); text-align: center;">
                                     <p>Aguardando confirmação do servidor...</p>
                                     <small>Resposta do servidor não é um formato válido</small>
+                                    <br><small>ID de Sessão: ${sessionId.substring(0, 8)}...</small>
                                 </div>
                             `;
                         }
@@ -7086,6 +7102,7 @@ function startPaymentCheck(amount) {
                         statusDetailDiv.innerHTML = `
                             <div style="color: var(--error); text-align: center;">
                                 <p>Erro ao verificar pagamento: ${error.message}</p>
+                                <small>ID de Sessão: ${sessionId.substring(0, 8)}...</small>
                             </div>
                         `;
                     }
@@ -7117,6 +7134,7 @@ function startPaymentCheck(amount) {
     const checkInterval = setInterval(checkPayment, 3000);
 }
 
+// Função para permitir continuar sem confirmação
 function continueAfterPix() {
     const submitButton = document.querySelector('#createOrderForm button[type="button"]');
     if (submitButton) {
@@ -7135,8 +7153,20 @@ function continueAfterPix() {
     `;
 }
 
-// Função para gerar o QR Code do PIX e iniciar a verificação de pagamento
+// Adicione esta função para gerar IDs únicos
+function generateSessionId() {
+    return Date.now().toString() + Math.random().toString(36).substring(2, 9);
+}
+
+// Modifique a função generatePixQRCode para criar um ID de sessão
 function generatePixQRCode(total) {
+    // Gerar ID de sessão único
+    const sessionId = generateSessionId();
+    // Armazenar o ID na janela para uso posterior
+    window.currentSessionId = sessionId;
+    
+    console.log("Nova sessão de pagamento criada: " + sessionId);
+    
     // Dados do PIX atualizados
     const pixKey = "06561938402";
     const merchantName = "JACKSON";
