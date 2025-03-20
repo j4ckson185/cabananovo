@@ -6873,7 +6873,6 @@ function generatePixQRCode(total) {
                 </div>
             </div>
         </div>
-// Substitua a linha do botão por:
 <button onclick="initializePixPayment('${amount}', event)" class="modal-btn add-to-cart" style="margin-top: 15px; width: 100%;">
     <i class="fas fa-paper-plane"></i> Enviar PIX
 </button>
@@ -6998,7 +6997,7 @@ async function initializePixPayment(amount, event) {
         const orderId = `ORDER_${Date.now()}`;
         
         // Configurar webhook URL
-        const webhookUrl = 'https://script.google.com/macros/s/AKfycbxr1r9FI0rYhX1_s4B_VDtSQEj5nTxrPn0f3DQYyOn5bMRVvymtMvw5RqAYYkpcG9pjeA/exec';
+        const webhookUrl = 'https://script.google.com/macros/s/AKfycbyhf-RvUVXh9ZQDcD7420MSCh6BQz6mHXJwMCcI7KTyrX5gamPDFPmPvdUB68VwAlpTOw/exec';
 
         // Atualizar status
         statusDiv.innerHTML = `
@@ -7085,7 +7084,7 @@ function checkPaymentStatus(orderId, amount) {
     const statusDiv = document.getElementById('paymentStatus');
     
     // URL do seu Google Apps Script implantado
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbxr1r9FI0rYhX1_s4B_VDtSQEj5nTxrPn0f3DQYyOn5bMRVvymtMvw5RqAYYkpcG9pjeA/exec';
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbyhf-RvUVXh9ZQDcD7420MSCh6BQz6mHXJwMCcI7KTyrX5gamPDFPmPvdUB68VwAlpTOw/exec';
     
     // Atualizar status para "verificando"
     statusDiv.innerHTML = `
