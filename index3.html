@@ -6984,7 +6984,7 @@ function closeBankModal(event) {
 }
 
 async function initializePixPayment(amount, event) {
-    // Prevenir comportamento padrão que fecha o modal
+    // Prevenir comportamento padrão
     if (event) {
         event.preventDefault();
         event.stopPropagation();
@@ -6993,9 +6993,6 @@ async function initializePixPayment(amount, event) {
     const statusDiv = document.getElementById('paymentStatus');
     
     try {
-        // Gerar ID único para o pedido
-        const orderId = `ORDER_${Date.now()}`;
-        
         // Configurar webhook URL
         const webhookUrl = 'https://script.google.com/macros/s/AKfycbyiL6IxjabiI8FBcevpIF9c-Ozt0j907iaacHI_2GeruurkxFIvpLAcMJQbs4tZCXWcoA/exec';
 
@@ -7007,41 +7004,32 @@ async function initializePixPayment(amount, event) {
             </div>
         `;
 
-        // Criar preferência de pagamento
-        try {
-            const preferenceUrl = 'https://api.mercadopago.com/v1/payments';
-            const response = await fetch(preferenceUrl, {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer APP_USR-5690418429869747-031817-f6ee6e1b8317cfd7526ff7bd547728e7-257593839',
-                    'Content-Type': 'application/json'
+        // Criar preferência de pagamento no Mercado Pago
+        const preferenceUrl = 'https://api.mercadopago.com/v1/payments';
+        const response = await fetch(preferenceUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer APP_USR-5690418429869747-031817-f6ee6e1b8317cfd7526ff7bd547728e7-257593839',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                transaction_amount: parseFloat(amount),
+                payment_method_id: 'pix',
+                payer: {
+                    email: 'customer@email.com'
                 },
-                body: JSON.stringify({
-                    transaction_amount: parseFloat(amount),
-                    payment_method_id: 'pix',
-                    payer: {
-                        email: 'customer@email.com'
-                    },
-                    external_reference: orderId,
-                    notification_url: webhookUrl
-                })
-            });
+                notification_url: webhookUrl
+            })
+        });
 
-            const paymentData = await response.json();
+        const paymentData = await response.json();
 
-            if (paymentData.id) {
-                // Salvar ID do pagamento
-                sessionStorage.setItem('currentPaymentId', paymentData.id);
-                sessionStorage.setItem('currentOrderId', orderId);
-
-                // Iniciar verificação
-                startPaymentCheck(paymentData.id);
-            }
-
-        } catch (error) {
-            console.error('Erro na chamada do Mercado Pago:', error);
-            // Mesmo com erro, continuamos monitorando
-            startPaymentCheck(orderId);
+        if (paymentData.id) {
+            // Salvar ID do pagamento e iniciar verificação
+            console.log('Payment ID:', paymentData.id);
+            startPaymentCheck(paymentData.id);
+        } else {
+            throw new Error('Não foi possível criar o pagamento');
         }
 
     } catch (error) {
@@ -7173,20 +7161,25 @@ function startPaymentCheck(paymentId) {
     const maxChecks = 60; // 5 minutos (verificando a cada 5 segundos)
     const webhookUrl = 'https://script.google.com/macros/s/AKfycbyiL6IxjabiI8FBcevpIF9c-Ozt0j907iaacHI_2GeruurkxFIvpLAcMJQbs4tZCXWcoA/exec';
 
+    // Log para debug
+    console.log('Iniciando verificação para payment ID:', paymentId);
+
     const checkInterval = setInterval(async () => {
         checkCount++;
         
         try {
-            // Verificar status somente através do Apps Script
+            // Verificar status através do Apps Script
             const response = await fetch(`${webhookUrl}?action=check&paymentId=${paymentId}`, {
                 method: 'GET',
                 mode: 'no-cors'
             });
 
-            // Como estamos usando no-cors, verificamos o status via sessionStorage
-            const status = sessionStorage.getItem(`payment_${paymentId}`);
+            // Como estamos usando no-cors, verificamos via localStorage também
+            const storedStatus = localStorage.getItem(`payment_${paymentId}`);
+            console.log('Status armazenado:', storedStatus);
 
-            if (status === 'approved') {
+            // Verificar se o pagamento foi aprovado
+            if (storedStatus === 'approved') {
                 clearInterval(checkInterval);
                 
                 statusDiv.innerHTML = `
@@ -7210,6 +7203,7 @@ function startPaymentCheck(paymentId) {
                     <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
                         <i class="fas fa-info-circle"></i> 
                         O pagamento ainda não foi confirmado. Se você já pagou, aguarde alguns instantes.
+                        <br><small>ID do Pagamento: ${paymentId}</small>
                     </div>
                 `;
             } else {
@@ -7218,6 +7212,7 @@ function startPaymentCheck(paymentId) {
                     <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
                         <i class="fas fa-spinner fa-spin"></i> 
                         Verificando pagamento... (${checkCount}/${maxChecks})
+                        <br><small>ID do Pagamento: ${paymentId}</small>
                     </div>
                 `;
             }
@@ -7229,11 +7224,21 @@ function startPaymentCheck(paymentId) {
                     <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
                         <i class="fas fa-exclamation-circle"></i> 
                         Erro ao verificar pagamento. Se você já pagou, aguarde alguns instantes.
+                        <br><small>ID do Pagamento: ${paymentId}</small>
                     </div>
                 `;
             }
         }
     }, 5000);
+
+    // Iniciar verificação imediatamente
+    statusDiv.innerHTML = `
+        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+            <i class="fas fa-spinner fa-spin"></i> 
+            Iniciando verificação do pagamento...
+            <br><small>ID do Pagamento: ${paymentId}</small>
+        </div>
+    `;
 }
 
 function updatePaymentStatus(status) {
