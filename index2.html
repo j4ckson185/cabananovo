@@ -7048,67 +7048,67 @@ function handlePixResponse(response) {
 function startPaymentCheck(amount) {
     const statusDiv = document.getElementById('paymentStatus');
     let checkCount = 0;
-    const maxChecks = 120; // 10 minutos (5s * 120)
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbyEaQdGMK4xQGndHHabvNDlU2gkxg3bps_SbWEbYw7DGQ54YQaW6o2dNpWopL9IVKeqnQ/exec';
+    const maxChecks = 120; // 10 minutos
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbzqJku4pT0YIXUCDTITzcbI6zSF2d1FZMn5z69pPD6f50Al2zapj2PX1CYvxHeXbKeAaQ/exec';
 
-    const checkInterval = setInterval(() => {
+    // Guardar ID da transação atual
+    let currentTransactionId = null;
+
+    const checkInterval = setInterval(async () => {
         checkCount++;
+        
+        try {
+            const response = await fetch(`${webhookUrl}?action=check_payment&amount=${amount}`, {
+                method: 'GET'
+            });
 
-        fetch(`${webhookUrl}?action=check_payment&amount=${amount}`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.text())
-        .then(text => {
-            try {
-                const response = JSON.parse(text);
-                if (response.status === 'approved') {
-                    clearInterval(checkInterval);
-                    
-                    statusDiv.innerHTML = `
-                        <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 8px; margin: 10px 0;">
-                            <i class="fas fa-check-circle"></i> 
-                            Pagamento PIX recebido! Você pode continuar com seu pedido.
-                        </div>
-                    `;
+            const data = await response.text();
+            
+            // Se encontrou pagamento novo
+            if (data.includes('approved')) {
+                clearInterval(checkInterval);
+                
+                statusDiv.innerHTML = `
+                    <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 8px; margin: 10px 0;">
+                        <i class="fas fa-check-circle"></i> 
+                        Pagamento PIX recebido! Você pode continuar com seu pedido.
+                    </div>
+                `;
 
-                    // Habilitar botão de finalizar pedido
-                    const submitButton = document.querySelector('#createOrderForm button[type="button"]');
-                    if (submitButton) {
-                        submitButton.disabled = false;
-                        submitButton.innerHTML = 'Finalizar Pedido';
-                        submitButton.style.opacity = '1';
-                    }
-                } else if (checkCount >= maxChecks) {
-                    clearInterval(checkInterval);
-                    statusDiv.innerHTML = `
-                        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                            <i class="fas fa-info-circle"></i> 
-                            Tempo limite excedido. Se você já pagou, o pedido será confirmado em breve.
-                            <br>
-                            <small>Você pode acompanhar o status do pagamento pelo app do Mercado Pago.</small>
-                        </div>
-                    `;
-                } else {
-                    statusDiv.innerHTML = `
-                        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                            <i class="fas fa-spinner fa-spin"></i> 
-                            Aguardando confirmação do PIX... (${Math.floor(checkCount/12)}min)
-                            <br>
-                            <small>Não feche esta janela até a confirmação.</small>
-                        </div>
-                    `;
+                // Habilitar botão de finalizar pedido
+                const submitButton = document.querySelector('#createOrderForm button[type="button"]');
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = 'Finalizar Pedido';
+                    submitButton.style.opacity = '1';
                 }
-            } catch (error) {
-                console.error('Erro ao processar resposta:', error);
+
+                return;
             }
-        })
-        .catch(error => {
+            
+            // Se ainda não encontrou
+            if (checkCount >= maxChecks) {
+                clearInterval(checkInterval);
+                statusDiv.innerHTML = `
+                    <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                        <i class="fas fa-info-circle"></i> 
+                        Tempo limite excedido. Se você já pagou, o pedido será confirmado em breve.
+                    </div>
+                `;
+            } else {
+                statusDiv.innerHTML = `
+                    <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                        <i class="fas fa-spinner fa-spin"></i> 
+                        Aguardando confirmação do PIX... (${Math.floor(checkCount/12)}min)
+                        <br><small>Não feche esta janela até a confirmação.</small>
+                    </div>
+                `;
+            }
+
+        } catch (error) {
             console.error('Erro ao verificar pagamento:', error);
-        });
-    }, 5000); // Verifica a cada 5 segundos
+        }
+    }, 5000);
 }
 
 // Função que recebe resposta do check
