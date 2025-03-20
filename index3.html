@@ -6957,8 +6957,8 @@ function startPaymentCheck(amount) {
     let checkCount = 0;
     const maxChecks = 120; // 6 minutos (3s * 120)
     
-    // URL do webhook
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbzaqoLMBcFI9EAUBego-g5kb_A_EkH2Cuu6rNOPByA4BcqshEvqRZcXUuh7p9dCNPJmuQ/exec';
+    // Substituir pela URL correta do seu script
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbwOrWy3V11c5NWcanao1s4gS2-TOoS6pc_25uZREjVjPtotdIDJVMotQ9NCZBa6gl5v9w/exec';
     
     // Mostrar status inicial
     statusDiv.innerHTML = `
@@ -6968,6 +6968,16 @@ function startPaymentCheck(amount) {
             <br><small>Não feche esta janela até a confirmação.</small>
         </div>
     `;
+    
+    // Exibir o contêiner de detalhes caso esteja escondido
+    if (statusDetailDiv) {
+        statusDetailDiv.style.display = 'block';
+        statusDetailDiv.innerHTML = `
+            <div style="text-align: center;">
+                <p>Iniciando verificação de pagamento...</p>
+            </div>
+        `;
+    }
     
     // Função para verificar o pagamento
     const checkPayment = () => {
@@ -6980,9 +6990,6 @@ function startPaymentCheck(amount) {
             .then(response => response.text())
             .then(text => {
                 try {
-                    // Mostrar o texto bruto no elemento de detalhes
-                    statusDetailDiv.style.display = 'block';
-                    
                     // Tentar analisar como JSON
                     let data;
                     try {
@@ -6990,14 +6997,19 @@ function startPaymentCheck(amount) {
                         
                         // Se for aprovado
                         if (data.status === 'approved') {
-                            statusDetailDiv.innerHTML = `
-                                <div style="color: #4CAF50; text-align: center;">
-                                    <i class="fas fa-check-circle" style="font-size: 2rem;"></i>
-                                    <h3 style="margin: 10px 0;">Pagamento Confirmado!</h3>
-                                    <p>Recebemos seu pagamento com sucesso.</p>
-                                    <p>Seu pedido está sendo processado.</p>
-                                </div>
-                            `;
+                            // Mostrar quando o pagamento foi aprovado
+                            const timeAgo = data.timeAgo ? `(há ${data.timeAgo} segundos)` : '';
+                            
+                            if (statusDetailDiv) {
+                                statusDetailDiv.innerHTML = `
+                                    <div style="color: #4CAF50; text-align: center;">
+                                        <i class="fas fa-check-circle" style="font-size: 2rem;"></i>
+                                        <h3 style="margin: 10px 0;">Pagamento Confirmado! ${timeAgo}</h3>
+                                        <p>Recebemos seu pagamento com sucesso.</p>
+                                        <p>Seu pedido está sendo processado.</p>
+                                    </div>
+                                `;
+                            }
                             
                             // Também atualizar o status principal
                             statusDiv.innerHTML = `
@@ -7021,21 +7033,27 @@ function startPaymentCheck(amount) {
                             return;
                         } else {
                             // Status pendente
-                            statusDetailDiv.innerHTML = `
-                                <div style="text-align: center;">
-                                    <i class="fas fa-clock" style="font-size: 1.5rem;"></i>
-                                    <p style="margin: 10px 0;">Ainda estamos aguardando a confirmação do seu pagamento.</p>
-                                    <small>Status: ${data.status || 'pendente'}</small>
-                                </div>
-                            `;
+                            if (statusDetailDiv) {
+                                statusDetailDiv.innerHTML = `
+                                    <div style="text-align: center;">
+                                        <i class="fas fa-clock" style="font-size: 1.5rem;"></i>
+                                        <p style="margin: 10px 0;">Ainda estamos aguardando a confirmação do seu pagamento.</p>
+                                        <small>Status: ${data.status || 'pendente'}</small>
+                                    </div>
+                                `;
+                            }
                         }
                     } catch (e) {
                         // Se não for JSON, mostra o texto como está
-                        statusDetailDiv.innerHTML = `
-                            <div style="color: var(--error); text-align: center;">
-                                <p>Aguardando confirmação do servidor...</p>
-                            </div>
-                        `;
+                        console.error("Erro ao analisar JSON:", e);
+                        if (statusDetailDiv) {
+                            statusDetailDiv.innerHTML = `
+                                <div style="color: var(--error); text-align: center;">
+                                    <p>Aguardando confirmação do servidor...</p>
+                                    <small>Resposta do servidor não é um formato válido</small>
+                                </div>
+                            `;
+                        }
                     }
                     
                     // Continuar verificando
@@ -7064,12 +7082,13 @@ function startPaymentCheck(amount) {
                     }
                 } catch (error) {
                     console.error("Erro ao processar resposta:", error);
-                    statusDetailDiv.style.display = 'block';
-                    statusDetailDiv.innerHTML = `
-                        <div style="color: var(--error); text-align: center;">
-                            <p>Erro ao verificar pagamento: ${error.message}</p>
-                        </div>
-                    `;
+                    if (statusDetailDiv) {
+                        statusDetailDiv.innerHTML = `
+                            <div style="color: var(--error); text-align: center;">
+                                <p>Erro ao verificar pagamento: ${error.message}</p>
+                            </div>
+                        `;
+                    }
                 }
             })
             .catch(error => {
