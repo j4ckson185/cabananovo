@@ -202,7 +202,7 @@
 
     <script>
         // URL do seu Google Apps Script
-        const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzDQvZ0F4MdvTpybQD7HbYen3HLtxhdvpoYD4GcTxMRdWkUpveRgAUxlC6QGsHtLO4lXg/exec';
+        const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbz27k4KvF5_P9LTqk-qBLzNRKP8o8KHX5vk-Y6O_CcUXuKv9boBRZpMopkevfwNODzyXg/exec';
         
         let checkInterval;
         let amount = 0;
@@ -348,14 +348,26 @@
                 addLog(`Verificando pagamento (tentativa ${checkCount + 1})`);
                 
                 // Criar URL única para evitar cache
-                const url = `${WEBHOOK_URL}?action=get_last_status&amount=${amount}&nocache=${Date.now()}`;
+                const url = `${WEBHOOK_URL}?action=check_payment&amount=${amount}&nocache=${Date.now()}`;
                 
                 fetch(url)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error(`Erro HTTP: ${response.status}`);
                         }
-                        return response.json();
+                        return response.text(); // Obter como texto primeiro
+                    })
+                    .then(text => {
+                        // Verificar se a resposta está no formato JSONP (callback)
+                        if (text.startsWith('callback(') && text.endsWith(')')) {
+                            // Extrair o JSON interno
+                            const jsonStr = text.substring(9, text.length - 1);
+                            addLog(`Resposta no formato JSONP, extraindo JSON: ${jsonStr}`, 'info');
+                            return JSON.parse(jsonStr);
+                        }
+                        // Tentar como JSON puro
+                        addLog(`Resposta em texto: ${text}`, 'info');
+                        return JSON.parse(text);
                     })
                     .then(data => {
                         console.log('Resposta recebida:', data);
@@ -414,14 +426,26 @@
             statusEl.innerHTML = `<i class="fas fa-spinner"></i> Verificando pagamento...`;
             
             // URL para verificação
-            const url = `${WEBHOOK_URL}?action=get_last_status&amount=${amount}&nocache=${Date.now()}`;
+            const url = `${WEBHOOK_URL}?action=check_payment&amount=${amount}&nocache=${Date.now()}`;
             
             fetch(url)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`Erro HTTP: ${response.status}`);
                     }
-                    return response.json();
+                    return response.text(); // Obter como texto primeiro
+                })
+                .then(text => {
+                    // Verificar se a resposta está no formato JSONP (callback)
+                    if (text.startsWith('callback(') && text.endsWith(')')) {
+                        // Extrair o JSON interno
+                        const jsonStr = text.substring(9, text.length - 1);
+                        addLog(`Resposta manual no formato JSONP, extraindo JSON: ${jsonStr}`, 'info');
+                        return JSON.parse(jsonStr);
+                    }
+                    // Tentar como JSON puro
+                    addLog(`Resposta manual em texto: ${text}`, 'info');
+                    return JSON.parse(text);
                 })
                 .then(data => {
                     console.log('Resposta manual recebida:', data);
