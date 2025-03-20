@@ -6873,9 +6873,10 @@ function generatePixQRCode(total) {
                 </div>
             </div>
         </div>
-        <button onclick="initializePixPayment('${amount}')" class="modal-btn add-to-cart" style="margin-top: 15px; width: 100%;">
-            <i class="fas fa-money-bill"></i> Pagar com PIX
-        </button>
+// Substitua a linha do botão por:
+<button onclick="initializePixPayment('${amount}', event)" class="modal-btn add-to-cart" style="margin-top: 15px; width: 100%;">
+    <i class="fas fa-paper-plane"></i> Enviar PIX
+</button>
     `;
 
     // Gerar QR Code após inserir no DOM
@@ -6983,7 +6984,13 @@ function closeBankModal(event) {
     }
 }
 
-async function initializePixPayment(amount) {
+async function initializePixPayment(amount, event) {
+    // Prevenir comportamento padrão que fecha o modal
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
     const statusDiv = document.getElementById('paymentStatus');
     
     try {
@@ -6991,44 +6998,51 @@ async function initializePixPayment(amount) {
         const orderId = `ORDER_${Date.now()}`;
         
         // Configurar webhook URL
-        const webhookUrl = 'https://script.google.com/macros/s/AKfycbxr1r9FI0rYhX1_s4B_VDtSQEj5nTxrPn0f3DQYyOn5bMRVvymtMvw5RqAYYkpcG9pjeA/exec';
+        const webhookUrl = 'https://script.google.com/macros/s/AKfycbyyJUZcPWbX0Ly4Rjbze1pPhXC9Uv6wJbYYemH-7c97nzHuRy3eW7S0zXWNQOt0eIi6/exec';
+
+        // Atualizar status
+        statusDiv.innerHTML = `
+            <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                <i class="fas fa-spinner fa-spin"></i> 
+                Aguardando pagamento...
+            </div>
+        `;
 
         // Criar preferência de pagamento
-        const preferenceUrl = 'https://api.mercadopago.com/v1/payments';
-        const response = await fetch(preferenceUrl, {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer APP_USR-5690418429869747-031817-f6ee6e1b8317cfd7526ff7bd547728e7-257593839',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                transaction_amount: parseFloat(amount),
-                payment_method_id: 'pix',
-                payer: {
-                    email: 'customer@email.com'
+        try {
+            const preferenceUrl = 'https://api.mercadopago.com/v1/payments';
+            const response = await fetch(preferenceUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer APP_USR-5690418429869747-031817-f6ee6e1b8317cfd7526ff7bd547728e7-257593839',
+                    'Content-Type': 'application/json'
                 },
-                external_reference: orderId,
-                notification_url: webhookUrl
-            })
-        });
+                body: JSON.stringify({
+                    transaction_amount: parseFloat(amount),
+                    payment_method_id: 'pix',
+                    payer: {
+                        email: 'customer@email.com'
+                    },
+                    external_reference: orderId,
+                    notification_url: webhookUrl
+                })
+            });
 
-        const paymentData = await response.json();
+            const paymentData = await response.json();
 
-        if (paymentData.id) {
-            // Salvar ID do pagamento
-            sessionStorage.setItem('currentPaymentId', paymentData.id);
-            sessionStorage.setItem('currentOrderId', orderId);
+            if (paymentData.id) {
+                // Salvar ID do pagamento
+                sessionStorage.setItem('currentPaymentId', paymentData.id);
+                sessionStorage.setItem('currentOrderId', orderId);
 
-            // Atualizar status
-            statusDiv.innerHTML = `
-                <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                    <i class="fas fa-spinner fa-spin"></i> 
-                    Aguardando pagamento...
-                </div>
-            `;
+                // Iniciar verificação
+                startPaymentCheck(paymentData.id);
+            }
 
-            // Iniciar verificação
-            startPaymentCheck(paymentData.id);
+        } catch (error) {
+            console.error('Erro na chamada do Mercado Pago:', error);
+            // Mesmo com erro, continuamos monitorando
+            startPaymentCheck(orderId);
         }
 
     } catch (error) {
