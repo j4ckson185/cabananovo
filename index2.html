@@ -6908,43 +6908,24 @@ function closeBankModal(event) {
     }
 }
 
-async function initializePixPayment(amount, event) {
+function initializePixPayment(amount, event) {
     if (event) {
         event.preventDefault();
         event.stopPropagation();
     }
 
     const statusDiv = document.getElementById('paymentStatus');
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbym_hnN3XieTgv_aYeyQxwqqbzQhw7lhC1LmW0_gae3Ac0bKMHO7tQZfrOc6iQWquiwkQ/exec';
     
-    try {
-        statusDiv.innerHTML = `
-            <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                <i class="fas fa-spinner fa-spin"></i> 
-                Gerando QR Code PIX...
-            </div>
-        `;
+    statusDiv.innerHTML = `
+        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+            <i class="fas fa-qrcode"></i> 
+            QR Code PIX gerado! Escaneie e faça o pagamento.
+            <br><small>Após o pagamento, aguarde a confirmação automática.</small>
+        </div>
+    `;
 
-        // Criar elemento script para JSONP
-        const script = document.createElement('script');
-        script.src = `${webhookUrl}?action=generate_pix&amount=${amount}&callback=handlePixResponse`;
-        document.body.appendChild(script);
-
-        // Remover script após execução
-        script.onload = () => document.body.removeChild(script);
-
-        // Iniciar verificação
-        startPaymentCheck(amount);
-
-    } catch (error) {
-        console.error('Erro ao gerar PIX:', error);
-        statusDiv.innerHTML = `
-            <div style="background: var(--error); padding: 10px; border-radius: 8px; margin: 10px 0; color: white;">
-                <i class="fas fa-exclamation-circle"></i> 
-                Erro ao gerar QR Code. Tente novamente.
-            </div>
-        `;
-    }
+    // Iniciar verificação
+    startPaymentCheck(amount);
 }
 
 // Função que recebe resposta do PIX
@@ -6970,17 +6951,79 @@ function handlePixResponse(response) {
     `;
 }
 
-function generatePixQRCode(amount) {
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbym_hnN3XieTgv_aYeyQxwqqbzQhw7lhC1LmW0_gae3Ac0bKMHO7tQZfrOc6iQWquiwkQ/exec';
+function generatePixQRCode(total) {
+    // Dados do PIX atualizados
+    const pixKey = "06561938402";
+    const merchantName = "JACKSON";
+    const city = "NATAL";
     
-    // Criar elemento script para JSONP
-    const script = document.createElement('script');
-    script.src = `${webhookUrl}?action=generate_pix&amount=${amount}&callback=handlePixResponse`;
-    document.body.appendChild(script);
-    script.onload = () => document.body.removeChild(script);
+    // Formatar valor
+    const amount = parseFloat(total.toString().replace(/[^\d.,]/g, '').replace(',', '.')).toFixed(2);
     
-    // Iniciar verificação de pagamento
-    startPaymentCheck(amount);
+    // Container principal
+    const qrContainer = document.createElement('div');
+    qrContainer.id = 'pixQRCode';
+    qrContainer.style.cssText = `
+        text-align: center;
+        padding: 15px;
+        background: var(--glass);
+        border-radius: 15px;
+        border: 1px solid var(--glass-border);
+        max-width: 100%;
+        margin: 0 auto;
+    `;
+
+    qrContainer.innerHTML = `
+        <h3 style="margin-bottom: 10px; color: white;">Pagamento via PIX</h3>
+        <div id="paymentStatus" style="margin-bottom: 15px; color: var(--text);"></div>
+        
+        <!-- Container do QR Code -->
+        <div style="background: white; padding: 10px; border-radius: 10px; display: inline-block; margin: 10px auto;">
+            <div id="qrCodeElement"></div>
+        </div>
+
+        <div style="margin: 15px 0; padding: 10px; background: var(--surface); border-radius: 10px;">
+            <div style="margin-bottom: 10px;">
+                <strong>Dados da Chave PIX</strong><br>
+                <span style="color: var(--text);">
+                    Chave PIX: ${pixKey}<br>
+                    Banco: Mercado Pago<br>
+                    Nome: Jackson<br>
+                    Valor: R$ ${amount}
+                </span>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <strong>Chave PIX</strong>
+                <div style="position: relative; margin-top: 5px;">
+                    <input type="text" value="${pixKey}" 
+                        readonly 
+                        style="width: 100%; padding: 8px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text); font-size: 12px;">
+                    <button onclick="copyPixKey(this, event)" 
+                        style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--accent); color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">
+                        Copiar
+                    </button>
+                </div>
+            </div>
+        </div>
+        <button onclick="initializePixPayment('${amount}', event)" class="modal-btn add-to-cart" style="margin-top: 15px; width: 100%;">
+            <i class="fas fa-paper-plane"></i> Enviar PIX
+        </button>
+    `;
+
+    // Gerar QR Code após inserir no DOM
+    setTimeout(() => {
+        new QRCode(qrContainer.querySelector('#qrCodeElement'), {
+            text: `00020126580014BR.GOV.BCB.PIX0136${pixKey}5204000053039865802BR5913${merchantName}6006${city}62070503***6304${calculateCRC16(generatePixString(pixKey, merchantName, city, amount))}`,
+            width: 200,
+            height: 200,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    }, 100);
+
+    return qrContainer;
 }
 
 function startPaymentCheck(amount) {
