@@ -206,6 +206,7 @@
         
         let checkInterval;
         let amount = 0;
+        let callbackCount = 0;
         
         // Função para adicionar logs
         function addLog(message, type = 'info') {
@@ -229,6 +230,38 @@
             document.execCommand('copy');
             
             addLog('Chave PIX copiada para área de transferência', 'success');
+        }
+
+        // Função para criar uma chamada JSONP
+        function jsonpRequest(url, callback) {
+            // Criar nome de função único para cada chamada
+            const callbackName = 'jsonpCallback_' + callbackCount++;
+            
+            // Criar função global temporária que será chamada pelo script
+            window[callbackName] = function(data) {
+                // Remover script após uso
+                document.body.removeChild(script);
+                // Remover função global após uso
+                delete window[callbackName];
+                // Chamar callback com os dados
+                callback(data);
+            };
+            
+            // Adicionar parâmetro de callback à URL
+            const scriptUrl = url + (url.includes('?') ? '&' : '?') + 'callback=' + callbackName;
+            
+            // Criar e adicionar tag de script
+            const script = document.createElement('script');
+            script.src = scriptUrl;
+            script.onerror = function() {
+                // Remover script em caso de erro
+                document.body.removeChild(script);
+                delete window[callbackName];
+                callback({ error: 'Failed to load script' });
+            };
+            
+            // Adicionar script à página
+            document.body.appendChild(script);
         }
         
         // Função para gerar CRC16
@@ -350,66 +383,34 @@
                 // Criar URL única para evitar cache
                 const url = `${WEBHOOK_URL}?action=check_payment&amount=${amount}&nocache=${Date.now()}`;
                 
-                fetch(url)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`Erro HTTP: ${response.status}`);
-                        }
-                        return response.text(); // Obter como texto primeiro
-                    })
-                    .then(text => {
-                        // Verificar se a resposta está no formato JSONP (callback)
-                        if (text.startsWith('callback(') && text.endsWith(')')) {
-                            // Extrair o JSON interno
-                            const jsonStr = text.substring(9, text.length - 1);
-                            addLog(`Resposta no formato JSONP, extraindo JSON: ${jsonStr}`, 'info');
-                            return JSON.parse(jsonStr);
-                        }
-                        // Tentar como JSON puro
-                        addLog(`Resposta em texto: ${text}`, 'info');
-                        return JSON.parse(text);
-                    })
-                    .then(data => {
-                        console.log('Resposta recebida:', data);
-                        addLog(`Resposta: ${JSON.stringify(data)}`);
-                        
-                        if (data.status === 'approved') {
-                            clearInterval(checkInterval);
-                            statusEl.className = 'payment-status success';
-                            statusEl.innerHTML = `<i class="fas fa-check-circle"></i> Pagamento confirmado!`;
-                            addLog('Pagamento confirmado com sucesso!', 'success');
-                        } else {
-                            checkCount++;
-                            
-                            if (checkCount >= maxChecks) {
-                                clearInterval(checkInterval);
-                                statusEl.innerHTML = `
-                                    <i class="fas fa-info-circle"></i> Tempo limite excedido. 
-                                    Se você já pagou, o pagamento será confirmado em breve.
-                                `;
-                                addLog('Tempo limite de verificação excedido', 'error');
-                            } else {
-                                statusEl.innerHTML = `
-                                    <i class="fas fa-spinner"></i> Aguardando confirmação do PIX... 
-                                    (${Math.floor(checkCount/20)} min ${(checkCount % 20) * 3} s)
-                                `;
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Erro na verificação:', error);
-                        addLog(`Erro na verificação: ${error.message}`, 'error');
-                        
+                // Fazer requisição JSONP
+                jsonpRequest(url, function(data) {
+                    console.log('Resposta recebida:', data);
+                    addLog(`Resposta: ${JSON.stringify(data)}`);
+                    
+                    if (data.status === 'approved') {
+                        clearInterval(checkInterval);
+                        statusEl.className = 'payment-status success';
+                        statusEl.innerHTML = `<i class="fas fa-check-circle"></i> Pagamento confirmado!`;
+                        addLog('Pagamento confirmado com sucesso!', 'success');
+                    } else {
                         checkCount++;
+                        
                         if (checkCount >= maxChecks) {
                             clearInterval(checkInterval);
-                            statusEl.className = 'payment-status error';
                             statusEl.innerHTML = `
-                                <i class="fas fa-exclamation-circle"></i> Erro ao verificar pagamento. 
-                                Se você já pagou, o pagamento será processado normalmente.
+                                <i class="fas fa-info-circle"></i> Tempo limite excedido. 
+                                Se você já pagou, o pagamento será confirmado em breve.
+                            `;
+                            addLog('Tempo limite de verificação excedido', 'error');
+                        } else {
+                            statusEl.innerHTML = `
+                                <i class="fas fa-spinner"></i> Aguardando confirmação do PIX... 
+                                (${Math.floor(checkCount/20)} min ${(checkCount % 20) * 3} s)
                             `;
                         }
-                    });
+                    }
+                });
             };
             
             // Verificar imediatamente e depois a cada 3 segundos
@@ -428,46 +429,21 @@
             // URL para verificação
             const url = `${WEBHOOK_URL}?action=check_payment&amount=${amount}&nocache=${Date.now()}`;
             
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Erro HTTP: ${response.status}`);
-                    }
-                    return response.text(); // Obter como texto primeiro
-                })
-                .then(text => {
-                    // Verificar se a resposta está no formato JSONP (callback)
-                    if (text.startsWith('callback(') && text.endsWith(')')) {
-                        // Extrair o JSON interno
-                        const jsonStr = text.substring(9, text.length - 1);
-                        addLog(`Resposta manual no formato JSONP, extraindo JSON: ${jsonStr}`, 'info');
-                        return JSON.parse(jsonStr);
-                    }
-                    // Tentar como JSON puro
-                    addLog(`Resposta manual em texto: ${text}`, 'info');
-                    return JSON.parse(text);
-                })
-                .then(data => {
-                    console.log('Resposta manual recebida:', data);
-                    addLog(`Resposta manual: ${JSON.stringify(data)}`);
-                    
-                    if (data.status === 'approved') {
-                        statusEl.className = 'payment-status success';
-                        statusEl.innerHTML = `<i class="fas fa-check-circle"></i> Pagamento confirmado!`;
-                        addLog('Pagamento confirmado com sucesso!', 'success');
-                    } else {
-                        statusEl.className = 'payment-status pending';
-                        statusEl.innerHTML = `<i class="fas fa-info-circle"></i> Pagamento ainda não confirmado.`;
-                        addLog('Pagamento ainda não confirmado', 'info');
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro na verificação manual:', error);
-                    addLog(`Erro na verificação manual: ${error.message}`, 'error');
-                    
-                    statusEl.className = 'payment-status error';
-                    statusEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Erro ao verificar pagamento.`;
-                });
+            // Fazer requisição JSONP
+            jsonpRequest(url, function(data) {
+                console.log('Resposta manual recebida:', data);
+                addLog(`Resposta manual: ${JSON.stringify(data)}`);
+                
+                if (data.status === 'approved') {
+                    statusEl.className = 'payment-status success';
+                    statusEl.innerHTML = `<i class="fas fa-check-circle"></i> Pagamento confirmado!`;
+                    addLog('Pagamento confirmado com sucesso!', 'success');
+                } else {
+                    statusEl.className = 'payment-status pending';
+                    statusEl.innerHTML = `<i class="fas fa-info-circle"></i> Pagamento ainda não confirmado.`;
+                    addLog('Pagamento ainda não confirmado', 'info');
+                }
+            });
         }
         
         // Adicionar log inicial
