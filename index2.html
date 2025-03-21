@@ -3067,243 +3067,85 @@ function enviarAudioParaChatbot(audioBlob) {
     recognition.start();
 }
 
-// Função para enviar logs para o Google Sheets
-async function logToSheet(data) {
-    const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwVHf_Q5XfRHawZ6AvPoUb3Ywt5s60Q1yZICKa4H2Hv1HQASLMxaObuJ-rNR5r_Nw2U/exec';
-    
-    const logData = {
-        timestamp: new Date().toISOString(),
-        ...data
-    };
-
-    try {
-        const response = await fetch(SHEET_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(logData)
-        });
-        console.log('Log enviado para planilha');
-    } catch (error) {
-        console.error('Erro ao enviar log:', error);
-    }
-}
-
-async function logDebugToSheet(data) {
-    const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwCLst5GX3FRbNOKrg9NzgbAzgUf8pdjrrJfKwwoW0HS5IjZbuYAv-FO92oQ568T5KfvQ/exec';
-
-    const logData = {
-        type: 'debug_log',
-        timestamp: new Date().toISOString(),
-        ...data
-    };
-
-    try {
-        await fetch(SHEET_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(logData)
-        });
-        console.log('Log enviado:', logData);
-    } catch (error) {
-        console.error('Erro ao enviar log:', error);
-    }
-}
-
-function searchOrderHistory() {
+async function searchOrderHistory() {
     const phoneInput = document.getElementById('historyPhoneInput');
-    const phone = phoneInput ? phoneInput.value.replace(/\D/g, '') : localStorage.getItem('cartPhone');
-
-    // Log inicial da busca
-    logDebugToSheet({
-        action: 'SEARCH_START',
-        phone: phone,
-        message: 'Iniciando busca de histórico',
-        details: `Buscando em: carrinho/${phone}/0`
-    });
-
-    if (!phone || phone.length !== 11) {
-        logDebugToSheet({
-            action: 'ERROR',
-            phone: phone,
-            error: 'Número inválido',
-            details: 'O número deve ter 11 dígitos'
-        });
-        showNotification('Por favor, digite um número válido com DDD');
+    const phone = phoneInput.value.replace(/\D/g, '');
+    
+    if (!phone) {
+        showNotification('Por favor, digite seu WhatsApp');
         return;
     }
 
+    const favoritesSection = document.querySelector('.favorites-section');
     const previousOrdersSection = document.querySelector('.previous-orders-section');
-    previousOrdersSection.innerHTML = `
-        <div class="empty-state">
-            <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--accent); margin-bottom: 1rem;"></i>
-            <p>Carregando seus itens...</p>
-        </div>
-    `;
 
-    const cartRef = firebase.database().ref(`carrinho/${phone}/0`);
-    
-    cartRef.once('value')
-        .then((snapshot) => {
-            const cartData = snapshot.val();
-            
-            logDebugToSheet({
-                action: 'DATA_RECEIVED',
-                phone: phone,
-                data: JSON.stringify(cartData),
-                details: cartData ? 'Dados encontrados' : 'Nenhum dado encontrado'
+    try {
+        const ordersRef = firebase.database().ref('orders');
+        const query = ordersRef.orderByChild('customer/phone').equalTo(phone);
+        
+        const snapshot = await query.once('value');
+        const orders = [];
+        
+        snapshot.forEach((childSnapshot) => {
+            const order = childSnapshot.val();
+            orders.push({
+                id: childSnapshot.key,
+                ...order,
+                timestamp: order.timestamp || Date.now()
             });
+        });
 
-            if (!cartData || !cartData.items) {
-                previousOrdersSection.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
-                        <p>Nenhum item encontrado para este número.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            // Renderização do cartão do pedido...
-            previousOrdersSection.innerHTML = `
-                <div class="order-card">
-                    <div class="order-header">
-                        <div class="order-date">
-                            Último pedido: ${new Date(cartData.timestamp).toLocaleDateString('pt-BR')}
-                        </div>
-                    </div>
-                    <div class="order-items">
-                        ${cartData.items.map(item => `
-                            <div class="order-item">
-                                <div style="font-weight: bold;">${item.name}</div>
-                                ${item.selectedToppings?.length ? `
-                                    <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.5rem;">
-                                        <i class="fas fa-check-circle"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
-                                    </div>
-                                ` : ''}
-                                ${item.selectedExtras?.length ? `
-                                    <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
-                                        <i class="fas fa-plus-circle"></i> Extras: ${item.selectedExtras.join(', ')}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
-                        <div class="order-total">
-                            Total: R$ ${cartData.items.reduce((total, item) => total + (item.price || 0), 0).toFixed(2)}
-                        </div>
-                        <button class="reorder-btn" onclick="reorderItems(${JSON.stringify(cartData.items)})">
-                            <i class="fas fa-redo-alt"></i> Pedir Novamente
-                        </button>
-                    </div>
-                </div>
-            `;
-
-            logDebugToSheet({
-                action: 'SUCCESS',
-                phone: phone,
-                message: 'Dados renderizados com sucesso',
-                details: `Encontrados ${cartData.items.length} itens`
-            });
-        })
-        .catch(error => {
-            logDebugToSheet({
-                action: 'ERROR',
-                phone: phone,
-                error: error.message,
-                stack: error.stack,
-                details: 'Erro ao buscar dados no Firebase'
-            });
-
-            console.error('Erro ao buscar carrinho:', error);
+        if (orders.length === 0) {
             previousOrdersSection.innerHTML = `
                 <div class="empty-state">
-                    <i class="fas fa-exclamation-circle fa-3x" style="color: var(--error); margin-bottom: 1rem;"></i>
-                    <p>Erro ao carregar itens</p>
+                    <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
+                    <p>Nenhum pedido encontrado para este número.</p>
                 </div>
             `;
-        });
-}
+            return;
+        }
 
-    function calculateOrderTotal(items) {
-    return items.reduce((total, item) => total + (item.price || 0), 0);
-}
+        // Ordenar por data mais recente
+        orders.sort((a, b) => b.timestamp - a.timestamp);
 
-    function formatDate(timestamp) {
-    const date = new Date(timestamp);
-    return date.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-}
+        // Renderizar favoritos
+        const favorites = orders.filter(order => order.isFavorite);
+        favoritesSection.innerHTML = `
+            <div class="section-title">
+                <i class="fas fa-star" style="color: #FFD700;"></i>
+                Seus Favoritos
+            </div>
+            ${favorites.length ? renderOrders(favorites) : '<p class="empty-state">Nenhum pedido favorito ainda</p>'}
+        `;
 
-// Função auxiliar para cookies (se ainda não existir no seu código)
-function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-}
+        // Renderizar histórico completo
+        previousOrdersSection.innerHTML = `
+            <div class="section-title">
+                <i class="fas fa-history"></i>
+                Histórico de Pedidos
+            </div>
+            ${renderOrders(orders)}
+        `;
 
-function setCookie(name, value, days) {
-    const d = new Date();
-    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-    const expires = `expires=${d.toUTCString()}`;
-    document.cookie = `${name}=${value};${expires};path=/`;
-}
-
-// Quando o cliente fornece o telefone pela primeira vez
-function validateAndStorePhone() {
-    const phoneInput = document.getElementById('customerPhoneCart');
-    const phone = phoneInput.value.replace(/\D/g, '');
-
-    if (phone.length !== 11) {
-        showNotification('Digite um número válido com DDD (11 dígitos)');
-        return;
-    }
-
-    // Salvar em múltiplos lugares para persistência
-    localStorage.setItem('cartPhone', phone);
-    setCookie('customerPhone', phone, 365); // Salva por 1 ano
-    
-    // Salvar no Firebase
-    firebase.database().ref(`customers/${phone}`).set({
-        lastVisit: Date.now(),
-        visits: firebase.database.ServerValue.increment(1)
-    });
-
-    // Continuar com a adição ao carrinho
-    if (window.pendingCartAddition) {
-        addToCart(
-            window.pendingCartAddition.product,
-            window.pendingCartAddition.selectedToppings
-        );
-        window.pendingCartAddition = null;
-    }
-
-    document.getElementById('phoneCollectionModal').style.display = 'none';
-}
-
-    function setupOrderButtons() {
-    // Setup para botões de "Pedir Novamente"
+        // ADICIONAR AQUI - Event listeners para os botões de "Pedir Novamente"
     const reorderButtons = document.querySelectorAll('.reorder-btn');
     reorderButtons.forEach(btn => {
         btn.addEventListener('click', function() {
             try {
                 const items = JSON.parse(this.getAttribute('data-items'));
                 cart = []; // Limpa o carrinho antes
-                cart.push(...items);
+                // Garante que todos os itens tenham as propriedades necessárias
+                cart.push(...items.map(item => ({
+                    name: item.name || 'Item sem nome',
+                    price: item.price || 0,
+                    description: item.description || '',
+                    selectedToppings: item.selectedToppings || [],
+                    selectedExtras: item.selectedExtras || []
+                })));
+                
                 updateCartCount();
                 document.getElementById('timeMachineModal').style.display = 'none';
-                showCartModal();
+                showCartModal(); // Abre o carrinho automaticamente
                 showNotification('Itens adicionados ao carrinho');
             } catch (error) {
                 console.error('Erro ao reordenar itens:', error);
@@ -3312,14 +3154,10 @@ function validateAndStorePhone() {
         });
     });
 
-    // Setup para botões de favorito
-    const favoriteButtons = document.querySelectorAll('.favorite-btn');
-    favoriteButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const orderId = this.closest('.order-card').dataset.orderId;
-            toggleFavorite(orderId);
-        });
-    });
+    } catch (error) {
+        console.error('Erro ao carregar pedidos:', error);
+        showNotification('Erro ao carregar seu histórico de pedidos');
+    }
 }
 
 // Adicionar botão do Time Machine ao header
@@ -3338,113 +3176,28 @@ function addTimeMachineButton() {
     headerContent.insertBefore(timeMachineBtn, cartIcon);
 }
 
+// Função para mostrar o Time Machine
+// Função para mostrar o Time Machine
+// Função para mostrar o Time Machine
 function showTimeMachine() {
     const modal = document.getElementById('timeMachineModal');
     const favoritesSection = modal.querySelector('.favorites-section');
     const previousOrdersSection = modal.querySelector('.previous-orders-section');
-    const phoneMessage = modal.querySelector('#phoneMessage');
     
     // Limpa seções anteriores
     favoritesSection.innerHTML = '';
     previousOrdersSection.innerHTML = '';
     
-    const phone = localStorage.getItem('cartPhone');
-    
-    if (!phone) {
-        phoneMessage.innerHTML = `
-            <div class="phone-input-section">
-                <p>Digite seu WhatsApp com DDD para ver seu histórico:</p>
-                <div class="phone-input-container">
-                    <input type="tel" id="historyPhoneInput" 
-                           placeholder="Ex: 84988888888" 
-                           class="form-input"
-                           pattern="[0-9]{11}">
-                    <button onclick="searchOrderHistory()" class="modal-btn">Buscar</button>
-                </div>
-            </div>
-        `;
-    } else {
-        phoneMessage.innerHTML = `
-            <div style="background: var(--glass); padding: 15px; border-radius: 10px; display: inline-block;">
-                <i class="fas fa-phone"></i> Mostrando pedidos para: ${phone}
-            </div>
-        `;
-        searchOrderHistory(phone);
+    // Adiciona event listener para o botão de fechar
+    const closeButton = modal.querySelector('.close-modal');
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
     }
     
     modal.style.display = 'block';
 }
-
-
-    // Nova função para buscar por número digitado
-function searchOrderByPhone() {
-    const phoneInput = document.getElementById('historyPhoneInput');
-    const phone = phoneInput.value.replace(/\D/g, '');
-    
-    if (phone.length !== 11) {
-        showNotification('Digite um número válido com DDD (11 dígitos)');
-        return;
-    }
-
-    // Salvar o número para uso futuro
-    localStorage.setItem('cartPhone', phone);
-    setCookie('customerPhone', phone, 365); // Salva por 1 ano
-
-    // Atualizar a mensagem
-    const phoneMessage = document.querySelector('#phoneMessage');
-    phoneMessage.innerHTML = `
-        <div style="background: var(--glass); padding: 15px; border-radius: 10px; display: inline-block;">
-            <i class="fas fa-phone"></i> Mostrando pedidos para: ${phone}
-        </div>
-    `;
-
-    // Buscar histórico
-    searchOrderHistory(phone);
-}
-
-// Nova função para mostrar carrinho atual
-function showCurrentCart(currentCart) {
-    const previousOrdersSection = document.querySelector('.previous-orders-section');
-    
-    const cartHtml = `
-        <div class="order-card" style="border: 2px solid var(--accent);">
-            <div class="order-header">
-                <div class="order-date">
-                    Carrinho Atual
-                </div>
-            </div>
-            <div class="order-items">
-                ${currentCart.map(item => `
-                    <div class="order-item">
-                        <div style="font-weight: bold;">${item.name}</div>
-                        ${item.selectedToppings && item.selectedToppings.length ? `
-                            <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.5rem;">
-                                <i class="fas fa-check-circle"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
-                            </div>
-                        ` : ''}
-                        ${item.selectedExtras && item.selectedExtras.length ? `
-                            <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
-                                <i class="fas fa-plus-circle"></i> Extras: ${item.selectedExtras.join(', ')}
-                            </div>
-                        ` : ''}
-                        <div style="color: var(--accent); margin-top: 0.5rem;">
-                            R$ ${item.price.toFixed(2)}
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-            <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
-                <div class="order-total">
-                    Total: R$ ${currentCart.reduce((total, item) => total + item.price, 0).toFixed(2)}
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Inserir no início da seção
-    previousOrdersSection.insertAdjacentHTML('afterbegin', cartHtml);
-}
-    
 // Função para renderizar os pedidos
 // Modifique a função renderOrders para usar um data-attribute em vez de passar diretamente no onclick
 function renderOrders(orders) {
@@ -3513,23 +3266,24 @@ async function toggleFavorite(orderId) {
     }
 }
 
+// Função para repedir itens
 function reorderItems(items) {
-    try {
-        // Limpar carrinho atual
-        cart = [];
-        // Adicionar itens ao carrinho
-        cart.push(...items);
-        // Atualizar contagem
-        updateCartCount();
-        // Fechar modal de histórico
-        document.getElementById('timeMachineModal').style.display = 'none';
-        // Mostrar carrinho
-        showCartModal();
-        showNotification('Itens adicionados ao carrinho');
-    } catch (error) {
-        console.error('Erro ao reordenar itens:', error);
-        showNotification('Erro ao adicionar itens ao carrinho');
-    }
+    // Limpar carrinho atual
+    cart = [];
+    
+    // Adicionar itens ao carrinho
+    cart.push(...items);
+    
+    // Atualizar UI
+    updateCartCount();
+    
+    // Fechar modal do Time Machine
+    document.getElementById('timeMachineModal').style.display = 'none';
+    
+    // Mostrar carrinho
+    showCartModal();
+    
+    showNotification('Itens adicionados ao carrinho');
 }
 
 function updateCustomerAndDeliveryInfo(customer, delivery) {
@@ -3615,27 +3369,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Função que salva o pedido
+// Replace the handleDeliveryInfo function in your digital menu with this version:
 async function handleDeliveryInfo(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
     const deliveryInfo = Object.fromEntries(formData);
 
+    // ADICIONAR ESTA LINHA AQUI, logo após obter o formData
+    if (customerInfo && customerInfo.whatsapp) {
+        localStorage.setItem('lastCustomerPhone', customerInfo.whatsapp);
+    }
+
     try {
-        if (!customerInfo || !customerInfo.whatsapp) {
+        // Garantir que temos as informações necessárias
+        if (!customerInfo || !customerInfo.fullName) {
             throw new Error('Informações do cliente incompletas');
         }
-
-        // Formatar o número do telefone (remover qualquer formatação)
-        const phoneNumber = customerInfo.whatsapp.replace(/\D/g, '');
 
         // Criar o pedido para o Firebase
         const orderData = {
             timestamp: firebase.database.ServerValue.TIMESTAMP,
-            customerInfo: {
-                ...customerInfo,
-                whatsapp: phoneNumber // Garantir que o número está sem formatação
-            },
+            customerInfo,
             deliveryInfo,
             items: cart,
             status: 'new'
@@ -3655,106 +3409,6 @@ async function handleDeliveryInfo(e) {
     } catch (error) {
         console.error('Erro ao processar pedido:', error);
         alert('Erro ao processar pedido. Por favor, tente novamente.');
-    }
-}
-
-// Função que busca o histórico
-function searchOrderHistory() {
-    const phoneInput = document.getElementById('historyPhoneInput');
-    let phone = phoneInput ? phoneInput.value.replace(/\D/g, '') : localStorage.getItem('cartPhone');
-
-    const previousOrdersSection = document.querySelector('.previous-orders-section');
-    const favoritesSection = document.querySelector('.favorites-section');
-
-    // Validar o número de telefone
-    if (!phone || phone.length !== 11) {
-        previousOrdersSection.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-exclamation-circle fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
-                <p>Por favor, digite um número de telefone válido com DDD</p>
-            </div>
-        `;
-        return;
-    }
-
-    // Mostrar loading
-    previousOrdersSection.innerHTML = `
-        <div class="empty-state">
-            <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--accent); margin-bottom: 1rem;"></i>
-            <p>Carregando seus pedidos...</p>
-        </div>
-    `;
-
-    try {
-        // Referência ao Firebase e buscar por qualquer possível formato do número
-        const ordersRef = realtimeDB.ref('orders');
-        
-        // Primeiro tentar com o número limpo
-        ordersRef
-            .orderByChild('customerInfo/whatsapp')
-            .equalTo(phone)
-            .once('value')
-            .then((snapshot) => {
-                const orders = [];
-                
-                snapshot.forEach((childSnapshot) => {
-                    const order = childSnapshot.val();
-                    if (order && order.items) {
-                        orders.push({
-                            id: childSnapshot.key,
-                            ...order,
-                            timestamp: order.timestamp || Date.now()
-                        });
-                    }
-                });
-
-                console.log('Pedidos encontrados:', orders); // Debug
-
-                if (orders.length === 0) {
-                    previousOrdersSection.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
-                            <p>Nenhum pedido encontrado para este número.</p>
-                            <small style="color: var(--text); margin-top: 10px;">Número buscado: ${phone}</small>
-                        </div>
-                    `;
-                    favoritesSection.innerHTML = '';
-                    return;
-                }
-
-                // Ordenar por data mais recente
-                orders.sort((a, b) => b.timestamp - a.timestamp);
-
-                // Renderizar pedidos
-                previousOrdersSection.innerHTML = `
-                    <div class="section-title">
-                        <i class="fas fa-history"></i>
-                        Histórico de Pedidos
-                    </div>
-                    ${renderOrders(orders)}
-                `;
-
-                // Configurar botões
-                setupOrderButtons();
-            })
-            .catch((error) => {
-                console.error('Erro na busca:', error);
-                previousOrdersSection.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-exclamation-circle fa-3x" style="color: var(--error); margin-bottom: 1rem;"></i>
-                        <p>Erro ao buscar pedidos. Tente novamente.</p>
-                    </div>
-                `;
-            });
-
-    } catch (error) {
-        console.error('Erro ao carregar pedidos:', error);
-        previousOrdersSection.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-exclamation-circle fa-3x" style="color: var(--error); margin-bottom: 1rem;"></i>
-                <p>Erro ao carregar histórico de pedidos</p>
-            </div>
-        `;
     }
 }
 
@@ -4954,7 +4608,10 @@ function updateTotalPrice(product) {
 }
 
 function addToCart(product, selectedToppings) {
+    console.log('Iniciando addToCart');
+    // Verificar se já tem telefone cadastrado
     if (!localStorage.getItem('cartPhone')) {
+        console.log('Telefone não encontrado, mostrando modal');
         // Armazenar temporariamente o produto
         window.pendingCartAddition = { product, selectedToppings };
         
@@ -4964,6 +4621,7 @@ function addToCart(product, selectedToppings) {
         return;
     }
 
+    // Se já tem número, continua com a adição normal ao carrinho
     const selectedExtras = Array.from(document.querySelectorAll('.extra-item.selected'))
         .map(extra => {
             const priceText = extra.querySelector('.extra-price')?.textContent;
@@ -4977,58 +4635,28 @@ function addToCart(product, selectedToppings) {
     const totalExtrasPrice = selectedExtras.reduce((total, extra) => total + extra.price, 0);
     const totalPrice = product.price + totalExtrasPrice;
 
-    const cartItem = {
+    if (product.isAcaiDoDia && acaiDoDiaQuantityInCart >= 2) {
+        showNotification('Limite de 2 unidades do Açaí do Dia por pedido');
+        return;
+    }
+
+    cart.push({
         ...product,
         selectedToppings,
         selectedExtras: selectedExtras.map(extra => extra.name),
         price: totalPrice,
         originalPrice: product.originalPrice || product.price
-    };
-
-    cart.push(cartItem);
-
-    // Salvar no Firebase
-    const phone = localStorage.getItem('cartPhone');
-    const cartRef = firebase.database().ref(`carrinho/${phone.replace(/\D/g, '')}`);
-    cartRef.set({
-        items: cart,
-        timestamp: Date.now()
     });
+
+    if (product.isAcaiDoDia) {
+        acaiDoDiaQuantityInCart++;
+    }
 
     updateCartCount();
+    
+    // Fecha o modal do produto e mostra o carrinho
     document.getElementById('productModal').style.display = 'none';
     showCartModal();
-}
-
-    // Função para obter telefone do cliente
-function getCustomerPhone() {
-    // Primeiro tenta do localStorage
-    let phone = localStorage.getItem('cartPhone');
-    
-    // Se não encontrar, tenta do Firebase via cookie
-    if (!phone) {
-        const savedPhone = getCookie('customerPhone');
-        if (savedPhone) {
-            localStorage.setItem('cartPhone', savedPhone);
-            phone = savedPhone;
-        }
-    }
-    
-    return phone;
-}
-
-    // Função para salvar carrinho
-function saveCartToStorage(phone, cartItems) {
-    // Salvar no localStorage
-    localStorage.setItem('cartPhone', phone);
-    localStorage.setItem('currentCart', JSON.stringify(cartItems));
-
-    // Salvar no Firebase também
-    const cartRef = firebase.database().ref(`carts/${phone.replace(/\D/g, '')}`);
-    cartRef.set({
-        items: cartItems,
-        lastUpdated: Date.now()
-    });
 }
     
 async function applyCoupon() {
@@ -6997,7 +6625,18 @@ function createPhoneCollectionModal() {
 // Variável global para armazenar temporariamente o produto a ser adicionado
 let pendingCartAddition = null;
 
-async function validateAndStorePhone() {
+// Função para salvar histórico quando um item é adicionado ao carrinho
+function saveToHistory(phone, items) {
+    const historyRef = firebase.database().ref(`historico_pedidos/${phone}`);
+    const pedido = {
+        items: items,
+        timestamp: Date.now()
+    };
+    historyRef.push(pedido);
+}
+
+// Modificar a função validateAndStorePhone existente para incluir o salvamento do histórico
+function validateAndStorePhone() {
     const phoneInput = document.getElementById('customerPhoneCart');
     const phoneError = document.getElementById('phoneError');
     const phone = phoneInput.value.replace(/\D/g, '');
@@ -7008,29 +6647,11 @@ async function validateAndStorePhone() {
     }
 
     try {
-        console.log('Iniciando processo de validação do telefone...');
-        const timestamp = new Date().toISOString();
-        
-        // Registrar na planilha
-        const data = {
-            phone: phone,
-            timestamp: timestamp,
-            cartItems: JSON.stringify(cart),
-            status: 'active'
-        };
-
-        // Registrar no Google Sheets
-        await recordAbandonedCart(data);
-        
-        // Salvar localmente
         localStorage.setItem('cartPhone', phone);
-        localStorage.setItem('cartTimestamp', timestamp);
-
-        // Fechar modal do telefone
-        document.getElementById('phoneCollectionModal').style.display = 'none';
-
-        // Adicionar o produto pendente ao carrinho
+        
+        // Salvar os itens no histórico
         if (window.pendingCartAddition) {
+            saveToHistory(phone, [window.pendingCartAddition.product]);
             addToCart(
                 window.pendingCartAddition.product,
                 window.pendingCartAddition.selectedToppings
@@ -7038,12 +6659,122 @@ async function validateAndStorePhone() {
             window.pendingCartAddition = null;
         }
 
-        console.log('Iniciando monitoramento do carrinho...');
-        startCartMonitoring(); // Iniciar monitoramento imediatamente
+        document.getElementById('phoneCollectionModal').style.display = 'none';
 
     } catch (error) {
         console.error('Erro:', error);
         alert('Erro ao processar seu número. Tente novamente.');
+    }
+}
+
+// Nova função para buscar histórico de pedidos
+function buscarHistoricoPedidos() {
+    const phoneInput = document.getElementById('historyPhoneInput');
+    const phone = phoneInput ? phoneInput.value.replace(/\D/g, '') : localStorage.getItem('cartPhone');
+
+    if (!phone || phone.length !== 11) {
+        showNotification('Digite um número válido com DDD');
+        return;
+    }
+
+    const previousOrdersSection = document.querySelector('.previous-orders-section');
+    previousOrdersSection.innerHTML = `
+        <div class="empty-state">
+            <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--accent); margin-bottom: 1rem;"></i>
+            <p>Carregando seus itens...</p>
+        </div>
+    `;
+
+    const historyRef = firebase.database().ref(`historico_pedidos/${phone}`);
+    historyRef.orderByChild('timestamp').once('value')
+        .then((snapshot) => {
+            const pedidos = [];
+            snapshot.forEach((childSnapshot) => {
+                pedidos.push({
+                    id: childSnapshot.key,
+                    ...childSnapshot.val()
+                });
+            });
+
+            if (pedidos.length === 0) {
+                previousOrdersSection.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
+                        <p>Nenhum pedido encontrado para este número.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Ordenar pedidos do mais recente para o mais antigo
+            pedidos.sort((a, b) => b.timestamp - a.timestamp);
+
+            previousOrdersSection.innerHTML = pedidos.map(pedido => `
+                <div class="order-card">
+                    <div class="order-header">
+                        <div class="order-date">
+                            ${new Date(pedido.timestamp).toLocaleDateString('pt-BR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })}
+                        </div>
+                    </div>
+                    <div class="order-items">
+                        ${pedido.items.map(item => `
+                            <div class="order-item">
+                                <div style="font-weight: bold;">${item.name}</div>
+                                ${item.selectedToppings?.length ? `
+                                    <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.5rem;">
+                                        <i class="fas fa-check-circle"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
+                                    </div>
+                                ` : ''}
+                                ${item.selectedExtras?.length ? `
+                                    <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
+                                        <i class="fas fa-plus-circle"></i> Extras: ${item.selectedExtras.join(', ')}
+                                    </div>
+                                ` : ''}
+                                <div style="color: var(--accent); margin-top: 0.5rem;">
+                                    R$ ${item.price ? item.price.toFixed(2) : '0.00'}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                        <div class="order-total">
+                            Total: R$ ${pedido.items.reduce((total, item) => total + (item.price || 0), 0).toFixed(2)}
+                        </div>
+                        <button class="reorder-btn" onclick="repedirItens(${JSON.stringify(pedido.items)})">
+                            <i class="fas fa-redo-alt"></i> Pedir Novamente
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Erro ao buscar histórico:', error);
+            previousOrdersSection.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-circle fa-3x" style="color: var(--error); margin-bottom: 1rem;"></i>
+                    <p>Erro ao carregar histórico de pedidos</p>
+                </div>
+            `;
+        });
+}
+
+// Função para repedir itens
+function repedirItens(items) {
+    try {
+        cart = [...items];
+        updateCartCount();
+        document.getElementById('timeMachineModal').style.display = 'none';
+        showCartModal();
+        showNotification('Itens adicionados ao carrinho');
+    } catch (error) {
+        console.error('Erro ao repedir itens:', error);
+        showNotification('Erro ao adicionar itens ao carrinho');
     }
 }
 
@@ -7980,17 +7711,19 @@ function convertFileToBase64(file) {
             <button class="close-modal">&times;</button>
         </div>
         <div class="time-machine-content">
-            <!-- Nova seção que mostra o telefone ou mensagem -->
-            <div class="phone-info-section" style="text-align: center; margin-bottom: 20px;">
-                <div id="phoneMessage"></div>
+            <div class="phone-input-section">
+                <p>Digite seu WhatsApp com DDD para ver seu histórico:</p>
+                <div class="phone-input-container">
+                    <input type="tel" id="historyPhoneInput" placeholder="Ex: 84988500756" class="form-input">
+                    <button onclick="searchOrderHistory()" class="modal-btn">Buscar</button>
+                </div>
             </div>
-            <!-- Seções existentes para favoritos e histórico -->
             <div class="favorites-section"></div>
             <div class="previous-orders-section"></div>
         </div>
     </div>
 </div>
-    
+</div>
     <!-- Popup de loja fechada -->
 <div id="storeClosedPopup" class="store-closed-popup">
     <div class="popup-content">
