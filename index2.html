@@ -3068,112 +3068,85 @@ function enviarAudioParaChatbot(audioBlob) {
 }
 
 function searchOrderHistory() {
-    // Pegar o número do input se estiver disponível
     const phoneInput = document.getElementById('historyPhoneInput');
-    let phone = phoneInput ? phoneInput.value.replace(/\D/g, '') : localStorage.getItem('cartPhone');
+    const phone = phoneInput ? phoneInput.value.replace(/\D/g, '') : localStorage.getItem('cartPhone');
 
-    const previousOrdersSection = document.querySelector('.previous-orders-section');
-    const favoritesSection = document.querySelector('.favorites-section');
-
-    // Validar o número de telefone
     if (!phone || phone.length !== 11) {
-        previousOrdersSection.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-exclamation-circle fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
-                <p>Por favor, digite um número de telefone válido com DDD</p>
-            </div>
-        `;
+        showNotification('Por favor, digite um número válido com DDD');
         return;
     }
 
-    // Mostrar loading
+    const previousOrdersSection = document.querySelector('.previous-orders-section');
     previousOrdersSection.innerHTML = `
         <div class="empty-state">
             <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--accent); margin-bottom: 1rem;"></i>
-            <p>Carregando seus pedidos...</p>
+            <p>Carregando seus itens...</p>
         </div>
     `;
 
-    try {
-        // Referência ao Firebase
-        const ordersRef = firebase.database().ref('orders');
-        
-        // Buscar pedidos onde o telefone do cliente corresponde
-        ordersRef.orderByChild('customer/whatsapp').equalTo(phone).once('value')
-            .then((snapshot) => {
-                const orders = [];
-                
-                snapshot.forEach((childSnapshot) => {
-                    const order = childSnapshot.val();
-                    if (order && order.items) {
-                        orders.push({
-                            id: childSnapshot.key,
-                            ...order,
-                            timestamp: order.timestamp || Date.now()
-                        });
-                    }
-                });
-
-                // Se não encontrou pedidos
-                if (orders.length === 0) {
-                    previousOrdersSection.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
-                            <p>Nenhum pedido encontrado para este número.</p>
-                        </div>
-                    `;
-                    favoritesSection.innerHTML = '';
-                    return;
-                }
-
-                // Ordenar pedidos do mais recente para o mais antigo
-                orders.sort((a, b) => b.timestamp - a.timestamp);
-
-                // Renderizar favoritos
-                const favorites = orders.filter(order => order.isFavorite);
-                if (favorites.length > 0) {
-                    favoritesSection.innerHTML = `
-                        <div class="section-title">
-                            <i class="fas fa-star" style="color: #FFD700;"></i>
-                            Seus Favoritos
-                        </div>
-                        ${renderOrders(favorites)}
-                    `;
-                } else {
-                    favoritesSection.innerHTML = '';
-                }
-
-                // Renderizar histórico completo
-                previousOrdersSection.innerHTML = `
-                    <div class="section-title">
-                        <i class="fas fa-history"></i>
-                        Histórico de Pedidos
-                    </div>
-                    ${renderOrders(orders)}
-                `;
-
-                // Configurar botões
-                setupOrderButtons();
-            })
-            .catch((error) => {
-                console.error('Erro na busca:', error);
+    // Buscar do Firebase
+    const cartRef = firebase.database().ref(`carrinho/${phone}`);
+    cartRef.once('value')
+        .then((snapshot) => {
+            const cartData = snapshot.val();
+            
+            if (!cartData || !cartData.items || !cartData.items.length) {
                 previousOrdersSection.innerHTML = `
                     <div class="empty-state">
-                        <i class="fas fa-exclamation-circle fa-3x" style="color: var(--error); margin-bottom: 1rem;"></i>
-                        <p>Erro ao buscar pedidos. Tente novamente.</p>
+                        <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
+                        <p>Nenhum item encontrado para este número.</p>
                     </div>
                 `;
-            });
+                return;
+            }
 
-    } catch (error) {
-        console.error('Erro ao carregar pedidos:', error);
-        previousOrdersSection.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-exclamation-circle fa-3x" style="color: var(--error); margin-bottom: 1rem;"></i>
-                <p>Erro ao carregar histórico de pedidos</p>
-            </div>
-        `;
-    }
+            previousOrdersSection.innerHTML = `
+                <div class="order-card">
+                    <div class="order-header">
+                        <div class="order-date">
+                            Último pedido: ${new Date(cartData.timestamp).toLocaleDateString('pt-BR')}
+                        </div>
+                    </div>
+                    <div class="order-items">
+                        ${cartData.items.map(item => `
+                            <div class="order-item">
+                                <div style="font-weight: bold;">${item.name}</div>
+                                ${item.selectedToppings?.length ? `
+                                    <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.5rem;">
+                                        <i class="fas fa-check-circle"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
+                                    </div>
+                                ` : ''}
+                                ${item.selectedExtras?.length ? `
+                                    <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
+                                        <i class="fas fa-plus-circle"></i> Extras: ${item.selectedExtras.join(', ')}
+                                    </div>
+                                ` : ''}
+                                <div style="color: var(--accent); margin-top: 0.5rem;">
+                                    R$ ${item.price.toFixed(2)}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                        <div class="order-total">
+                            Total: R$ ${cartData.items.reduce((total, item) => total + item.price, 0).toFixed(2)}
+                        </div>
+                        <button class="reorder-btn" onclick="reorderItems(${JSON.stringify(cartData.items)})">
+                            <i class="fas fa-redo-alt"></i> Pedir Novamente
+                        </button>
+                    </div>
+                </div>
+            `;
+        })
+        .catch(error => {
+            console.error('Erro ao buscar carrinho:', error);
+            previousOrdersSection.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-circle fa-3x" style="color: var(--error); margin-bottom: 1rem;"></i>
+                    <p>Erro ao carregar itens</p>
+                </div>
+            `;
+        });
 }
 
     function calculateOrderTotal(items) {
@@ -4898,22 +4871,17 @@ function updateTotalPrice(product) {
     document.querySelector('.modal-product-price').textContent = `R$ ${totalPrice.toFixed(2)}`;
 }
 
-// Função para adicionar ao carrinho
 function addToCart(product, selectedToppings) {
-    console.log('Iniciando addToCart');
-    
-    // Primeiro verifica se temos o telefone do cliente
-    const customerPhone = getCustomerPhone();
-    
-    if (!customerPhone) {
-        console.log('Telefone não encontrado, mostrando modal');
+    if (!localStorage.getItem('cartPhone')) {
+        // Armazenar temporariamente o produto
         window.pendingCartAddition = { product, selectedToppings };
+        
+        // Criar e mostrar modal de telefone
         createPhoneCollectionModal();
         document.getElementById('phoneCollectionModal').style.display = 'block';
         return;
     }
 
-    // Restante da lógica existente de addToCart...
     const selectedExtras = Array.from(document.querySelectorAll('.extra-item.selected'))
         .map(extra => {
             const priceText = extra.querySelector('.extra-price')?.textContent;
@@ -4937,8 +4905,13 @@ function addToCart(product, selectedToppings) {
 
     cart.push(cartItem);
 
-    // Salvar no localStorage e no Firebase
-    saveCartToStorage(customerPhone, cart);
+    // Salvar no Firebase
+    const phone = localStorage.getItem('cartPhone');
+    const cartRef = firebase.database().ref(`carrinho/${phone.replace(/\D/g, '')}`);
+    cartRef.set({
+        items: cart,
+        timestamp: Date.now()
+    });
 
     updateCartCount();
     document.getElementById('productModal').style.display = 'none';
