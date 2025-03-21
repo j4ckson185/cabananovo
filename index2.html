@@ -3067,11 +3067,49 @@ function enviarAudioParaChatbot(audioBlob) {
     recognition.start();
 }
 
+// Função para enviar logs para o Google Sheets
+async function logToSheet(data) {
+    const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwVHf_Q5XfRHawZ6AvPoUb3Ywt5s60Q1yZICKa4H2Hv1HQASLMxaObuJ-rNR5r_Nw2U/exec';
+    
+    const logData = {
+        timestamp: new Date().toISOString(),
+        ...data
+    };
+
+    try {
+        const response = await fetch(SHEET_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(logData)
+        });
+        console.log('Log enviado para planilha');
+    } catch (error) {
+        console.error('Erro ao enviar log:', error);
+    }
+}
+
+// Modificar a função searchOrderHistory para incluir logs
 function searchOrderHistory() {
     const phoneInput = document.getElementById('historyPhoneInput');
     const phone = phoneInput ? phoneInput.value.replace(/\D/g, '') : localStorage.getItem('cartPhone');
 
+    // Log inicial
+    logToSheet({
+        action: 'SEARCH_START',
+        phone: phone,
+        cartPhone: localStorage.getItem('cartPhone'),
+        inputPhone: phoneInput ? phoneInput.value : 'N/A'
+    });
+
     if (!phone || phone.length !== 11) {
+        logToSheet({
+            action: 'INVALID_PHONE',
+            phone: phone,
+            error: 'Número inválido ou incompleto'
+        });
         showNotification('Por favor, digite um número válido com DDD');
         return;
     }
@@ -3084,7 +3122,14 @@ function searchOrderHistory() {
         </div>
     `;
 
-    // Buscar das duas referências possíveis
+    // Log antes da busca no Firebase
+    logToSheet({
+        action: 'FIREBASE_SEARCH_START',
+        phone: phone,
+        path_carts: `carts/${phone}`,
+        path_carrinho: `carrinho/${phone}`
+    });
+
     Promise.all([
         firebase.database().ref(`carts/${phone}`).once('value'),
         firebase.database().ref(`carrinho/${phone}`).once('value')
@@ -3093,12 +3138,23 @@ function searchOrderHistory() {
         const cartsData = cartsSnapshot.val();
         const carrinhoData = carrinhoSnapshot.val();
         
-        // Usar os dados de qualquer uma das referências que tiver conteúdo
+        // Log dos dados encontrados
+        logToSheet({
+            action: 'FIREBASE_DATA_RECEIVED',
+            phone: phone,
+            cartsData: JSON.stringify(cartsData),
+            carrinhoData: JSON.stringify(carrinhoData)
+        });
+
         const cartData = cartsData || carrinhoData;
 
-        console.log('Dados encontrados:', cartData); // Debug
-
         if (!cartData || !cartData.items || !cartData.items.length) {
+            logToSheet({
+                action: 'NO_DATA_FOUND',
+                phone: phone,
+                message: 'Nenhum item encontrado'
+            });
+
             previousOrdersSection.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
@@ -3107,6 +3163,15 @@ function searchOrderHistory() {
             `;
             return;
         }
+
+        // Log dos itens encontrados
+        logToSheet({
+            action: 'ITEMS_FOUND',
+            phone: phone,
+            itemCount: cartData.items.length,
+            totalValue: cartData.items.reduce((total, item) => total + item.price, 0),
+            items: JSON.stringify(cartData.items)
+        });
 
         previousOrdersSection.innerHTML = `
             <div class="order-card">
@@ -3146,10 +3211,23 @@ function searchOrderHistory() {
             </div>
         `;
 
-        // Setup dos botões
-        setupOrderButtons();
+        // Log de sucesso
+        logToSheet({
+            action: 'RENDER_SUCCESS',
+            phone: phone,
+            message: 'Itens renderizados com sucesso'
+        });
+
     })
     .catch(error => {
+        // Log de erro
+        logToSheet({
+            action: 'ERROR',
+            phone: phone,
+            error: error.message,
+            errorStack: error.stack
+        });
+
         console.error('Erro ao buscar carrinho:', error);
         previousOrdersSection.innerHTML = `
             <div class="empty-state">
