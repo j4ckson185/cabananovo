@@ -3091,21 +3091,48 @@ async function logToSheet(data) {
     }
 }
 
+async function logDebugToSheet(data) {
+    const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwCLst5GX3FRbNOKrg9NzgbAzgUf8pdjrrJfKwwoW0HS5IjZbuYAv-FO92oQ568T5KfvQ/exec';
+
+    const logData = {
+        type: 'debug_log',
+        timestamp: new Date().toISOString(),
+        ...data
+    };
+
+    try {
+        await fetch(SHEET_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(logData)
+        });
+        console.log('Log enviado:', logData);
+    } catch (error) {
+        console.error('Erro ao enviar log:', error);
+    }
+}
+
 function searchOrderHistory() {
     const phoneInput = document.getElementById('historyPhoneInput');
     const phone = phoneInput ? phoneInput.value.replace(/\D/g, '') : localStorage.getItem('cartPhone');
 
-    logToSheet({
+    // Log inicial da busca
+    logDebugToSheet({
         action: 'SEARCH_START',
         phone: phone,
-        message: 'Iniciando busca'
+        message: 'Iniciando busca de histórico',
+        details: `Buscando em: carrinho/${phone}/0`
     });
 
     if (!phone || phone.length !== 11) {
-        logToSheet({
-            action: 'INVALID_PHONE',
+        logDebugToSheet({
+            action: 'ERROR',
             phone: phone,
-            error: 'Número inválido'
+            error: 'Número inválido',
+            details: 'O número deve ter 11 dígitos'
         });
         showNotification('Por favor, digite um número válido com DDD');
         return;
@@ -3119,32 +3146,20 @@ function searchOrderHistory() {
         </div>
     `;
 
-    // Buscar no caminho correto do Realtime Database
     const cartRef = firebase.database().ref(`carrinho/${phone}/0`);
     
-    logToSheet({
-        action: 'FIREBASE_SEARCH',
-        phone: phone,
-        path: `carrinho/${phone}/0`
-    });
-
     cartRef.once('value')
         .then((snapshot) => {
             const cartData = snapshot.val();
             
-            logToSheet({
+            logDebugToSheet({
                 action: 'DATA_RECEIVED',
                 phone: phone,
-                data: JSON.stringify(cartData)
+                data: JSON.stringify(cartData),
+                details: cartData ? 'Dados encontrados' : 'Nenhum dado encontrado'
             });
 
-            if (!cartData) {
-                logToSheet({
-                    action: 'NO_DATA',
-                    phone: phone,
-                    message: 'Nenhum dado encontrado'
-                });
-
+            if (!cartData || !cartData.items) {
                 previousOrdersSection.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
@@ -3154,6 +3169,7 @@ function searchOrderHistory() {
                 return;
             }
 
+            // Renderização do cartão do pedido...
             previousOrdersSection.innerHTML = `
                 <div class="order-card">
                     <div class="order-header">
@@ -3189,18 +3205,20 @@ function searchOrderHistory() {
                 </div>
             `;
 
-            logToSheet({
-                action: 'RENDER_SUCCESS',
+            logDebugToSheet({
+                action: 'SUCCESS',
                 phone: phone,
-                message: 'Dados renderizados com sucesso'
+                message: 'Dados renderizados com sucesso',
+                details: `Encontrados ${cartData.items.length} itens`
             });
         })
         .catch(error => {
-            logToSheet({
+            logDebugToSheet({
                 action: 'ERROR',
                 phone: phone,
                 error: error.message,
-                stack: error.stack
+                stack: error.stack,
+                details: 'Erro ao buscar dados no Firebase'
             });
 
             console.error('Erro ao buscar carrinho:', error);
