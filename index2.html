@@ -3068,16 +3068,9 @@ function enviarAudioParaChatbot(audioBlob) {
 }
 
 // Função para buscar histórico
-function searchOrderHistory() {
-    const phone = getCustomerPhone();
-    
-    if (!phone) {
-        showNotification('Adicione itens ao carrinho primeiro para ver seu histórico');
-        return;
-    }
-
-    const favoritesSection = document.querySelector('.favorites-section');
+function searchOrderHistory(phone) {
     const previousOrdersSection = document.querySelector('.previous-orders-section');
+    const favoritesSection = document.querySelector('.favorites-section');
 
     previousOrdersSection.innerHTML = `
         <div class="empty-state">
@@ -3086,45 +3079,109 @@ function searchOrderHistory() {
         </div>
     `;
 
-    // Buscar tanto o carrinho atual quanto os pedidos finalizados
-    Promise.all([
-        firebase.database().ref(`carts/${phone.replace(/\D/g, '')}`).once('value'),
-        firebase.database().ref('orders').orderByChild('customer/phone').equalTo(phone).once('value')
-    ]).then(([cartSnapshot, ordersSnapshot]) => {
-        const currentCart = cartSnapshot.val()?.items || [];
-        const orders = [];
+    try {
+        const ordersRef = firebase.database().ref('orders');
+        const query = ordersRef
+            .orderByChild('customer/phone')
+            .equalTo(phone);
         
-        ordersSnapshot.forEach((childSnapshot) => {
-            const order = childSnapshot.val();
-            if (order && order.items) {
-                orders.push({
-                    id: childSnapshot.key,
-                    ...order,
-                    timestamp: order.timestamp || Date.now()
-                });
+        query.once('value').then((snapshot) => {
+            const orders = [];
+            
+            snapshot.forEach((childSnapshot) => {
+                const order = childSnapshot.val();
+                if (order && order.items) {
+                    orders.push({
+                        id: childSnapshot.key,
+                        ...order,
+                        timestamp: order.timestamp || Date.now()
+                    });
+                }
+            });
+
+            // Ordenar por data mais recente
+            orders.sort((a, b) => b.timestamp - a.timestamp);
+
+            if (orders.length === 0) {
+                previousOrdersSection.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
+                        <p>Nenhum pedido encontrado para este número.</p>
+                    </div>
+                `;
+                return;
             }
+
+            // Renderizar todos os pedidos
+            previousOrdersSection.innerHTML = `
+                <div class="section-title">
+                    <i class="fas fa-history"></i>
+                    Histórico de Pedidos
+                </div>
+                ${orders.map((order, index) => `
+                    <div class="order-card" data-order-id="${order.id}">
+                        <div class="order-header">
+                            <div class="order-date">
+                                ${formatDate(order.timestamp)}
+                            </div>
+                            <button class="favorite-btn ${order.isFavorite ? 'active' : ''}" onclick="toggleFavorite('${order.id}')">
+                                <i class="fas fa-star"></i>
+                            </button>
+                        </div>
+                        <div class="order-items">
+                            ${order.items.map(item => `
+                                <div class="order-item">
+                                    <div style="font-weight: bold;">${item.name}</div>
+                                    ${item.selectedToppings && item.selectedToppings.length ? `
+                                        <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.5rem;">
+                                            <i class="fas fa-check-circle"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
+                                        </div>
+                                    ` : ''}
+                                    ${item.selectedExtras && item.selectedExtras.length ? `
+                                        <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
+                                            <i class="fas fa-plus-circle"></i> Extras: ${item.selectedExtras.join(', ')}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                            <div class="order-total">Total: R$ ${calculateOrderTotal(order.items).toFixed(2)}</div>
+                            <button class="reorder-btn" onclick="reorderItems(${JSON.stringify(order.items).replace(/'/g, "\\'")})" style="background: var(--accent); color: white; padding: 8px 16px; border-radius: 20px; border: none; cursor: pointer;">
+                                <i class="fas fa-redo-alt"></i> Pedir Novamente
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+
+            // Configurar botões
+            setupOrderButtons();
         });
 
-        // Mostrar carrinho atual se existir
-        if (currentCart.length > 0) {
-            showCurrentCart(currentCart);
-        }
+    } catch (error) {
+        console.error('Erro ao carregar pedidos:', error);
+        previousOrdersSection.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-circle fa-3x" style="color: var(--error); margin-bottom: 1rem;"></i>
+                <p>Erro ao carregar histórico de pedidos</p>
+            </div>
+        `;
+    }
+}
 
-        // Mostrar pedidos anteriores
-        if (orders.length > 0) {
-            orders.sort((a, b) => b.timestamp - a.timestamp);
-            showPreviousOrders(orders);
-        }
+    function calculateOrderTotal(items) {
+    return items.reduce((total, item) => total + (item.price || 0), 0);
+}
 
-        // Se não houver nada para mostrar
-        if (currentCart.length === 0 && orders.length === 0) {
-            previousOrdersSection.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
-                    <p>Nenhum pedido encontrado para este número.</p>
-                </div>
-            `;
-        }
+    function formatDate(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
     });
 }
 
@@ -3230,11 +3287,9 @@ function showTimeMachine() {
     favoritesSection.innerHTML = '';
     previousOrdersSection.innerHTML = '';
     
-    // Tenta obter o telefone de várias fontes
-    const phone = localStorage.getItem('cartPhone') || getCookie('customerPhone');
+    const phone = localStorage.getItem('cartPhone');
     
     if (!phone) {
-        // Se não encontrou telefone em nenhum lugar, mostra o input
         phoneMessage.innerHTML = `
             <div class="phone-input-section">
                 <p>Digite seu WhatsApp com DDD para ver seu histórico:</p>
@@ -3243,7 +3298,7 @@ function showTimeMachine() {
                            placeholder="Ex: 84988888888" 
                            class="form-input"
                            pattern="[0-9]{11}">
-                    <button onclick="searchOrderByPhone()" class="modal-btn">Buscar</button>
+                    <button onclick="searchOrderHistory()" class="modal-btn">Buscar</button>
                 </div>
             </div>
         `;
@@ -3253,12 +3308,12 @@ function showTimeMachine() {
                 <i class="fas fa-phone"></i> Mostrando pedidos para: ${phone}
             </div>
         `;
-        // Busca o histórico automaticamente
         searchOrderHistory(phone);
     }
     
     modal.style.display = 'block';
 }
+
 
     // Nova função para buscar por número digitado
 function searchOrderByPhone() {
@@ -3397,24 +3452,23 @@ async function toggleFavorite(orderId) {
     }
 }
 
-// Função para repedir itens
 function reorderItems(items) {
-    // Limpar carrinho atual
-    cart = [];
-    
-    // Adicionar itens ao carrinho
-    cart.push(...items);
-    
-    // Atualizar UI
-    updateCartCount();
-    
-    // Fechar modal do Time Machine
-    document.getElementById('timeMachineModal').style.display = 'none';
-    
-    // Mostrar carrinho
-    showCartModal();
-    
-    showNotification('Itens adicionados ao carrinho');
+    try {
+        // Limpar carrinho atual
+        cart = [];
+        // Adicionar itens ao carrinho
+        cart.push(...items);
+        // Atualizar contagem
+        updateCartCount();
+        // Fechar modal de histórico
+        document.getElementById('timeMachineModal').style.display = 'none';
+        // Mostrar carrinho
+        showCartModal();
+        showNotification('Itens adicionados ao carrinho');
+    } catch (error) {
+        console.error('Erro ao reordenar itens:', error);
+        showNotification('Erro ao adicionar itens ao carrinho');
+    }
 }
 
 function updateCustomerAndDeliveryInfo(customer, delivery) {
