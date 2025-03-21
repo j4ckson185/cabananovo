@@ -3128,26 +3128,18 @@ function searchOrderHistory() {
     });
 }
 
-    // Função auxiliar para cookies
-function setCookie(name, value, days) {
-    let expires = '';
-    if (days) {
-        const date = new Date();
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-        expires = '; expires=' + date.toUTCString();
-    }
-    document.cookie = name + '=' + (value || '') + expires + '; path=/';
+// Função auxiliar para cookies (se ainda não existir no seu código)
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
-function getCookie(name) {
-    const nameEQ = name + '=';
-    const ca = document.cookie.split(';');
-    for(let i = 0; i < ca.length; i++) {
-        let c = ca[i];
-        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
-    }
-    return null;
+function setCookie(name, value, days) {
+    const d = new Date();
+    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+    const expires = `expires=${d.toUTCString()}`;
+    document.cookie = `${name}=${value};${expires};path=/`;
 }
 
 // Quando o cliente fornece o telefone pela primeira vez
@@ -3238,14 +3230,21 @@ function showTimeMachine() {
     favoritesSection.innerHTML = '';
     previousOrdersSection.innerHTML = '';
     
-    // Verifica se tem número de telefone armazenado
-    const phone = localStorage.getItem('cartPhone');
+    // Tenta obter o telefone de várias fontes
+    const phone = localStorage.getItem('cartPhone') || getCookie('customerPhone');
     
     if (!phone) {
+        // Se não encontrou telefone em nenhum lugar, mostra o input
         phoneMessage.innerHTML = `
-            <div class="empty-state" style="padding: 20px;">
-                <i class="fas fa-exclamation-circle" style="font-size: 2rem; color: var(--accent); margin-bottom: 1rem;"></i>
-                <p style="color: var(--text);">Adicione itens ao carrinho primeiro para ver seu histórico de pedidos.</p>
+            <div class="phone-input-section">
+                <p>Digite seu WhatsApp com DDD para ver seu histórico:</p>
+                <div class="phone-input-container">
+                    <input type="tel" id="historyPhoneInput" 
+                           placeholder="Ex: 84988888888" 
+                           class="form-input"
+                           pattern="[0-9]{11}">
+                    <button onclick="searchOrderByPhone()" class="modal-btn">Buscar</button>
+                </div>
             </div>
         `;
     } else {
@@ -3254,18 +3253,37 @@ function showTimeMachine() {
                 <i class="fas fa-phone"></i> Mostrando pedidos para: ${phone}
             </div>
         `;
-        
-        // Busca o histórico e carrinho atual
+        // Busca o histórico automaticamente
         searchOrderHistory(phone);
-        
-        // Mostra itens do carrinho atual se houver
-        const currentCart = JSON.parse(localStorage.getItem('currentCart')) || [];
-        if (currentCart.length > 0) {
-            showCurrentCart(currentCart);
-        }
     }
     
     modal.style.display = 'block';
+}
+
+    // Nova função para buscar por número digitado
+function searchOrderByPhone() {
+    const phoneInput = document.getElementById('historyPhoneInput');
+    const phone = phoneInput.value.replace(/\D/g, '');
+    
+    if (phone.length !== 11) {
+        showNotification('Digite um número válido com DDD (11 dígitos)');
+        return;
+    }
+
+    // Salvar o número para uso futuro
+    localStorage.setItem('cartPhone', phone);
+    setCookie('customerPhone', phone, 365); // Salva por 1 ano
+
+    // Atualizar a mensagem
+    const phoneMessage = document.querySelector('#phoneMessage');
+    phoneMessage.innerHTML = `
+        <div style="background: var(--glass); padding: 15px; border-radius: 10px; display: inline-block;">
+            <i class="fas fa-phone"></i> Mostrando pedidos para: ${phone}
+        </div>
+    `;
+
+    // Buscar histórico
+    searchOrderHistory(phone);
 }
 
 // Nova função para mostrar carrinho atual
