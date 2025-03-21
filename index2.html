@@ -6004,11 +6004,29 @@ openProductModal = async function(product) {
     // Chama a implementação original primeiro
     originalOpenProductModal(product);
     
-    // Encontra o container de insights
-    const insightContainer = document.querySelector('.product-ai-insights .insight-content');
-    if (insightContainer) {
-        // Mostra loading
-        insightContainer.innerHTML = `
+    // Remover insights anteriores
+    const existingInsights = document.querySelectorAll('.product-ai-insights');
+    existingInsights.forEach(insight => insight.remove());
+
+    // Adicionar novo insight após o preço
+    const priceElement = modal.querySelector('.modal-product-price');
+    if (priceElement) {
+        // Criar div de insights
+        const insightDiv = document.createElement('div');
+        insightDiv.className = 'product-ai-insights';
+        insightDiv.style.cssText = 'margin: 1.5rem 0; padding: 1.5rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 15px;';
+        
+        const insightContent = document.createElement('div');
+        insightContent.className = 'insight-content';
+        insightContent.style.color = 'var(--text)';
+        
+        insightDiv.appendChild(insightContent);
+        
+        // Inserir após o preço
+        priceElement.parentNode.insertBefore(insightDiv, priceElement.nextSibling);
+
+        // Mostrar loading
+        insightContent.innerHTML = `
             <div style="display: flex; align-items: center; gap: 8px;">
                 <div class="spinner" style="width: 20px; height: 20px; border: 2px solid var(--glass-border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite;"></div>
                 <span>Analisando produto...</span>
@@ -6020,9 +6038,9 @@ openProductModal = async function(product) {
         
         if (insight) {
             // Anima a transição do texto
-            insightContainer.style.opacity = '0';
+            insightContent.style.opacity = '0';
             setTimeout(() => {
-                insightContainer.innerHTML = `
+                insightContent.innerHTML = `
                     <div style="display: flex; align-items: start; gap: 12px;">
                         <i class="fas fa-lightbulb" style="color: var(--accent); font-size: 1.2rem; margin-top: 3px;"></i>
                         <div>
@@ -6031,10 +6049,10 @@ openProductModal = async function(product) {
                         </div>
                     </div>
                 `;
-                insightContainer.style.opacity = '1';
+                insightContent.style.opacity = '1';
             }, 300);
         } else {
-            insightContainer.innerHTML = '';
+            insightContent.innerHTML = '';
         }
     }
 };
