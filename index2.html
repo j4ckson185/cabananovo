@@ -3084,69 +3084,80 @@ function searchOrderHistory() {
         </div>
     `;
 
-    // Buscar do Firebase
-    const cartRef = firebase.database().ref(`carrinho/${phone}`);
-    cartRef.once('value')
-        .then((snapshot) => {
-            const cartData = snapshot.val();
-            
-            if (!cartData || !cartData.items || !cartData.items.length) {
-                previousOrdersSection.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
-                        <p>Nenhum item encontrado para este número.</p>
-                    </div>
-                `;
-                return;
-            }
+    // Buscar das duas referências possíveis
+    Promise.all([
+        firebase.database().ref(`carts/${phone}`).once('value'),
+        firebase.database().ref(`carrinho/${phone}`).once('value')
+    ])
+    .then(([cartsSnapshot, carrinhoSnapshot]) => {
+        const cartsData = cartsSnapshot.val();
+        const carrinhoData = carrinhoSnapshot.val();
+        
+        // Usar os dados de qualquer uma das referências que tiver conteúdo
+        const cartData = cartsData || carrinhoData;
 
-            previousOrdersSection.innerHTML = `
-                <div class="order-card">
-                    <div class="order-header">
-                        <div class="order-date">
-                            Último pedido: ${new Date(cartData.timestamp).toLocaleDateString('pt-BR')}
-                        </div>
-                    </div>
-                    <div class="order-items">
-                        ${cartData.items.map(item => `
-                            <div class="order-item">
-                                <div style="font-weight: bold;">${item.name}</div>
-                                ${item.selectedToppings?.length ? `
-                                    <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.5rem;">
-                                        <i class="fas fa-check-circle"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
-                                    </div>
-                                ` : ''}
-                                ${item.selectedExtras?.length ? `
-                                    <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
-                                        <i class="fas fa-plus-circle"></i> Extras: ${item.selectedExtras.join(', ')}
-                                    </div>
-                                ` : ''}
-                                <div style="color: var(--accent); margin-top: 0.5rem;">
-                                    R$ ${item.price.toFixed(2)}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
-                        <div class="order-total">
-                            Total: R$ ${cartData.items.reduce((total, item) => total + item.price, 0).toFixed(2)}
-                        </div>
-                        <button class="reorder-btn" onclick="reorderItems(${JSON.stringify(cartData.items)})">
-                            <i class="fas fa-redo-alt"></i> Pedir Novamente
-                        </button>
-                    </div>
-                </div>
-            `;
-        })
-        .catch(error => {
-            console.error('Erro ao buscar carrinho:', error);
+        console.log('Dados encontrados:', cartData); // Debug
+
+        if (!cartData || !cartData.items || !cartData.items.length) {
             previousOrdersSection.innerHTML = `
                 <div class="empty-state">
-                    <i class="fas fa-exclamation-circle fa-3x" style="color: var(--error); margin-bottom: 1rem;"></i>
-                    <p>Erro ao carregar itens</p>
+                    <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
+                    <p>Nenhum item encontrado para este número.</p>
                 </div>
             `;
-        });
+            return;
+        }
+
+        previousOrdersSection.innerHTML = `
+            <div class="order-card">
+                <div class="order-header">
+                    <div class="order-date">
+                        Último pedido: ${new Date(cartData.lastUpdated || cartData.timestamp || Date.now()).toLocaleDateString('pt-BR')}
+                    </div>
+                </div>
+                <div class="order-items">
+                    ${cartData.items.map(item => `
+                        <div class="order-item">
+                            <div style="font-weight: bold;">${item.name}</div>
+                            ${item.selectedToppings?.length ? `
+                                <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.5rem;">
+                                    <i class="fas fa-check-circle"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
+                                </div>
+                            ` : ''}
+                            ${item.selectedExtras?.length ? `
+                                <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
+                                    <i class="fas fa-plus-circle"></i> Extras: ${item.selectedExtras.join(', ')}
+                                </div>
+                            ` : ''}
+                            <div style="color: var(--accent); margin-top: 0.5rem;">
+                                R$ ${item.price.toFixed(2)}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                    <div class="order-total">
+                        Total: R$ ${cartData.items.reduce((total, item) => total + item.price, 0).toFixed(2)}
+                    </div>
+                    <button class="reorder-btn" onclick="reorderItems(${JSON.stringify(cartData.items)})">
+                        <i class="fas fa-redo-alt"></i> Pedir Novamente
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Setup dos botões
+        setupOrderButtons();
+    })
+    .catch(error => {
+        console.error('Erro ao buscar carrinho:', error);
+        previousOrdersSection.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-circle fa-3x" style="color: var(--error); margin-bottom: 1rem;"></i>
+                <p>Erro ao carregar itens</p>
+            </div>
+        `;
+    });
 }
 
     function calculateOrderTotal(items) {
