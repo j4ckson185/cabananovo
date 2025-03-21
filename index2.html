@@ -2456,10 +2456,6 @@ document.head.appendChild(style);
            <button class="modal-btn continue-shopping">Continuar Comprando</button>
        </div>
 
-<div class="product-ai-insights" style="margin: 2rem 0; padding: 1.5rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 15px;">
-    <div class="insight-content" style="color: var(--text);"></div>
-</div>
-
     <!-- Combo Builder Modal -->
 <div class="modal" id="comboModal">
     <div class="modal-content">
@@ -4313,6 +4309,23 @@ shareBtn.addEventListener('click', function() {
     modal.querySelector('.modal-product-title').textContent = product.name;
     modal.querySelector('.modal-product-description').textContent = product.description;
     modal.querySelector('.modal-product-price').textContent = `R$ ${product.price.toFixed(2)}`;
+    // Adicionar div de insights após o preço
+const priceElement = modal.querySelector('.modal-product-price');
+if (priceElement) {
+    // Criar div de insights
+    const insightDiv = document.createElement('div');
+    insightDiv.className = 'product-ai-insights';
+    insightDiv.style.cssText = 'margin: 1.5rem 0; padding: 1.5rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 15px;';
+    
+    const insightContent = document.createElement('div');
+    insightContent.className = 'insight-content';
+    insightContent.style.color = 'var(--text)';
+    
+    insightDiv.appendChild(insightContent);
+    
+    // Inserir após o preço
+    priceElement.parentNode.insertBefore(insightDiv, priceElement.nextSibling);
+}
 
     // Objeto com os benefícios dos acompanhamentos
     const toppingBenefits = {
