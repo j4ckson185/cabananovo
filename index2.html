@@ -3091,24 +3091,21 @@ async function logToSheet(data) {
     }
 }
 
-// Modificar a função searchOrderHistory para incluir logs
 function searchOrderHistory() {
     const phoneInput = document.getElementById('historyPhoneInput');
     const phone = phoneInput ? phoneInput.value.replace(/\D/g, '') : localStorage.getItem('cartPhone');
 
-    // Log inicial
     logToSheet({
         action: 'SEARCH_START',
         phone: phone,
-        cartPhone: localStorage.getItem('cartPhone'),
-        inputPhone: phoneInput ? phoneInput.value : 'N/A'
+        message: 'Iniciando busca'
     });
 
     if (!phone || phone.length !== 11) {
         logToSheet({
             action: 'INVALID_PHONE',
             phone: phone,
-            error: 'Número inválido ou incompleto'
+            error: 'Número inválido'
         });
         showNotification('Por favor, digite um número válido com DDD');
         return;
@@ -3122,120 +3119,98 @@ function searchOrderHistory() {
         </div>
     `;
 
-    // Log antes da busca no Firebase
+    // Buscar no caminho correto do Realtime Database
+    const cartRef = firebase.database().ref(`carrinho/${phone}/0`);
+    
     logToSheet({
-        action: 'FIREBASE_SEARCH_START',
+        action: 'FIREBASE_SEARCH',
         phone: phone,
-        path_carts: `carts/${phone}`,
-        path_carrinho: `carrinho/${phone}`
+        path: `carrinho/${phone}/0`
     });
 
-    Promise.all([
-        firebase.database().ref(`carts/${phone}`).once('value'),
-        firebase.database().ref(`carrinho/${phone}`).once('value')
-    ])
-    .then(([cartsSnapshot, carrinhoSnapshot]) => {
-        const cartsData = cartsSnapshot.val();
-        const carrinhoData = carrinhoSnapshot.val();
-        
-        // Log dos dados encontrados
-        logToSheet({
-            action: 'FIREBASE_DATA_RECEIVED',
-            phone: phone,
-            cartsData: JSON.stringify(cartsData),
-            carrinhoData: JSON.stringify(carrinhoData)
-        });
-
-        const cartData = cartsData || carrinhoData;
-
-        if (!cartData || !cartData.items || !cartData.items.length) {
+    cartRef.once('value')
+        .then((snapshot) => {
+            const cartData = snapshot.val();
+            
             logToSheet({
-                action: 'NO_DATA_FOUND',
+                action: 'DATA_RECEIVED',
                 phone: phone,
-                message: 'Nenhum item encontrado'
+                data: JSON.stringify(cartData)
             });
 
+            if (!cartData) {
+                logToSheet({
+                    action: 'NO_DATA',
+                    phone: phone,
+                    message: 'Nenhum dado encontrado'
+                });
+
+                previousOrdersSection.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
+                        <p>Nenhum item encontrado para este número.</p>
+                    </div>
+                `;
+                return;
+            }
+
             previousOrdersSection.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
-                    <p>Nenhum item encontrado para este número.</p>
+                <div class="order-card">
+                    <div class="order-header">
+                        <div class="order-date">
+                            Último pedido: ${new Date(cartData.timestamp).toLocaleDateString('pt-BR')}
+                        </div>
+                    </div>
+                    <div class="order-items">
+                        ${cartData.items.map(item => `
+                            <div class="order-item">
+                                <div style="font-weight: bold;">${item.name}</div>
+                                ${item.selectedToppings?.length ? `
+                                    <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.5rem;">
+                                        <i class="fas fa-check-circle"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
+                                    </div>
+                                ` : ''}
+                                ${item.selectedExtras?.length ? `
+                                    <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
+                                        <i class="fas fa-plus-circle"></i> Extras: ${item.selectedExtras.join(', ')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                        <div class="order-total">
+                            Total: R$ ${cartData.items.reduce((total, item) => total + (item.price || 0), 0).toFixed(2)}
+                        </div>
+                        <button class="reorder-btn" onclick="reorderItems(${JSON.stringify(cartData.items)})">
+                            <i class="fas fa-redo-alt"></i> Pedir Novamente
+                        </button>
+                    </div>
                 </div>
             `;
-            return;
-        }
 
-        // Log dos itens encontrados
-        logToSheet({
-            action: 'ITEMS_FOUND',
-            phone: phone,
-            itemCount: cartData.items.length,
-            totalValue: cartData.items.reduce((total, item) => total + item.price, 0),
-            items: JSON.stringify(cartData.items)
-        });
+            logToSheet({
+                action: 'RENDER_SUCCESS',
+                phone: phone,
+                message: 'Dados renderizados com sucesso'
+            });
+        })
+        .catch(error => {
+            logToSheet({
+                action: 'ERROR',
+                phone: phone,
+                error: error.message,
+                stack: error.stack
+            });
 
-        previousOrdersSection.innerHTML = `
-            <div class="order-card">
-                <div class="order-header">
-                    <div class="order-date">
-                        Último pedido: ${new Date(cartData.lastUpdated || cartData.timestamp || Date.now()).toLocaleDateString('pt-BR')}
-                    </div>
+            console.error('Erro ao buscar carrinho:', error);
+            previousOrdersSection.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-circle fa-3x" style="color: var(--error); margin-bottom: 1rem;"></i>
+                    <p>Erro ao carregar itens</p>
                 </div>
-                <div class="order-items">
-                    ${cartData.items.map(item => `
-                        <div class="order-item">
-                            <div style="font-weight: bold;">${item.name}</div>
-                            ${item.selectedToppings?.length ? `
-                                <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.5rem;">
-                                    <i class="fas fa-check-circle"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
-                                </div>
-                            ` : ''}
-                            ${item.selectedExtras?.length ? `
-                                <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
-                                    <i class="fas fa-plus-circle"></i> Extras: ${item.selectedExtras.join(', ')}
-                                </div>
-                            ` : ''}
-                            <div style="color: var(--accent); margin-top: 0.5rem;">
-                                R$ ${item.price.toFixed(2)}
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
-                    <div class="order-total">
-                        Total: R$ ${cartData.items.reduce((total, item) => total + item.price, 0).toFixed(2)}
-                    </div>
-                    <button class="reorder-btn" onclick="reorderItems(${JSON.stringify(cartData.items)})">
-                        <i class="fas fa-redo-alt"></i> Pedir Novamente
-                    </button>
-                </div>
-            </div>
-        `;
-
-        // Log de sucesso
-        logToSheet({
-            action: 'RENDER_SUCCESS',
-            phone: phone,
-            message: 'Itens renderizados com sucesso'
+            `;
         });
-
-    })
-    .catch(error => {
-        // Log de erro
-        logToSheet({
-            action: 'ERROR',
-            phone: phone,
-            error: error.message,
-            errorStack: error.stack
-        });
-
-        console.error('Erro ao buscar carrinho:', error);
-        previousOrdersSection.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-exclamation-circle fa-3x" style="color: var(--error); margin-bottom: 1rem;"></i>
-                <p>Erro ao carregar itens</p>
-            </div>
-        `;
-    });
 }
 
     function calculateOrderTotal(items) {
