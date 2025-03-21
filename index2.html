@@ -2292,6 +2292,10 @@ document.head.appendChild(style);
     margin: 1rem 0;
 }
 
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 </style>
 </head>
 <body>
@@ -2452,14 +2456,8 @@ document.head.appendChild(style);
            <button class="modal-btn continue-shopping">Continuar Comprando</button>
        </div>
 
-       <!-- Mascote aqui -->
-       <div class="mascot-container">
-           <div class="speech-bubble">
-               <p>Olá! Bem-vindo à Cabana Açaí! 😊</p>
-           </div>
-           <img src="https://i.ibb.co/KbthVz8/Designer-1.png" alt="Mascote" class="mascot" id="mascot">
-       </div>
-   </div>
+<div class="product-ai-insights" style="margin: 2rem 0; padding: 1.5rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 15px;">
+    <div class="insight-content" style="color: var(--text);"></div>
 </div>
 
     <!-- Combo Builder Modal -->
@@ -5987,28 +5985,44 @@ function addMascotToProduct(modalContent, productSize) {
     }
 }
 
-// Modificar a função openProductModal existente para incluir o mascote
+// Atualizar a função openProductModal 
 const originalOpenProductModal = openProductModal;
-openProductModal = function(product) {
+openProductModal = async function(product) {
+    // Chama a implementação original primeiro
     originalOpenProductModal(product);
     
-    const modalContent = document.querySelector('#productModal .modal-content');
-    const productTitle = modalContent.querySelector('.modal-product-title').textContent;
-    
-    // Limpar qualquer mascote existente
-    const existingMascot = modalContent.querySelector('.mascot-section');
-    if (existingMascot) {
-        existingMascot.remove();
-    }
-    
-    // Atualizar histórico de visualizações
-    productViewHistory.updateHistory(productTitle);
-    
-    // Adicionar mascote baseado no tamanho do produto
-    if (productTitle.includes('500ml')) {
-        addMascotToProduct(modalContent, '500ml');
-    } else if (productTitle.includes('1L') || productTitle.includes('1 Litro')) {
-        addMascotToProduct(modalContent, '1L');
+    // Encontra o container de insights
+    const insightContainer = document.querySelector('.product-ai-insights .insight-content');
+    if (insightContainer) {
+        // Mostra loading
+        insightContainer.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="spinner" style="width: 20px; height: 20px; border: 2px solid var(--glass-border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <span>Analisando produto...</span>
+            </div>
+        `;
+
+        // Obter insight do chatbot
+        const insight = await getProductInsight(product.name);
+        
+        if (insight) {
+            // Anima a transição do texto
+            insightContainer.style.opacity = '0';
+            setTimeout(() => {
+                insightContainer.innerHTML = `
+                    <div style="display: flex; align-items: start; gap: 12px;">
+                        <i class="fas fa-lightbulb" style="color: var(--accent); font-size: 1.2rem; margin-top: 3px;"></i>
+                        <div>
+                            <div style="color: white; margin-bottom: 4px; font-weight: 500;">Descrição do Produto</div>
+                            <div style="line-height: 1.5;">${insight}</div>
+                        </div>
+                    </div>
+                `;
+                insightContainer.style.opacity = '1';
+            }, 300);
+        } else {
+            insightContainer.innerHTML = '';
+        }
     }
 };
     
@@ -6254,6 +6268,32 @@ function selectOccasion(occasion) {
 
     // Exibir notificação com detalhes
     showRecommendation(message, products, toppings);
+}
+
+async function getProductInsight(productName) {
+    try {
+        const prompt = `uma descrição em poucas palavras do ${productName}, diga apenas '${productName}: descrição'`;
+        
+        const response = await fetch('https://www.chatbase.co/api/v1/chat', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer 6564b636-1a71-4a0f-9863-7c87e586384a',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                messages: [{ content: prompt, role: 'user' }],
+                chatbotId: 'PpgNSIgeYN1FCucFGP4w3',
+                stream: false,
+                temperature: 0
+            })
+        });
+
+        const data = await response.json();
+        return data.text;
+    } catch (error) {
+        console.error('Erro ao obter insight:', error);
+        return null;
+    }
 }
 
 function showRecommendation(message, products, toppings) {
@@ -6625,18 +6665,7 @@ function createPhoneCollectionModal() {
 // Variável global para armazenar temporariamente o produto a ser adicionado
 let pendingCartAddition = null;
 
-// Função para salvar histórico quando um item é adicionado ao carrinho
-function saveToHistory(phone, items) {
-    const historyRef = firebase.database().ref(`historico_pedidos/${phone}`);
-    const pedido = {
-        items: items,
-        timestamp: Date.now()
-    };
-    historyRef.push(pedido);
-}
-
-// Modificar a função validateAndStorePhone existente para incluir o salvamento do histórico
-function validateAndStorePhone() {
+async function validateAndStorePhone() {
     const phoneInput = document.getElementById('customerPhoneCart');
     const phoneError = document.getElementById('phoneError');
     const phone = phoneInput.value.replace(/\D/g, '');
@@ -6647,11 +6676,29 @@ function validateAndStorePhone() {
     }
 
     try {
-        localStorage.setItem('cartPhone', phone);
+        console.log('Iniciando processo de validação do telefone...');
+        const timestamp = new Date().toISOString();
         
-        // Salvar os itens no histórico
+        // Registrar na planilha
+        const data = {
+            phone: phone,
+            timestamp: timestamp,
+            cartItems: JSON.stringify(cart),
+            status: 'active'
+        };
+
+        // Registrar no Google Sheets
+        await recordAbandonedCart(data);
+        
+        // Salvar localmente
+        localStorage.setItem('cartPhone', phone);
+        localStorage.setItem('cartTimestamp', timestamp);
+
+        // Fechar modal do telefone
+        document.getElementById('phoneCollectionModal').style.display = 'none';
+
+        // Adicionar o produto pendente ao carrinho
         if (window.pendingCartAddition) {
-            saveToHistory(phone, [window.pendingCartAddition.product]);
             addToCart(
                 window.pendingCartAddition.product,
                 window.pendingCartAddition.selectedToppings
@@ -6659,122 +6706,12 @@ function validateAndStorePhone() {
             window.pendingCartAddition = null;
         }
 
-        document.getElementById('phoneCollectionModal').style.display = 'none';
+        console.log('Iniciando monitoramento do carrinho...');
+        startCartMonitoring(); // Iniciar monitoramento imediatamente
 
     } catch (error) {
         console.error('Erro:', error);
         alert('Erro ao processar seu número. Tente novamente.');
-    }
-}
-
-// Nova função para buscar histórico de pedidos
-function buscarHistoricoPedidos() {
-    const phoneInput = document.getElementById('historyPhoneInput');
-    const phone = phoneInput ? phoneInput.value.replace(/\D/g, '') : localStorage.getItem('cartPhone');
-
-    if (!phone || phone.length !== 11) {
-        showNotification('Digite um número válido com DDD');
-        return;
-    }
-
-    const previousOrdersSection = document.querySelector('.previous-orders-section');
-    previousOrdersSection.innerHTML = `
-        <div class="empty-state">
-            <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--accent); margin-bottom: 1rem;"></i>
-            <p>Carregando seus itens...</p>
-        </div>
-    `;
-
-    const historyRef = firebase.database().ref(`historico_pedidos/${phone}`);
-    historyRef.orderByChild('timestamp').once('value')
-        .then((snapshot) => {
-            const pedidos = [];
-            snapshot.forEach((childSnapshot) => {
-                pedidos.push({
-                    id: childSnapshot.key,
-                    ...childSnapshot.val()
-                });
-            });
-
-            if (pedidos.length === 0) {
-                previousOrdersSection.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
-                        <p>Nenhum pedido encontrado para este número.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            // Ordenar pedidos do mais recente para o mais antigo
-            pedidos.sort((a, b) => b.timestamp - a.timestamp);
-
-            previousOrdersSection.innerHTML = pedidos.map(pedido => `
-                <div class="order-card">
-                    <div class="order-header">
-                        <div class="order-date">
-                            ${new Date(pedido.timestamp).toLocaleDateString('pt-BR', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })}
-                        </div>
-                    </div>
-                    <div class="order-items">
-                        ${pedido.items.map(item => `
-                            <div class="order-item">
-                                <div style="font-weight: bold;">${item.name}</div>
-                                ${item.selectedToppings?.length ? `
-                                    <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.5rem;">
-                                        <i class="fas fa-check-circle"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
-                                    </div>
-                                ` : ''}
-                                ${item.selectedExtras?.length ? `
-                                    <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
-                                        <i class="fas fa-plus-circle"></i> Extras: ${item.selectedExtras.join(', ')}
-                                    </div>
-                                ` : ''}
-                                <div style="color: var(--accent); margin-top: 0.5rem;">
-                                    R$ ${item.price ? item.price.toFixed(2) : '0.00'}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
-                        <div class="order-total">
-                            Total: R$ ${pedido.items.reduce((total, item) => total + (item.price || 0), 0).toFixed(2)}
-                        </div>
-                        <button class="reorder-btn" onclick="repedirItens(${JSON.stringify(pedido.items)})">
-                            <i class="fas fa-redo-alt"></i> Pedir Novamente
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        })
-        .catch(error => {
-            console.error('Erro ao buscar histórico:', error);
-            previousOrdersSection.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-exclamation-circle fa-3x" style="color: var(--error); margin-bottom: 1rem;"></i>
-                    <p>Erro ao carregar histórico de pedidos</p>
-                </div>
-            `;
-        });
-}
-
-// Função para repedir itens
-function repedirItens(items) {
-    try {
-        cart = [...items];
-        updateCartCount();
-        document.getElementById('timeMachineModal').style.display = 'none';
-        showCartModal();
-        showNotification('Itens adicionados ao carrinho');
-    } catch (error) {
-        console.error('Erro ao repedir itens:', error);
-        showNotification('Erro ao adicionar itens ao carrinho');
     }
 }
 
