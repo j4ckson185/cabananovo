@@ -3067,17 +3067,25 @@ function enviarAudioParaChatbot(audioBlob) {
     recognition.start();
 }
 
-function searchOrderHistory() {
-    // Em vez de pegar do input, pegamos do localStorage
-    const phone = localStorage.getItem('cartPhone');
-    
+function searchOrderHistory(phone) {
     if (!phone) {
-        showNotification('Nenhum número de telefone encontrado. Adicione itens ao carrinho primeiro.');
-        return;
+        phone = localStorage.getItem('cartPhone');
+        if (!phone) {
+            showNotification('Adicione itens ao carrinho primeiro para ver seu histórico');
+            return;
+        }
     }
 
     const favoritesSection = document.querySelector('.favorites-section');
     const previousOrdersSection = document.querySelector('.previous-orders-section');
+
+    // Mostrar loading
+    previousOrdersSection.innerHTML = `
+        <div class="empty-state">
+            <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--accent); margin-bottom: 1rem;"></i>
+            <p>Carregando seus pedidos...</p>
+        </div>
+    `;
 
     try {
         const ordersRef = firebase.database().ref('orders');
@@ -3088,11 +3096,13 @@ function searchOrderHistory() {
             
             snapshot.forEach((childSnapshot) => {
                 const order = childSnapshot.val();
-                orders.push({
-                    id: childSnapshot.key,
-                    ...order,
-                    timestamp: order.timestamp || Date.now()
-                });
+                if (order && order.items) { // Verificar se o pedido tem itens
+                    orders.push({
+                        id: childSnapshot.key,
+                        ...order,
+                        timestamp: order.timestamp || Date.now()
+                    });
+                }
             });
 
             if (orders.length === 0) {
@@ -3102,6 +3112,7 @@ function searchOrderHistory() {
                         <p>Nenhum pedido encontrado para este número.</p>
                     </div>
                 `;
+                favoritesSection.innerHTML = ''; // Limpa a seção de favoritos
                 return;
             }
 
@@ -3127,30 +3138,49 @@ function searchOrderHistory() {
                 ${renderOrders(orders)}
             `;
 
-            // Adicionar event listeners para os botões de "Pedir Novamente"
-            const reorderButtons = document.querySelectorAll('.reorder-btn');
-            reorderButtons.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    try {
-                        const items = JSON.parse(this.getAttribute('data-items'));
-                        cart = []; // Limpa o carrinho antes
-                        cart.push(...items);
-                        updateCartCount();
-                        document.getElementById('timeMachineModal').style.display = 'none';
-                        showCartModal();
-                        showNotification('Itens adicionados ao carrinho');
-                    } catch (error) {
-                        console.error('Erro ao reordenar itens:', error);
-                        showNotification('Erro ao adicionar itens ao carrinho');
-                    }
-                });
-            });
+            // Adicionar event listeners para os botões
+            setupOrderButtons();
         });
 
     } catch (error) {
         console.error('Erro ao carregar pedidos:', error);
-        showNotification('Erro ao carregar seu histórico de pedidos');
+        previousOrdersSection.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-circle fa-3x" style="color: var(--error); margin-bottom: 1rem;"></i>
+                <p>Erro ao carregar histórico de pedidos</p>
+            </div>
+        `;
     }
+}
+
+    function setupOrderButtons() {
+    // Setup para botões de "Pedir Novamente"
+    const reorderButtons = document.querySelectorAll('.reorder-btn');
+    reorderButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            try {
+                const items = JSON.parse(this.getAttribute('data-items'));
+                cart = []; // Limpa o carrinho antes
+                cart.push(...items);
+                updateCartCount();
+                document.getElementById('timeMachineModal').style.display = 'none';
+                showCartModal();
+                showNotification('Itens adicionados ao carrinho');
+            } catch (error) {
+                console.error('Erro ao reordenar itens:', error);
+                showNotification('Erro ao adicionar itens ao carrinho');
+            }
+        });
+    });
+
+    // Setup para botões de favorito
+    const favoriteButtons = document.querySelectorAll('.favorite-btn');
+    favoriteButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.closest('.order-card').dataset.orderId;
+            toggleFavorite(orderId);
+        });
+    });
 }
 
 // Adicionar botão do Time Machine ao header
@@ -3169,11 +3199,11 @@ function addTimeMachineButton() {
     headerContent.insertBefore(timeMachineBtn, cartIcon);
 }
 
-// Modificar a função que abre o modal de histórico
 function showTimeMachine() {
     const modal = document.getElementById('timeMachineModal');
     const favoritesSection = modal.querySelector('.favorites-section');
     const previousOrdersSection = modal.querySelector('.previous-orders-section');
+    const phoneMessage = modal.querySelector('#phoneMessage');
     
     // Limpa seções anteriores
     favoritesSection.innerHTML = '';
@@ -3181,16 +3211,22 @@ function showTimeMachine() {
     
     // Verifica se tem número de telefone armazenado
     const phone = localStorage.getItem('cartPhone');
+    
     if (!phone) {
-        previousOrdersSection.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-exclamation-circle fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
-                <p>Adicione itens ao carrinho primeiro para ver seu histórico de pedidos.</p>
+        phoneMessage.innerHTML = `
+            <div class="empty-state" style="padding: 20px;">
+                <i class="fas fa-exclamation-circle" style="font-size: 2rem; color: var(--accent); margin-bottom: 1rem;"></i>
+                <p style="color: var(--text);">Adicione itens ao carrinho primeiro para ver seu histórico de pedidos.</p>
             </div>
         `;
     } else {
+        phoneMessage.innerHTML = `
+            <div style="background: var(--glass); padding: 15px; border-radius: 10px; display: inline-block;">
+                <i class="fas fa-phone"></i> Mostrando pedidos para: ${phone}
+            </div>
+        `;
         // Busca o histórico automaticamente
-        searchOrderHistory();
+        searchOrderHistory(phone);
     }
     
     modal.style.display = 'block';
