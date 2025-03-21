@@ -3067,12 +3067,12 @@ function enviarAudioParaChatbot(audioBlob) {
     recognition.start();
 }
 
-async function searchOrderHistory() {
-    const phoneInput = document.getElementById('historyPhoneInput');
-    const phone = phoneInput.value.replace(/\D/g, '');
+function searchOrderHistory() {
+    // Em vez de pegar do input, pegamos do localStorage
+    const phone = localStorage.getItem('cartPhone');
     
     if (!phone) {
-        showNotification('Por favor, digite seu WhatsApp');
+        showNotification('Nenhum número de telefone encontrado. Adicione itens ao carrinho primeiro.');
         return;
     }
 
@@ -3083,76 +3083,69 @@ async function searchOrderHistory() {
         const ordersRef = firebase.database().ref('orders');
         const query = ordersRef.orderByChild('customer/phone').equalTo(phone);
         
-        const snapshot = await query.once('value');
-        const orders = [];
-        
-        snapshot.forEach((childSnapshot) => {
-            const order = childSnapshot.val();
-            orders.push({
-                id: childSnapshot.key,
-                ...order,
-                timestamp: order.timestamp || Date.now()
+        query.once('value').then((snapshot) => {
+            const orders = [];
+            
+            snapshot.forEach((childSnapshot) => {
+                const order = childSnapshot.val();
+                orders.push({
+                    id: childSnapshot.key,
+                    ...order,
+                    timestamp: order.timestamp || Date.now()
+                });
+            });
+
+            if (orders.length === 0) {
+                previousOrdersSection.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
+                        <p>Nenhum pedido encontrado para este número.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Ordenar por data mais recente
+            orders.sort((a, b) => b.timestamp - a.timestamp);
+
+            // Renderizar favoritos
+            const favorites = orders.filter(order => order.isFavorite);
+            favoritesSection.innerHTML = `
+                <div class="section-title">
+                    <i class="fas fa-star" style="color: #FFD700;"></i>
+                    Seus Favoritos
+                </div>
+                ${favorites.length ? renderOrders(favorites) : '<p class="empty-state">Nenhum pedido favorito ainda</p>'}
+            `;
+
+            // Renderizar histórico completo
+            previousOrdersSection.innerHTML = `
+                <div class="section-title">
+                    <i class="fas fa-history"></i>
+                    Histórico de Pedidos
+                </div>
+                ${renderOrders(orders)}
+            `;
+
+            // Adicionar event listeners para os botões de "Pedir Novamente"
+            const reorderButtons = document.querySelectorAll('.reorder-btn');
+            reorderButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    try {
+                        const items = JSON.parse(this.getAttribute('data-items'));
+                        cart = []; // Limpa o carrinho antes
+                        cart.push(...items);
+                        updateCartCount();
+                        document.getElementById('timeMachineModal').style.display = 'none';
+                        showCartModal();
+                        showNotification('Itens adicionados ao carrinho');
+                    } catch (error) {
+                        console.error('Erro ao reordenar itens:', error);
+                        showNotification('Erro ao adicionar itens ao carrinho');
+                    }
+                });
             });
         });
-
-        if (orders.length === 0) {
-            previousOrdersSection.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
-                    <p>Nenhum pedido encontrado para este número.</p>
-                </div>
-            `;
-            return;
-        }
-
-        // Ordenar por data mais recente
-        orders.sort((a, b) => b.timestamp - a.timestamp);
-
-        // Renderizar favoritos
-        const favorites = orders.filter(order => order.isFavorite);
-        favoritesSection.innerHTML = `
-            <div class="section-title">
-                <i class="fas fa-star" style="color: #FFD700;"></i>
-                Seus Favoritos
-            </div>
-            ${favorites.length ? renderOrders(favorites) : '<p class="empty-state">Nenhum pedido favorito ainda</p>'}
-        `;
-
-        // Renderizar histórico completo
-        previousOrdersSection.innerHTML = `
-            <div class="section-title">
-                <i class="fas fa-history"></i>
-                Histórico de Pedidos
-            </div>
-            ${renderOrders(orders)}
-        `;
-
-        // ADICIONAR AQUI - Event listeners para os botões de "Pedir Novamente"
-    const reorderButtons = document.querySelectorAll('.reorder-btn');
-    reorderButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            try {
-                const items = JSON.parse(this.getAttribute('data-items'));
-                cart = []; // Limpa o carrinho antes
-                // Garante que todos os itens tenham as propriedades necessárias
-                cart.push(...items.map(item => ({
-                    name: item.name || 'Item sem nome',
-                    price: item.price || 0,
-                    description: item.description || '',
-                    selectedToppings: item.selectedToppings || [],
-                    selectedExtras: item.selectedExtras || []
-                })));
-                
-                updateCartCount();
-                document.getElementById('timeMachineModal').style.display = 'none';
-                showCartModal(); // Abre o carrinho automaticamente
-                showNotification('Itens adicionados ao carrinho');
-            } catch (error) {
-                console.error('Erro ao reordenar itens:', error);
-                showNotification('Erro ao adicionar itens ao carrinho');
-            }
-        });
-    });
 
     } catch (error) {
         console.error('Erro ao carregar pedidos:', error);
@@ -3176,9 +3169,7 @@ function addTimeMachineButton() {
     headerContent.insertBefore(timeMachineBtn, cartIcon);
 }
 
-// Função para mostrar o Time Machine
-// Função para mostrar o Time Machine
-// Função para mostrar o Time Machine
+// Modificar a função que abre o modal de histórico
 function showTimeMachine() {
     const modal = document.getElementById('timeMachineModal');
     const favoritesSection = modal.querySelector('.favorites-section');
@@ -3188,16 +3179,23 @@ function showTimeMachine() {
     favoritesSection.innerHTML = '';
     previousOrdersSection.innerHTML = '';
     
-    // Adiciona event listener para o botão de fechar
-    const closeButton = modal.querySelector('.close-modal');
-    if (closeButton) {
-        closeButton.addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
+    // Verifica se tem número de telefone armazenado
+    const phone = localStorage.getItem('cartPhone');
+    if (!phone) {
+        previousOrdersSection.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-circle fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
+                <p>Adicione itens ao carrinho primeiro para ver seu histórico de pedidos.</p>
+            </div>
+        `;
+    } else {
+        // Busca o histórico automaticamente
+        searchOrderHistory();
     }
     
     modal.style.display = 'block';
 }
+    
 // Função para renderizar os pedidos
 // Modifique a função renderOrders para usar um data-attribute em vez de passar diretamente no onclick
 function renderOrders(orders) {
@@ -6914,6 +6912,10 @@ function initializePixPayment(amount, event) {
         event.stopPropagation();
     }
 
+    // Adicione estas duas linhas no início para gerar um novo ID de sessão
+    window.currentSessionId = generateSessionId();
+    console.log("Nova sessão de pagamento iniciada: " + window.currentSessionId);
+
     const statusDiv = document.getElementById('paymentStatus');
     
     statusDiv.innerHTML = `
@@ -6951,7 +6953,218 @@ function handlePixResponse(response) {
     `;
 }
 
+function startPaymentCheck(amount) {
+    const statusDiv = document.getElementById('paymentStatus');
+    const statusDetailDiv = document.getElementById('paymentStatusDetail');
+    let checkCount = 0;
+    const maxChecks = 120; // 6 minutos (3s * 120)
+    
+    // Obter ou criar ID de sessão
+    if (!window.currentSessionId) {
+        window.currentSessionId = generateSessionId();
+        console.log("Novo ID de sessão criado: " + window.currentSessionId);
+    }
+    const sessionId = window.currentSessionId;
+    
+    // Substituir pela URL correta do seu script
+    const webhookUrl = 'https://script.google.com/macros/s/AKfycbxudaDaCy9jnqswuw9JR7OAdScJQTFSO5Vs_msLH0Sbqd5OQrGtzQ9Ypkcz0QUVuBKOIA/exec';
+    
+    // Mostrar status inicial
+    statusDiv.innerHTML = `
+        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+            <i class="fas fa-spinner fa-spin"></i> 
+            Aguardando confirmação do PIX...
+            <br><small>Não feche esta janela até a confirmação.</small>
+        </div>
+    `;
+    
+    // Exibir o contêiner de detalhes caso esteja escondido
+    if (statusDetailDiv) {
+        statusDetailDiv.style.display = 'block';
+        statusDetailDiv.innerHTML = `
+            <div style="text-align: center;">
+                <p>Iniciando verificação de pagamento...</p>
+                <small>ID de Sessão: ${sessionId.substring(0, 8)}...</small>
+            </div>
+        `;
+    }
+    
+    // Função para verificar o pagamento
+    const checkPayment = () => {
+        console.log(`Verificação ${checkCount+1} para valor ${amount}, sessão ${sessionId}`);
+        
+        // Adicionar timestamp e ID de sessão para evitar cache
+        const url = `${webhookUrl}?action=check_payment&amount=${amount}&session=${sessionId}&cache=${Date.now()}`;
+        
+        fetch(url)
+            .then(response => response.text())
+            .then(text => {
+                try {
+                    // Tentar analisar como JSON
+                    let data;
+                    try {
+                        data = JSON.parse(text);
+                        console.log("Resposta recebida:", data);
+                        
+                        // Se for aprovado
+                        if (data.status === 'approved') {
+                            // Mostrar quando o pagamento foi aprovado
+                            const timeAgo = data.timeAgo ? `(há ${data.timeAgo} segundos)` : '';
+                            
+                            if (statusDetailDiv) {
+                                statusDetailDiv.innerHTML = `
+                                    <div style="color: #4CAF50; text-align: center;">
+                                        <i class="fas fa-check-circle" style="font-size: 2rem;"></i>
+                                        <h3 style="margin: 10px 0;">Pagamento Confirmado! ${timeAgo}</h3>
+                                        <p>Recebemos seu pagamento com sucesso.</p>
+                                        <p>Seu pedido está sendo processado.</p>
+                                        <small>ID de Sessão: ${sessionId.substring(0, 8)}...</small>
+                                    </div>
+                                `;
+                            }
+                            
+                            // Também atualizar o status principal
+                            statusDiv.innerHTML = `
+                                <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 8px; margin: 10px 0;">
+                                    <i class="fas fa-check-circle"></i> 
+                                    Pagamento PIX recebido! Você pode continuar com seu pedido.
+                                </div>
+                            `;
+                            
+                            // Habilitar botão de finalizar
+                            const submitButton = document.querySelector('#createOrderForm button[type="button"]');
+                            if (submitButton) {
+                                submitButton.disabled = false;
+                                submitButton.innerHTML = 'Finalizar Pedido';
+                                submitButton.style.backgroundColor = '';
+                                submitButton.style.opacity = '1';
+                            }
+                            
+                            // Parar de verificar
+                            clearInterval(checkInterval);
+                            return;
+                        } else {
+                            // Status pendente
+                            if (statusDetailDiv) {
+                                statusDetailDiv.innerHTML = `
+                                    <div style="text-align: center;">
+                                        <i class="fas fa-clock" style="font-size: 1.5rem;"></i>
+                                        <p style="margin: 10px 0;">Ainda estamos aguardando a confirmação do seu pagamento.</p>
+                                        <small>Status: ${data.status || 'pendente'}</small>
+                                        <br><small>ID de Sessão: ${sessionId.substring(0, 8)}...</small>
+                                    </div>
+                                `;
+                            }
+                        }
+                    } catch (e) {
+                        // Se não for JSON, mostra o texto como está
+                        console.error("Erro ao analisar JSON:", e, "Texto recebido:", text);
+                        if (statusDetailDiv) {
+                            statusDetailDiv.innerHTML = `
+                                <div style="color: var(--error); text-align: center;">
+                                    <p>Aguardando confirmação do servidor...</p>
+                                    <small>Resposta do servidor não é um formato válido</small>
+                                    <br><small>ID de Sessão: ${sessionId.substring(0, 8)}...</small>
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    // Continuar verificando
+                    checkCount++;
+                    
+                    if (checkCount >= maxChecks) {
+                        clearInterval(checkInterval);
+                        statusDiv.innerHTML = `
+                            <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                                <i class="fas fa-info-circle"></i> 
+                                Tempo limite excedido. Se você já pagou, clique no botão abaixo para continuar.
+                                <button onclick="continueAfterPix()" style="margin-top: 10px; width: 100%; padding: 8px; background: var(--accent); color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                    Já realizei o pagamento
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        // Apenas atualizar tempo decorrido
+                        statusDiv.innerHTML = `
+                            <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                                <i class="fas fa-spinner fa-spin"></i> 
+                                Aguardando confirmação do PIX... (${Math.floor(checkCount/20)}min ${(checkCount % 20) * 3}s)
+                                <br><small>Não feche esta janela até a confirmação.</small>
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    console.error("Erro ao processar resposta:", error);
+                    if (statusDetailDiv) {
+                        statusDetailDiv.innerHTML = `
+                            <div style="color: var(--error); text-align: center;">
+                                <p>Erro ao verificar pagamento: ${error.message}</p>
+                                <small>ID de Sessão: ${sessionId.substring(0, 8)}...</small>
+                            </div>
+                        `;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error("Erro na verificação:", error);
+                checkCount++;
+                
+                if (checkCount >= maxChecks) {
+                    clearInterval(checkInterval);
+                    statusDiv.innerHTML = `
+                        <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                            <i class="fas fa-exclamation-circle"></i> 
+                            Erro ao verificar pagamento. Se você já pagou, clique no botão abaixo para continuar.
+                            <button onclick="continueAfterPix()" style="margin-top: 10px; width: 100%; padding: 8px; background: var(--accent); color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                Já realizei o pagamento
+                            </button>
+                        </div>
+                    `;
+                }
+            });
+    };
+    
+    // Verificar imediatamente
+    checkPayment();
+    
+    // E então a cada 3 segundos
+    const checkInterval = setInterval(checkPayment, 3000);
+}
+
+// Função para permitir continuar sem confirmação
+function continueAfterPix() {
+    const submitButton = document.querySelector('#createOrderForm button[type="button"]');
+    if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Finalizar Pedido';
+        submitButton.style.backgroundColor = '';
+        submitButton.style.opacity = '1';
+    }
+    
+    const statusDiv = document.getElementById('paymentStatus');
+    statusDiv.innerHTML = `
+        <div style="background: #FFA500; color: white; padding: 10px; border-radius: 8px; margin: 10px 0;">
+            <i class="fas fa-info-circle"></i> 
+            Continuando sem confirmação automática. Se você já realizou o pagamento, prossiga normalmente.
+        </div>
+    `;
+}
+
+// Adicione esta função para gerar IDs únicos
+function generateSessionId() {
+    return Date.now().toString() + Math.random().toString(36).substring(2, 9);
+}
+
+// Modifique a função generatePixQRCode para criar um ID de sessão
 function generatePixQRCode(total) {
+    // Gerar ID de sessão único
+    const sessionId = generateSessionId();
+    // Armazenar o ID na janela para uso posterior
+    window.currentSessionId = sessionId;
+    
+    console.log("Nova sessão de pagamento criada: " + sessionId);
+    
     // Dados do PIX atualizados
     const pixKey = "06561938402";
     const merchantName = "JACKSON";
@@ -6976,6 +7189,9 @@ function generatePixQRCode(total) {
     qrContainer.innerHTML = `
         <h3 style="margin-bottom: 10px; color: white;">Pagamento via PIX</h3>
         <div id="paymentStatus" style="margin-bottom: 15px; color: var(--text);"></div>
+
+         <!-- Adicionar este novo elemento para o status detalhado -->
+        <div id="paymentStatusDetail" style="margin-bottom: 15px; background: var(--glass); padding: 10px; border-radius: 8px; display: none;"></div>
         
         <!-- Container do QR Code -->
         <div style="background: white; padding: 10px; border-radius: 10px; display: inline-block; margin: 10px auto;">
@@ -7006,9 +7222,6 @@ function generatePixQRCode(total) {
                 </div>
             </div>
         </div>
-        <button onclick="initializePixPayment('${amount}', event)" class="modal-btn add-to-cart" style="margin-top: 15px; width: 100%;">
-            <i class="fas fa-paper-plane"></i> Enviar PIX
-        </button>
     `;
 
     // Gerar QR Code após inserir no DOM
@@ -7021,51 +7234,12 @@ function generatePixQRCode(total) {
             colorLight: "#ffffff",
             correctLevel: QRCode.CorrectLevel.H
         });
+        
+        // Iniciar verificação de pagamento automaticamente
+        startPaymentCheck(amount);
     }, 100);
 
     return qrContainer;
-}
-
-function startPaymentCheck(amount) {
-    const statusDiv = document.getElementById('paymentStatus');
-    let checkCount = 0;
-    const maxChecks = 120; // 10 minutos (5s * 120)
-    const webhookUrl = 'https://script.google.com/macros/s/AKfycbym_hnN3XieTgv_aYeyQxwqqbzQhw7lhC1LmW0_gae3Ac0bKMHO7tQZfrOc6iQWquiwkQ/exec';
-
-    const checkInterval = setInterval(() => {
-        checkCount++;
-
-        // Criar elemento script para JSONP
-        const script = document.createElement('script');
-        script.src = `${webhookUrl}?action=check_payment&amount=${amount}&callback=handlePaymentCheck`;
-        document.body.appendChild(script);
-        script.onload = () => document.body.removeChild(script);
-
-        // Se atingir limite de tempo
-        if (checkCount >= maxChecks) {
-            clearInterval(checkInterval);
-            statusDiv.innerHTML = `
-                <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                    <i class="fas fa-info-circle"></i> 
-                    Tempo limite excedido. Se você já pagou, o pedido será confirmado em breve.
-                    <br>
-                    <small>Você pode acompanhar o status do pagamento pelo app do Mercado Pago.</small>
-                </div>
-            `;
-        } else {
-            statusDiv.innerHTML = `
-                <div style="background: var(--glass); padding: 10px; border-radius: 8px; margin: 10px 0;">
-                    <i class="fas fa-spinner fa-spin"></i> 
-                    Aguardando confirmação do PIX... (${Math.floor(checkCount/12)}min)
-                    <br>
-                    <small>Não feche esta janela até a confirmação.</small>
-                </div>
-            `;
-        }
-    }, 5000);
-
-    // Salvar intervalo para poder cancelar depois
-    window.currentCheckInterval = checkInterval;
 }
 
 // Função que recebe resposta do check
