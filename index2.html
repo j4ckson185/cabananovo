@@ -6004,8 +6004,11 @@ openProductModal = async function(product) {
     // Chama a implementação original primeiro
     originalOpenProductModal(product);
     
+    // Pegar referência ao modal
+    const modal = document.getElementById('productModal');
+    
     // Remover insights anteriores
-    const existingInsights = document.querySelectorAll('.product-ai-insights');
+    const existingInsights = modal.querySelectorAll('.product-ai-insights');
     existingInsights.forEach(insight => insight.remove());
 
     // Adicionar novo insight após o preço
