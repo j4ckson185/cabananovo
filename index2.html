@@ -3067,11 +3067,26 @@ function enviarAudioParaChatbot(audioBlob) {
     recognition.start();
 }
 
-// Função para buscar histórico
-function searchOrderHistory(phone) {
+function searchOrderHistory() {
+    // Pegar o número do input se estiver disponível
+    const phoneInput = document.getElementById('historyPhoneInput');
+    let phone = phoneInput ? phoneInput.value.replace(/\D/g, '') : localStorage.getItem('cartPhone');
+
     const previousOrdersSection = document.querySelector('.previous-orders-section');
     const favoritesSection = document.querySelector('.favorites-section');
 
+    // Validar o número de telefone
+    if (!phone || phone.length !== 11) {
+        previousOrdersSection.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-circle fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
+                <p>Por favor, digite um número de telefone válido com DDD</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Mostrar loading
     previousOrdersSection.innerHTML = `
         <div class="empty-state">
             <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--accent); margin-bottom: 1rem;"></i>
@@ -3080,84 +3095,75 @@ function searchOrderHistory(phone) {
     `;
 
     try {
+        // Referência ao Firebase
         const ordersRef = firebase.database().ref('orders');
-        const query = ordersRef
-            .orderByChild('customer/phone')
-            .equalTo(phone);
         
-        query.once('value').then((snapshot) => {
-            const orders = [];
-            
-            snapshot.forEach((childSnapshot) => {
-                const order = childSnapshot.val();
-                if (order && order.items) {
-                    orders.push({
-                        id: childSnapshot.key,
-                        ...order,
-                        timestamp: order.timestamp || Date.now()
-                    });
+        // Buscar pedidos onde o telefone do cliente corresponde
+        ordersRef.orderByChild('customer/whatsapp').equalTo(phone).once('value')
+            .then((snapshot) => {
+                const orders = [];
+                
+                snapshot.forEach((childSnapshot) => {
+                    const order = childSnapshot.val();
+                    if (order && order.items) {
+                        orders.push({
+                            id: childSnapshot.key,
+                            ...order,
+                            timestamp: order.timestamp || Date.now()
+                        });
+                    }
+                });
+
+                // Se não encontrou pedidos
+                if (orders.length === 0) {
+                    previousOrdersSection.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
+                            <p>Nenhum pedido encontrado para este número.</p>
+                        </div>
+                    `;
+                    favoritesSection.innerHTML = '';
+                    return;
                 }
-            });
 
-            // Ordenar por data mais recente
-            orders.sort((a, b) => b.timestamp - a.timestamp);
+                // Ordenar pedidos do mais recente para o mais antigo
+                orders.sort((a, b) => b.timestamp - a.timestamp);
 
-            if (orders.length === 0) {
+                // Renderizar favoritos
+                const favorites = orders.filter(order => order.isFavorite);
+                if (favorites.length > 0) {
+                    favoritesSection.innerHTML = `
+                        <div class="section-title">
+                            <i class="fas fa-star" style="color: #FFD700;"></i>
+                            Seus Favoritos
+                        </div>
+                        ${renderOrders(favorites)}
+                    `;
+                } else {
+                    favoritesSection.innerHTML = '';
+                }
+
+                // Renderizar histórico completo
+                previousOrdersSection.innerHTML = `
+                    <div class="section-title">
+                        <i class="fas fa-history"></i>
+                        Histórico de Pedidos
+                    </div>
+                    ${renderOrders(orders)}
+                `;
+
+                // Configurar botões
+                setupOrderButtons();
+            })
+            .catch((error) => {
+                console.error('Erro na busca:', error);
                 previousOrdersSection.innerHTML = `
                     <div class="empty-state">
-                        <i class="fas fa-search fa-3x" style="color: var(--accent); margin-bottom: 1rem;"></i>
-                        <p>Nenhum pedido encontrado para este número.</p>
+                        <i class="fas fa-exclamation-circle fa-3x" style="color: var(--error); margin-bottom: 1rem;"></i>
+                        <p>Erro ao buscar pedidos. Tente novamente.</p>
                     </div>
                 `;
-                return;
-            }
-
-            // Renderizar todos os pedidos
-            previousOrdersSection.innerHTML = `
-                <div class="section-title">
-                    <i class="fas fa-history"></i>
-                    Histórico de Pedidos
-                </div>
-                ${orders.map((order, index) => `
-                    <div class="order-card" data-order-id="${order.id}">
-                        <div class="order-header">
-                            <div class="order-date">
-                                ${formatDate(order.timestamp)}
-                            </div>
-                            <button class="favorite-btn ${order.isFavorite ? 'active' : ''}" onclick="toggleFavorite('${order.id}')">
-                                <i class="fas fa-star"></i>
-                            </button>
-                        </div>
-                        <div class="order-items">
-                            ${order.items.map(item => `
-                                <div class="order-item">
-                                    <div style="font-weight: bold;">${item.name}</div>
-                                    ${item.selectedToppings && item.selectedToppings.length ? `
-                                        <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.5rem;">
-                                            <i class="fas fa-check-circle"></i> Acompanhamentos: ${item.selectedToppings.join(', ')}
-                                        </div>
-                                    ` : ''}
-                                    ${item.selectedExtras && item.selectedExtras.length ? `
-                                        <div style="font-size: 0.9rem; color: var(--text); margin-top: 0.3rem;">
-                                            <i class="fas fa-plus-circle"></i> Extras: ${item.selectedExtras.join(', ')}
-                                        </div>
-                                    ` : ''}
-                                </div>
-                            `).join('')}
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
-                            <div class="order-total">Total: R$ ${calculateOrderTotal(order.items).toFixed(2)}</div>
-                            <button class="reorder-btn" onclick="reorderItems(${JSON.stringify(order.items).replace(/'/g, "\\'")})" style="background: var(--accent); color: white; padding: 8px 16px; border-radius: 20px; border: none; cursor: pointer;">
-                                <i class="fas fa-redo-alt"></i> Pedir Novamente
-                            </button>
-                        </div>
-                    </div>
-                `).join('')}
-            `;
-
-            // Configurar botões
-            setupOrderButtons();
-        });
+            });
 
     } catch (error) {
         console.error('Erro ao carregar pedidos:', error);
