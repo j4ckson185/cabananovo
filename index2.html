@@ -7642,19 +7642,17 @@ function convertFileToBase64(file) {
             <button class="close-modal">&times;</button>
         </div>
         <div class="time-machine-content">
-            <div class="phone-input-section">
-                <p>Digite seu WhatsApp com DDD para ver seu histórico:</p>
-                <div class="phone-input-container">
-                    <input type="tel" id="historyPhoneInput" placeholder="Ex: 84988500756" class="form-input">
-                    <button onclick="searchOrderHistory()" class="modal-btn">Buscar</button>
-                </div>
+            <!-- Nova seção que mostra o telefone ou mensagem -->
+            <div class="phone-info-section" style="text-align: center; margin-bottom: 20px;">
+                <div id="phoneMessage"></div>
             </div>
+            <!-- Seções existentes para favoritos e histórico -->
             <div class="favorites-section"></div>
             <div class="previous-orders-section"></div>
         </div>
     </div>
 </div>
-</div>
+    
     <!-- Popup de loja fechada -->
 <div id="storeClosedPopup" class="store-closed-popup">
     <div class="popup-content">
