@@ -3956,7 +3956,7 @@ function checkStoreStatus() {
 }
 
 // Verificar status da loja a cada minuto
-setInterval(checkStoreStatus, 60000);
+setInterval(checkStoreStatus, 300000);  // 5 minutos
 
 function isStoreOpenNow(schedule) {
     const now = new Date();
@@ -6593,7 +6593,7 @@ async function createAcaiDoDiaElement(product) {
     if (storeStatus) {
         storeStatus.insertAdjacentHTML('afterend', acaiHTML);
         updateCountdown();
-        setInterval(updateCountdown, 1000);
+        setInterval(updateCountdown, 60000);
         simulateUnitsSold();
     }
 }
@@ -6705,7 +6705,7 @@ function simulateUnitsSold() {
             localStorage.setItem('acaiDoDiaUnitsSold', unitsSold);
         }
         simulateUnitsSold();
-    }, 180000);
+    }, 600000);
 }
 
 function addAcaiDoDiaToCart(product) {
