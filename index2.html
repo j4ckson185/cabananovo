@@ -6547,16 +6547,13 @@ if (!selectedProduct || selectedProduct.date !== today) {
     }
 }
 
-async function createAcaiDoDiaElement(product) {
+function createAcaiDoDiaElement(product) {
     // Primeiro, verifica se já existe um Açaí do Dia na página
     const existingAcai = document.querySelector('.acai-do-dia');
     if (existingAcai) {
         existingAcai.remove(); // Remove se já existir
     }
 
-    // Obter descrição especial do chatbot
-    const specialReason = await getAcaiDoDiaReason(product);
-    
     const acaiHTML = `
         <div class="acai-do-dia">
             <div class="acai-deal-badge">Açaí do Dia</div>
@@ -6564,9 +6561,7 @@ async function createAcaiDoDiaElement(product) {
                 <img src="${product.imageUrl || '/api/placeholder/400/400'}" alt="${product.name}" class="acai-image">
                 <div class="acai-info">
                     <h2 class="acai-title">${product.name}</h2>
-                    <div class="special-reason" style="color: var(--accent); margin: 1rem 0; font-style: italic; font-size: 1.1rem;">
-                        ${specialReason || product.description}
-                    </div>
+                    <p class="acai-description">${product.description}</p>
                     <div class="price-container">
                         <span class="original-price">R$ ${product.originalPrice.toFixed(2)}</span>
                         <span class="deal-price">R$ ${product.price.toFixed(2)}</span>
@@ -6593,47 +6588,8 @@ async function createAcaiDoDiaElement(product) {
     if (storeStatus) {
         storeStatus.insertAdjacentHTML('afterend', acaiHTML);
         updateCountdown();
-        setInterval(updateCountdown, 60000);
+        setInterval(updateCountdown, 1000);
         simulateUnitsSold();
-    }
-}
-
-async function getAcaiDoDiaReason(product) {
-    try {
-        const prompt = `Por que o ${product.name} é especial hoje? Responda em exatamente 15 palavras, começando pelo nome do produto. Não sugira fazer pedido nem ofereça ajuda.`;
-        
-        // Exibir feedback visual
-        const feedbackDiv = document.createElement('div');
-        feedbackDiv.className = 'acai-day-feedback';
-        feedbackDiv.innerHTML = `
-            <div style="text-align: center; padding: 2rem; background: var(--surface); border-radius: 15px; border: 1px solid var(--glass-border);">
-                <h3 style="color: white; margin-bottom: 1rem;">✨ Preparando Açaí do Dia ✨</h3>
-                <p style="color: var(--text); margin-bottom: 1rem;">🍇 Escolhemos um produto incrível para você hoje!</p>
-                <div class="spinner" style="margin: 0 auto;"></div>
-            </div>
-        `;
-        document.body.appendChild(feedbackDiv);
-
-        const response = await fetch('https://www.chatbase.co/api/v1/chat', {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer 6564b636-1a71-4a0f-9863-7c87e586384a',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                messages: [{ content: prompt, role: 'user' }],
-                chatbotId: 'PpgNSIgeYN1FCucFGP4w3',
-                stream: false,
-                temperature: 0
-            })
-        });
-
-        const data = await response.json();
-        feedbackDiv.remove();
-        return data.text;
-    } catch (error) {
-        console.error('Erro ao obter descrição do Açaí do Dia:', error);
-        return null;
     }
 }
 
