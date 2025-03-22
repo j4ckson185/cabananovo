@@ -2296,6 +2296,30 @@ document.head.appendChild(style);
     to { transform: rotate(360deg); }
 }
 
+.recommendation-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1.5rem;
+    max-width: 350px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.5s ease;
+    z-index: 9999;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.recommendation-notification button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
+}
+
 </style>
 </head>
 <body>
@@ -6032,7 +6056,7 @@ openProductModal = async function(product) {
         insightContent.innerHTML = `
             <div style="display: flex; align-items: center; gap: 8px;">
                 <div class="spinner" style="width: 20px; height: 20px; border: 2px solid var(--glass-border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                <span>Analisando produto...</span>
+                <span>Carregando descrição...</span>
             </div>
         `;
 
@@ -6172,18 +6196,28 @@ document.addEventListener('DOMContentLoaded', () => {
 }); // Fechamento do DOMContentLoaded
    
    // Categories
-   document.querySelectorAll('.category-btn').forEach(button => {
-       button.addEventListener('click', () => {
-           document.querySelector('.category-btn.active')?.classList.remove('active');
-           button.classList.add('active');
-           
-           const category = button.textContent.trim();
-           const filteredProducts = category === 'Todos' 
-               ? currentProducts 
-               : currentProducts.filter(p => p.category === category);
-           displayProducts(filteredProducts);
-       });
-   });
+// Dentro da função updateCategoryButtons ou onde estiver o listener das categorias
+document.querySelectorAll('.category-btn').forEach(button => {
+    button.addEventListener('click', () => {
+        document.querySelector('.category-btn.active')?.classList.remove('active');
+        button.classList.add('active');
+        
+        const categoryId = button.dataset.category;
+        if (categoryId === 'combo') {
+            const comboModal = document.getElementById('comboModal');
+            if (comboModal) {
+                comboModal.style.display = 'block';
+                resetComboBuilder(); // Reseta o estado do combo
+                initComboBuilder(); // Inicializa o combo builder
+            }
+        } else {
+            const filteredProducts = categoryId === 'all' 
+                ? currentProducts 
+                : currentProducts.filter(p => p.category === categoryId);
+            displayProducts(filteredProducts);
+        }
+    });
+});
 
 
    // Search
@@ -6261,47 +6295,54 @@ function toggleOccasionAssistant() {
     options.classList.toggle('active');
 }
 
-// Função para selecionar uma ocasião
-function selectOccasion(occasion) {
-    let message = '';
-    let products = [];
-    let toppings = [];
+async function selectOccasion(occasion) {
+    const occasionMap = {
+        'romantic': 'um encontro romântico',
+        'party': 'uma festa com amigos',
+        'pre-workout': 'antes do treino',
+        'post-workout': 'depois do treino',
+        'dessert': 'uma sobremesa especial',
+        'gift': 'presentear alguém especial'
+    };
 
-    switch (occasion) {
-        case 'romantic':
-            message = 'Para um encontro romântico, recomendamos combinações doces e cremosas. Experimente:';
-            products = ['Açaí + Creme de Ninho (1 Litro)', 'Açaí + Creme de Morango (500ml)', 'Creme de Ninho + Creme de Ovomaltine (500ml)'];
-            toppings = ['Morango', 'Banana', 'Calda de Chocolate', 'Leite Condensado'];
-            break;
-        case 'party':
-            message = 'Para festas com amigos, sugerimos combinações energéticas e divertidas. Experimente:';
-            products = ['Açaí + Creme de Ovomaltine (1 Litro)', 'Açaí + Creme de Cupuaçu (500ml)', 'Creme de Amendoim + Creme de Ovomaltine (500ml)'];
-            toppings = ['Granola', 'Chocoball', 'M&M', 'Calda de Morango'];
-            break;
-        case 'pre-workout':
-            message = 'Para o pré-treino, recomendamos combinações ricas em energia. Experimente:';
-            products = ['Açaí + Creme de Amendoim (500ml)', 'Açaí + Creme de Ninho (500ml)', 'Creme de Amendoim + Creme de Ovomaltine (500ml)'];
-            toppings = ['Banana', 'Granola', 'Farinha Láctea', 'Barra de Proteína'];
-            break;
-        case 'post-workout':
-            message = 'Para o pós-treino, sugerimos combinações que ajudam na recuperação. Experimente:';
-            products = ['Açaí + Creme de Ninho (1 Litro)', 'Açaí + Creme de Morango (500ml)', 'Creme de Ninho + Creme de Ovomaltine (500ml)'];
-            toppings = ['Banana', 'Amendoim', 'Farinha Láctea', 'Calda de Morango'];
-            break;
-        case 'dessert':
-            message = 'Para uma sobremesa incrível, recomendamos combinações doces e especiais. Experimente:';
-            products = ['Açaí + Creme de Ovomaltine (500ml)', 'Açaí + Creme de Cupuaçu (500ml)', 'Creme de Morango + Creme de Ninho (500ml)'];
-            toppings = ['Leite Condensado', 'Calda de Chocolate', 'M&M', 'Côco Ralado'];
-            break;
-        case 'gift':
-            message = 'Para presentear alguém especial, sugerimos combinações sofisticadas. Experimente:';
-            products = ['Açaí + Creme de Ninho (1 Litro)', 'Açaí + Creme de Ovomaltine (1 Litro)', 'Creme de Morango + Creme de Cupuaçu (500ml)'];
-            toppings = ['Granola', 'Calda de Chocolate', 'M&M', 'Leite Condensado'];
-            break;
+    const occasionTitle = occasionMap[occasion];
+    const recommendation = await getOccasionSuggestion(occasionTitle);
+
+    // Criar notificação com loading
+    const notification = document.createElement('div');
+    notification.className = 'recommendation-notification';
+    notification.innerHTML = `
+        <div class="notification-content" style="text-align: center;">
+            <div class="spinner" style="width: 30px; height: 30px; border: 2px solid var(--glass-border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+            <h3>Analisando a melhor opção...</h3>
+        </div>
+    `;
+    document.body.appendChild(notification);
+
+    // Após receber a recomendação
+    if (recommendation) {
+        notification.innerHTML = `
+            <div class="notification-content">
+                <h3 style="color: white; margin-bottom: 1rem;">
+                    <i class="fas fa-star" style="color: var(--accent);"></i>
+                    Sugestão para ${occasionTitle}
+                </h3>
+                <div style="background: var(--glass); padding: 1rem; border-radius: 10px; margin: 1rem 0;">
+                    ${recommendation}
+                </div>
+                <button onclick="this.parentElement.parentElement.remove()" 
+                        style="background: var(--gradient); color: white; border: none; padding: 0.8rem 1.5rem; 
+                        border-radius: 25px; cursor: pointer; width: 100%; margin-top: 1rem;">
+                    Entendi
+                </button>
+            </div>
+        `;
     }
 
-    // Exibir notificação com detalhes
-    showRecommendation(message, products, toppings);
+    // Remover notificação após 15 segundos
+    setTimeout(() => {
+        notification.remove();
+    }, 15000);
 }
 
 async function getProductInsight(productName) {
@@ -6460,13 +6501,16 @@ if (!selectedProduct || selectedProduct.date !== today) {
     }
 }
 
-function createAcaiDoDiaElement(product) {
+async function createAcaiDoDiaElement(product) {
     // Primeiro, verifica se já existe um Açaí do Dia na página
     const existingAcai = document.querySelector('.acai-do-dia');
     if (existingAcai) {
         existingAcai.remove(); // Remove se já existir
     }
 
+    // Obter descrição especial do chatbot
+    const specialReason = await getAcaiDoDiaReason(product);
+    
     const acaiHTML = `
         <div class="acai-do-dia">
             <div class="acai-deal-badge">Açaí do Dia</div>
@@ -6474,7 +6518,9 @@ function createAcaiDoDiaElement(product) {
                 <img src="${product.imageUrl || '/api/placeholder/400/400'}" alt="${product.name}" class="acai-image">
                 <div class="acai-info">
                     <h2 class="acai-title">${product.name}</h2>
-                    <p class="acai-description">${product.description}</p>
+                    <div class="special-reason" style="color: var(--accent); margin: 1rem 0; font-style: italic; font-size: 1.1rem;">
+                        ${specialReason || product.description}
+                    </div>
                     <div class="price-container">
                         <span class="original-price">R$ ${product.originalPrice.toFixed(2)}</span>
                         <span class="deal-price">R$ ${product.price.toFixed(2)}</span>
@@ -6503,6 +6549,58 @@ function createAcaiDoDiaElement(product) {
         updateCountdown();
         setInterval(updateCountdown, 1000);
         simulateUnitsSold();
+    }
+}
+
+async function getAcaiDoDiaReason(product) {
+    try {
+        const prompt = `Por que o ${product.name} é especial hoje? Dê uma razão curta e convincente em no máximo 15 palavras, começando pelo nome do produto.`;
+        
+        const response = await fetch('https://www.chatbase.co/api/v1/chat', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer 6564b636-1a71-4a0f-9863-7c87e586384a',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                messages: [{ content: prompt, role: 'user' }],
+                chatbotId: 'PpgNSIgeYN1FCucFGP4w3',
+                stream: false,
+                temperature: 0
+            })
+        });
+
+        const data = await response.json();
+        return data.text;
+    } catch (error) {
+        console.error('Erro ao obter descrição do Açaí do Dia:', error);
+        return null;
+    }
+}
+
+async function getOccasionSuggestion(occasion) {
+    try {
+        const prompt = `Sugira o melhor produto para ${occasion}, considerando os acompanhamentos, seja breve e direto, sem falar preços, sem me pedir pra fazer pedido, apenas sugestão.`;
+        
+        const response = await fetch('https://www.chatbase.co/api/v1/chat', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer 6564b636-1a71-4a0f-9863-7c87e586384a',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                messages: [{ content: prompt, role: 'user' }],
+                chatbotId: 'PpgNSIgeYN1FCucFGP4w3',
+                stream: false,
+                temperature: 0
+            })
+        });
+
+        const data = await response.json();
+        return data.text;
+    } catch (error) {
+        console.error('Erro ao obter sugestão:', error);
+        return null;
     }
 }
 
