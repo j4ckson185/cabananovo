@@ -6395,7 +6395,7 @@ async function selectOccasion(occasion) {
 
 async function getProductInsight(productName) {
     try {
-        const prompt = `uma descrição em poucas palavras do ${productName}, diga apenas '${productName}: descrição'`;
+        const prompt = `uma descrição com 20 palavras do ${productName}, diga apenas '${productName}: descrição. Não me pergunte meu whatsapp nem se quero fazer pedido, apenas a descrição'`;
         
         const response = await fetch('https://www.chatbase.co/api/v1/chat', {
             method: 'POST',
