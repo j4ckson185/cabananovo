@@ -3835,27 +3835,36 @@ function updateCategoryButtons(categories) {
         `;
     });
     
-    // Adiciona event listeners para todos os botões de categoria
-    categoriesNav.querySelectorAll('.category-btn').forEach(button => {
+    // Adicionar event listeners para todos os botões de categoria
+    const categoryButtons = categoriesNav.querySelectorAll('.category-btn');
+    categoryButtons.forEach(button => {
         button.addEventListener('click', () => {
-document.querySelectorAll('.category-btn').forEach(button => {
-    button.addEventListener('click', () => {
-        document.querySelector('.category-btn.active')?.classList.remove('active');
-        button.classList.add('active');
-        
-        const categoryId = button.dataset.category;
-        if (categoryId === 'combo') {
-            document.getElementById('comboModal').style.display = 'block';
-            resetComboBuilder();
-            initComboBuilder();
-        } else {
-            const filteredProducts = categoryId === 'all' 
-                ? currentProducts 
-                : currentProducts.filter(p => p.category === categoryId);
-            displayProducts(filteredProducts);
-        }
+            // Remove a classe active do botão anterior
+            categoriesNav.querySelector('.category-btn.active')?.classList.remove('active');
+            
+            // Adiciona a classe active ao botão clicado
+            button.classList.add('active');
+            
+            // Pega a categoria do botão
+            const categoryId = button.dataset.category;
+            
+            // Se for combo, mostra o modal de combo
+            if (categoryId === 'combo') {
+                const comboModal = document.getElementById('comboModal');
+                if (comboModal) {
+                    comboModal.style.display = 'block';
+                    resetComboBuilder();
+                    initComboBuilder();
+                }
+            } else {
+                // Se não for combo, filtra os produtos
+                const filteredProducts = categoryId === 'all' 
+                    ? currentProducts 
+                    : currentProducts.filter(p => p.category === categoryId);
+                displayProducts(filteredProducts);
+            }
+        });
     });
-});
 }
 
 function checkStoreStatus() {
