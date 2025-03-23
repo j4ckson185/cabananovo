@@ -4661,58 +4661,6 @@ function updateTotalPrice(product) {
 
     document.querySelector('.modal-product-price').textContent = `R$ ${totalPrice.toFixed(2)}`;
 }
-
-function addToCart(product, selectedToppings) {
-    console.log('Iniciando addToCart');
-    // Verificar se já tem telefone cadastrado
-    if (!localStorage.getItem('cartPhone')) {
-        console.log('Telefone não encontrado, mostrando modal');
-        // Armazenar temporariamente o produto
-        window.pendingCartAddition = { product, selectedToppings };
-        
-        // Criar e mostrar modal de telefone
-        createPhoneCollectionModal();
-        document.getElementById('phoneCollectionModal').style.display = 'block';
-        return;
-    }
-
-    // Se já tem número, continua com a adição normal ao carrinho
-    const selectedExtras = Array.from(document.querySelectorAll('.extra-item.selected'))
-        .map(extra => {
-            const priceText = extra.querySelector('.extra-price')?.textContent;
-            const extraPrice = priceText ? parseFloat(priceText.replace(/[^0-9.,]/g, '').replace(',', '.')) : 0;
-            return {
-                name: extra.textContent.trim(),
-                price: extraPrice
-            };
-        });
-
-    const totalExtrasPrice = selectedExtras.reduce((total, extra) => total + extra.price, 0);
-    const totalPrice = product.price + totalExtrasPrice;
-
-    if (product.isAcaiDoDia && acaiDoDiaQuantityInCart >= 2) {
-        showNotification('Limite de 2 unidades do Açaí do Dia por pedido');
-        return;
-    }
-
-    cart.push({
-        ...product,
-        selectedToppings,
-        selectedExtras: selectedExtras.map(extra => extra.name),
-        price: totalPrice,
-        originalPrice: product.originalPrice || product.price
-    });
-
-    if (product.isAcaiDoDia) {
-        acaiDoDiaQuantityInCart++;
-    }
-
-    updateCartCount();
-    
-    // Fecha o modal do produto e mostra o carrinho
-    document.getElementById('productModal').style.display = 'none';
-    showCartModal();
-}
     
 async function applyCoupon() {
     const couponCode = document.getElementById('couponCode').value.toUpperCase();
@@ -6776,48 +6724,70 @@ function handleKeyPress(event) {
     }
 }
 
-// Certifique-se que a função createPhoneCollectionModal está presente
+// 1. Atualizar a função de criação do modal de telefone
 function createPhoneCollectionModal() {
+    // Remover modal existente se houver
     const existingModal = document.getElementById('phoneCollectionModal');
     if (existingModal) {
         existingModal.remove();
     }
 
+    // Criar novo modal
     const modal = document.createElement('div');
     modal.id = 'phoneCollectionModal';
     modal.className = 'modal';
     modal.innerHTML = `
         <div class="modal-content" style="max-width: 400px;">
-            <h2>Para prosseguir com seu pedido</h2>
-            <p>Digite seu WhatsApp com DDD para continuar:</p>
+            <div class="modal-header">
+                <h2>Para prosseguir com seu pedido</h2>
+                <button class="close-modal" onclick="document.getElementById('phoneCollectionModal').style.display='none'">&times;</button>
+            </div>
+            <p style="margin: 1rem 0;">Digite seu WhatsApp com DDD para continuar:</p>
             <div class="form-group">
-                <input type="tel" id="customerPhoneCart" 
+                <input type="tel" 
+                    id="customerPhoneCart" 
                     placeholder="Ex: 84988888888" 
                     pattern="[0-9]{11}" 
                     required
-                    style="width: 100%; padding: 10px; margin: 10px 0;">
+                    style="width: 100%; padding: 10px; margin: 10px 0; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text);">
                 <div id="phoneError" style="color: var(--error); display: none;">
                     Digite um número válido com DDD (11 dígitos)
                 </div>
             </div>
             <div class="modal-buttons">
-                <button class="modal-btn" onclick="validateAndStorePhone()">Continuar</button>
+                <button onclick="validateAndStorePhone()" class="modal-btn add-to-cart" style="width: 100%;">
+                    Continuar
+                </button>
             </div>
         </div>
     `;
+
     document.body.appendChild(modal);
+    modal.style.display = 'block';
+
+    // Focar no input
+    const phoneInput = modal.querySelector('#customerPhoneCart');
+    if (phoneInput) {
+        phoneInput.focus();
+    }
 }
 
-// Variável global para armazenar temporariamente o produto a ser adicionado
-let pendingCartAddition = null;
-
+// 2. Atualizar a função de validação do telefone
 async function validateAndStorePhone() {
     const phoneInput = document.getElementById('customerPhoneCart');
     const phoneError = document.getElementById('phoneError');
+    const phoneModal = document.getElementById('phoneCollectionModal');
+    
+    if (!phoneInput || !phoneError || !phoneModal) {
+        console.error('Elementos do modal não encontrados');
+        return;
+    }
+
     const phone = phoneInput.value.replace(/\D/g, '');
 
     if (phone.length !== 11) {
         phoneError.style.display = 'block';
+        phoneInput.focus();
         return;
     }
 
@@ -6841,24 +6811,81 @@ async function validateAndStorePhone() {
         localStorage.setItem('cartTimestamp', timestamp);
 
         // Fechar modal do telefone
-        document.getElementById('phoneCollectionModal').style.display = 'none';
+        phoneModal.style.display = 'none';
 
         // Adicionar o produto pendente ao carrinho
         if (window.pendingCartAddition) {
-            addToCart(
-                window.pendingCartAddition.product,
-                window.pendingCartAddition.selectedToppings
-            );
+            const { product, selectedToppings } = window.pendingCartAddition;
+            
+            cart.push({
+                ...product,
+                selectedToppings,
+                selectedExtras: [],
+                price: product.price,
+                originalPrice: product.originalPrice || product.price
+            });
+
             window.pendingCartAddition = null;
+            updateCartCount();
+            showCartModal();
         }
 
         console.log('Iniciando monitoramento do carrinho...');
-        startCartMonitoring(); // Iniciar monitoramento imediatamente
+        startCartMonitoring();
 
     } catch (error) {
-        console.error('Erro:', error);
-        alert('Erro ao processar seu número. Tente novamente.');
+        console.error('Erro ao processar telefone:', error);
+        showNotification('Erro ao processar seu número. Tente novamente.');
     }
+}
+
+// 3. Atualizar a função addToCart para usar o novo sistema
+function addToCart(product, selectedToppings) {
+    if (!localStorage.getItem('cartPhone')) {
+        window.pendingCartAddition = { product, selectedToppings };
+        createPhoneCollectionModal();
+        return;
+    }
+
+    // Se já tem número, continua com a adição normal ao carrinho
+    const selectedExtras = Array.from(document.querySelectorAll('.extra-item.selected'))
+        .map(extra => {
+            const priceText = extra.querySelector('.extra-price')?.textContent;
+            const extraPrice = priceText ? parseFloat(priceText.replace(/[^0-9.,]/g, '').replace(',', '.')) : 0;
+            return {
+                name: extra.textContent.trim(),
+                price: extraPrice
+            };
+        });
+
+    const totalExtrasPrice = selectedExtras.reduce((total, extra) => total + extra.price, 0);
+    const totalPrice = product.price + totalExtrasPrice;
+
+    if (product.isAcaiDoDia && acaiDoDiaQuantityInCart >= 2) {
+        showNotification('Limite de 2 unidades do Açaí do Dia por pedido');
+        return;
+    }
+
+    cart.push({
+        ...product,
+        selectedToppings,
+        selectedExtras: selectedExtras.map(extra => extra.name),
+        price: totalPrice,
+        originalPrice: product.originalPrice || product.price
+    });
+
+    if (product.isAcaiDoDia) {
+        acaiDoDiaQuantityInCart++;
+    }
+
+    updateCartCount();
+    
+    // Fecha o modal do produto e mostra o carrinho
+    const productModal = document.getElementById('productModal');
+    if (productModal) {
+        productModal.style.display = 'none';
+    }
+    showCartModal();
 }
 
 // Função para registrar carrinho abandonado na planilha
