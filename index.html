@@ -6106,13 +6106,30 @@ openProductModal = async function(product) {
     
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    // Limpar dados do carrinho anterior (ADICIONAR ESTAS LINHAS PRIMEIRO)
+    // Limpar dados do carrinho anterior
     localStorage.removeItem('cartPhone');
     localStorage.removeItem('cartTimestamp');
     localStorage.removeItem('orderCompleted');
     console.log('LocalStorage limpo');
    
-    console.log('DOM Carregado'); // Log para diagnóstico
+    console.log('DOM Carregado');
+
+    // Listener para o ícone do carrinho
+    const cartIcon = document.querySelector('.cart-icon');
+    if (cartIcon) {
+        cartIcon.addEventListener('click', () => {
+            const cartModal = document.getElementById('cartModal');
+            if (cartModal) {
+                showCartModal();
+            }
+        });
+    }
+
+    // Listener para o botão de checkout
+    const checkoutBtn = document.querySelector('.checkout');
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', handleCheckout);
+    }
 
     addTimeMachineButton(); // Adiciona o botão do Time Machine
     openProductByUrlParam();
@@ -6149,23 +6166,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
     }
-    
-    // Evento para o ícone do carrinho
-    const cartIcon = document.querySelector('.cart-icon');
-    if (cartIcon) {
-        cartIcon.addEventListener('click', showCartModal);
-    } else {
-        console.error('Ícone do carrinho não encontrado');
-    }
-    
-    // Evento para botão de checkout
-    const checkoutButton = document.querySelector('.checkout');
-    if (checkoutButton) {
-        checkoutButton.addEventListener('click', () => {
-            console.log('Botão de checkout clicado');
-            showCreateOrderModal();
-        });
-    } 
 
     // Event listeners para fechar modais
     document.querySelectorAll('.close-modal').forEach(button => {
@@ -6209,11 +6209,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-      // Adicione estas linhas no final, antes do fechamento da função
-  setTimeout(function() {
-    window.openProductByUrlParam();
-  }, 1000);
-}); // Fechamento do DOMContentLoaded
+    
+    setTimeout(function() {
+        window.openProductByUrlParam();
+    }, 1000);
+});
    
    // Categories
 // Dentro da função updateCategoryButtons ou onde estiver o listener das categorias
@@ -6274,7 +6274,6 @@ document.querySelectorAll('.continue-shopping').forEach(button => {
 });
     
    // Cart
-   document.querySelector('.cart-icon').addEventListener('click', showCartModal);
    document.querySelector('.checkout').addEventListener('click', handleCheckout);
    document.getElementById('customerInfoForm').addEventListener('submit', handleCustomerInfo);
    document.getElementById('deliveryInfoForm').addEventListener('submit', handleDeliveryInfo);
