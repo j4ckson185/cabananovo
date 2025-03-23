@@ -3390,120 +3390,113 @@ function loadCategories() {
     });
 }
 
-// Combo Builder Logic
 let currentStep = 1;
 let comboData = {
     size: null,
-    flavor1: '',
-    flavor2: '',
-    toppings1: [],
-    toppings2: [],
+    acai1: {
+        primaryFlavor: '',
+        secondaryFlavor: '',
+        toppings: []
+    },
+    acai2: {
+        primaryFlavor: '',
+        secondaryFlavor: '',
+        toppings: []
+    },
     extras: []
 };
 
 function initComboBuilder() {
-    const comboModal = document.getElementById('comboModal');
-    const closeBtn = comboModal.querySelector('.close-modal');
-    const nextBtn = comboModal.querySelector('.btn-next');
-    const backBtn = comboModal.querySelector('.btn-back');
-    const addCartBtn = comboModal.querySelector('.btn-add-cart');
-    
-// Size selection
-document.querySelectorAll('.size-option').forEach(option => {
-    option.addEventListener('click', function() {
-        // Remove seleção anterior
-        document.querySelectorAll('.size-option').forEach(opt => {
-            opt.classList.remove('selected');
-            opt.style.background = ''; // Remove background anterior
+    console.log('Iniciando Combo Builder');
+    resetComboBuilder();
+
+    // Setup size selection
+    const sizeOptions = document.querySelectorAll('.size-option');
+    sizeOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            sizeOptions.forEach(opt => opt.classList.remove('selected'));
+            this.classList.add('selected');
+            comboData.size = {
+                size: this.dataset.size,
+                price: parseFloat(this.dataset.price)
+            };
+            document.querySelector('.btn-next').disabled = false;
         });
-        
-        // Adiciona nova seleção com gradiente
-        this.classList.add('selected');
-        this.style.background = 'var(--gradient)';
-        
-        comboData.size = {
-            size: this.dataset.size,
-            price: parseFloat(this.dataset.price)
-        };
-        
-        nextBtn.disabled = false;
     });
-});
 
-        setupFlavorSelectors();
+    // Setup flavor selection
+    setupFlavorSelectors();
 
-    // Configuração dos botões de navegação
+    // Setup navigation buttons
+    const nextBtn = document.querySelector('.btn-next');
+    const backBtn = document.querySelector('.btn-back');
+    const addCartBtn = document.querySelector('.btn-add-cart');
+
     nextBtn.addEventListener('click', () => {
         if (validateStep()) {
             currentStep++;
             updateComboView();
+            console.log('Avançando para o passo:', currentStep);
         }
     });
 
     backBtn.addEventListener('click', () => {
         currentStep--;
         updateComboView();
-    });
-
-    closeBtn.addEventListener('click', () => {
-        comboModal.style.display = 'none';
-        resetComboBuilder();
+        console.log('Voltando para o passo:', currentStep);
     });
 
     addCartBtn.addEventListener('click', () => {
         addComboToCart();
-        comboModal.style.display = 'none';
-        resetComboBuilder();
+        const comboModal = document.getElementById('comboModal');
+        if (comboModal) comboModal.style.display = 'none';
     });
 
     // Load toppings and extras
     loadToppingsAndExtras();
-    
-    // Reset inicial
-    resetComboBuilder();
 }
 
-    function setupFlavorSelectors() {
-    const flavor1Primary = document.getElementById('flavor1Primary');
-    const flavor1Secondary = document.getElementById('flavor1Secondary');
-    const flavor2Primary = document.getElementById('flavor2Primary');
-    const flavor2Secondary = document.getElementById('flavor2Secondary');
-    const nextBtn = document.querySelector('.btn-next');
+function setupFlavorSelectors() {
+    const selectors = {
+        flavor1Primary: document.getElementById('flavor1Primary'),
+        flavor1Secondary: document.getElementById('flavor1Secondary'),
+        flavor2Primary: document.getElementById('flavor2Primary'),
+        flavor2Secondary: document.getElementById('flavor2Secondary')
+    };
 
-    flavor1Primary.addEventListener('change', (e) => {
-        comboData.acai1.primaryFlavor = e.target.value;
-        nextBtn.disabled = !validateStep();
-    });
-
-    flavor1Secondary.addEventListener('change', (e) => {
-        comboData.acai1.secondaryFlavor = e.target.value;
-    });
-
-    flavor2Primary.addEventListener('change', (e) => {
-        comboData.acai2.primaryFlavor = e.target.value;
-        if (e.target.value) {
-            document.getElementById('acai2Toppings').style.display = 'block';
-        } else {
-            document.getElementById('acai2Toppings').style.display = 'none';
-            comboData.acai2.toppings = [];
-        }
-    });
-
-    flavor2Secondary.addEventListener('change', (e) => {
-        comboData.acai2.secondaryFlavor = e.target.value;
-    });
-}
-
-// Função para formatar descrição do combo
-function formatComboDescription() {
-    let desc = `${comboData.flavor1}`;
-    if (comboData.flavor2) {
-        desc += ` + ${comboData.flavor2}`;
+    if (selectors.flavor1Primary) {
+        selectors.flavor1Primary.addEventListener('change', (e) => {
+            comboData.acai1.primaryFlavor = e.target.value;
+            validateStep();
+        });
     }
-    return desc;
+
+    if (selectors.flavor1Secondary) {
+        selectors.flavor1Secondary.addEventListener('change', (e) => {
+            comboData.acai1.secondaryFlavor = e.target.value;
+        });
+    }
+
+    if (selectors.flavor2Primary) {
+        selectors.flavor2Primary.addEventListener('change', (e) => {
+            comboData.acai2.primaryFlavor = e.target.value;
+            const acai2Toppings = document.getElementById('acai2Toppings');
+            if (acai2Toppings) {
+                acai2Toppings.style.display = e.target.value ? 'block' : 'none';
+            }
+        });
+    }
+
+    if (selectors.flavor2Secondary) {
+        selectors.flavor2Secondary.addEventListener('change', (e) => {
+            comboData.acai2.secondaryFlavor = e.target.value;
+        });
+    }
 }
 
 function updateComboView() {
+    console.log('Atualizando view do combo, passo atual:', currentStep);
+    
     const steps = ['sizeStep', 'flavorStep', 'toppingsStep', 'extrasStep'];
     steps.forEach((step, index) => {
         const stepElement = document.getElementById(step);
@@ -3525,9 +3518,6 @@ function updateComboView() {
     if (backBtn) backBtn.style.display = currentStep > 1 ? 'block' : 'none';
     if (nextBtn) nextBtn.style.display = currentStep < 4 ? 'block' : 'none';
     if (addCartBtn) addCartBtn.style.display = currentStep === 4 ? 'block' : 'none';
-
-    // Atualizar estado dos botões
-    if (nextBtn) nextBtn.disabled = !validateStep();
 
     // Se estiver na etapa final, atualiza o resumo
     if (currentStep === 4) {
@@ -3560,44 +3550,37 @@ function updateComboSummary() {
     }
     
     // Extras (se houver)
-    if (comboData.extras && comboData.extras.length > 0) {
-        summary += `<strong>Extras:</strong> ${comboData.extras.join(', ')}<br>`;
+    if (comboData.extras.length > 0) {
+        summary += `<strong>Extras:</strong> ${comboData.extras.join(', ')}<br><br>`;
     }
 
     // Preço Total
     const totalPrice = calculateComboPrice();
-    summary += `<br><strong>Preço Total:</strong> R$ ${totalPrice.toFixed(2)}`;
+    summary += `<strong>Preço Total:</strong> R$ ${totalPrice.toFixed(2)}`;
 
     summaryContent.innerHTML = summary;
 }
 
 function validateStep() {
+    console.log('Validando passo:', currentStep);
+    let isValid = false;
+
     switch (currentStep) {
         case 1: // Tamanho
-            return comboData.size !== null;
+            isValid = comboData.size !== null;
+            break;
 
         case 2: // Sabores
-            return comboData.acai1.primaryFlavor !== '';
-
-        case 3: // Acompanhamentos
-            // Verifica se tem pelo menos 1 acompanhamento no açaí 1
-            if (comboData.acai1.toppings.length < 1) {
-                showNotification('Selecione pelo menos 1 acompanhamento para o Açaí 1');
-                return false;
-            }
-            // Se tiver sabor principal no açaí 2, precisa ter pelo menos 1 acompanhamento também
-            if (comboData.acai2.primaryFlavor && comboData.acai2.toppings.length < 1) {
-                showNotification('Selecione pelo menos 1 acompanhamento para o Açaí 2');
-                return false;
-            }
-            return true;
-
-        case 4: // Extras/Resumo
-            return true;
-
-        default:
-            return false;
+            isValid = comboData.acai1.primaryFlavor !== '';
+            if (!isValid) {
+                showNotification('Selecione pelo menos o sab
+// Função para formatar descrição do combo
+function formatComboDescription() {
+    let desc = `${comboData.flavor1}`;
+    if (comboData.flavor2) {
+        desc += ` + ${comboData.flavor2}`;
     }
+    return desc;
 }
 
 function calculateComboPrice() {
