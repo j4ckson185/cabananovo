@@ -3497,6 +3497,7 @@ function setupFlavorSelectors() {
 function updateComboView() {
     console.log('Atualizando view do combo, passo atual:', currentStep);
     
+    // Atualizar visibilidade dos passos
     const steps = ['sizeStep', 'flavorStep', 'toppingsStep', 'extrasStep'];
     steps.forEach((step, index) => {
         const stepElement = document.getElementById(step);
@@ -3505,12 +3506,13 @@ function updateComboView() {
         }
     });
 
-    // Update progress bar
-    document.querySelectorAll('.progress-step').forEach((step, index) => {
+    // Atualizar barra de progresso
+    const progressSteps = document.querySelectorAll('.progress-step');
+    progressSteps.forEach((step, index) => {
         step.classList.toggle('active', index + 1 <= currentStep);
     });
 
-    // Show/hide navigation buttons
+    // Atualizar botões de navegação
     const backBtn = document.querySelector('.btn-back');
     const nextBtn = document.querySelector('.btn-next');
     const addCartBtn = document.querySelector('.btn-add-cart');
@@ -3519,9 +3521,40 @@ function updateComboView() {
     if (nextBtn) nextBtn.style.display = currentStep < 4 ? 'block' : 'none';
     if (addCartBtn) addCartBtn.style.display = currentStep === 4 ? 'block' : 'none';
 
-    // Se estiver na etapa final, atualiza o resumo
+    // Atualizar resumo se estiver no último passo
     if (currentStep === 4) {
         updateComboSummary();
+    }
+}
+
+function validateStep() {
+    switch (currentStep) {
+        case 1: // Tamanho
+            return comboData.size !== null;
+
+        case 2: // Sabores
+            if (!comboData.acai1.primaryFlavor) {
+                showNotification('Selecione o sabor principal do primeiro açaí');
+                return false;
+            }
+            return true;
+
+        case 3: // Acompanhamentos
+            if (comboData.acai1.toppings.length < 1) {
+                showNotification('Selecione pelo menos 1 acompanhamento para o primeiro açaí');
+                return false;
+            }
+            if (comboData.acai2.primaryFlavor && comboData.acai2.toppings.length < 1) {
+                showNotification('Selecione pelo menos 1 acompanhamento para o segundo açaí');
+                return false;
+            }
+            return true;
+
+        case 4: // Resumo/Extras
+            return true;
+
+        default:
+            return false;
     }
 }
 
@@ -3554,33 +3587,50 @@ function updateComboSummary() {
         summary += `<strong>Extras:</strong> ${comboData.extras.join(', ')}<br><br>`;
     }
 
-    // Preço Total
     const totalPrice = calculateComboPrice();
     summary += `<strong>Preço Total:</strong> R$ ${totalPrice.toFixed(2)}`;
 
     summaryContent.innerHTML = summary;
 }
 
-function validateStep() {
-    console.log('Validando passo:', currentStep);
-    let isValid = false;
+// Resetar o combo builder
+function resetComboBuilder() {
+    currentStep = 1;
+    comboData = {
+        size: null,
+        acai1: {
+            primaryFlavor: '',
+            secondaryFlavor: '',
+            toppings: []
+        },
+        acai2: {
+            primaryFlavor: '',
+            secondaryFlavor: '',
+            toppings: []
+        },
+        extras: []
+    };
 
-    switch (currentStep) {
-        case 1: // Tamanho
-            isValid = comboData.size !== null;
-            break;
+    // Limpar seleções visuais
+    document.querySelectorAll('.size-option').forEach(option => {
+        option.classList.remove('selected');
+    });
 
-        case 2: // Sabores
-            isValid = comboData.acai1.primaryFlavor !== '';
-            if (!isValid) {
-                showNotification('Selecione pelo menos o sab
-// Função para formatar descrição do combo
-function formatComboDescription() {
-    let desc = `${comboData.flavor1}`;
-    if (comboData.flavor2) {
-        desc += ` + ${comboData.flavor2}`;
-    }
-    return desc;
+    document.querySelectorAll('.topping-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+
+    document.querySelectorAll('.extra-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+
+    // Resetar selects
+    ['flavor1Primary', 'flavor1Secondary', 'flavor2Primary', 'flavor2Secondary'].forEach(id => {
+        const select = document.getElementById(id);
+        if (select) select.value = '';
+    });
+
+    updateComboView();
 }
 
 function calculateComboPrice() {
@@ -3648,48 +3698,7 @@ function addComboToCart() {
 
     showCartModal();
 }
-
-// Função para resetar o combo builder
-function resetComboBuilder() {
-    currentStep = 1;
-    comboData = {
-        size: null,
-        acai1: {
-            primaryFlavor: '',
-            secondaryFlavor: '',
-            toppings: []
-        },
-        acai2: {
-            primaryFlavor: '',
-            secondaryFlavor: '',
-            toppings: []
-        },
-        extras: []
-    };
-
-    // Limpar seleções visuais
-    document.querySelectorAll('.size-option').forEach(option => {
-        option.classList.remove('selected');
-    });
-
-    document.querySelectorAll('.topping-item').forEach(item => {
-        item.classList.remove('selected');
-    });
-
-    document.querySelectorAll('.extra-item').forEach(item => {
-        item.classList.remove('selected');
-    });
-
-    // Resetar selects de sabores
-    const selects = ['flavor1Primary', 'flavor1Secondary', 'flavor2Primary', 'flavor2Secondary'];
-    selects.forEach(selectId => {
-        const select = document.getElementById(selectId);
-        if (select) select.value = '';
-    });
-
-    updateComboView();
-}
-
+    
 function loadToppingsAndExtras() {
     // Load toppings from Firebase
     realtimeDB.ref('toppings').once('value', snapshot => {
