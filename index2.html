@@ -3634,12 +3634,13 @@ function resetComboBuilder() {
 }
 
 function calculateComboPrice() {
-    let total = comboData.size.price;
+    let total = comboData.size?.price || 0;
     
     // Adiciona preço dos extras
     if (comboData.extras && comboData.extras.length > 0) {
+        const extrasGrid = document.querySelector('.extras-grid');
         comboData.extras.forEach(extraName => {
-            const extraItem = document.querySelector(`.extra-item[data-name="${extraName}"]`);
+            const extraItem = extrasGrid?.querySelector(`[data-name="${extraName}"]`);
             if (extraItem && extraItem.dataset.price) {
                 total += parseFloat(extraItem.dataset.price);
             }
@@ -3653,7 +3654,6 @@ function addComboToCart() {
     const comboPrice = calculateComboPrice();
     const comboName = `Combo ${comboData.size.size}`;
 
-    // Monta descrição detalhada do combo
     let description = '';
 
     // Açaí 1
@@ -3684,23 +3684,23 @@ function addComboToCart() {
         price: comboPrice,
         description: description,
         selectedToppings: [...comboData.acai1.toppings, ...comboData.acai2.toppings],
-        selectedExtras: comboData.extras
+        selectedExtras: comboData.extras,
+        isCombo: true
     };
 
     cart.push(comboItem);
     updateCartCount();
+    showCartModal();
 
     // Fechar modal do combo
     const comboModal = document.getElementById('comboModal');
     if (comboModal) {
         comboModal.style.display = 'none';
     }
-
-    showCartModal();
 }
-    
+
 function loadToppingsAndExtras() {
-    // Load toppings from Firebase
+    // Carregar acompanhamentos do Firebase
     realtimeDB.ref('toppings').once('value', snapshot => {
         const toppings = snapshot.val();
         if (toppings) {
@@ -3713,52 +3713,60 @@ function loadToppingsAndExtras() {
                     </div>
                 `).join('');
             
-            document.getElementById('toppings1').innerHTML = toppingsHtml;
-            document.getElementById('toppings2').innerHTML = toppingsHtml;
+            // Adicionar aos dois containers de acompanhamentos
+            const toppings1 = document.getElementById('toppings1');
+            const toppings2 = document.getElementById('toppings2');
+            
+            if (toppings1) toppings1.innerHTML = toppingsHtml;
+            if (toppings2) toppings2.innerHTML = toppingsHtml;
 
-            // Add click handlers
+            // Adicionar listeners para seleção
             document.querySelectorAll('.topping-item').forEach(item => {
-                item.addEventListener('click', () => toggleTopping(item));
+                item.addEventListener('click', function() {
+                    const isForFirstAcai = this.closest('#toppings1') !== null;
+                    toggleTopping(this, isForFirstAcai);
+                });
             });
         }
     });
 
-    // Load extras from Firebase
+    // Carregar extras do Firebase
     realtimeDB.ref('extras').once('value', snapshot => {
         const extras = snapshot.val();
         if (extras) {
-            const extrasHtml = Object.values(extras)
-                .filter(extra => extra.available)
-                .map(extra => `
-                    <div class="extra-item" data-name="${extra.name}" data-price="${extra.price}">
-                        ${extra.name}
-                        <span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>
-                    </div>
-                `).join('');
-            
-            document.querySelector('.extras-grid').innerHTML = extrasHtml;
+            const extrasGrid = document.querySelector('.extras-grid');
+            if (extrasGrid) {
+                extrasGrid.innerHTML = Object.values(extras)
+                    .filter(extra => extra.available)
+                    .map(extra => `
+                        <div class="extra-item" data-name="${extra.name}" data-price="${extra.price}">
+                            ${extra.name}
+                            ${extra.price > 0 ? `<span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>` : ''}
+                        </div>
+                    `).join('');
 
-            // Add click handlers
-            document.querySelectorAll('.extra-item').forEach(item => {
-                item.addEventListener('click', () => toggleExtra(item));
-            });
+                // Adicionar listeners para seleção de extras
+                document.querySelectorAll('.extra-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        this.classList.toggle('selected');
+                        const extraName = this.dataset.name;
+                        if (this.classList.contains('selected')) {
+                            comboData.extras.push(extraName);
+                        } else {
+                            comboData.extras = comboData.extras.filter(e => e !== extraName);
+                        }
+                        updateComboSummary();
+                    });
+                });
+            }
         }
     });
 }
 
-function toggleTopping(item) {
+function toggleTopping(item, isForFirstAcai) {
     const toppingName = item.dataset.name;
-    const isForFirstAcai = item.closest('#toppings1') !== null;
-    
-    // Define o limite de acompanhamentos baseado no tamanho
-    let maxToppings;
-    if (comboData.size.size === '300ml') {
-        maxToppings = 3;
-    } else if (comboData.size.size === '500ml') {
-        maxToppings = 4;
-    } else if (comboData.size.size === '1L') {
-        maxToppings = 8;
-    }
+    const maxToppings = comboData.size.size === '300ml' ? 3 : 
+                       comboData.size.size === '500ml' ? 4 : 8;
     
     const toppingsArray = isForFirstAcai ? comboData.acai1.toppings : comboData.acai2.toppings;
     
@@ -3785,17 +3793,9 @@ function toggleTopping(item) {
         }
     }
 
-    // Atualiza o resumo se estiver na última etapa
-    if (currentStep === 4) {
-        updateComboSummary();
-    }
-
-    // Valida se tem pelo menos 1 acompanhamento selecionado
-    const nextBtn = document.querySelector('.btn-next');
-    if (nextBtn) {
-        nextBtn.disabled = !validateStep();
-    }
+    updateComboSummary();
 }
+    
     function toggleExtra(item) {
     const extraName = item.dataset.name;
     
@@ -3838,22 +3838,24 @@ function updateCategoryButtons(categories) {
     // Adiciona event listeners para todos os botões de categoria
     categoriesNav.querySelectorAll('.category-btn').forEach(button => {
         button.addEventListener('click', () => {
-            document.querySelector('.category-btn.active')?.classList.remove('active');
-            button.classList.add('active');
-            
-            const categoryId = button.dataset.category;
-            if (categoryId === 'combo') {
-                document.getElementById('comboModal').style.display = 'block';
-                resetComboBuilder();
-                initComboBuilder();
-            } else {
-                const filteredProducts = categoryId === 'all' 
-                    ? currentProducts 
-                    : currentProducts.filter(p => p.category === categoryId);
-                displayProducts(filteredProducts);
-            }
-        });
+document.querySelectorAll('.category-btn').forEach(button => {
+    button.addEventListener('click', () => {
+        document.querySelector('.category-btn.active')?.classList.remove('active');
+        button.classList.add('active');
+        
+        const categoryId = button.dataset.category;
+        if (categoryId === 'combo') {
+            document.getElementById('comboModal').style.display = 'block';
+            resetComboBuilder();
+            initComboBuilder();
+        } else {
+            const filteredProducts = categoryId === 'all' 
+                ? currentProducts 
+                : currentProducts.filter(p => p.category === categoryId);
+            displayProducts(filteredProducts);
+        }
     });
+});
 }
 
 function checkStoreStatus() {
