@@ -4897,7 +4897,7 @@ async function handleDeliveryInfo(e) {
         if (newOrderRef.key) {
             const message = formatOrderForWhatsApp(customerInfo, deliveryInfo);
             const encodedMessage = encodeURIComponent(message);
-            window.location.href = `https://wa.me/5584988731028?text=${encodedMessage}`;
+            window.location.href = `https://wa.me/12362016670?text=${encodedMessage}`;
         } else {
             throw new Error('Falha ao salvar o pedido');
         }
@@ -5271,7 +5271,7 @@ async function submitOrder() {
         }
 
         // Redirecionar para WhatsApp
-        window.location.href = `https://wa.me/5584988731028?text=${encodeURIComponent(message)}`;
+        window.location.href = `https://wa.me/12362016670?text=${encodeURIComponent(message)}`;
 
   } catch (error) {
     console.error('Erro ao processar pedido:', error);
@@ -5421,7 +5421,7 @@ async function submitOrderFromDigitalMenu() {
         
         // Redirecionar para WhatsApp
         const message = formatOrderForWhatsApp(customerInfo, order);
-        window.location.href = `https://wa.me/5584988731028?text=${encodeURIComponent(message)}`;
+        window.location.href = `https://wa.me/12362016670?text=${encodeURIComponent(message)}`;
         
     } catch (error) {
         console.error('Erro ao criar pedido:', error);
