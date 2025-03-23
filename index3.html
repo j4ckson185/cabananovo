@@ -6900,6 +6900,19 @@ function showCartModal() {
     modal.style.display = 'block';
 }
 
+// Atualizar a inicialização dos event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    const cartIcon = document.querySelector('.cart-icon');
+    if (cartIcon) {
+        cartIcon.addEventListener('click', () => {
+            const cartModal = document.getElementById('cartModal');
+            if (cartModal) {
+                showCartModal();
+            }
+        });
+    }
+});
+
 // Função para registrar carrinho abandonado na planilha
 async function recordAbandonedCart(data) {
     const scriptUrl = 'https://script.google.com/macros/s/AKfycbwS5DcA_NuUsFaHlcnGV-78kfmNKog-1KtXv_Scn6q-6o85c3SSUMPsSk8LXIggKoUW0w/exec';
