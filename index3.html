@@ -6057,22 +6057,23 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
     
-    // Evento para o ícone do carrinho
+    // Listener para o ícone do carrinho
     const cartIcon = document.querySelector('.cart-icon');
     if (cartIcon) {
-        cartIcon.addEventListener('click', showCartModal);
-    } else {
-        console.error('Ícone do carrinho não encontrado');
-    }
-    
-    // Evento para botão de checkout
-    const checkoutButton = document.querySelector('.checkout');
-    if (checkoutButton) {
-        checkoutButton.addEventListener('click', () => {
-            console.log('Botão de checkout clicado');
-            showCreateOrderModal();
+        cartIcon.addEventListener('click', () => {
+            const cartModal = document.getElementById('cartModal');
+            if (cartModal) {
+                showCartModal();
+            }
         });
-    } 
+    }
+
+    // Listener para o botão de checkout
+    const checkoutBtn = document.querySelector('.checkout');
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', handleCheckout);
+    }
+});
 
     // Event listeners para fechar modais
     document.querySelectorAll('.close-modal').forEach(button => {
