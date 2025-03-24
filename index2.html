@@ -2258,6 +2258,10 @@ document.head.appendChild(style);
     to { opacity: 1; }
 }
 
+[data-category="combo"] {
+    display: none !important;
+}
+
 </style>
 </head>
 <body>
@@ -2428,7 +2432,7 @@ document.head.appendChild(style);
    </div>
 </div>
 
-<!-- Combo Builder Modal -->
+    <!-- Combo Builder Modal -->
 <div class="modal" id="comboModal">
     <div class="modal-content">
         <div class="modal-header">
@@ -2437,71 +2441,73 @@ document.head.appendChild(style);
         </div>
         
         <!-- Step 1: Choose Size -->
-        <div class="combo-step" id="sizeStep">
-            <h3 class="step-title">Escolha o tamanho do seu combo</h3>
-            <div class="toppings-grid size-options">
-                <div class="topping-item size-option" data-size="300ml" data-price="20.99">
-                    300ml - R$ 20,99
-                </div>
-                <div class="topping-item size-option" data-size="500ml" data-price="26.99">
-                    500ml - R$ 26,99
-                </div>
-                <div class="topping-item size-option" data-size="1L" data-price="49.99">
-                    1 Litro - R$ 49,99
-                </div>
-            </div>
+<!-- Step 1: Choose Size -->
+<div class="combo-step" id="sizeStep">
+    <h3 class="step-title">Escolha o tamanho do seu combo</h3>
+    <div class="toppings-grid size-options">
+        <div class="topping-item size-option" data-size="300ml" data-price="20.99">
+            300ml - R$ 20,99
         </div>
+        <div class="topping-item size-option" data-size="500ml" data-price="26.99">
+            500ml - R$ 26,99
+        </div>
+        <div class="topping-item size-option" data-size="1L" data-price="49.99">
+            1 Litro - R$ 49,99
+        </div>
+    </div>
+</div>
 
         <!-- Step 2: Choose Flavors -->
-        <div class="combo-step" id="flavorStep" style="display: none;">
-            <h3 class="step-title">Escolha seus sabores</h3>
-            <div class="flavor-section">
-                <div class="flavor-option">
-                    <h4>Açaí 1 - Sabor Principal</h4>
-                    <select class="form-select" id="flavor1Primary">
-                        <option value="">Selecione um sabor</option>
-                        <option value="Açaí Tradicional">Açaí Tradicional</option>
-                        <option value="Creme de Ninho">Creme de Ninho</option>
-                        <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
-                        <option value="Creme de Amendoim">Creme de Amendoim</option>
-                        <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
-                        <option value="Creme de Morango">Creme de Morango</option>
-                    </select>
-                    <h4 style="margin-top: 1rem;">Açaí 1 - Segundo Sabor (Opcional)</h4>
-                    <select class="form-select" id="flavor1Secondary">
-                        <option value="">Nenhum</option>
-                        <option value="Açaí Tradicional">Açaí Tradicional</option>
-                        <option value="Creme de Ninho">Creme de Ninho</option>
-                        <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
-                        <option value="Creme de Amendoim">Creme de Amendoim</option>
-                        <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
-                        <option value="Creme de Morango">Creme de Morango</option>
-                    </select>
-                </div>
-                <div class="flavor-option" style="margin-top: 2rem;">
-                    <h4>Açaí 2 - Escolha Principal</h4>
-                    <select class="form-select" id="flavor2Primary">
-                        <option value="">Nenhum</option>
-                        <option value="Açaí Tradicional">Açaí Tradicional</option>
-                        <option value="Creme de Ninho">Creme de Ninho</option>
-                        <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
-                        <option value="Creme de Amendoim">Creme de Amendoim</option>
-                        <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
-                        <option value="Creme de Morango">Creme de Morango</option>
-                    </select>
-                    <h4 style="margin-top: 1rem;">Açaí 2 - Segundo Sabor (Opcional)</h4>
-                    <select class="form-select" id="flavor2Secondary">
-                        <option value="">Nenhum</option>
-                        <option value="Açaí Tradicional">Açaí Tradicional</option>
-                        <option value="Creme de Ninho">Creme de Ninho</option>
-                        <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
-                        <option value="Creme de Amendoim">Creme de Amendoim</option>
-                        <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
-                        <option value="Creme de Morango">Creme de Morango</option>
-                    </select>
-                </div>
-            </div>
+<!-- Step 2: Choose Flavors -->
+<div class="combo-step" id="flavorStep" style="display: none;">
+    <h3 class="step-title">Escolha seus sabores</h3>
+    <div class="flavor-section">
+        <div class="flavor-option">
+            <h4>Açaí 1 - Sabor Principal</h4>
+            <select class="form-select" id="flavor1Primary">
+                <option value="">Selecione um sabor</option>
+                <option value="Açaí Tradicional">Açaí Tradicional</option>
+                <option value="Creme de Ninho">Creme de Ninho</option>
+                <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
+                <option value="Creme de Amendoim">Creme de Amendoim</option>
+                <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
+                <option value="Creme de Morango">Creme de Morango</option>
+            </select>
+            <h4 style="margin-top: 1rem;">Açaí 1 - Segundo Sabor (Opcional)</h4>
+            <select class="form-select" id="flavor1Secondary">
+                <option value="">Nenhum</option>
+                <option value="Açaí Tradicional">Açaí Tradicional</option>
+                <option value="Creme de Ninho">Creme de Ninho</option>
+                <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
+                <option value="Creme de Amendoim">Creme de Amendoim</option>
+                <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
+                <option value="Creme de Morango">Creme de Morango</option>
+            </select>
         </div>
+        <div class="flavor-option" style="margin-top: 2rem;">
+            <h4>Açaí 2 - Escolha Principal </h4>
+            <select class="form-select" id="flavor2Primary">
+                <option value="">Nenhum</option>
+                <option value="Açaí Tradicional">Açaí Tradicional</option>
+                <option value="Creme de Ninho">Creme de Ninho</option>
+                <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
+                <option value="Creme de Amendoim">Creme de Amendoim</option>
+                <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
+                <option value="Creme de Morango">Creme de Morango</option>
+            </select>
+            <h4 style="margin-top: 1rem;">Açaí 2 - Segundo Sabor (Opcional, caso queira mais de 1 sabor) </h4>
+            <select class="form-select" id="flavor2Secondary">
+                <option value="">Nenhum</option>
+                <option value="Açaí Tradicional">Açaí Tradicional</option>
+                <option value="Creme de Ninho">Creme de Ninho</option>
+                <option value="Creme de Ovomaltine">Creme de Ovomaltine</option>
+                <option value="Creme de Amendoim">Creme de Amendoim</option>
+                <option value="Creme de Cupuaçu">Creme de Cupuaçu</option>
+                <option value="Creme de Morango">Creme de Morango</option>
+            </select>
+        </div>
+    </div>
+</div>
 
         <!-- Step 3: Choose Toppings -->
         <div class="combo-step" id="toppingsStep" style="display: none;">
@@ -2522,19 +2528,16 @@ document.head.appendChild(style);
             </div>
         </div>
 
-        <!-- Step 4: Summary and Extras -->
+        <!-- Step 4: Choose Extras -->
         <div class="combo-step" id="extrasStep" style="display: none;">
             <h3 class="step-title">Confira seu pedido</h3>
+            <div class="extras-grid">
+                <!-- Extras will be loaded dynamically -->
+            </div>
+            
             <div class="combo-summary">
                 <h4>Resumo do seu combo:</h4>
                 <div class="summary-content"></div>
-            </div>
-            
-            <div class="extras-section">
-                <h3 class="extras-title">Adicione Itens Extras (opcional)</h3>
-                <div class="extras-grid">
-                    <!-- Extras will be loaded dynamically -->
-                </div>
             </div>
         </div>
 
@@ -3390,210 +3393,204 @@ function loadCategories() {
     });
 }
 
+// Combo Builder Logic
 let currentStep = 1;
 let comboData = {
     size: null,
-    acai1: {
-        primaryFlavor: '',
-        secondaryFlavor: '',
-        toppings: []
-    },
-    acai2: {
-        primaryFlavor: '',
-        secondaryFlavor: '',
-        toppings: []
-    },
+    flavor1: '',
+    flavor2: '',
+    toppings1: [],
+    toppings2: [],
     extras: []
 };
 
 function initComboBuilder() {
-    console.log('Iniciando Combo Builder');
-    resetComboBuilder();
-
-    // Setup size selection
-    const sizeOptions = document.querySelectorAll('.size-option');
-    sizeOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            sizeOptions.forEach(opt => opt.classList.remove('selected'));
-            this.classList.add('selected');
-            comboData.size = {
-                size: this.dataset.size,
-                price: parseFloat(this.dataset.price)
-            };
-            document.querySelector('.btn-next').disabled = false;
+    const comboModal = document.getElementById('comboModal');
+    const closeBtn = comboModal.querySelector('.close-modal');
+    const nextBtn = comboModal.querySelector('.btn-next');
+    const backBtn = comboModal.querySelector('.btn-back');
+    const addCartBtn = comboModal.querySelector('.btn-add-cart');
+    
+// Size selection
+document.querySelectorAll('.size-option').forEach(option => {
+    option.addEventListener('click', function() {
+        // Remove seleção anterior
+        document.querySelectorAll('.size-option').forEach(opt => {
+            opt.classList.remove('selected');
+            opt.style.background = ''; // Remove background anterior
         });
+        
+        // Adiciona nova seleção com gradiente
+        this.classList.add('selected');
+        this.style.background = 'var(--gradient)';
+        
+        comboData.size = {
+            size: this.dataset.size,
+            price: parseFloat(this.dataset.price)
+        };
+        
+        nextBtn.disabled = false;
     });
+});
 
-    // Setup flavor selection
-    setupFlavorSelectors();
+        setupFlavorSelectors();
 
-    // Setup navigation buttons
-    const nextBtn = document.querySelector('.btn-next');
-    const backBtn = document.querySelector('.btn-back');
-    const addCartBtn = document.querySelector('.btn-add-cart');
-
+    // Configuração dos botões de navegação
     nextBtn.addEventListener('click', () => {
         if (validateStep()) {
             currentStep++;
             updateComboView();
-            console.log('Avançando para o passo:', currentStep);
         }
     });
 
     backBtn.addEventListener('click', () => {
         currentStep--;
         updateComboView();
-        console.log('Voltando para o passo:', currentStep);
+    });
+
+    closeBtn.addEventListener('click', () => {
+        comboModal.style.display = 'none';
+        resetComboBuilder();
     });
 
     addCartBtn.addEventListener('click', () => {
         addComboToCart();
-        const comboModal = document.getElementById('comboModal');
-        if (comboModal) comboModal.style.display = 'none';
+        comboModal.style.display = 'none';
+        resetComboBuilder();
     });
 
     // Load toppings and extras
     loadToppingsAndExtras();
-}
-
-function setupFlavorSelectors() {
-    const selectors = {
-        flavor1Primary: document.getElementById('flavor1Primary'),
-        flavor1Secondary: document.getElementById('flavor1Secondary'),
-        flavor2Primary: document.getElementById('flavor2Primary'),
-        flavor2Secondary: document.getElementById('flavor2Secondary')
-    };
-
-    if (selectors.flavor1Primary) {
-        selectors.flavor1Primary.addEventListener('change', (e) => {
-            comboData.acai1.primaryFlavor = e.target.value;
-            validateStep();
-        });
-    }
-
-    if (selectors.flavor1Secondary) {
-        selectors.flavor1Secondary.addEventListener('change', (e) => {
-            comboData.acai1.secondaryFlavor = e.target.value;
-        });
-    }
-
-    if (selectors.flavor2Primary) {
-        selectors.flavor2Primary.addEventListener('change', (e) => {
-            comboData.acai2.primaryFlavor = e.target.value;
-            const acai2Toppings = document.getElementById('acai2Toppings');
-            if (acai2Toppings) {
-                acai2Toppings.style.display = e.target.value ? 'block' : 'none';
-            }
-        });
-    }
-
-    if (selectors.flavor2Secondary) {
-        selectors.flavor2Secondary.addEventListener('change', (e) => {
-            comboData.acai2.secondaryFlavor = e.target.value;
-        });
-    }
-}
-
-function updateComboView() {
-    console.log('Atualizando view do combo, passo atual:', currentStep);
     
-    // Atualizar visibilidade dos passos
-    const steps = ['sizeStep', 'flavorStep', 'toppingsStep', 'extrasStep'];
-    steps.forEach((step, index) => {
-        const stepElement = document.getElementById(step);
-        if (stepElement) {
-            stepElement.style.display = index + 1 === currentStep ? 'block' : 'none';
+    // Reset inicial
+    resetComboBuilder();
+}
+
+    function setupFlavorSelectors() {
+    const flavor1Primary = document.getElementById('flavor1Primary');
+    const flavor1Secondary = document.getElementById('flavor1Secondary');
+    const flavor2Primary = document.getElementById('flavor2Primary');
+    const flavor2Secondary = document.getElementById('flavor2Secondary');
+    const nextBtn = document.querySelector('.btn-next');
+
+    flavor1Primary.addEventListener('change', (e) => {
+        comboData.acai1.primaryFlavor = e.target.value;
+        nextBtn.disabled = !validateStep();
+    });
+
+    flavor1Secondary.addEventListener('change', (e) => {
+        comboData.acai1.secondaryFlavor = e.target.value;
+    });
+
+    flavor2Primary.addEventListener('change', (e) => {
+        comboData.acai2.primaryFlavor = e.target.value;
+        if (e.target.value) {
+            document.getElementById('acai2Toppings').style.display = 'block';
+        } else {
+            document.getElementById('acai2Toppings').style.display = 'none';
+            comboData.acai2.toppings = [];
         }
     });
 
-    // Atualizar barra de progresso
-    const progressSteps = document.querySelectorAll('.progress-step');
-    progressSteps.forEach((step, index) => {
-        step.classList.toggle('active', index + 1 <= currentStep);
+    flavor2Secondary.addEventListener('change', (e) => {
+        comboData.acai2.secondaryFlavor = e.target.value;
     });
+}
 
-    // Atualizar botões de navegação
-    const backBtn = document.querySelector('.btn-back');
-    const nextBtn = document.querySelector('.btn-next');
-    const addCartBtn = document.querySelector('.btn-add-cart');
+// Adiciona função para adicionar o combo ao carrinho
+function addComboToCart() {
+    const comboPrice = calculateComboPrice();
+    const comboName = `Combo ${comboData.size.size}`;
 
-    if (backBtn) backBtn.style.display = currentStep > 1 ? 'block' : 'none';
-    if (nextBtn) nextBtn.style.display = currentStep < 4 ? 'block' : 'none';
-    if (addCartBtn) addCartBtn.style.display = currentStep === 4 ? 'block' : 'none';
-
-    // Atualizar resumo se estiver no último passo
-    if (currentStep === 4) {
-        updateComboSummary();
+    // Monta os detalhes do Açaí 1
+    let acai1Details = `\n• Açaí 1:\n`;
+    acai1Details += `  Sabor principal: ${comboData.acai1.primaryFlavor}\n`;
+    if (comboData.acai1.secondaryFlavor) {
+        acai1Details += `  Segundo sabor: ${comboData.acai1.secondaryFlavor}\n`;
     }
+    acai1Details += `  Acompanhamentos: ${comboData.acai1.toppings.join(', ')}\n`;
+
+    // Monta os detalhes do Açaí 2 se houver
+    let acai2Details = '';
+    if (comboData.acai2.primaryFlavor) {
+        acai2Details = `\n• Açaí 2:\n`;
+        acai2Details += `  Sabor principal: ${comboData.acai2.primaryFlavor}\n`;
+        if (comboData.acai2.secondaryFlavor) {
+            acai2Details += `  Segundo sabor: ${comboData.acai2.secondaryFlavor}\n`;
+        }
+        acai2Details += `  Acompanhamentos: ${comboData.acai2.toppings.join(', ')}`;
+    }
+
+    // Extras se houver
+    let extrasDetails = '';
+    if (comboData.extras.length > 0) {
+        extrasDetails = `\n\n• Extras: ${comboData.extras.join(', ')}`;
+    }
+
+    const comboItem = {
+        name: comboName,
+        price: comboPrice,
+        selectedToppings: [...comboData.acai1.toppings, ...comboData.acai2.toppings],
+        selectedExtras: comboData.extras,
+        description: `${acai1Details}${acai2Details}${extrasDetails}`
+    };
+
+    cart.push(comboItem);
+    updateCartCount();
+    showCartModal();
+}
+
+function calculateComboPrice() {
+    let total = comboData.size.price;
+    
+    // Adiciona preço dos extras
+    if (comboData.extras.length > 0) {
+        const extrasGrid = document.querySelector('.extras-grid');
+        comboData.extras.forEach(extraName => {
+            const extraItem = extrasGrid.querySelector(`[data-name="${extraName}"]`);
+            if (extraItem && extraItem.dataset.price) {
+                total += parseFloat(extraItem.dataset.price);
+            }
+        });
+    }
+    
+    return total;
+}
+
+// Função para formatar descrição do combo
+function formatComboDescription() {
+    let desc = `${comboData.flavor1}`;
+    if (comboData.flavor2) {
+        desc += ` + ${comboData.flavor2}`;
+    }
+    return desc;
 }
 
 function validateStep() {
     switch (currentStep) {
-        case 1: // Tamanho
+        case 1:
             return comboData.size !== null;
-
-        case 2: // Sabores
-            if (!comboData.acai1.primaryFlavor) {
-                showNotification('Selecione o sabor principal do primeiro açaí');
-                return false;
-            }
-            return true;
-
-        case 3: // Acompanhamentos
+        case 2:
+            return comboData.acai1.primaryFlavor !== '';
+        case 3:
+            // Verifica se tem pelo menos 1 acompanhamento no açaí 1
             if (comboData.acai1.toppings.length < 1) {
-                showNotification('Selecione pelo menos 1 acompanhamento para o primeiro açaí');
+                showNotification('Selecione pelo menos 1 acompanhamento para o Açaí 1');
                 return false;
             }
+            // Se tiver sabor principal no açaí 2, precisa ter pelo menos 1 acompanhamento também
             if (comboData.acai2.primaryFlavor && comboData.acai2.toppings.length < 1) {
-                showNotification('Selecione pelo menos 1 acompanhamento para o segundo açaí');
+                showNotification('Selecione pelo menos 1 acompanhamento para o Açaí 2');
                 return false;
             }
             return true;
-
-        case 4: // Resumo/Extras
+        case 4:
             return true;
-
         default:
             return false;
     }
 }
 
-function updateComboSummary() {
-    const summaryContent = document.querySelector('.summary-content');
-    if (!summaryContent) return;
-
-    let summary = `<strong>Tamanho:</strong> ${comboData.size.size} (R$ ${comboData.size.price.toFixed(2)})<br><br>`;
-    
-    // Açaí 1
-    summary += `<strong>Açaí 1:</strong><br>`;
-    summary += `Sabor Principal: ${comboData.acai1.primaryFlavor}<br>`;
-    if (comboData.acai1.secondaryFlavor) {
-        summary += `Segundo Sabor: ${comboData.acai1.secondaryFlavor}<br>`;
-    }
-    summary += `Acompanhamentos: ${comboData.acai1.toppings.join(', ') || 'Nenhum'}<br><br>`;
-    
-    // Açaí 2 (se houver)
-    if (comboData.acai2.primaryFlavor) {
-        summary += `<strong>Açaí 2:</strong><br>`;
-        summary += `Sabor Principal: ${comboData.acai2.primaryFlavor}<br>`;
-        if (comboData.acai2.secondaryFlavor) {
-            summary += `Segundo Sabor: ${comboData.acai2.secondaryFlavor}<br>`;
-        }
-        summary += `Acompanhamentos: ${comboData.acai2.toppings.join(', ') || 'Nenhum'}<br><br>`;
-    }
-    
-    // Extras (se houver)
-    if (comboData.extras.length > 0) {
-        summary += `<strong>Extras:</strong> ${comboData.extras.join(', ')}<br><br>`;
-    }
-
-    const totalPrice = calculateComboPrice();
-    summary += `<strong>Preço Total:</strong> R$ ${totalPrice.toFixed(2)}`;
-
-    summaryContent.innerHTML = summary;
-}
-
-// Resetar o combo builder
 function resetComboBuilder() {
     currentStep = 1;
     comboData = {
@@ -3610,97 +3607,41 @@ function resetComboBuilder() {
         },
         extras: []
     };
-
-    // Limpar seleções visuais
-    document.querySelectorAll('.size-option').forEach(option => {
-        option.classList.remove('selected');
-    });
-
-    document.querySelectorAll('.topping-item').forEach(item => {
-        item.classList.remove('selected');
-    });
-
-    document.querySelectorAll('.extra-item').forEach(item => {
-        item.classList.remove('selected');
-    });
-
-    // Resetar selects
-    ['flavor1Primary', 'flavor1Secondary', 'flavor2Primary', 'flavor2Secondary'].forEach(id => {
-        const select = document.getElementById(id);
-        if (select) select.value = '';
-    });
-
     updateComboView();
 }
 
-function calculateComboPrice() {
-    let total = comboData.size?.price || 0;
+function updateComboView() {
+    const steps = ['sizeStep', 'flavorStep', 'toppingsStep', 'extrasStep'];
+    steps.forEach((step, index) => {
+        document.getElementById(step).style.display = 
+            index + 1 === currentStep ? 'block' : 'none';
+    });
+
+    // Update progress bar
+    document.querySelectorAll('.progress-step').forEach((step, index) => {
+        step.classList.toggle('active', index + 1 <= currentStep);
+    });
+
+    // Show/hide navigation buttons
+    const backBtn = document.querySelector('.btn-back');
+    const nextBtn = document.querySelector('.btn-next');
+    const addCartBtn = document.querySelector('.btn-add-cart');
+
+    backBtn.style.display = currentStep > 1 ? 'block' : 'none';
+    nextBtn.style.display = currentStep < 4 ? 'block' : 'none';
+    addCartBtn.style.display = currentStep === 4 ? 'block' : 'none';
     
-    // Adiciona preço dos extras
-    if (comboData.extras && comboData.extras.length > 0) {
-        const extrasGrid = document.querySelector('.extras-grid');
-        comboData.extras.forEach(extraName => {
-            const extraItem = extrasGrid?.querySelector(`[data-name="${extraName}"]`);
-            if (extraItem && extraItem.dataset.price) {
-                total += parseFloat(extraItem.dataset.price);
-            }
-        });
-    }
-    
-    return total;
-}
+    // Atualizar estado dos botões
+    nextBtn.disabled = !validateStep();
 
-function addComboToCart() {
-    const comboPrice = calculateComboPrice();
-    const comboName = `Combo ${comboData.size.size}`;
-
-    let description = '';
-
-    // Açaí 1
-    description += '• Açaí 1:\n';
-    description += `  Sabor principal: ${comboData.acai1.primaryFlavor}\n`;
-    if (comboData.acai1.secondaryFlavor) {
-        description += `  Segundo sabor: ${comboData.acai1.secondaryFlavor}\n`;
-    }
-    description += `  Acompanhamentos: ${comboData.acai1.toppings.join(', ')}\n`;
-
-    // Açaí 2 (se houver)
-    if (comboData.acai2.primaryFlavor) {
-        description += '\n• Açaí 2:\n';
-        description += `  Sabor principal: ${comboData.acai2.primaryFlavor}\n`;
-        if (comboData.acai2.secondaryFlavor) {
-            description += `  Segundo sabor: ${comboData.acai2.secondaryFlavor}\n`;
-        }
-        description += `  Acompanhamentos: ${comboData.acai2.toppings.join(', ')}\n`;
-    }
-
-    // Extras (se houver)
-    if (comboData.extras.length > 0) {
-        description += `\n• Extras: ${comboData.extras.join(', ')}`;
-    }
-
-    const comboItem = {
-        name: comboName,
-        price: comboPrice,
-        description: description,
-        selectedToppings: [...comboData.acai1.toppings, ...comboData.acai2.toppings],
-        selectedExtras: comboData.extras,
-        isCombo: true
-    };
-
-    cart.push(comboItem);
-    updateCartCount();
-    showCartModal();
-
-    // Fechar modal do combo
-    const comboModal = document.getElementById('comboModal');
-    if (comboModal) {
-        comboModal.style.display = 'none';
+    // Se estiver na etapa final, atualiza o resumo
+    if (currentStep === 4) {
+        updateComboSummary();
     }
 }
 
 function loadToppingsAndExtras() {
-    // Carregar acompanhamentos do Firebase
+    // Load toppings from Firebase
     realtimeDB.ref('toppings').once('value', snapshot => {
         const toppings = snapshot.val();
         if (toppings) {
@@ -3713,60 +3654,52 @@ function loadToppingsAndExtras() {
                     </div>
                 `).join('');
             
-            // Adicionar aos dois containers de acompanhamentos
-            const toppings1 = document.getElementById('toppings1');
-            const toppings2 = document.getElementById('toppings2');
-            
-            if (toppings1) toppings1.innerHTML = toppingsHtml;
-            if (toppings2) toppings2.innerHTML = toppingsHtml;
+            document.getElementById('toppings1').innerHTML = toppingsHtml;
+            document.getElementById('toppings2').innerHTML = toppingsHtml;
 
-            // Adicionar listeners para seleção
+            // Add click handlers
             document.querySelectorAll('.topping-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    const isForFirstAcai = this.closest('#toppings1') !== null;
-                    toggleTopping(this, isForFirstAcai);
-                });
+                item.addEventListener('click', () => toggleTopping(item));
             });
         }
     });
 
-    // Carregar extras do Firebase
+    // Load extras from Firebase
     realtimeDB.ref('extras').once('value', snapshot => {
         const extras = snapshot.val();
         if (extras) {
-            const extrasGrid = document.querySelector('.extras-grid');
-            if (extrasGrid) {
-                extrasGrid.innerHTML = Object.values(extras)
-                    .filter(extra => extra.available)
-                    .map(extra => `
-                        <div class="extra-item" data-name="${extra.name}" data-price="${extra.price}">
-                            ${extra.name}
-                            ${extra.price > 0 ? `<span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>` : ''}
-                        </div>
-                    `).join('');
+            const extrasHtml = Object.values(extras)
+                .filter(extra => extra.available)
+                .map(extra => `
+                    <div class="extra-item" data-name="${extra.name}" data-price="${extra.price}">
+                        ${extra.name}
+                        <span class="extra-price">+R$ ${extra.price.toFixed(2)}</span>
+                    </div>
+                `).join('');
+            
+            document.querySelector('.extras-grid').innerHTML = extrasHtml;
 
-                // Adicionar listeners para seleção de extras
-                document.querySelectorAll('.extra-item').forEach(item => {
-                    item.addEventListener('click', function() {
-                        this.classList.toggle('selected');
-                        const extraName = this.dataset.name;
-                        if (this.classList.contains('selected')) {
-                            comboData.extras.push(extraName);
-                        } else {
-                            comboData.extras = comboData.extras.filter(e => e !== extraName);
-                        }
-                        updateComboSummary();
-                    });
-                });
-            }
+            // Add click handlers
+            document.querySelectorAll('.extra-item').forEach(item => {
+                item.addEventListener('click', () => toggleExtra(item));
+            });
         }
     });
 }
 
-function toggleTopping(item, isForFirstAcai) {
+function toggleTopping(item) {
     const toppingName = item.dataset.name;
-    const maxToppings = comboData.size.size === '300ml' ? 3 : 
-                       comboData.size.size === '500ml' ? 4 : 8;
+    const isForFirstAcai = item.closest('#toppings1') !== null;
+    
+    // Define o limite de acompanhamentos baseado no tamanho
+    let maxToppings;
+    if (comboData.size.size === '300ml') {
+        maxToppings = 3;
+    } else if (comboData.size.size === '500ml') {
+        maxToppings = 4;
+    } else if (comboData.size.size === '1L') {
+        maxToppings = 8;
+    }
     
     const toppingsArray = isForFirstAcai ? comboData.acai1.toppings : comboData.acai2.toppings;
     
@@ -3793,9 +3726,17 @@ function toggleTopping(item, isForFirstAcai) {
         }
     }
 
-    updateComboSummary();
+    // Atualiza o resumo se estiver na última etapa
+    if (currentStep === 4) {
+        updateComboSummary();
+    }
+
+    // Valida se tem pelo menos 1 acompanhamento selecionado
+    const nextBtn = document.querySelector('.btn-next');
+    if (nextBtn) {
+        nextBtn.disabled = !validateStep();
+    }
 }
-    
     function toggleExtra(item) {
     const extraName = item.dataset.name;
     
@@ -3813,16 +3754,39 @@ function toggleTopping(item, isForFirstAcai) {
     }
 }
 
+function updateComboSummary() {
+    const summaryContent = document.querySelector('.summary-content');
+    let summary = `<strong>Tamanho:</strong> ${comboData.size.size} (R$ ${comboData.size.price})<br><br>`;
+    
+    summary += `<strong>Açaí 1:</strong><br>`;
+    summary += `Sabor Principal: ${comboData.acai1.primaryFlavor}<br>`;
+    if (comboData.acai1.secondaryFlavor) {
+        summary += `Segundo Sabor: ${comboData.acai1.secondaryFlavor}<br>`;
+    }
+    summary += `Acompanhamentos: ${comboData.acai1.toppings.join(', ') || 'Nenhum'}<br><br>`;
+    
+    if (comboData.acai2.primaryFlavor) {
+        summary += `<strong>Açaí 2:</strong><br>`;
+        summary += `Sabor Principal: ${comboData.acai2.primaryFlavor}<br>`;
+        if (comboData.acai2.secondaryFlavor) {
+            summary += `Segundo Sabor: ${comboData.acai2.secondaryFlavor}<br>`;
+        }
+        summary += `Acompanhamentos: ${comboData.acai2.toppings.join(', ') || 'Nenhum'}<br><br>`;
+    }
+    
+    if (comboData.extras.length > 0) {
+        summary += `<strong>Extras:</strong> ${comboData.extras.join(', ')}`;
+    }
+    
+    summaryContent.innerHTML = summary;
+}
+
 function updateCategoryButtons(categories) {
     const categoriesNav = document.querySelector('.categories');
     categoriesNav.innerHTML = `
         <button class="category-btn active" data-category="all">
             <i class="fas fa-star"></i>
             Todos
-        </button>
-        <button class="category-btn" data-category="combo">
-            <i class="fas fa-magic"></i>
-            Monte seu Combo
         </button>
     `;
     
@@ -3835,29 +3799,18 @@ function updateCategoryButtons(categories) {
         `;
     });
     
-    // Adicionar event listeners para todos os botões de categoria
-    const categoryButtons = categoriesNav.querySelectorAll('.category-btn');
-    categoryButtons.forEach(button => {
+    // Adiciona event listeners para todos os botões de categoria
+    categoriesNav.querySelectorAll('.category-btn').forEach(button => {
         button.addEventListener('click', () => {
-            // Remove a classe active do botão anterior
-            categoriesNav.querySelector('.category-btn.active')?.classList.remove('active');
-            
-            // Adiciona a classe active ao botão clicado
+            document.querySelector('.category-btn.active')?.classList.remove('active');
             button.classList.add('active');
             
-            // Pega a categoria do botão
             const categoryId = button.dataset.category;
-            
-            // Se for combo, mostra o modal de combo
             if (categoryId === 'combo') {
-                const comboModal = document.getElementById('comboModal');
-                if (comboModal) {
-                    comboModal.style.display = 'block';
-                    resetComboBuilder();
-                    initComboBuilder();
-                }
+                document.getElementById('comboModal').style.display = 'block';
+                resetComboBuilder();
+                initComboBuilder();
             } else {
-                // Se não for combo, filtra os produtos
                 const filteredProducts = categoryId === 'all' 
                     ? currentProducts 
                     : currentProducts.filter(p => p.category === categoryId);
@@ -4612,55 +4565,51 @@ function updateTotalPrice(product) {
 }
 
 function addToCart(product, selectedToppings) {
-    console.log('Iniciando addToCart');
-    // Verificar se já tem telefone cadastrado
-    if (!localStorage.getItem('cartPhone')) {
-        console.log('Telefone não encontrado, mostrando modal');
-        // Armazenar temporariamente o produto
-        window.pendingCartAddition = { product, selectedToppings };
-        
-        // Criar e mostrar modal de telefone
-        createPhoneCollectionModal();
-        document.getElementById('phoneCollectionModal').style.display = 'block';
-        return;
-    }
+    try {
+        const selectedExtras = Array.from(document.querySelectorAll('.extra-item.selected'))
+            .map(extra => {
+                const priceText = extra.querySelector('.extra-price')?.textContent;
+                const extraPrice = priceText ? parseFloat(priceText.replace(/[^0-9.,]/g, '').replace(',', '.')) : 0;
+                return {
+                    name: extra.textContent.trim(),
+                    price: extraPrice
+                };
+            });
 
-    // Se já tem número, continua com a adição normal ao carrinho
-    const selectedExtras = Array.from(document.querySelectorAll('.extra-item.selected'))
-        .map(extra => {
-            const priceText = extra.querySelector('.extra-price')?.textContent;
-            const extraPrice = priceText ? parseFloat(priceText.replace(/[^0-9.,]/g, '').replace(',', '.')) : 0;
-            return {
-                name: extra.textContent.trim(),
-                price: extraPrice
-            };
+        const totalExtrasPrice = selectedExtras.reduce((total, extra) => total + extra.price, 0);
+        const totalPrice = product.price + totalExtrasPrice;
+
+        if (product.isAcaiDoDia && acaiDoDiaQuantityInCart >= 2) {
+            showNotification('Limite de 2 unidades do Açaí do Dia por pedido');
+            return;
+        }
+
+        cart.push({
+            ...product,
+            selectedToppings,
+            selectedExtras: selectedExtras.map(extra => extra.name),
+            price: totalPrice,
+            originalPrice: product.originalPrice || product.price
         });
 
-    const totalExtrasPrice = selectedExtras.reduce((total, extra) => total + extra.price, 0);
-    const totalPrice = product.price + totalExtrasPrice;
+        if (product.isAcaiDoDia) {
+            acaiDoDiaQuantityInCart++;
+        }
 
-    if (product.isAcaiDoDia && acaiDoDiaQuantityInCart >= 2) {
-        showNotification('Limite de 2 unidades do Açaí do Dia por pedido');
-        return;
+        updateCartCount();
+        
+        // Fechar modal do produto
+        const productModal = document.getElementById('productModal');
+        if (productModal) {
+            productModal.style.display = 'none';
+        }
+
+        showCartModal();
+
+    } catch (error) {
+        console.error('Erro ao adicionar ao carrinho:', error);
+        showNotification('Erro ao adicionar item ao carrinho');
     }
-
-    cart.push({
-        ...product,
-        selectedToppings,
-        selectedExtras: selectedExtras.map(extra => extra.name),
-        price: totalPrice,
-        originalPrice: product.originalPrice || product.price
-    });
-
-    if (product.isAcaiDoDia) {
-        acaiDoDiaQuantityInCart++;
-    }
-
-    updateCartCount();
-    
-    // Fecha o modal do produto e mostra o carrinho
-    document.getElementById('productModal').style.display = 'none';
-    showCartModal();
 }
     
 async function applyCoupon() {
