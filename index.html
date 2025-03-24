@@ -4565,55 +4565,51 @@ function updateTotalPrice(product) {
 }
 
 function addToCart(product, selectedToppings) {
-    console.log('Iniciando addToCart');
-    // Verificar se já tem telefone cadastrado
-    if (!localStorage.getItem('cartPhone')) {
-        console.log('Telefone não encontrado, mostrando modal');
-        // Armazenar temporariamente o produto
-        window.pendingCartAddition = { product, selectedToppings };
-        
-        // Criar e mostrar modal de telefone
-        createPhoneCollectionModal();
-        document.getElementById('phoneCollectionModal').style.display = 'block';
-        return;
-    }
+    try {
+        const selectedExtras = Array.from(document.querySelectorAll('.extra-item.selected'))
+            .map(extra => {
+                const priceText = extra.querySelector('.extra-price')?.textContent;
+                const extraPrice = priceText ? parseFloat(priceText.replace(/[^0-9.,]/g, '').replace(',', '.')) : 0;
+                return {
+                    name: extra.textContent.trim(),
+                    price: extraPrice
+                };
+            });
 
-    // Se já tem número, continua com a adição normal ao carrinho
-    const selectedExtras = Array.from(document.querySelectorAll('.extra-item.selected'))
-        .map(extra => {
-            const priceText = extra.querySelector('.extra-price')?.textContent;
-            const extraPrice = priceText ? parseFloat(priceText.replace(/[^0-9.,]/g, '').replace(',', '.')) : 0;
-            return {
-                name: extra.textContent.trim(),
-                price: extraPrice
-            };
+        const totalExtrasPrice = selectedExtras.reduce((total, extra) => total + extra.price, 0);
+        const totalPrice = product.price + totalExtrasPrice;
+
+        if (product.isAcaiDoDia && acaiDoDiaQuantityInCart >= 2) {
+            showNotification('Limite de 2 unidades do Açaí do Dia por pedido');
+            return;
+        }
+
+        cart.push({
+            ...product,
+            selectedToppings,
+            selectedExtras: selectedExtras.map(extra => extra.name),
+            price: totalPrice,
+            originalPrice: product.originalPrice || product.price
         });
 
-    const totalExtrasPrice = selectedExtras.reduce((total, extra) => total + extra.price, 0);
-    const totalPrice = product.price + totalExtrasPrice;
+        if (product.isAcaiDoDia) {
+            acaiDoDiaQuantityInCart++;
+        }
 
-    if (product.isAcaiDoDia && acaiDoDiaQuantityInCart >= 2) {
-        showNotification('Limite de 2 unidades do Açaí do Dia por pedido');
-        return;
+        updateCartCount();
+        
+        // Fechar modal do produto
+        const productModal = document.getElementById('productModal');
+        if (productModal) {
+            productModal.style.display = 'none';
+        }
+
+        showCartModal();
+
+    } catch (error) {
+        console.error('Erro ao adicionar ao carrinho:', error);
+        showNotification('Erro ao adicionar item ao carrinho');
     }
-
-    cart.push({
-        ...product,
-        selectedToppings,
-        selectedExtras: selectedExtras.map(extra => extra.name),
-        price: totalPrice,
-        originalPrice: product.originalPrice || product.price
-    });
-
-    if (product.isAcaiDoDia) {
-        acaiDoDiaQuantityInCart++;
-    }
-
-    updateCartCount();
-    
-    // Fecha o modal do produto e mostra o carrinho
-    document.getElementById('productModal').style.display = 'none';
-    showCartModal();
 }
     
 async function applyCoupon() {
