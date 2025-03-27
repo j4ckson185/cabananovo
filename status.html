@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cabana Açaí - Rastreador de Pedidos</title>
+    <style>
+        /* Variáveis CSS para fácil personalização */
+        :root {
+            --cor-primaria: #8e24aa; /* Roxo para o tema do açaí */
+            --cor-primaria-clara: #b052c0;
+            --cor-primaria-escura: #6a1b9a;
+            --cor-acento: #69f0ae; /* Verde para detalhes */
+            --cor-texto-primario: #ffffff;
+            --cor-texto-secundario: #333333;
+            --cor-fundo: #f5f5f5;
+            --cor-cartao: #ffffff;
+            --cor-borda: #e0e0e0;
+            --cor-sucesso: #4caf50;
+            --cor-aviso: #ff9800;
+            --cor-erro: #f44336;
+            --sombra-padrao: 0 2px 10px rgba(0,0,0,0.1);
+            --raio-borda: 8px;
+        }
+
+        /* Reset e configurações base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: var(--cor-fundo);
+            color: var(--cor-texto-secundario);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Cabeçalho */
+        header {
+            background-color: var(--cor-primaria);
+            color: var(--cor-texto-primario);
+            padding: 1rem 0;
+            box-shadow: var(--sombra-padrao);
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .logo-img {
+            width: 40px;
+            height: 40px;
+            background-color: var(--cor-acento);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        /* Conteúdo principal */
+        main {
+            flex: 1;
+            padding: 2rem 0;
+        }
+
+        .card {
+            background-color: var(--cor-cartao);
+            border-radius: var(--raio-borda);
+            box-shadow: var(--sombra-padrao);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: var(--cor-primaria);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        /* Formulário */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid var(--cor-borda);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--cor-primaria);
+            box-shadow: 0 0 0 2px rgba(142, 36, 170, 0.2);
+        }
+
+        button {
+            background-color: var(--cor-primaria);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--cor-primaria-escura);
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .error {
+            color: var(--cor-erro);
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        /* Tela de carregamento */
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--cor-primaria);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Resultados */
+        .results {
+            display: none;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--cor-borda);
+        }
+
+        .order-number {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .status-novo {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-pronto {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .status-aceito {
+            background-color: #fff8e1;
+            color: #ffa000;
+        }
+
+        .status-caminho {
+            background-color: #fffde7;
+            color: #fbc02d;
+        }
+
+        .status-finalizado {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .status-cancelado {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+
+        .status-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .status-details {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .status-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-message {
+            color: #666;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            margin: 2rem 0 1rem;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 10px;
+            width: 2px;
+            background-color: var(--cor-borda);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+        }
+
+        .timeline-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            left: -30px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: var(--cor-borda);
+            border: 3px solid white;
+        }
+
+        .timeline-marker.active {
+            background-color: var(--cor-primaria);
+        }
+
+        .timeline-marker.completed {
+            background-color: var(--cor-sucesso);
+        }
+
+        .timeline-content {
+            padding-left: 0.5rem;
+        }
+
+        .timeline-title {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .timeline-text {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* Rodapé */
+        footer {
+            background-color: #f1f1f1;
+            padding: 1rem 0;
+            text-align: center;
+            margin-top: auto;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <div class="logo-img">🍧</div>
+                <span>Cabana Açaí</span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <!-- Formulário de busca -->
+            <div class="card" id="search-card">
+                <h1>Acompanhe seu Pedido</h1>
+                <div class="form-group">
+                    <label for="order-number">Número do Pedido:</label>
+                    <input type="text" id="order-number" placeholder="Digite o número do seu pedido">
+                    <div class="error" id="error-message">Por favor, digite um número de pedido válido.</div>
+                </div>
+                <button id="track-button">Rastrear Pedido</button>
+            </div>
+
+            <!-- Indicador de carregamento -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Buscando informações do pedido...</p>
+            </div>
+
+            <!-- Resultados -->
+            <div class="card results" id="results">
+                <div class="order-header">
+                    <div class="order-number">Pedido #<span id="result-order-number">12345</span></div>
+                    <div class="status-badge" id="status-badge">Processando</div>
+                </div>
+
+                <div class="status-details">
+                    <div class="status-icon" id="status-icon">🛵</div>
+                    <div class="status-title" id="status-title">Pedido Aceito</div>
+                    <div class="status-message" id="status-message">Seu pedido foi aceito pelo motoboy e sairá para entrega logo mais!</div>
+                </div>
+
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker" id="step-novo"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">Novo</div>
+                            <div class="timeline-text">Pedido recebido e está sendo preparado.</div>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker" id="step-pronto"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">Pronto</div>
+                            <div class="timeline-text">Pedido está pronto e aguardando motoboy.</div>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker" id="step-aceito"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">Aceito</div>
+                            <div class="timeline-text">Pedido aceito pelo motoboy para entrega.</div>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker" id="step-caminho"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">A Caminho</div>
+                            <div class="timeline-text">Motoboy a caminho com seu pedido!</div>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker" id="step-finalizado"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">Finalizado</div>
+                            <div class="timeline-text">Pedido entregue com sucesso!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Cabana Açaí - Todos os direitos reservados</p>
+        </div>
+    </footer>
+
+    <script>
+        // Aguarda o carregamento completo do DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos do DOM
+            const orderInput = document.getElementById('order-number');
+            const trackButton = document.getElementById('track-button');
+            const errorMessage = document.getElementById('error-message');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const resultOrderNumber = document.getElementById('result-order-number');
+            const statusBadge = document.getElementById('status-badge');
+            const statusIcon = document.getElementById('status-icon');
+            const statusTitle = document.getElementById('status-title');
+            const statusMessage = document.getElementById('status-message');
+            
+            // Timeline steps
+            const stepNovo = document.getElementById('step-novo');
+            const stepPronto = document.getElementById('step-pronto');
+            const stepAceito = document.getElementById('step-aceito');
+            const stepCaminho = document.getElementById('step-caminho');
+            const stepFinalizado = document.getElementById('step-finalizado');
+
+            // Banco de dados simulado - em uma implementação real, 
+            // estes dados viriam de uma API que consulta a planilha
+            const orderDatabase = {
+                "1234": { status: "Novo" },
+                "2345": { status: "Pronto" },
+                "3456": { status: "Aceito" },
+                "4567": { status: "A Caminho" },
+                "5678": { status: "Finalizado" },
+                "6789": { status: "Cancelado" },
+                // Pedidos específicos mencionados nos seus códigos
+                "7318": { status: "A Caminho" },
+                "2687": { status: "Finalizado" },
+                "1515": { status: "Pronto" },
+                "0074": { status: "Aceito" }
+            };
+            
+            // Informações sobre os status
+            const statusInfo = {
+                "Novo": {
+                    icon: "📋",
+                    message: "Pedido recebido e está sendo preparado.",
+                    badgeClass: "status-novo"
+                },
+                "Pronto": {
+                    icon: "✅",
+                    message: "Pedido está pronto e sairá para entrega com o próximo motoboy!",
+                    badgeClass: "status-pronto"
+                },
+                "Aceito": {
+                    icon: "🛵",
+                    message: "Pedido aceito pelo motoboy e sairá para entrega logo mais!",
+                    badgeClass: "status-aceito"
+                },
+                "A Caminho": {
+                    icon: "🚀",
+                    message: "Motoboy a caminho com seu pedido!",
+                    badgeClass: "status-caminho"
+                },
+                "Finalizado": {
+                    icon: "✨",
+                    message: "Pedido entregue - Obrigado pela preferência!",
+                    badgeClass: "status-finalizado"
+                },
+                "Cancelado": {
+                    icon: "❌",
+                    message: "Pedido cancelado",
+                    badgeClass: "status-cancelado"
+                }
+            };
+
+            // Função para buscar o status do pedido
+            function getOrderStatus(orderId) {
+                return new Promise((resolve, reject) => {
+                    // Simulação de delay de rede (1 segundo)
+                    setTimeout(() => {
+                        // Remove zeros à esquerda do orderId para checagem
+                        const cleanId = orderId.replace(/^0+/, '');
+                        
+                        // Verifica se o pedido existe no banco de dados
+                        if (orderDatabase[cleanId]) {
+                            resolve({
+                                orderId: orderId,
+                                status: orderDatabase[cleanId].status
+                            });
+                        } else {
+                            reject(new Error("Pedido não encontrado. Verifique o número e tente novamente."));
+                        }
+                    }, 1000);
+                });
+            }
+
+            // Função para atualizar a timeline baseada no status
+            function updateTimeline(status) {
+                // Resetar todos os steps
+                stepNovo.classList.remove('active', 'completed');
+                stepPronto.classList.remove('active', 'completed');
+                stepAceito.classList.remove('active', 'completed');
+                stepCaminho.classList.remove('active', 'completed');
+                stepFinalizado.classList.remove('active', 'completed');
+
+                // Atualizar timeline baseado no status
+                switch(status) {
+                    case 'Novo':
+                        stepNovo.classList.add('active');
+                        break;
+                    case 'Pronto':
+                        stepNovo.classList.add('completed');
+                        stepPronto.classList.add('active');
+                        break;
+                    case 'Aceito':
+                        stepNovo.classList.add('completed');
+                        stepPronto.classList.add('completed');
+                        stepAceito.classList.add('active');
+                        break;
+                    case 'A Caminho':
+                        stepNovo.classList.add('completed');
+                        stepPronto.classList.add('completed');
+                        stepAceito.classList.add('completed');
+                        stepCaminho.classList.add('active');
+                        break;
+                    case 'Finalizado':
+                        stepNovo.classList.add('completed');
+                        stepPronto.classList.add('completed');
+                        stepAceito.classList.add('completed');
+                        stepCaminho.classList.add('completed');
+                        stepFinalizado.classList.add('active');
+                        break;
+                    case 'Cancelado':
+                        // Para pedidos cancelados, apenas o primeiro step é ativo
+                        stepNovo.classList.add('active');
+                        break;
+                }
+            }
+
+            // Event listener para botão de rastreamento
+            trackButton.addEventListener('click', function() {
+                const orderNumber = orderInput.value.trim();
+                
+                // Validação básica
+                if (!orderNumber) {
+                    errorMessage.textContent = "Por favor, digite o número do seu pedido.";
+                    errorMessage.style.display = "block";
+                    return;
+                }
+                
+                // Reset da UI
+                errorMessage.style.display = "none";
+                results.style.display = "none";
+                loading.style.display = "block";
+                trackButton.disabled = true;
+                
+                // Buscar status do pedido
+                getOrderStatus(orderNumber)
+                    .then(data => {
+                        // Preencher informações do pedido
+                        resultOrderNumber.textContent = orderNumber;
+                        
+                        const status = data.status;
+                        const info = statusInfo[status] || {
+                            icon: "❓",
+                            message: "Status desconhecido",
+                            badgeClass: ""
+                        };
+                        
+                        // Atualizar detalhes do status
+                        statusIcon.textContent = info.icon;
+                        statusTitle.textContent = status;
+                        statusMessage.textContent = info.message;
+                        
+                        // Atualizar badge de status
+                        statusBadge.textContent = status;
+                        statusBadge.className = "status-badge " + info.badgeClass;
+                        
+                        // Atualizar timeline
+                        updateTimeline(status);
+                        
+                        // Exibir resultados
+                        loading.style.display = "none";
+                        results.style.display = "block";
+                    })
+                    .catch(error => {
+                        // Exibir mensagem de erro
+                        errorMessage.textContent = error.message;
+                        errorMessage.style.display = "block";
+                        loading.style.display = "none";
+                    })
+                    .finally(() => {
+                        // Reativar botão
+                        trackButton.disabled = false;
+                    });
+            });
+            
+            // Event listener para a tecla Enter no input
+            orderInput.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    trackButton.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
