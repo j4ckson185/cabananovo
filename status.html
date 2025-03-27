@@ -431,22 +431,10 @@
             const stepAceito = document.getElementById('step-aceito');
             const stepCaminho = document.getElementById('step-caminho');
             const stepFinalizado = document.getElementById('step-finalizado');
-
-            // Banco de dados simulado - em uma implementação real, 
-            // estes dados viriam de uma API que consulta a planilha
-            const orderDatabase = {
-                "1234": { status: "Novo" },
-                "2345": { status: "Pronto" },
-                "3456": { status: "Aceito" },
-                "4567": { status: "A Caminho" },
-                "5678": { status: "Finalizado" },
-                "6789": { status: "Cancelado" },
-                // Pedidos específicos mencionados nos seus códigos
-                "7318": { status: "A Caminho" },
-                "2687": { status: "Finalizado" },
-                "1515": { status: "Pronto" },
-                "0074": { status: "Aceito" }
-            };
+            
+            // URL da API do Google Apps Script publicada como aplicativo da web
+            // SUBSTITUA ESTA URL pela URL do seu Apps Script publicado
+            const API_URL = 'https://script.google.com/macros/s/AKfycbz8SZnmv8-B-ddjYsYqF58OEvi0X-b8dBGSvRpuDwcAsX_Fn00l0QXm4HTyoB2yXWgjYQ/exec';
             
             // Informações sobre os status
             const statusInfo = {
@@ -482,25 +470,33 @@
                 }
             };
 
-            // Função para buscar o status do pedido
-            function getOrderStatus(orderId) {
-                return new Promise((resolve, reject) => {
-                    // Simulação de delay de rede (1 segundo)
-                    setTimeout(() => {
-                        // Remove zeros à esquerda do orderId para checagem
-                        const cleanId = orderId.replace(/^0+/, '');
-                        
-                        // Verifica se o pedido existe no banco de dados
-                        if (orderDatabase[cleanId]) {
-                            resolve({
-                                orderId: orderId,
-                                status: orderDatabase[cleanId].status
-                            });
-                        } else {
-                            reject(new Error("Pedido não encontrado. Verifique o número e tente novamente."));
-                        }
-                    }, 1000);
-                });
+            // Função para buscar o status do pedido via API
+            async function getOrderStatus(orderId) {
+                try {
+                    // Remover zeros à esquerda do orderId
+                    const cleanId = orderId.replace(/^0+/, '');
+                    
+                    // Fazer a requisição para a API
+                    const response = await fetch(`${API_URL}?action=checkStatus&orderId=${cleanId}`);
+                    
+                    if (!response.ok) {
+                        throw new Error('Falha ao consultar o pedido. Tente novamente mais tarde.');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (!data.status || data.status === 'Não Encontrado') {
+                        throw new Error('Pedido não encontrado. Verifique o número e tente novamente.');
+                    }
+                    
+                    return {
+                        orderId: orderId,
+                        status: data.status
+                    };
+                } catch (error) {
+                    console.error('Erro ao buscar status:', error);
+                    throw error;
+                }
             }
 
             // Função para atualizar a timeline baseada no status
@@ -543,11 +539,14 @@
                         // Para pedidos cancelados, apenas o primeiro step é ativo
                         stepNovo.classList.add('active');
                         break;
+                    default:
+                        // Status desconhecido, apenas primeiro step é ativo
+                        stepNovo.classList.add('active');
                 }
             }
 
             // Event listener para botão de rastreamento
-            trackButton.addEventListener('click', function() {
+            trackButton.addEventListener('click', async function() {
                 const orderNumber = orderInput.value.trim();
                 
                 // Validação básica
@@ -563,45 +562,45 @@
                 loading.style.display = "block";
                 trackButton.disabled = true;
                 
-                // Buscar status do pedido
-                getOrderStatus(orderNumber)
-                    .then(data => {
-                        // Preencher informações do pedido
-                        resultOrderNumber.textContent = orderNumber;
-                        
-                        const status = data.status;
-                        const info = statusInfo[status] || {
-                            icon: "❓",
-                            message: "Status desconhecido",
-                            badgeClass: ""
-                        };
-                        
-                        // Atualizar detalhes do status
-                        statusIcon.textContent = info.icon;
-                        statusTitle.textContent = status;
-                        statusMessage.textContent = info.message;
-                        
-                        // Atualizar badge de status
-                        statusBadge.textContent = status;
-                        statusBadge.className = "status-badge " + info.badgeClass;
-                        
-                        // Atualizar timeline
-                        updateTimeline(status);
-                        
-                        // Exibir resultados
-                        loading.style.display = "none";
-                        results.style.display = "block";
-                    })
-                    .catch(error => {
-                        // Exibir mensagem de erro
-                        errorMessage.textContent = error.message;
-                        errorMessage.style.display = "block";
-                        loading.style.display = "none";
-                    })
-                    .finally(() => {
-                        // Reativar botão
-                        trackButton.disabled = false;
-                    });
+                try {
+                    // Buscar status do pedido
+                    const data = await getOrderStatus(orderNumber);
+                    
+                    // Preencher informações do pedido
+                    resultOrderNumber.textContent = orderNumber;
+                    
+                    const status = data.status;
+                    const info = statusInfo[status] || {
+                        icon: "❓",
+                        message: "Status desconhecido",
+                        badgeClass: ""
+                    };
+                    
+                    // Atualizar detalhes do status
+                    statusIcon.textContent = info.icon;
+                    statusTitle.textContent = status;
+                    statusMessage.textContent = info.message;
+                    
+                    // Atualizar badge de status
+                    statusBadge.textContent = status;
+                    statusBadge.className = "status-badge " + info.badgeClass;
+                    
+                    // Atualizar timeline
+                    updateTimeline(status);
+                    
+                    // Exibir resultados
+                    loading.style.display = "none";
+                    results.style.display = "block";
+                    
+                } catch (error) {
+                    // Exibir mensagem de erro
+                    errorMessage.textContent = error.message;
+                    errorMessage.style.display = "block";
+                    loading.style.display = "none";
+                } finally {
+                    // Reativar botão
+                    trackButton.disabled = false;
+                }
             });
             
             // Event listener para a tecla Enter no input
