@@ -6062,20 +6062,20 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.removeItem('orderCompleted');
     console.log('LocalStorage limpo');
 
-// Adicione ao início do seu arquivo JavaScript, junto com outros listeners
 window.addEventListener('message', function(event) {
-    // Listener existente para PIX_DATA
+    console.log('Evento recebido:', event.data); // Debug
+    
     if (event.data.type === 'PIX_DATA') {
         showPixModal(event.data.data);
     } 
-    // Listener existente para PIX_ERROR
     else if (event.data.type === 'PIX_ERROR') {
         showNotification('Erro ao gerar PIX: ' + event.data.error);
     }
-    // Novo listener para pagamento confirmado
-    else if (event.data.type === 'order.paid') {
+    // Modificado para charge.paid
+    else if (event.data.type === 'charge.paid' && event.data.data.charges[0].status === 'paid') {
+        console.log('Pagamento PIX confirmado:', event.data); // Debug
         handlePixPaymentSuccess(event.data.data);
-        showNotification('Pagamento confirmado! Redirecionando...');
+        showNotification('Pagamento confirmado! Finalizando pedido...');
     }
 });
    
@@ -6878,7 +6878,7 @@ function handlePixPayment(orderData) {
     // Abrir janela do PIX
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = 'https://script.google.com/macros/s/AKfycbxny6WRr7KWgZUY0vMYKb6BIs2lGA_vQCso1cJkPTqVGXij3qSZnHQQbP8CH3OjaeEcDg/exec';
+    form.action = 'https://script.google.com/macros/s/AKfycbyXpOn7sg0UXYjlkqmfKSTCoGQKufcVcL26cOwMJzPwxjtQG6tYMuPZGyXHE5F9zxhQOQ/exec';
     form.target = '_blank';
 
     // Adicionar campos ao formulário
@@ -7017,13 +7017,6 @@ function startPixTimer() {
     <input type="radio" id="paymentPix" name="paymentMethod" value="pix" data-requires-pix="true">
     <label for="paymentPix"><i class="fas fa-qrcode"></i> PIX</label>
 </div>
-<script>
-document.getElementById('paymentPix').addEventListener('change', function() {
-    if(this.checked) {
-        document.getElementById('pixInfo').style.display = 'block';
-    }
-});
-</script>
 </div>
 
 <div id="changeContainer" style="display: none;">
