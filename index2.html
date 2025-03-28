@@ -5270,7 +5270,7 @@ async function submitOrder() {
         const complement = document.getElementById('complement').value;
         const zipCode = document.getElementById('zipCode').value;
         const notes = document.getElementById('notes').value;
-        const selectedPaymentMethod = form.querySelector('input[name="paymentMethod"]:checked')?.value || 'money';
+        const paymentType = form.querySelector('input[name="paymentMethod"]:checked')?.value || 'money';
 
         
         // Validar campos obrigatórios
@@ -5396,16 +5396,16 @@ if (paymentMethod === 'pix') {  // Removi o || paymentMethod === 'online'
         message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
         message += `*Total: R$ ${total.toFixed(2)}*\n\n`;
         
-        // Pagamento
-        message += `*💳 Forma de Pagamento:* ${paymentMethodMap[selectedPaymentMethod]}\n`;
-        
-        // Se for dinheiro, verificar troco
-        if (selectedPaymentMethod === 'money') {
-            const changeAmount = document.getElementById('changeAmount')?.value;
-            if (changeAmount) {
-                message += `Troco para: R$ ${changeAmount}\n`;
-            }
-        }
+// Pagamento
+message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentType]}\n`;
+
+// Se for dinheiro, verificar troco
+if (paymentType === 'money') {
+    const changeAmount = document.getElementById('changeAmount')?.value;
+    if (changeAmount) {
+        message += `Troco para: R$ ${changeAmount}\n`;
+    }
+}
         
         // Observações
         if (notes?.trim()) {
