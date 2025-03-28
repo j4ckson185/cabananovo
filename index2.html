@@ -6882,21 +6882,30 @@ function startPixTimer() {
             <label for="orderDetails">Itens do Pedido</label>
             <textarea id="orderDetails" readonly></textarea>
             
-            <!-- Método de Pagamento -->
-            <label>Forma de Pagamento*</label>
+<!-- Método de Pagamento -->
+<label>Forma de Pagamento*</label>
 <div class="payment-group">
     <div class="payment-option">
         <input type="radio" id="paymentMoney" name="paymentMethod" value="money" required>
-        <label for="paymentMoney">Dinheiro</label>
+        <label for="paymentMoney"><i class="fas fa-money-bill"></i> Dinheiro</label>
     </div>
     <div class="payment-option">
         <input type="radio" id="paymentCard" name="paymentMethod" value="card">
-        <label for="paymentCard">Cartão</label>
+        <label for="paymentCard"><i class="fas fa-credit-card"></i> Cartão</label>
     </div>
     <div class="payment-option">
         <input type="radio" id="paymentPix" name="paymentMethod" value="pix" data-requires-pix="true">
-        <label for="paymentPix">PIX</label>
+        <label for="paymentPix"><i class="fas fa-qrcode"></i> PIX</label>
     </div>
+</div>
+
+<div id="changeContainer" style="display: none;">
+    <label>Troco para quanto?</label>
+    <input type="number" id="changeAmount" step="0.01">
+</div>
+
+<div id="pixInfo" style="display: none;">
+    <p>Após clicar em "Finalizar Pedido", você receberá o QR Code do PIX</p>
 </div>
             
             <label for="notes">Observações</label>
