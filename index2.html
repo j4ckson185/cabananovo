@@ -5192,23 +5192,26 @@ function setupPaymentEvents() {
     
 async function submitOrder() {
     try {
-        // Modificar esta linha para usar let ao invés de const
-        let paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
-        console.log('Método de pagamento selecionado:', paymentMethod); // Debug
+        const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+        console.log('Método de pagamento selecionado:', selectedPaymentMethod); // Debug
 
         // Se for PIX, trata separadamente
-        if (paymentMethod === 'pix') {
+        if (selectedPaymentMethod === 'pix') {
             console.log('Iniciando fluxo de PIX...'); // Debug
             
             // Obter dados do formulário
             const customerName = document.getElementById('customerName').value;
+            console.log('Nome do cliente:', customerName); // Debug
+            
             const customerPhone = document.getElementById('customerPhone').value.replace(/\D/g, '');
+            console.log('Telefone do cliente:', customerPhone); // Debug
             
             // Calcular total
             const subtotal = cart.reduce((total, item) => total + item.price, 0);
             const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
             const deliveryFee = 3.00;
             const total = subtotal - discount + deliveryFee;
+            console.log('Total calculado:', total); // Debug
 
             // Preparar dados do pedido
             const orderData = {
@@ -5219,8 +5222,9 @@ async function submitOrder() {
                 }
             };
 
+            console.log('Dados do pedido para PIX:', orderData); // Debug
             handlePixPayment(orderData);
-            return; // Importante: retornar aqui para não continuar com o fluxo normal
+            return;
         }
         
           // Modificar o botão para "Aguarde..."
