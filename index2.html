@@ -6878,7 +6878,7 @@ function handlePixPayment(orderData) {
     // Abrir janela do PIX
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = 'https://script.google.com/macros/s/AKfycbzGaeyidzCgeDNmMbIb2zk0Q8N0wnuo1NmMhUPeaan4O2Q356vkM2yCpa9Z5LaPu-zXBA/exec';
+    form.action = 'https://script.google.com/macros/s/AKfycbxny6WRr7KWgZUY0vMYKb6BIs2lGA_vQCso1cJkPTqVGXij3qSZnHQQbP8CH3OjaeEcDg/exec';
     form.target = '_blank';
 
     // Adicionar campos ao formulário
@@ -7013,6 +7013,17 @@ function startPixTimer() {
         <input type="radio" id="paymentPix" name="paymentMethod" value="pix" data-requires-pix="true">
         <label for="paymentPix"><i class="fas fa-qrcode"></i> PIX</label>
     </div>
+    <div class="payment-option">
+    <input type="radio" id="paymentPix" name="paymentMethod" value="pix" data-requires-pix="true">
+    <label for="paymentPix"><i class="fas fa-qrcode"></i> PIX</label>
+</div>
+<script>
+document.getElementById('paymentPix').addEventListener('change', function() {
+    if(this.checked) {
+        document.getElementById('pixInfo').style.display = 'block';
+    }
+});
+</script>
 </div>
 
 <div id="changeContainer" style="display: none;">
