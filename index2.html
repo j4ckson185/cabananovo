@@ -5234,10 +5234,10 @@ async function submitOrder() {
             return;
         }
 
-      // Dentro da função submitOrder, após a verificação dos campos obrigatórios
-const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+// Dentro da função submitOrder, após a verificação dos campos obrigatórios
+paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
 
-if (paymentMethod === 'pix' || paymentMethod === 'online') {
+if (paymentMethod === 'pix') {  // Removi o || paymentMethod === 'online'
     // Preparar dados do pedido para o PIX
     const orderData = {
         total: total, // Use o total calculado do seu pedido
