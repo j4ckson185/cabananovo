@@ -434,7 +434,7 @@
             
             // URL da API do Google Apps Script publicada como aplicativo da web
             // SUBSTITUA ESTA URL pela URL do seu Apps Script publicado
-            const API_URL = 'https://script.google.com/macros/s/AKfycbz71ZIgbItrk4nu-FKvrHZaOoAeUYgYjcT68McQY2xbGS_IRUtQAs_epXl-FvDnOJ8Y0A/exec';
+            const API_URL = 'https://script.google.com/macros/s/AKfycbzl-WGgOQvRt1FWODlDrph5doNQFp2bq5ZD8IGyaty8SxTgRPSdDbRsE9CvQiyD5h_kZw/exec';
             
             // Informações sobre os status
             const statusInfo = {
@@ -470,59 +470,65 @@
                 }
             };
 
-async function getOrderStatus(orderId) {
-    return new Promise((resolve, reject) => {
-        try {
-            // Remover zeros à esquerda do orderId
-            const cleanId = orderId.replace(/^0+/, '');
-            
-            // Criar iframe oculto
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            document.body.appendChild(iframe);
-            
-            // Definir handler para mensagem
-            const messageHandler = function(event) {
-                // Verificar origem da mensagem (opcional)
-                // if (event.origin !== "https://script.google.com") return;
-                
-                // Remover iframe após receber resposta
-                document.body.removeChild(iframe);
-                window.removeEventListener('message', messageHandler);
-                
-                // Processar dados
-                const data = event.data;
-                if (!data.status || data.status === 'Não Encontrado') {
-                    reject(new Error('Pedido não encontrado. Verifique o número e tente novamente.'));
-                } else {
-                    resolve({
-                        orderId: orderId,
-                        status: data.status
-                    });
-                }
-            };
-            
-            // Adicionar listener para receber mensagem
-            window.addEventListener('message', messageHandler, false);
-            
-            // Definir timeout (10 segundos)
-            const timeoutId = setTimeout(() => {
-                if (document.body.contains(iframe)) {
-                    document.body.removeChild(iframe);
-                    window.removeEventListener('message', messageHandler);
-                    reject(new Error('Tempo esgotado. Tente novamente mais tarde.'));
-                }
-            }, 10000);
-            
-            // Carregar URL no iframe
-            iframe.src = `${API_URL}?action=checkStatus&orderId=${cleanId}`;
-            
-        } catch (error) {
-            console.error('Erro ao buscar status:', error);
-            reject(error);
-        }
-    });
-}
+            // Função para buscar o status do pedido via JSONP
+            function getOrderStatus(orderId) {
+                return new Promise((resolve, reject) => {
+                    // Remover zeros à esquerda do orderId
+                    const cleanId = orderId.replace(/^0+/, '');
+                    
+                    // Criar nome único para callback
+                    const callbackName = 'jsonpCallback_' + Math.round(Math.random() * 10000000);
+                    
+                    // Definir timeout
+                    let timeoutId = setTimeout(function() {
+                        if (window[callbackName]) {
+                            delete window[callbackName];
+                            if (document.head.contains(script)) {
+                                document.head.removeChild(script);
+                            }
+                            reject(new Error('Tempo esgotado. Tente novamente mais tarde.'));
+                        }
+                    }, 10000);
+                    
+                    // Adicionar função callback ao objeto window
+                    window[callbackName] = function(data) {
+                        // Limpar timeout
+                        clearTimeout(timeoutId);
+                        
+                        // Limpar script após execução
+                        if (document.head.contains(script)) {
+                            document.head.removeChild(script);
+                        }
+                        delete window[callbackName];
+                        
+                        if (!data.status || data.status === 'Não Encontrado') {
+                            reject(new Error('Pedido não encontrado. Verifique o número e tente novamente.'));
+                        } else {
+                            resolve({
+                                orderId: orderId,
+                                status: data.status
+                            });
+                        }
+                    };
+                    
+                    // Criar elemento script
+                    const script = document.createElement('script');
+                    script.src = `${API_URL}?action=checkStatus&orderId=${cleanId}&callback=${callbackName}`;
+                    
+                    // Adicionar tratamento de erro
+                    script.onerror = function() {
+                        clearTimeout(timeoutId);
+                        if (document.head.contains(script)) {
+                            document.head.removeChild(script);
+                        }
+                        delete window[callbackName];
+                        reject(new Error('Falha ao consultar o pedido. Tente novamente mais tarde.'));
+                    };
+                    
+                    // Adicionar script à página
+                    document.head.appendChild(script);
+                });
+            }
 
             // Função para atualizar a timeline baseada no status
             function updateTimeline(status) {
@@ -618,6 +624,7 @@ async function getOrderStatus(orderId) {
                     results.style.display = "block";
                     
                 } catch (error) {
+                    console.error('Erro:', error);
                     // Exibir mensagem de erro
                     errorMessage.textContent = error.message;
                     errorMessage.style.display = "block";
