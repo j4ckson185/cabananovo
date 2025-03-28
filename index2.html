@@ -2262,6 +2262,137 @@ document.head.appendChild(style);
     display: none !important;
 }
 
+Sim, vamos adicionar o CSS necessário. Localize a tag <style> do seu HTML e adicione estas novas classes ao final (antes do último }):
+cssCopiar/* Estilos para o modal de PIX */
+.pix-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(16, 0, 43, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 2000;
+}
+
+.pix-modal-content {
+    background: var(--surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    margin: 20px auto;
+    padding: 2rem;
+    position: relative;
+    overflow-y: auto;
+    animation: modalSlide 0.3s ease;
+}
+
+.pix-qr-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+}
+
+.pix-qr-container img {
+    max-width: 200px;
+    margin-bottom: 1rem;
+    border-radius: 10px;
+}
+
+.pix-code-container {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 1rem;
+    margin: 1rem 0;
+    position: relative;
+    word-break: break-all;
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.pix-copy-button {
+    background: var(--gradient);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.pix-copy-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
+}
+
+.pix-timer {
+    text-align: center;
+    margin: 1.5rem 0;
+    color: var(--accent);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.pix-instructions {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.pix-instructions h3 {
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.pix-instructions ol {
+    color: var(--text);
+    margin-left: 1.5rem;
+}
+
+.pix-instructions li {
+    margin-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .pix-modal-content {
+        width: 95%;
+        margin: 10px auto;
+        padding: 1.5rem;
+    }
+
+    .pix-qr-container img {
+        max-width: 180px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pix-modal-content {
+        padding: 1rem;
+    }
+
+    .pix-qr-container {
+        padding: 1rem;
+    }
+
+    .pix-qr-container img {
+        max-width: 150px;
+    }
+}
+
 </style>
 </head>
 <body>
@@ -5103,6 +5234,23 @@ async function submitOrder() {
             return;
         }
 
+      // Dentro da função submitOrder, após a verificação dos campos obrigatórios
+const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+
+if (paymentMethod === 'pix' || paymentMethod === 'online') {
+    // Preparar dados do pedido para o PIX
+    const orderData = {
+        total: total, // Use o total calculado do seu pedido
+        customer: {
+            customerName: document.getElementById('customerName').value,
+            customerPhone: document.getElementById('customerPhone').value.replace(/\D/g, '')
+        }
+    };
+    
+    handlePixPayment(orderData);
+    return; // Retorna aqui pois o fluxo do PIX é diferente
+}
+
         // Calcular valores
         const subtotal = cart.reduce((total, item) => total + item.price, 0);
         const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
@@ -5738,6 +5886,15 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.removeItem('cartTimestamp');
     localStorage.removeItem('orderCompleted');
     console.log('LocalStorage limpo');
+
+    // Adicionar no início do seu DOMContentLoaded ou onde você inicializa seus eventos
+window.addEventListener('message', function(event) {
+    if (event.data.type === 'PIX_DATA') {
+        showPixModal(event.data.data);
+    } else if (event.data.type === 'PIX_ERROR') {
+        showNotification('Erro ao gerar PIX: ' + event.data.error);
+    }
+});
    
     console.log('DOM Carregado'); // Log para diagnóstico
 
@@ -6514,6 +6671,101 @@ async function updateSMSStatus(phone, type) {
     await recordAbandonedCart(data);
 }
 
+function handlePixPayment(orderData) {
+    // Dados do cliente pré-definidos
+    const pixData = {
+        amount: orderData.total,
+        description: "Pedido Cabana Açaí",
+        customer_name: orderData.customer.customerName,
+        customer_email: "cliente@cabanaacai.com.br", // Email pré-definido
+        customer_document: "00000000000", // CPF pré-definido
+        customer_area_code: orderData.customer.customerPhone.substring(0, 2),
+        customer_phone: orderData.customer.customerPhone.substring(2)
+    };
+
+    // Abrir nova janela para o pagamento PIX
+    const pixWindow = window.open('', '_blank');
+    
+    // Enviar dados para o Google Apps Script
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'https://script.google.com/macros/s/AKfycbyXjMw9oD9AmUCQONJwJgRjDW1lFculi56beKNKqGTXaORFcvk91k0bQqOFTjjPdBSMxg/exec';
+    form.target = '_blank';
+
+    // Adicionar campos ao formulário
+    Object.entries(pixData).forEach(([key, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+    });
+
+    // Adicionar formulário ao documento, enviar e remover
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+}
+
+// Função para mostrar o modal do PIX
+function showPixModal(pixData) {
+    const modal = document.getElementById('pixModal');
+    const qrCode = document.getElementById('pixQrCode');
+    const pixCode = document.getElementById('pixCode');
+    
+    // Atualizar dados do PIX
+    qrCode.src = pixData.qr_code_url;
+    pixCode.textContent = pixData.qr_code;
+    
+    // Mostrar modal
+    modal.style.display = 'block';
+    
+    // Iniciar timer
+    startPixTimer();
+}
+
+// Função para copiar o código PIX
+function copyPixCode() {
+    const pixCode = document.getElementById('pixCode');
+    const codeText = pixCode.textContent;
+    
+    navigator.clipboard.writeText(codeText)
+        .then(() => {
+            const copyButton = document.querySelector('.pix-copy-button');
+            const originalText = copyButton.innerHTML;
+            copyButton.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+            
+            setTimeout(() => {
+                copyButton.innerHTML = originalText;
+            }, 2000);
+        })
+        .catch(err => {
+            console.error('Erro ao copiar código:', err);
+            showNotification('Erro ao copiar código. Tente copiar manualmente.');
+        });
+}
+
+// Função para iniciar o timer do PIX
+function startPixTimer() {
+    let timeLeft = 3600; // 1 hora em segundos
+    const timerElement = document.getElementById('pixTimer');
+    
+    const timer = setInterval(() => {
+        timeLeft--;
+        
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        
+        timerElement.textContent = `Expira em: ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            timerElement.textContent = 'Expirado';
+            timerElement.style.color = 'var(--error)';
+        }
+    }, 1000);
+}
+
 </script>
 <<!-- Modal para Criar Novo Pedido -->
 <!-- Modal para Criar Novo Pedido -->
@@ -6556,20 +6808,20 @@ async function updateSMSStatus(phone, type) {
             
             <!-- Método de Pagamento -->
             <label>Forma de Pagamento*</label>
-            <div class="payment-group">
-                <div class="payment-option">
-                    <input type="radio" id="paymentMoney" name="paymentMethod" value="money" required>
-                    <label for="paymentMoney">Dinheiro</label>
-                </div>
-                <div class="payment-option">
-                    <input type="radio" id="paymentCard" name="paymentMethod" value="card">
-                    <label for="paymentCard">Cartão</label>
-                </div>
-                <div class="payment-option">
-                    <input type="radio" id="paymentOnline" name="paymentMethod" value="online">
-                    <label for="paymentOnline">PIX</label>
-                </div>
-            </div>
+<div class="payment-group">
+    <div class="payment-option">
+        <input type="radio" id="paymentMoney" name="paymentMethod" value="money" required>
+        <label for="paymentMoney">Dinheiro</label>
+    </div>
+    <div class="payment-option">
+        <input type="radio" id="paymentCard" name="paymentMethod" value="card">
+        <label for="paymentCard">Cartão</label>
+    </div>
+    <div class="payment-option">
+        <input type="radio" id="paymentPix" name="paymentMethod" value="pix" data-requires-pix="true">
+        <label for="paymentPix">PIX</label>
+    </div>
+</div>
             
             <label for="notes">Observações</label>
             <textarea id="notes" placeholder="Alguma observação sobre seu pedido?"></textarea>
@@ -6623,6 +6875,48 @@ async function updateSMSStatus(phone, type) {
         <button class="send-button" onclick="sendMessage()">
             <i class="fas fa-paper-plane"></i>
         </button>
+    </div>
+</div>
+
+    <!-- Modal do PIX -->
+<div class="modal" id="pixModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Pagamento via PIX</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        
+        <div class="pix-qr-container">
+            <img id="pixQrCode" src="" alt="QR Code PIX">
+            <p>Escaneie o QR Code com o app do seu banco</p>
+        </div>
+
+        <div class="pix-code-container">
+            <p style="margin-bottom: 0.5rem;">Ou copie o código PIX:</p>
+            <div id="pixCode" style="word-break: break-all;"></div>
+            <button class="pix-copy-button" onclick="copyPixCode()">
+                <i class="fas fa-copy"></i> Copiar Código
+            </button>
+        </div>
+
+        <div class="pix-timer">
+            <i class="fas fa-clock"></i>
+            <span id="pixTimer">Expira em: 60:00</span>
+        </div>
+
+        <div class="pix-instructions">
+            <h3>Como pagar:</h3>
+            <ol>
+                <li>Abra o app do seu banco</li>
+                <li>Escolha a opção "Pagar com PIX"</li>
+                <li>Escaneie o QR Code ou cole o código copiado</li>
+                <li>Confirme as informações e finalize o pagamento</li>
+            </ol>
+        </div>
+        
+        <p style="text-align: center; color: var(--text); margin-top: 1rem;">
+            Após o pagamento, você receberá a confirmação automaticamente.
+        </p>
     </div>
 </div>
 </body>
