@@ -6855,13 +6855,8 @@ async function updateSMSStatus(phone, type) {
 }
 
 function handlePixPayment(orderData) {
-    showNotification('Gerando QR Code do PIX...'); // Adicione esta linha
-    
     console.log('Iniciando pagamento PIX...', orderData); // Debug
 
-    // Calcular valor em centavos
-    const amountInCents = Math.round(orderData.total * 100);
-    
     // Dados para o PIX
     const pixData = {
         amount: orderData.total,
@@ -6873,12 +6868,12 @@ function handlePixPayment(orderData) {
         customer_phone: orderData.customer.customerPhone.substring(2)
     };
 
-    console.log('Dados do PIX:', pixData); // Debug
+    console.log('Dados do PIX formatados:', pixData); // Debug
 
     // Abrir janela do PIX
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = 'https://script.google.com/macros/s/AKfycbyXpOn7sg0UXYjlkqmfKSTCoGQKufcVcL26cOwMJzPwxjtQG6tYMuPZGyXHE5F9zxhQOQ/exec';
+    form.action = 'https://script.google.com/macros/s/AKfycbwy2aGb9ORwq-bC_Y-mzKsY98AsTS9CaUwehVGbDHM-TmT5PK-glBrD3i26x-7fMObmzg/exec';
     form.target = '_blank';
 
     // Adicionar campos ao formulário
@@ -6888,15 +6883,13 @@ function handlePixPayment(orderData) {
         input.name = key;
         input.value = value;
         form.appendChild(input);
-        console.log(`Adicionando campo ${key}:`, value); // Debug
+        console.log(`Campo do formulário ${key}:`, value); // Debug
     });
 
-    // Adicionar formulário ao documento e enviar
     document.body.appendChild(form);
+    console.log('Formulário criado:', form); // Debug
     form.submit();
     document.body.removeChild(form);
-
-    console.log('Formulário PIX enviado'); // Debug
 }
 
 // Função para mostrar o modal do PIX
@@ -7013,13 +7006,7 @@ function startPixTimer() {
         <input type="radio" id="paymentPix" name="paymentMethod" value="pix" data-requires-pix="true">
         <label for="paymentPix"><i class="fas fa-qrcode"></i> PIX</label>
     </div>
-    <div class="payment-option">
-    <input type="radio" id="paymentPix" name="paymentMethod" value="pix" data-requires-pix="true">
-    <label for="paymentPix"><i class="fas fa-qrcode"></i> PIX</label>
-</div>
-</div>
-
-<div id="changeContainer" style="display: none;">
+    <div id="changeContainer" style="display: none;">
     <label>Troco para quanto?</label>
     <input type="number" id="changeAmount" step="0.01">
 </div>
@@ -7034,9 +7021,7 @@ function startPixTimer() {
             <li>Escaneie ou copie o código usando seu app bancário</li>
             <li>Após o pagamento, seu pedido será confirmado automaticamente</li>
         </ol>
-    </div>
-</div>
-            
+</div>      
             <label for="notes">Observações</label>
             <textarea id="notes" placeholder="Alguma observação sobre seu pedido?"></textarea>
             
