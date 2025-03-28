@@ -5266,7 +5266,8 @@ async function submitOrder() {
         const complement = document.getElementById('complement').value;
         const zipCode = document.getElementById('zipCode').value;
         const notes = document.getElementById('notes').value;
-        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'money';
+        const selectedPaymentMethod = form.querySelector('input[name="paymentMethod"]:checked')?.value || 'money';
+
         
         // Validar campos obrigatórios
         if (!customerName || !customerPhone || !street || !streetNumber || !neighborhood || !zipCode) {
@@ -5392,10 +5393,10 @@ if (paymentMethod === 'pix') {  // Removi o || paymentMethod === 'online'
         message += `*Total: R$ ${total.toFixed(2)}*\n\n`;
         
         // Pagamento
-        message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod]}\n`;
+        message += `*💳 Forma de Pagamento:* ${paymentMethodMap[selectedPaymentMethod]}\n`;
         
         // Se for dinheiro, verificar troco
-        if (paymentMethod === 'money') {
+        if (selectedPaymentMethod === 'money') {
             const changeAmount = document.getElementById('changeAmount')?.value;
             if (changeAmount) {
                 message += `Troco para: R$ ${changeAmount}\n`;
