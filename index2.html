@@ -6741,6 +6741,8 @@ async function updateSMSStatus(phone, type) {
 }
 
 function handlePixPayment(orderData) {
+    showNotification('Gerando QR Code do PIX...'); // Adicione esta linha
+    
     console.log('Iniciando pagamento PIX...', orderData); // Debug
 
     // Calcular valor em centavos
@@ -6762,7 +6764,7 @@ function handlePixPayment(orderData) {
     // Abrir janela do PIX
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = 'https://script.google.com/macros/s/AKfycbyXjMw9oD9AmUCQONJwJgRjDW1lFculi56beKNKqGTXaORFcvk91k0bQqOFTjjPdBSMxg/exec';
+    form.action = 'https://script.google.com/macros/s/AKfycbzU2P8u2IZ11pVtauvbxuM3DEi64zD_-zGh9EKEtNGRuv0VK8iCBJc56PRIz3rGwOfl-A/exec';
     form.target = '_blank';
 
     // Adicionar campos ao formulário
