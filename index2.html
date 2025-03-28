@@ -2393,6 +2393,46 @@ cssCopiar/* Estilos para o modal de PIX */
     }
 }
 
+.pix-info-box {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    animation: fadeIn 0.3s ease;
+}
+
+.pix-info-content {
+    text-align: center;
+}
+
+.pix-info-content h3 {
+    color: white;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.pix-info-content p {
+    color: var(--text);
+    margin-bottom: 1rem;
+}
+
+.pix-info-content ol {
+    text-align: left;
+    color: var(--text);
+    padding-left: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.pix-info-content ol li {
+    margin-bottom: 0.8rem;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 </style>
 </head>
 <body>
@@ -6764,7 +6804,7 @@ function handlePixPayment(orderData) {
     // Abrir janela do PIX
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = 'https://script.google.com/macros/s/AKfycbzU2P8u2IZ11pVtauvbxuM3DEi64zD_-zGh9EKEtNGRuv0VK8iCBJc56PRIz3rGwOfl-A/exec';
+    form.action = 'https://script.google.com/macros/s/AKfycbyWUd9z3fWdqgiIQpIFM-7EgTEZJadu6bhldjNx6q20IsrO6WZbHLrkjKOHISCmmqD8HA/exec';
     form.target = '_blank';
 
     // Adicionar campos ao formulário
@@ -6906,8 +6946,17 @@ function startPixTimer() {
     <input type="number" id="changeAmount" step="0.01">
 </div>
 
-<div id="pixInfo" style="display: none;">
-    <p>Após clicar em "Finalizar Pedido", você receberá o QR Code do PIX</p>
+<div id="pixInfo" style="display: none;" class="pix-info-box">
+    <div class="pix-info-content">
+        <i class="fas fa-qrcode" style="font-size: 2rem; color: var(--accent); margin-bottom: 1rem;"></i>
+        <h3>Pagamento via PIX</h3>
+        <p>Ao clicar em "Finalizar Pedido":</p>
+        <ol>
+            <li>Uma nova janela abrirá com o QR Code do PIX</li>
+            <li>Escaneie ou copie o código usando seu app bancário</li>
+            <li>Após o pagamento, seu pedido será confirmado automaticamente</li>
+        </ol>
+    </div>
 </div>
             
             <label for="notes">Observações</label>
