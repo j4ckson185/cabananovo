@@ -434,7 +434,7 @@
             
             // URL da API do Google Apps Script publicada como aplicativo da web
             // SUBSTITUA ESTA URL pela URL do seu Apps Script publicado
-            const API_URL = 'https://script.google.com/macros/s/AKfycbz8SZnmv8-B-ddjYsYqF58OEvi0X-b8dBGSvRpuDwcAsX_Fn00l0QXm4HTyoB2yXWgjYQ/exec';
+            const API_URL = 'https://script.google.com/macros/s/AKfycbywj83AiB8ShuHrhg2OdTIl8Xn9nhhxg6TbpU64mWE60gs6qNOmlw-4WhklfmoZuaBYcg/exec';
             
             // Informações sobre os status
             const statusInfo = {
@@ -470,34 +470,45 @@
                 }
             };
 
-            // Função para buscar o status do pedido via API
-            async function getOrderStatus(orderId) {
-                try {
-                    // Remover zeros à esquerda do orderId
-                    const cleanId = orderId.replace(/^0+/, '');
-                    
-                    // Fazer a requisição para a API
-                    const response = await fetch(`${API_URL}?action=checkStatus&orderId=${cleanId}`);
-                    
-                    if (!response.ok) {
-                        throw new Error('Falha ao consultar o pedido. Tente novamente mais tarde.');
-                    }
-                    
-                    const data = await response.json();
-                    
-                    if (!data.status || data.status === 'Não Encontrado') {
-                        throw new Error('Pedido não encontrado. Verifique o número e tente novamente.');
-                    }
-                    
-                    return {
-                        orderId: orderId,
-                        status: data.status
-                    };
-                } catch (error) {
-                    console.error('Erro ao buscar status:', error);
-                    throw error;
-                }
+function getOrderStatus(orderId) {
+    return new Promise((resolve, reject) => {
+        // Remover zeros à esquerda do orderId
+        const cleanId = orderId.replace(/^0+/, '');
+        
+        // Criar uma função de callback única
+        const callbackName = 'jsonpCallback_' + Math.round(Math.random() * 10000000);
+        
+        // Adicionar a função callback ao objeto window
+        window[callbackName] = function(data) {
+            // Limpar o script após a execução
+            document.head.removeChild(script);
+            delete window[callbackName];
+            
+            if (!data.status || data.status === 'Não Encontrado') {
+                reject(new Error('Pedido não encontrado. Verifique o número e tente novamente.'));
+            } else {
+                resolve({
+                    orderId: orderId,
+                    status: data.status
+                });
             }
+        };
+        
+        // Criar elemento script
+        const script = document.createElement('script');
+        script.src = `${API_URL}?action=checkStatus&orderId=${cleanId}&callback=${callbackName}`;
+        
+        // Adicionar tratamento de erro
+        script.onerror = function() {
+            document.head.removeChild(script);
+            delete window[callbackName];
+            reject(new Error('Falha ao consultar o pedido. Tente novamente mais tarde.'));
+        };
+        
+        // Adicionar script ao cabeçalho
+        document.head.appendChild(script);
+    });
+}
 
             // Função para atualizar a timeline baseada no status
             function updateTimeline(status) {
