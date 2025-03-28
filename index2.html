@@ -5192,7 +5192,8 @@ function setupPaymentEvents() {
     
 async function submitOrder() {
     try {
-        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+        // Modificar esta linha para usar let ao invés de const
+        let paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
         console.log('Método de pagamento selecionado:', paymentMethod); // Debug
 
         // Se for PIX, trata separadamente
