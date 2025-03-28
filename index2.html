@@ -5191,7 +5191,37 @@ function setupPaymentEvents() {
 }
     
 async function submitOrder() {
-  try {
+    try {
+        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+        console.log('Método de pagamento selecionado:', paymentMethod); // Debug
+
+        // Se for PIX, trata separadamente
+        if (paymentMethod === 'pix') {
+            console.log('Iniciando fluxo de PIX...'); // Debug
+            
+            // Obter dados do formulário
+            const customerName = document.getElementById('customerName').value;
+            const customerPhone = document.getElementById('customerPhone').value.replace(/\D/g, '');
+            
+            // Calcular total
+            const subtotal = cart.reduce((total, item) => total + item.price, 0);
+            const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+            const deliveryFee = 3.00;
+            const total = subtotal - discount + deliveryFee;
+
+            // Preparar dados do pedido
+            const orderData = {
+                total: total,
+                customer: {
+                    customerName: customerName,
+                    customerPhone: customerPhone
+                }
+            };
+
+            handlePixPayment(orderData);
+            return; // Importante: retornar aqui para não continuar com o fluxo normal
+        }
+        
           // Modificar o botão para "Aguarde..."
     const submitButton = document.querySelector('#createOrderForm button[type="button"]');
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aguarde...';
@@ -5453,6 +5483,26 @@ submitOrder = async function(...args) {
     // Continuar com o envio normal do pedido
     return originalSubmitOrder.apply(this, args);
 };
+
+function setupPaymentEvents() {
+    // Código existente do setupPaymentEvents aqui...
+
+    // Adicionar novo listener para opção de PIX
+    const pixRadio = document.getElementById('paymentPix');
+    if (pixRadio) {
+        pixRadio.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                // Esconde container de troco se estiver visível
+                const changeContainer = document.getElementById('changeContainer');
+                if (changeContainer) changeContainer.style.display = 'none';
+                
+                // Limpa campo de notas
+                const notes = document.getElementById('notes');
+                if (notes) notes.value = '';
+            }
+        });
+    }
+}
     
 function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     const paymentMethodMap = {
@@ -5896,11 +5946,15 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.removeItem('orderCompleted');
     console.log('LocalStorage limpo');
 
-    // Adicionar no início do seu DOMContentLoaded ou onde você inicializa seus eventos
+// Atualizar o listener de mensagens para incluir mais logs
 window.addEventListener('message', function(event) {
+    console.log('Mensagem recebida:', event.data); // Debug
+    
     if (event.data.type === 'PIX_DATA') {
+        console.log('Dados do PIX recebidos:', event.data.data); // Debug
         showPixModal(event.data.data);
     } else if (event.data.type === 'PIX_ERROR') {
+        console.error('Erro do PIX:', event.data.error); // Debug
         showNotification('Erro ao gerar PIX: ' + event.data.error);
     }
 });
@@ -6681,21 +6735,25 @@ async function updateSMSStatus(phone, type) {
 }
 
 function handlePixPayment(orderData) {
-    // Dados do cliente pré-definidos
+    console.log('Iniciando pagamento PIX...', orderData); // Debug
+
+    // Calcular valor em centavos
+    const amountInCents = Math.round(orderData.total * 100);
+    
+    // Dados para o PIX
     const pixData = {
         amount: orderData.total,
-        description: "Pedido Cabana Açaí",
+        description: `Pedido Cabana Açaí - ${orderData.customer.customerName}`,
         customer_name: orderData.customer.customerName,
-        customer_email: "cliente@cabanaacai.com.br", // Email pré-definido
-        customer_document: "00000000000", // CPF pré-definido
+        customer_email: "cliente@cabanaacai.com.br",
+        customer_document: "00000000000",
         customer_area_code: orderData.customer.customerPhone.substring(0, 2),
         customer_phone: orderData.customer.customerPhone.substring(2)
     };
 
-    // Abrir nova janela para o pagamento PIX
-    const pixWindow = window.open('', '_blank');
-    
-    // Enviar dados para o Google Apps Script
+    console.log('Dados do PIX:', pixData); // Debug
+
+    // Abrir janela do PIX
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = 'https://script.google.com/macros/s/AKfycbyXjMw9oD9AmUCQONJwJgRjDW1lFculi56beKNKqGTXaORFcvk91k0bQqOFTjjPdBSMxg/exec';
@@ -6708,12 +6766,15 @@ function handlePixPayment(orderData) {
         input.name = key;
         input.value = value;
         form.appendChild(input);
+        console.log(`Adicionando campo ${key}:`, value); // Debug
     });
 
-    // Adicionar formulário ao documento, enviar e remover
+    // Adicionar formulário ao documento e enviar
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
+
+    console.log('Formulário PIX enviado'); // Debug
 }
 
 // Função para mostrar o modal do PIX
