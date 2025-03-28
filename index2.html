@@ -5196,37 +5196,43 @@ function formatOrderForWhatsApp() {
     
 function setupPaymentEvents() {
     const moneyRadio = document.getElementById('paymentMoney');
-    const changeInput = document.createElement('div');
-    changeInput.innerHTML = `
-        <div id="changeContainer" style="display: none; margin-top: 10px;">
-            <label>Troco para quanto?</label>
-            <input type="number" id="changeAmount" step="0.01">
-        </div>
-    `;
-    
-    moneyRadio.closest('div').appendChild(changeInput);
-    
-    document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            const changeContainer = document.getElementById('changeContainer');
-            const changeAmount = document.getElementById('changeAmount');
-            const notes = document.getElementById('notes');
-            
-            if (e.target.value === 'money') {
+    const pixRadio = document.getElementById('paymentPix');
+    const changeContainer = document.getElementById('changeContainer');
+    const pixInfo = document.getElementById('pixInfo');
+    const notes = document.getElementById('notes');
+
+    // Listener para opção de dinheiro
+    if (moneyRadio) {
+        moneyRadio.addEventListener('change', (e) => {
+            if (e.target.checked) {
                 changeContainer.style.display = 'block';
-                
-                changeAmount.addEventListener('change', () => {
-                    if (changeAmount.value) {
-                        notes.value = `Troco para R$ ${changeAmount.value}`;
-                    } else {
-                        notes.value = '';
-                    }
-                });
-            } else {
+                pixInfo.style.display = 'none';
+            }
+        });
+    }
+
+    // Listener para opção de PIX
+    if (pixRadio) {
+        pixRadio.addEventListener('change', (e) => {
+            if (e.target.checked) {
                 changeContainer.style.display = 'none';
+                pixInfo.style.display = 'block';
                 notes.value = '';
             }
         });
+    }
+
+    // Listener para outras opções de pagamento
+    document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+        if (radio.id !== 'paymentMoney' && radio.id !== 'paymentPix') {
+            radio.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    changeContainer.style.display = 'none';
+                    pixInfo.style.display = 'none';
+                    notes.value = '';
+                }
+            });
+        }
     });
 }
     
@@ -5547,6 +5553,70 @@ function setupPaymentEvents() {
                 if (notes) notes.value = '';
             }
         });
+    }
+}
+
+// Adicione esta função ao seu código
+function handlePixPaymentSuccess(pixData) {
+    console.log('Pagamento PIX confirmado:', pixData);
+    
+    // Pega os dados do pedido atual
+    const currentOrder = {
+        customerName: document.getElementById('customerName').value,
+        customerPhone: document.getElementById('customerPhone').value,
+        street: document.getElementById('street').value,
+        number: document.getElementById('streetNumber').value,
+        neighborhood: document.getElementById('neighborhood').value,
+        complement: document.getElementById('complement').value || '',
+        zipCode: document.getElementById('zipCode').value
+    };
+
+    // Montar a mensagem do WhatsApp
+    const message = formatOrderForWhatsApp(currentOrder);
+
+    // Salvar pedido e redirecionar para WhatsApp
+    try {
+        // Primeiro salva o pedido
+        const orderData = {
+            timestamp: Date.now(),
+            status: 'paid', // Marcar como pago
+            customer: {
+                name: currentOrder.customerName,
+                phone: currentOrder.customerPhone
+            },
+            address: {
+                street: currentOrder.street,
+                number: currentOrder.number,
+                neighborhood: currentOrder.neighborhood,
+                complement: currentOrder.complement,
+                zipCode: currentOrder.zipCode
+            },
+            items: cart,
+            payment: {
+                method: 'pix',
+                status: 'approved',
+                pixId: pixData.id
+            }
+        };
+
+        // Salvar no Firebase
+        realtimeDB.ref('orders').push(orderData)
+            .then(() => {
+                // Limpar carrinho
+                cart = [];
+                updateCartCount();
+                
+                // Redirecionar para WhatsApp
+                window.location.href = `https://wa.me/12362016670?text=${encodeURIComponent(message)}`;
+            })
+            .catch(error => {
+                console.error('Erro ao salvar pedido:', error);
+                showNotification('Erro ao finalizar pedido. Por favor, tente novamente.');
+            });
+
+    } catch (error) {
+        console.error('Erro ao processar pedido:', error);
+        showNotification('Erro ao processar pedido. Por favor, tente novamente.');
     }
 }
     
@@ -5992,16 +6062,20 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.removeItem('orderCompleted');
     console.log('LocalStorage limpo');
 
-// Atualizar o listener de mensagens para incluir mais logs
+// Adicione ao início do seu arquivo JavaScript, junto com outros listeners
 window.addEventListener('message', function(event) {
-    console.log('Mensagem recebida:', event.data); // Debug
-    
+    // Listener existente para PIX_DATA
     if (event.data.type === 'PIX_DATA') {
-        console.log('Dados do PIX recebidos:', event.data.data); // Debug
         showPixModal(event.data.data);
-    } else if (event.data.type === 'PIX_ERROR') {
-        console.error('Erro do PIX:', event.data.error); // Debug
+    } 
+    // Listener existente para PIX_ERROR
+    else if (event.data.type === 'PIX_ERROR') {
         showNotification('Erro ao gerar PIX: ' + event.data.error);
+    }
+    // Novo listener para pagamento confirmado
+    else if (event.data.type === 'order.paid') {
+        handlePixPaymentSuccess(event.data.data);
+        showNotification('Pagamento confirmado! Redirecionando...');
     }
 });
    
