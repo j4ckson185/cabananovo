@@ -3410,9 +3410,18 @@ function showCreateOrderModal() {
    document.getElementById('zipCode').value = '';
    document.getElementById('notes').value = '';
    
-   document.getElementById('paymentMoney').checked = false;
-   document.getElementById('paymentCard').checked = false;
-   document.getElementById('paymentOnline').checked = false;
+// Desmarca todas as opções de pagamento
+const moneyRadio = document.getElementById('paymentMoney');
+const cardRadio = document.getElementById('paymentCard');
+const pixRadio = document.getElementById('paymentPix');
+
+if (moneyRadio) moneyRadio.checked = false;
+if (cardRadio) cardRadio.checked = false;
+if (pixRadio) pixRadio.checked = false;
+
+// Reseta qualquer container de troco que possa estar visível
+const changeContainer = document.getElementById('changeContainer');
+if (changeContainer) changeContainer.style.display = 'none';
 
    const subtotal = cart.reduce((total, item) => total + item.price, 0);
    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
