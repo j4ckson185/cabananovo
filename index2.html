@@ -6746,36 +6746,42 @@ function processPixPayment(orderData) {
     const customerPhone = document.getElementById('customerPhone').value;
     const orderTotal = document.getElementById('orderTotal').value;
     
-    // Criar um iframe temporário oculto - esta é a única maneira garantida de evitar bloqueios
-    const tempFrame = document.createElement('iframe');
-    tempFrame.name = 'pixFrame';
-    tempFrame.style.display = 'none';
-    document.body.appendChild(tempFrame);
+    // Criar um formulário real para enviar
+    const form = document.createElement('form');
+    form.method = 'post';
+    form.action = 'https://script.google.com/macros/s/AKfycbxSAyXTjGDazM4zs0gPbGGKMClpXPWPKw-e3Q1fx9nfdnzmQHVaGiZmiP3qkQinfxsSXA/exec';
+    form.target = 'PixWindow';
+    form.style.display = 'none';
     
-    // Criar formulário diretamente, sem JavaScript
-    const formHTML = `
-      <html>
-      <body>
-        <form id="pixForm" method="post" action="https://script.google.com/macros/s/AKfycbyc-nmjFd2MKDyyvsdiTsvN2WZyo_Cfv5ergGlP2MXqshrmNrKW4OyCcv4H1Z7w_w8W_g/exec" target="_blank">
-          <input type="hidden" name="amount" value="${orderTotal}">
-          <input type="hidden" name="description" value="Pedido Cabana Açaí">
-          <input type="hidden" name="customer_name" value="${customerName}">
-          <input type="hidden" name="customer_email" value="cliente@cabanaacai.com.br">
-          <input type="hidden" name="customer_document" value="00000000000">
-          <input type="hidden" name="customer_area_code" value="84">
-          <input type="hidden" name="customer_phone" value="${customerPhone.replace(/\D/g, '')}">
-        </form>
-        <script>
-          document.getElementById('pixForm').submit();
-        </script>
-      </body>
-      </html>
-    `;
+    // Adicionar campos ao formulário
+    const addField = (name, value) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = name;
+      input.value = value;
+      form.appendChild(input);
+    };
     
-    // Abrir diretamente uma nova janela com o HTML do formulário
+    // Preencher os campos
+    addField('amount', orderTotal);
+    addField('description', `Pedido Cabana Açaí`);
+    addField('customer_name', customerName);
+    addField('customer_email', 'cliente@cabanaacai.com.br');
+    addField('customer_document', '00000000000');
+    addField('customer_area_code', '84');
+    addField('customer_phone', customerPhone.replace(/\D/g, ''));
+    
+    // Adicionar o formulário ao documento
+    document.body.appendChild(form);
+    
+    // Abrir uma nova janela para o resultado
     const pixWindow = window.open('', 'PixWindow', 'width=600,height=700');
-    pixWindow.document.write(formHTML);
-    pixWindow.document.close();
+    
+    // Enviar o formulário
+    form.submit();
+    
+    // Remover o formulário depois de enviado
+    document.body.removeChild(form);
     
     // Verificar quando a janela for fechada
     const checkClosed = setInterval(() => {
@@ -6787,16 +6793,13 @@ function processPixPayment(orderData) {
           // Processar o pedido como pago
           submitNormalOrder(orderData);
         } else {
-          // Usuário não completou o pagamento - abrir a janela novamente
-          processPixPayment(orderData);
+          // Usuário não completou o pagamento - perguntar se quer tentar novamente
+          if (confirm('Deseja gerar o PIX novamente?')) {
+            processPixPayment(orderData);
+          }
         }
       }
     }, 1000);
-    
-    // Limpar o iframe temporário depois de um tempo
-    setTimeout(() => {
-      document.body.removeChild(tempFrame);
-    }, 5000);
     
   } catch (error) {
     console.error('Erro ao processar pagamento PIX:', error);
