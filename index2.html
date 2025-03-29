@@ -6746,10 +6746,10 @@ function processPixPayment(orderData) {
     const customerPhone = document.getElementById('customerPhone').value;
     const orderTotal = document.getElementById('orderTotal').value;
     
-    // Criar um formulário real para enviar
+    // Criar um formulário para enviar os dados
     const form = document.createElement('form');
     form.method = 'post';
-    form.action = 'https://script.google.com/macros/s/AKfycbxruH9cvVSFk2lVJbOV1gAP1vKdhKqrXNlXTysqRWzVq_V3hmklqepPX3T8l2JfCF7OgQ/exec?function=processPixDirect';
+    form.action = 'https://script.google.com/macros/s/AKfycbxruH9cvVSFk2lVJbOV1gAP1vKdhKqrXNlXTysqRWzVq_V3hmklqepPX3T8l2JfCF7OgQ/exec';
     form.target = 'PixWindow';
     form.style.display = 'none';
     
@@ -6762,9 +6762,9 @@ function processPixPayment(orderData) {
       form.appendChild(input);
     };
     
-    // Preencher os campos
+    // Adicionar os campos com os dados do pedido
     addField('amount', orderTotal);
-    addField('description', `Pedido Cabana Açaí`);
+    addField('description', `Pedido Cabana Açaí #${orderData.id || ''}`);
     addField('customer_name', customerName);
     addField('customer_email', 'cliente@cabanaacai.com.br');
     addField('customer_document', '00000000000');
