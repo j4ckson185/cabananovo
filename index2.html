@@ -6063,19 +6063,16 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('LocalStorage limpo');
 
 window.addEventListener('message', function(event) {
-    console.log('Evento recebido:', event.data); // Debug
-    
     if (event.data.type === 'PIX_DATA') {
         showPixModal(event.data.data);
     } 
     else if (event.data.type === 'PIX_ERROR') {
         showNotification('Erro ao gerar PIX: ' + event.data.error);
     }
-    // Modificado para charge.paid
-    else if (event.data.type === 'charge.paid' && event.data.data.charges[0].status === 'paid') {
-        console.log('Pagamento PIX confirmado:', event.data); // Debug
+    // Apenas mudando de order.paid para charge.paid
+    else if (event.data.type === 'charge.paid') {
         handlePixPaymentSuccess(event.data.data);
-        showNotification('Pagamento confirmado! Finalizando pedido...');
+        showNotification('Pagamento confirmado! Redirecionando...');
     }
 });
    
