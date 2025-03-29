@@ -5805,6 +5805,8 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Carregado'); // Log para diagnóstico
 
     setupPIXPayment(); // ADICIONE ESTA LINHA AQUI
+    checkPendingPayment(); // Adicione esta linha para verificar pagamentos pendentes
+
 
     addTimeMachineButton(); // Adiciona o botão do Time Machine
     openProductByUrlParam();
@@ -6725,14 +6727,8 @@ function copyPixCode() {
   }
 }
 
-// Adicione esta função ao seu arquivo JavaScript
-async function processPixPayment(orderData) {
+function processPixPayment(orderData) {
   try {
-    // Mostrar modal do PIX
-    createPixModal();
-    const pixModal = document.getElementById('pixPaymentModal');
-    pixModal.style.display = 'block';
-    
     // Preparar dados para a API do Pagar.me
     const customerName = document.getElementById('customerName').value;
     const customerPhone = document.getElementById('customerPhone').value;
@@ -6748,50 +6744,67 @@ async function processPixPayment(orderData) {
       phoneNumber = phoneNumber.substring(2);
     }
     
-    // Montar objeto para a chamada da API
-    const pixData = {
+    // Armazenar os dados do pedido atual no localStorage para recuperar depois
+    localStorage.setItem('pending_order_data', JSON.stringify(orderData));
+    
+    // Criar um formulário e enviá-lo para abrir em uma nova janela
+    const form = document.createElement('form');
+    form.method = 'post';
+    form.action = 'https://script.google.com/macros/s/AKfycbxSAyXTjGDazM4zs0gPbGGKMClpXPWPKw-e3Q1fx9nfdnzmQHVaGiZmiP3qkQinfxsSXA/exec';
+    form.target = '_blank';
+    
+    // Adicionar campos ao formulário
+    const fields = {
       amount: orderTotal,
       description: `Pedido Cabana Açaí #${orderData.id}`,
       customer_name: customerName,
       customer_email: 'cliente@cabanaacai.com.br',
       customer_document: '00000000000',
       customer_area_code: areaCode,
-      customer_phone: phoneNumber
+      customer_phone: phoneNumber,
+      return_url: window.location.href // URL para retornar após pagamento
     };
     
-    // Fazer chamada para o script do Apps Script
-    const response = await fetch('https://script.google.com/macros/s/AKfycbzVsdUD52MeALPMGcRI0m6eVb4AtYpf9PrDi_81kMXW67IbIxYy67Qd-QgdupUHMc7zAA/exec', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(pixData)
-    });
-    
-    if (!response.ok) {
-      throw new Error('Erro ao gerar PIX');
+    for (const key in fields) {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = fields[key];
+      form.appendChild(input);
     }
     
-    const result = await response.json();
+    // Adicionar formulário ao documento e enviar
+    document.body.appendChild(form);
+    form.submit();
     
-    // Atualizar o modal com as informações do PIX
-    document.getElementById('pix-qrcode').src = result.pix_qrcode_url;
-    document.getElementById('pix-code').textContent = result.pix_code;
+    // Remover o formulário depois de enviado
+    document.body.removeChild(form);
     
-    // Armazenar o ID do pedido PIX para verificação posterior
-    localStorage.setItem('current_pix_order_id', result.order_id);
-    localStorage.setItem('current_order_data', JSON.stringify(orderData));
-    
-    // Configurar verificação automática de status
-    setupPaymentStatusCheck(result.order_id, orderData);
+    // Mostrar notificação
+    showNotification('Abrindo página de pagamento PIX em uma nova aba. Por favor, complete o pagamento.');
     
   } catch (error) {
     console.error('Erro ao processar pagamento PIX:', error);
     showNotification('Erro ao gerar PIX. Tente novamente ou escolha outra forma de pagamento.');
-    
-    // Fechar modal do PIX em caso de erro
-    const pixModal = document.getElementById('pixPaymentModal');
-    if (pixModal) pixModal.style.display = 'none';
+  }
+}
+
+function checkPendingPayment() {
+  // Verificar se há um pedido pendente
+  const pendingOrderData = localStorage.getItem('pending_order_data');
+  if (pendingOrderData) {
+    // Perguntar ao usuário se o pagamento foi realizado
+    if (confirm('Você completou o pagamento PIX? Clique em OK se já realizou o pagamento.')) {
+      // Limpar dados do pedido pendente
+      localStorage.removeItem('pending_order_data');
+      
+      // Simular conclusão bem sucedida do pedido
+      showNotification('Pagamento confirmado! Processando seu pedido...');
+      
+      // Continuar com o processo de pedido normal
+      const orderData = JSON.parse(pendingOrderData);
+      submitNormalOrder(orderData);
+    }
   }
 }
 
@@ -6848,6 +6861,72 @@ async function checkPaymentStatus(pixOrderId, orderData, intervalId = null) {
   } catch (error) {
     console.error('Erro ao verificar status do pagamento:', error);
     showNotification('Erro ao verificar status do pagamento. Tente novamente.');
+  }
+}
+
+function submitNormalOrder(orderData) {
+  try {
+    // Obter o contador atual do localStorage ou inicializar como 1
+    let orderCounter = parseInt(localStorage.getItem('orderCounter') || '1');
+    
+    // Verificar se o contador está dentro do intervalo (1-9)
+    if (orderCounter > 9) {
+        orderCounter = 1; // Reiniciar para 1 quando atingir 9
+    }
+    
+    // Gerar o ID do pedido com o formato 5555X
+    const orderId = `5555${orderCounter}`;
+    
+    // Incrementar o contador para o próximo pedido
+    localStorage.setItem('orderCounter', (orderCounter + 1).toString());
+    
+    // Preparar dados para salvar no Firebase
+    const firebaseOrderData = {
+      timestamp: firebase.database.ServerValue.TIMESTAMP,
+      status: 'new',
+      customer: {
+        name: orderData.customer.name,
+        phone: orderData.customer.phone
+      },
+      address: {
+        street: orderData.address.street,
+        number: orderData.address.number,
+        neighborhood: orderData.address.neighborhood,
+        complement: orderData.address.complement || '',
+        zipCode: orderData.address.zipCode,
+        city: 'Natal',
+        state: 'RN'
+      },
+      payment: {
+        method: 'pix',
+        status: 'paid'
+      },
+      items: cart,
+      subtotal: cart.reduce((total, item) => total + item.price, 0),
+      deliveryFee: 3.00,
+      total: orderData.total
+    };
+
+    // Salvar no Firebase
+    realtimeDB.ref('orders').push(firebaseOrderData)
+      .then(newOrderRef => {
+        if (!newOrderRef.key) {
+          throw new Error('Falha ao salvar o pedido');
+        }
+        
+        // Construir mensagem para WhatsApp
+        const message = formatOrderForWhatsApp(orderData.customer, orderData.address);
+        
+        // Redirecionar para WhatsApp
+        window.location.href = `https://wa.me/12362016670?text=${encodeURIComponent(message)}`;
+      })
+      .catch(error => {
+        console.error('Erro ao salvar pedido no Firebase:', error);
+        alert('Erro ao processar pedido. Por favor, tente novamente.');
+      });
+  } catch (error) {
+    console.error('Erro ao processar pedido após pagamento:', error);
+    alert('Erro ao processar pedido. Por favor, tente novamente.');
   }
 }
 
