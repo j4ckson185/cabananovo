@@ -6749,19 +6749,8 @@ function processPixPayment(orderData) {
     // Armazenar os dados do pedido atual no localStorage para recuperar depois
     localStorage.setItem('pending_order_data', JSON.stringify(orderData));
     
-    // Criar modal se não existir
-    if (!document.getElementById('pixPaymentModal')) {
-      createPixModal();
-    }
-    
-    // Mostrar o modal e o indicador de carregamento
-    const pixModal = document.getElementById('pixPaymentModal');
-    pixModal.style.display = 'block';
-    document.getElementById('pix-loading').style.display = 'block';
-    document.getElementById('pix-content').style.display = 'none';
-    
     // Abrir uma nova janela para o Apps Script, que processará o pagamento
-    const scriptUrl = 'https://script.google.com/macros/s/AKfycbzrKijtyPZNBgUzuGOAlT667H1DzRK2yEzZhZ6ZgI-YrfbcBJ0sCNDBCERibp7znnveFA/exec';
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbxSAyXTjGDazM4zs0gPbGGKMClpXPWPKw-e3Q1fx9nfdnzmQHVaGiZmiP3qkQinfxsSXA/exec';
     const pixWindow = window.open(
       `${scriptUrl}?amount=${encodeURIComponent(orderTotal)}&` +
       `description=${encodeURIComponent(`Pedido Cabana Açaí #${orderData.id || ''}`)}&` +
@@ -6781,29 +6770,11 @@ function processPixPayment(orderData) {
         
         // Perguntar ao usuário se completou o pagamento
         if (confirm('Você já realizou o pagamento PIX? Clique em OK para confirmar o pagamento ou Cancelar para tentar novamente.')) {
-          // Fechar o modal de PIX
-          pixModal.style.display = 'none';
-          
           // Processar o pedido como pago
           submitNormalOrder(orderData);
         } else {
-          // Ocultar loading e mostrar conteúdo simulado para tentar novamente
-          document.getElementById('pix-loading').style.display = 'none';
-          document.getElementById('pix-content').style.display = 'block';
-          
-          // Configurar o botão para verificar pagamento
-          const checkButton = document.getElementById('check-payment-status');
-          if (checkButton) {
-            checkButton.addEventListener('click', function() {
-              // Simular confirmação de pagamento
-              if (confirm('Para simular o pagamento realizado, clique em OK. Para simular pagamento pendente, clique em Cancelar.')) {
-                pixModal.style.display = 'none';
-                submitNormalOrder(orderData);
-              } else {
-                showNotification('Pagamento ainda não confirmado. Aguarde ou verifique novamente.');
-              }
-            });
-          }
+          // Usuário não completou o pagamento - abrir a janela novamente
+          processPixPayment(orderData);
         }
       }
     }, 1000);
@@ -6939,6 +6910,8 @@ function submitNormalOrder(orderData) {
         if (!newOrderRef.key) {
           throw new Error('Falha ao salvar o pedido');
         }
+        
+        showNotification('Pedido registrado com sucesso!');
         
         // Construir mensagem para WhatsApp
         const message = formatOrderForWhatsApp(orderData.customer, orderData.address);
