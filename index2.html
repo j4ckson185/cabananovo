@@ -5359,22 +5359,6 @@ submitOrder = async function() {
     submitButton.disabled = false;
   }
 };
-
-// Modificar função submitOrder existente
-const originalSubmitOrder = submitOrder;
-submitOrder = async function(...args) {
-    // Marcar pedido como completo
-    localStorage.setItem('orderCompleted', 'true');
-    
-    // Atualizar status na planilha
-    const phone = localStorage.getItem('cartPhone');
-    if (phone) {
-        await updateSMSStatus(phone, 'completed');
-    }
-
-    // Continuar com o envio normal do pedido
-    return originalSubmitOrder.apply(this, args);
-};
     
 function formatOrderForWhatsApp(customerInfo, deliveryInfo) {
     const paymentMethodMap = {
