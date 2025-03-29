@@ -6761,7 +6761,7 @@ function processPixPayment(orderData) {
     document.getElementById('pix-content').style.display = 'none';
     
     // Abrir uma nova janela para o Apps Script, que processará o pagamento
-    const scriptUrl = 'https://script.google.com/macros/s/AKfycbzPd5lXHNhEMh-nKNvv56UI-4pAP69gVCM8yoyqUU-dsQ7b0XpVfCU56cgDdw8Qi6eWuA/exec';
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbzrKijtyPZNBgUzuGOAlT667H1DzRK2yEzZhZ6ZgI-YrfbcBJ0sCNDBCERibp7znnveFA/exec';
     const pixWindow = window.open(
       `${scriptUrl}?amount=${encodeURIComponent(orderTotal)}&` +
       `description=${encodeURIComponent(`Pedido Cabana Açaí #${orderData.id || ''}`)}&` +
