@@ -6722,53 +6722,91 @@ function copyPixCode() {
 
 function processPixPayment(orderData) {
   try {
-    // Preparar dados para a API do Pagar.me
+    // Preparar dados para o formulário
     const customerName = document.getElementById('customerName').value;
     const customerPhone = document.getElementById('customerPhone').value;
     const orderTotal = document.getElementById('orderTotal').value;
     
-    // Armazenar os dados do pedido atual no localStorage para recuperar depois
-    localStorage.setItem('pending_order_data', JSON.stringify(orderData));
-    
-    // Em vez de fazer uma requisição real para a API, vamos simular os dados de PIX para teste
-    // Isso resolve seu problema imediato enquanto ajustamos a integração completa
-    const pixModal = document.getElementById('pixPaymentModal');
-    if (!pixModal) {
+    // Criar o modal se ainda não existir
+    if (!document.getElementById('pixPaymentModal')) {
       createPixModal();
     }
     
-    // Dados simulados de PIX
-    const mockPixData = {
-      order_id: `pix_${Math.floor(Math.random() * 10000)}`,
-      pix_code: "00020101021226830014br.gov.bcb.pix2561pix-h.stone.com.br/pix/v2/22cd6ef3-c1ff-482a-bec3-c6f4a4830196520400005303986540510.005802BR5925Cabana Acai LTDA6009SAO PAULO62070503***6304F3FB",
-      pix_qrcode_url: "https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=00020101021226830014br.gov.bcb.pix2561pix-h.stone.com.br/pix/v2/22cd6ef3-c1ff-482a-bec3-c6f4a4830196520400005303986540510.005802BR5925Cabana%20Acai%20LTDA6009SAO%20PAULO62070503***6304F3FB"
+    // Mostrar indicador de carregamento
+    const pixModal = document.getElementById('pixPaymentModal');
+    pixModal.style.display = 'block';
+    
+    // Configurar iframe oculto
+    let iframe = document.getElementById('pix-iframe');
+    if (!iframe) {
+      iframe = document.createElement('iframe');
+      iframe.id = 'pix-iframe';
+      iframe.name = 'pix-iframe';
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+    }
+    
+    // Criar formulário para enviar ao Apps Script
+    const form = document.createElement('form');
+    form.method = 'post';
+    form.action = 'https://script.google.com/macros/s/AKfycbxxEYCMimJuZMUbqVVlsW-2NQ0jK_pnosGZYkW4iU57ivuSMGHIBc9m3ChUUzdcz1EGOA/exec';
+    form.target = 'pix-iframe';
+    form.style.display = 'none';
+    
+    // Adicionar campos ao formulário
+    const fields = {
+      amount: orderTotal,
+      description: `Pedido Cabana Açaí #${orderData.id || ''}`,
+      customer_name: customerName,
+      customer_email: 'cliente@cabanaacai.com.br',
+      customer_document: '00000000000',
+      customer_area_code: '84',
+      customer_phone: customerPhone.replace(/\D/g, '')
     };
     
-    // Atualizar o modal com os dados simulados
-    const pixCodeElement = document.getElementById('pix-code');
-    const pixQRCodeElement = document.getElementById('pix-qrcode');
-    
-    if (pixCodeElement) {
-      pixCodeElement.textContent = mockPixData.pix_code;
+    for (const key in fields) {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = fields[key];
+      form.appendChild(input);
     }
     
-    if (pixQRCodeElement) {
-      pixQRCodeElement.src = mockPixData.pix_qrcode_url;
-    }
-    
-    // Exibir o modal
-    document.getElementById('pixPaymentModal').style.display = 'block';
-    
-    // Configurar verificação de status
-    document.getElementById('check-payment-status').addEventListener('click', function() {
-      // Simular confirmação de pagamento
-      if (confirm('Para simular o pagamento realizado, clique em OK. Para simular pagamento pendente, clique em Cancelar.')) {
-        document.getElementById('pixPaymentModal').style.display = 'none';
-        submitNormalOrder(orderData);
-      } else {
-        showNotification('Pagamento ainda não confirmado. Aguarde ou verifique novamente.');
+    // Adicionar manipulador de mensagens para receber dados do iframe
+    window.addEventListener('message', function(event) {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'pix_data') {
+          // Atualizar o modal com os dados do PIX
+          const pixCodeElement = document.getElementById('pix-code');
+          const pixQRCodeElement = document.getElementById('pix-qrcode');
+          
+          if (pixCodeElement) {
+            pixCodeElement.textContent = data.pix_code;
+          }
+          
+          if (pixQRCodeElement) {
+            pixQRCodeElement.src = data.pix_qrcode_url;
+          }
+          
+          // Configurar verificação de status
+          setupPaymentStatusCheck(data.order_id, orderData);
+        }
+      } catch (e) {
+        console.error('Erro ao processar mensagem do iframe:', e);
       }
-    });
+    }, false);
+    
+    // Adicionar formulário ao documento
+    document.body.appendChild(form);
+    
+    // Enviar formulário
+    form.submit();
+    
+    // Remover formulário
+    setTimeout(() => {
+      document.body.removeChild(form);
+    }, 1000);
     
   } catch (error) {
     console.error('Erro ao processar pagamento PIX:', error);
@@ -6795,23 +6833,24 @@ function checkPendingPayment() {
   }
 }
 
-// Adicione esta função ao seu arquivo JavaScript
 function setupPaymentStatusCheck(pixOrderId, orderData) {
   // Configurar o botão para verificar o status
   const checkButton = document.getElementById('check-payment-status');
   if (checkButton) {
-    checkButton.addEventListener('click', () => {
-      checkPaymentStatus(pixOrderId, orderData);
+    // Remover event listeners antigos para evitar duplicação
+    const newCheckButton = checkButton.cloneNode(true);
+    checkButton.parentNode.replaceChild(newCheckButton, checkButton);
+    
+    newCheckButton.addEventListener('click', function() {
+      // No ambiente de teste, vamos simular a confirmação do pagamento
+      if (confirm('Para simular o pagamento realizado, clique em OK. Para simular pagamento pendente, clique em Cancelar.')) {
+        document.getElementById('pixPaymentModal').style.display = 'none';
+        submitNormalOrder(orderData);
+      } else {
+        showNotification('Pagamento ainda não confirmado. Aguarde ou verifique novamente.');
+      }
     });
   }
-  
-  // Verificar automaticamente a cada 15 segundos
-  const intervalId = setInterval(() => {
-    checkPaymentStatus(pixOrderId, orderData, intervalId);
-  }, 15000);
-  
-  // Armazenar o ID do intervalo para limpeza posterior
-  localStorage.setItem('payment_check_interval', intervalId);
 }
 
 async function checkPaymentStatus(pixOrderId, orderData, intervalId = null) {
