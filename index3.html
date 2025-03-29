@@ -6617,9 +6617,8 @@ async function updateSMSStatus(phone, type) {
     await recordAbandonedCart(data);
 }
 
-// Configurações da API Pagar.me
-const PAGARME_API_KEY = "sk_test_74a124ada92a4702beba69c65335c168";
-const PAGARME_API_URL = "https://api.pagar.me/core/v5";
+// URL do seu Apps Script (substitua pelo URL real do seu deployment)
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysp7iFFUKEJn6NZkIa7kjcubGThWPsibs2T670LafsEQUCAuZqYhXWO8tKzjt75HCX8w/exec";
 let currentPixOrderId = null;
 
 // Função para gerar um pagamento PIX
@@ -6636,56 +6635,63 @@ async function generatePixPayment() {
         const total = subtotal - discount + deliveryFee;
         
         // Preparar dados para o Pagar.me
-        const orderData = {
-            items: [
-                {
-                    amount: Math.round(total * 100), // Converter para centavos
-                    description: "Pedido Cabana Açaí",
-                    quantity: 1
-                }
-            ],
-            customer: {
-                name: customerName,
-                email: "cliente@cabanaacai.com.br", // Email padrão
-                type: "individual",
-                document: "00000000000", // CPF genérico
-                phones: {
-                    mobile_phone: {
-                        country_code: "55",
-                        area_code: document.getElementById('customerPhone').value.substring(0, 2),
-                        number: document.getElementById('customerPhone').value.substring(2)
+        const requestData = {
+            action: "create_pix",
+            orderData: {
+                items: [
+                    {
+                        amount: Math.round(total * 100), // Converter para centavos
+                        description: "Pedido Cabana Açaí",
+                        quantity: 1
                     }
-                }
-            },
-            payments: [
-                {
-                    payment_method: "pix",
-                    pix: {
-                        expires_in: 3600 // Expira em 1 hora
+                ],
+                customer: {
+                    name: customerName,
+                    email: "cliente@cabanaacai.com.br", // Email padrão
+                    type: "individual",
+                    document: "00000000000", // CPF genérico
+                    phones: {
+                        mobile_phone: {
+                            country_code: "55",
+                            area_code: document.getElementById('customerPhone').value.substring(0, 2),
+                            number: document.getElementById('customerPhone').value.substring(2)
+                        }
                     }
-                }
-            ]
+                },
+                payments: [
+                    {
+                        payment_method: "pix",
+                        pix: {
+                            expires_in: 3600 // Expira em 1 hora
+                        }
+                    }
+                ]
+            }
         };
         
         // Mostra um indicador de carregamento
         showNotification("Gerando PIX, aguarde...");
         
-        // Envia a requisição para API do Pagar.me
-        const response = await fetch(PAGARME_API_URL + "/orders", {
+        // Envia a requisição para o Apps Script
+        const response = await fetch(APPS_SCRIPT_URL, {
             method: "POST",
             headers: {
-                "Authorization": "Basic " + btoa(PAGARME_API_KEY + ":"),
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             },
-            body: JSON.stringify(orderData)
+            body: JSON.stringify(requestData)
         });
         
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`Erro na API: ${errorData.message || 'Falha na requisição'}`);
+            throw new Error(`Erro na requisição: ${response.statusText}`);
         }
         
-        const responseData = await response.json();
+        const result = await response.json();
+        
+        if (result.status !== "success") {
+            throw new Error(result.message || "Falha ao gerar PIX");
+        }
+        
+        const responseData = result.data;
         
         // Verificar se há charges com last_transaction
         if (!responseData.charges || 
@@ -6720,19 +6726,6 @@ async function generatePixPayment() {
     }
 }
 
-// Função para copiar o código PIX
-function copyPixCode() {
-    const pixCode = document.getElementById('pix-code').textContent;
-    navigator.clipboard.writeText(pixCode)
-        .then(() => {
-            showNotification('Código PIX copiado!');
-        })
-        .catch(err => {
-            console.error('Erro ao copiar:', err);
-            alert('Não foi possível copiar automaticamente. Por favor, selecione o código manualmente e copie.');
-        });
-}
-
 // Função para verificar status do pagamento PIX
 async function checkPixStatus() {
     if (!currentPixOrderId) {
@@ -6743,19 +6736,30 @@ async function checkPixStatus() {
     try {
         showNotification("Verificando pagamento...");
         
-        const response = await fetch(`${PAGARME_API_URL}/orders/${currentPixOrderId}`, {
-            method: "GET",
+        const requestData = {
+            action: "check_status",
+            orderId: currentPixOrderId
+        };
+        
+        const response = await fetch(APPS_SCRIPT_URL, {
+            method: "POST",
             headers: {
-                "Authorization": "Basic " + btoa(PAGARME_API_KEY + ":")
-            }
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestData)
         });
         
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`Erro ao verificar status: ${errorData.message || 'Falha na requisição'}`);
+            throw new Error(`Erro na requisição: ${response.statusText}`);
         }
         
-        const orderData = await response.json();
+        const result = await response.json();
+        
+        if (result.status !== "success") {
+            throw new Error(result.message || "Falha ao verificar status");
+        }
+        
+        const orderData = result.data;
         
         if (orderData.status === 'paid') {
             document.getElementById('pixModal').style.display = 'none';
