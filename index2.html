@@ -6741,56 +6741,46 @@ function copyPixCode() {
 
 function processPixPayment(orderData) {
   try {
-    // Preparar dados para a API do Pagar.me
+    // Preparar dados para o formulário
     const customerName = document.getElementById('customerName').value;
     const customerPhone = document.getElementById('customerPhone').value;
     const orderTotal = document.getElementById('orderTotal').value;
     
-    // Armazenar os dados do pedido atual no localStorage para recuperar depois
-    localStorage.setItem('pending_order_data', JSON.stringify(orderData));
+    // Criar um iframe temporário oculto - esta é a única maneira garantida de evitar bloqueios
+    const tempFrame = document.createElement('iframe');
+    tempFrame.name = 'pixFrame';
+    tempFrame.style.display = 'none';
+    document.body.appendChild(tempFrame);
     
-    // Criar um formulário para enviar via POST
-    const form = document.createElement('form');
-    form.method = 'post';
-    form.action = 'https://script.google.com/macros/s/AKfycbzrKijtyPZNBgUzuGOAlT667H1DzRK2yEzZhZ6ZgI-YrfbcBJ0sCNDBCERibp7znnveFA/exec';
-    form.target = 'PixPayment';
-    form.style.display = 'none';
+    // Criar formulário diretamente, sem JavaScript
+    const formHTML = `
+      <html>
+      <body>
+        <form id="pixForm" method="post" action="https://script.google.com/macros/s/AKfycbzrKijtyPZNBgUzuGOAlT667H1DzRK2yEzZhZ6ZgI-YrfbcBJ0sCNDBCERibp7znnveFA/exec" target="_blank">
+          <input type="hidden" name="amount" value="${orderTotal}">
+          <input type="hidden" name="description" value="Pedido Cabana Açaí">
+          <input type="hidden" name="customer_name" value="${customerName}">
+          <input type="hidden" name="customer_email" value="cliente@cabanaacai.com.br">
+          <input type="hidden" name="customer_document" value="00000000000">
+          <input type="hidden" name="customer_area_code" value="84">
+          <input type="hidden" name="customer_phone" value="${customerPhone.replace(/\D/g, '')}">
+        </form>
+        <script>
+          document.getElementById('pixForm').submit();
+        </script>
+      </body>
+      </html>
+    `;
     
-    // Adicionar campos ao formulário
-    const fields = {
-      amount: orderTotal,
-      description: `Pedido Cabana Açaí #${orderData.id || ''}`,
-      customer_name: customerName,
-      customer_email: 'cliente@cabanaacai.com.br',
-      customer_document: '00000000000',
-      customer_area_code: '84',
-      customer_phone: customerPhone.replace(/\D/g, '')
-    };
+    // Abrir diretamente uma nova janela com o HTML do formulário
+    const pixWindow = window.open('', 'PixWindow', 'width=600,height=700');
+    pixWindow.document.write(formHTML);
+    pixWindow.document.close();
     
-    for (const key in fields) {
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = key;
-      input.value = fields[key];
-      form.appendChild(input);
-    }
-    
-    // Adicionar formulário ao documento
-    document.body.appendChild(form);
-    
-    // Abrir uma nova janela para enviar o formulário
-    const pixWindow = window.open('', 'PixPayment', 'width=600,height=700');
-    
-    // Enviar o formulário para a nova janela
-    form.submit();
-    
-    // Remover o formulário do documento
-    document.body.removeChild(form);
-    
-    // Após o usuário fechar a janela do Pagar.me, perguntamos se ele concluiu o pagamento
-    const checkInterval = setInterval(() => {
+    // Verificar quando a janela for fechada
+    const checkClosed = setInterval(() => {
       if (pixWindow.closed) {
-        clearInterval(checkInterval);
+        clearInterval(checkClosed);
         
         // Perguntar ao usuário se completou o pagamento
         if (confirm('Você já realizou o pagamento PIX? Clique em OK para confirmar o pagamento ou Cancelar para tentar novamente.')) {
@@ -6802,6 +6792,11 @@ function processPixPayment(orderData) {
         }
       }
     }, 1000);
+    
+    // Limpar o iframe temporário depois de um tempo
+    setTimeout(() => {
+      document.body.removeChild(tempFrame);
+    }, 5000);
     
   } catch (error) {
     console.error('Erro ao processar pagamento PIX:', error);
