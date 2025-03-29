@@ -5123,15 +5123,6 @@ function setupPaymentEvents() {
         });
     });
     
-    // Configurar o iframe PIX para detectar mensagens
-    window.addEventListener('message', function(event) {
-        if (event.data === 'PAYMENT_COMPLETED') {
-            // Pagamento confirmado, fechar modal e finalizar pedido
-            document.getElementById('pixModal').style.display = 'none';
-            submitOrder();
-        }
-    });
-    
     // Modificar o botão de finalizar pedido para verificar o método de pagamento
     const orderForm = document.getElementById('createOrderForm');
     const submitButton = orderForm.querySelector('button[type="button"]');
@@ -5146,9 +5137,7 @@ function setupPaymentEvents() {
         }
         
         if (selectedPayment.value === 'online') {
-            // Se for PIX, preparar o formulário
-            preparePIXForm();
-            // Exibir o modal de PIX
+            // Se for PIX, mostrar o modal de PIX
             document.getElementById('createOrderModal').style.display = 'none';
             document.getElementById('pixModal').style.display = 'block';
         } else {
@@ -5156,11 +5145,6 @@ function setupPaymentEvents() {
             submitOrder();
         }
     };
-    
-    // Evento para quando o iframe é carregado
-    document.getElementById('pixFrame').addEventListener('load', function() {
-        document.getElementById('pixFrameContainer').style.display = 'block';
-    });
 }
 
 // Função para preparar o formulário PIX
@@ -6815,6 +6799,106 @@ async function checkPixStatus() {
     }
 }
 
+// Função para abrir a página de pagamento PIX
+function openPixPayment() {
+    try {
+        // Preparar dados
+        const subtotal = cart.reduce((total, item) => total + item.price, 0);
+        const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+        const deliveryFee = 3.00;
+        const total = subtotal - discount + deliveryFee;
+        
+        const customerName = document.getElementById('customerName').value;
+        const customerPhone = document.getElementById('customerPhone').value;
+        
+        if (!customerName || !customerPhone) {
+            showNotification('Preencha todos os dados do cliente');
+            return;
+        }
+        
+        // Salvar dados do carrinho e cliente no localStorage
+        localStorage.setItem('pendingOrder', JSON.stringify({
+            cart: cart,
+            customerInfo: {
+                name: customerName,
+                phone: customerPhone
+            },
+            orderTotal: total,
+            timestamp: new Date().toISOString()
+        }));
+        
+        // Montar URL com parâmetros
+        const pixUrl = new URL('https://script.google.com/macros/s/AKfycbwz_9O0oWP8inYFtHuR7P5ELvyeMEu6Uk8EJTcf23ZV3NleaA57WwyBiu91QbH-9UdfAQ/exec');
+        pixUrl.searchParams.append('description', 'Pedido Cabana Açaí');
+        pixUrl.searchParams.append('amount', total.toFixed(2));
+        pixUrl.searchParams.append('customer_name', customerName);
+        pixUrl.searchParams.append('customer_email', 'cliente@cabanaacai.com.br');
+        pixUrl.searchParams.append('customer_document', '00000000000');
+        pixUrl.searchParams.append('customer_phone', customerPhone);
+        pixUrl.searchParams.append('return_url', window.location.href);
+        
+        // Redirecionar para a página de pagamento
+        window.open(pixUrl.toString(), '_blank');
+        
+    } catch (error) {
+        console.error('Erro ao abrir pagamento PIX:', error);
+        showNotification('Erro ao abrir pagamento PIX: ' + error.message);
+    }
+}
+
+// Função para finalizar pedido após pagamento manual
+function confirmPaymentManually() {
+    // Fechar modal de PIX
+    document.getElementById('pixModal').style.display = 'none';
+    
+    // Finalizar o pedido
+    submitOrder();
+    
+    // Limpar dados pendentes
+    localStorage.removeItem('pendingOrder');
+    
+    showNotification('Pedido finalizado! Obrigado pela compra.');
+}
+
+// Verificar ao carregar a página se há pedido pendente
+document.addEventListener('DOMContentLoaded', function() {
+    const pendingOrder = localStorage.getItem('pendingOrder');
+    
+    if (pendingOrder) {
+        try {
+            const orderData = JSON.parse(pendingOrder);
+            const orderTime = new Date(orderData.timestamp);
+            const now = new Date();
+            const hoursPassed = (now - orderTime) / (1000 * 60 * 60);
+            
+            // Se o pedido pendente é de menos de 2 horas atrás
+            if (hoursPassed < 2) {
+                // Restaurar carrinho
+                cart = orderData.cart;
+                updateCartCount();
+                
+                // Perguntar se deseja finalizar o pedido
+                setTimeout(() => {
+                    if (confirm('Você tem um pedido com pagamento PIX pendente. Deseja finalizar seu pedido?')) {
+                        // Preencher formulário de cliente
+                        document.getElementById('customerName').value = orderData.customerInfo.name;
+                        document.getElementById('customerPhone').value = orderData.customerInfo.phone;
+                        
+                        // Mostrar modal de finalização
+                        document.getElementById('createOrderModal').style.display = 'block';
+                    }
+                }, 1000);
+            } else {
+                // Se passou muito tempo, limpar os dados pendentes
+                localStorage.removeItem('pendingOrder');
+            }
+        } catch (error) {
+            console.error('Erro ao processar pedido pendente:', error);
+            localStorage.removeItem('pendingOrder');
+        }
+    }
+});
+
 </script>
 <<!-- Modal para Criar Novo Pedido -->
 <!-- Modal para Criar Novo Pedido -->
@@ -6926,7 +7010,7 @@ async function checkPixStatus() {
         </button>
     </div>
 </div>
-<!-- Modal do PIX -->
+<!-- Modal do PIX (versão com redirecionamento) -->
 <div class="modal" id="pixModal">
     <div class="modal-content">
         <div class="modal-header">
@@ -6934,24 +7018,15 @@ async function checkPixStatus() {
             <button class="close-modal">&times;</button>
         </div>
         <div class="pix-content">
-            <p>Clique no botão abaixo para gerar o QR Code PIX:</p>
+            <p>Você será redirecionado para a página de pagamento PIX.</p>
+            <p>Após concluir o pagamento, retorne a esta página para finalizar seu pedido.</p>
             
-            <form id="pixForm" method="post" target="pixFrame" action="https://script.google.com/macros/s/AKfycbxgp_VQCKSO3g7arwXhpnn_HH_Vrm8TXhXkIlYUVXS9YIjruZjOnEamxR1QwP0wVlz-MA/exec">
-                <input type="hidden" name="description" id="pix_description" value="Pedido Cabana Açaí">
-                <input type="hidden" name="amount" id="pix_amount" value="0.00">
-                <input type="hidden" name="customer_name" id="pix_customer_name" value="">
-                <input type="hidden" name="customer_email" value="cliente@cabanaacai.com.br">
-                <input type="hidden" name="customer_document" value="00000000000">
-                <input type="hidden" name="customer_phone" id="pix_customer_phone" value="">
-                <input type="hidden" name="webhook_url" id="pix_webhook_url" value="">
-                
-                <div style="text-align: center; margin: 20px 0;">
-                    <button type="submit" class="modal-btn" style="background: var(--gradient);">Gerar QR Code PIX</button>
-                </div>
-            </form>
+            <div style="text-align: center; margin: 20px 0;">
+                <button type="button" onclick="openPixPayment()" class="modal-btn" style="background: var(--gradient);">Ir para Pagamento PIX</button>
+            </div>
             
-            <div id="pixFrameContainer" style="display:none;">
-                <iframe name="pixFrame" id="pixFrame" style="width: 100%; height: 600px; border: none;"></iframe>
+            <div style="text-align: center; margin-top: 20px;">
+                <button type="button" onclick="confirmPaymentManually()" class="modal-btn">Já paguei, finalizar pedido</button>
             </div>
         </div>
     </div>
