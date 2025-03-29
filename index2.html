@@ -6749,19 +6749,43 @@ function processPixPayment(orderData) {
     // Armazenar os dados do pedido atual no localStorage para recuperar depois
     localStorage.setItem('pending_order_data', JSON.stringify(orderData));
     
-    // Abrir uma nova janela para o Apps Script, que processará o pagamento
-    const scriptUrl = 'https://script.google.com/macros/s/AKfycbxSAyXTjGDazM4zs0gPbGGKMClpXPWPKw-e3Q1fx9nfdnzmQHVaGiZmiP3qkQinfxsSXA/exec';
-    const pixWindow = window.open(
-      `${scriptUrl}?amount=${encodeURIComponent(orderTotal)}&` +
-      `description=${encodeURIComponent(`Pedido Cabana Açaí #${orderData.id || ''}`)}&` +
-      `customer_name=${encodeURIComponent(customerName)}&` +
-      `customer_email=${encodeURIComponent('cliente@cabanaacai.com.br')}&` +
-      `customer_document=${encodeURIComponent('00000000000')}&` +
-      `customer_area_code=${encodeURIComponent('84')}&` +
-      `customer_phone=${encodeURIComponent(customerPhone.replace(/\D/g, ''))}`,
-      'PixPayment',
-      'width=600,height=700'
-    );
+    // Criar um formulário para enviar via POST
+    const form = document.createElement('form');
+    form.method = 'post';
+    form.action = 'https://script.google.com/macros/s/AKfycbzrKijtyPZNBgUzuGOAlT667H1DzRK2yEzZhZ6ZgI-YrfbcBJ0sCNDBCERibp7znnveFA/exec';
+    form.target = 'PixPayment';
+    form.style.display = 'none';
+    
+    // Adicionar campos ao formulário
+    const fields = {
+      amount: orderTotal,
+      description: `Pedido Cabana Açaí #${orderData.id || ''}`,
+      customer_name: customerName,
+      customer_email: 'cliente@cabanaacai.com.br',
+      customer_document: '00000000000',
+      customer_area_code: '84',
+      customer_phone: customerPhone.replace(/\D/g, '')
+    };
+    
+    for (const key in fields) {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = fields[key];
+      form.appendChild(input);
+    }
+    
+    // Adicionar formulário ao documento
+    document.body.appendChild(form);
+    
+    // Abrir uma nova janela para enviar o formulário
+    const pixWindow = window.open('', 'PixPayment', 'width=600,height=700');
+    
+    // Enviar o formulário para a nova janela
+    form.submit();
+    
+    // Remover o formulário do documento
+    document.body.removeChild(form);
     
     // Após o usuário fechar a janela do Pagar.me, perguntamos se ele concluiu o pagamento
     const checkInterval = setInterval(() => {
