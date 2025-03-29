@@ -6762,7 +6762,7 @@ function processPixPayment(orderData) {
     
     // Abrir uma nova janela pequena para o Apps Script
     const pixWindow = window.open(
-      `https://script.google.com/macros/s/AKfycbzxQs-WiBZXFTud0syn9IhrsFMEeRGXT4UVO8bAgQVrGJhv4cPqZ7NKLeLjkCW-vjwbeA/exec?` + 
+      `https://script.google.com/macros/s/AKfycbxD7bZ97y5-bKlbVGX4wphGpNxwQdzcfUxDg7iC5r4AcdFenLuaZAp6CD_7RXCCMkNIdw/exec?` + 
       `amount=${encodeURIComponent(orderTotal)}&` +
       `description=${encodeURIComponent(`Pedido Cabana Açaí #${orderData.id || ''}`)}&` +
       `customer_name=${encodeURIComponent(customerName)}&` +
@@ -6782,7 +6782,7 @@ function processPixPayment(orderData) {
         console.log('Usando dados de PIX de teste devido a timeout');
         const mockPixData = {
           pix_code: "00020101021226830014br.gov.bcb.pix2561pix-h.stone.com.br/pix/v2/22cd6ef3-c1ff-482a-bec3-c6f4a4830196520400005303986540510.005802BR5925Cabana Acai LTDA6009SAO PAULO62070503***6304F3FB",
-          pix_qrcode_url: "https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=00020101021226830014br.gov.bcb.pix2561pix-h.stone.com.br/pix/v2/22cd6ef3-c1ff-482a-bec3-c6f4a4830196520400005303986540510.005802BR5925Cabana%20Acai%20LTDA6009SAO%20PAULO62070503***6304F3FB"
+          pix_qrcode_url: "https://pix-h.stone.com.br/api/v1/qr_codes/qrcode.png?size=200&data=00020101021226830014br.gov.bcb.pix2561pix-h.stone.com.br%2Fpix%2Fv2%2F22cd6ef3-c1ff-482a-bec3-c6f4a483019652040000530398654051.005802BR5925Cabana%20Acai%20LTDA6009SAO%20PAULO62070503%2A%2A%2A6304F3FB"
         };
         
         handlePixResponse(mockPixData);
