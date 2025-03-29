@@ -6741,87 +6741,72 @@ function copyPixCode() {
 
 function processPixPayment(orderData) {
   try {
-    // Preparar dados para o formulário
+    // Preparar dados para a API do Pagar.me
     const customerName = document.getElementById('customerName').value;
     const customerPhone = document.getElementById('customerPhone').value;
     const orderTotal = document.getElementById('orderTotal').value;
     
-    // Armazenar dados do pedido atual no localStorage
+    // Armazenar os dados do pedido atual no localStorage para recuperar depois
     localStorage.setItem('pending_order_data', JSON.stringify(orderData));
     
-    // Criar e mostrar o modal de PIX
+    // Criar modal se não existir
     if (!document.getElementById('pixPaymentModal')) {
       createPixModal();
     }
+    
+    // Mostrar o modal e o indicador de carregamento
     const pixModal = document.getElementById('pixPaymentModal');
     pixModal.style.display = 'block';
-    
-    // Mostrar mensagem de carregamento
     document.getElementById('pix-loading').style.display = 'block';
     document.getElementById('pix-content').style.display = 'none';
     
-    // Abrir uma nova janela pequena para o Apps Script
+    // Abrir uma nova janela para o Apps Script, que processará o pagamento
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbzPd5lXHNhEMh-nKNvv56UI-4pAP69gVCM8yoyqUU-dsQ7b0XpVfCU56cgDdw8Qi6eWuA/exec';
     const pixWindow = window.open(
-      `https://script.google.com/macros/s/AKfycbxD7bZ97y5-bKlbVGX4wphGpNxwQdzcfUxDg7iC5r4AcdFenLuaZAp6CD_7RXCCMkNIdw/exec?` + 
-      `amount=${encodeURIComponent(orderTotal)}&` +
+      `${scriptUrl}?amount=${encodeURIComponent(orderTotal)}&` +
       `description=${encodeURIComponent(`Pedido Cabana Açaí #${orderData.id || ''}`)}&` +
       `customer_name=${encodeURIComponent(customerName)}&` +
       `customer_email=${encodeURIComponent('cliente@cabanaacai.com.br')}&` +
       `customer_document=${encodeURIComponent('00000000000')}&` +
       `customer_area_code=${encodeURIComponent('84')}&` +
-      `customer_phone=${encodeURIComponent(customerPhone.replace(/\D/g, ''))}&` +
-      `callback=true`,
+      `customer_phone=${encodeURIComponent(customerPhone.replace(/\D/g, ''))}`,
       'PixPayment',
-      'width=500,height=600'
+      'width=600,height=700'
     );
     
-    // Enquanto aguarda a resposta, usar dados de teste
-    setTimeout(() => {
-      // Se depois de 5 segundos ainda não tiver resposta, usar dados de teste
-      if (document.getElementById('pix-loading').style.display === 'block') {
-        console.log('Usando dados de PIX de teste devido a timeout');
-        const mockPixData = {
-          pix_code: "00020101021226830014br.gov.bcb.pix2561pix-h.stone.com.br/pix/v2/22cd6ef3-c1ff-482a-bec3-c6f4a4830196520400005303986540510.005802BR5925Cabana Acai LTDA6009SAO PAULO62070503***6304F3FB",
-          pix_qrcode_url: "https://pix-h.stone.com.br/api/v1/qr_codes/qrcode.png?size=200&data=00020101021226830014br.gov.bcb.pix2561pix-h.stone.com.br%2Fpix%2Fv2%2F22cd6ef3-c1ff-482a-bec3-c6f4a483019652040000530398654051.005802BR5925Cabana%20Acai%20LTDA6009SAO%20PAULO62070503%2A%2A%2A6304F3FB"
-        };
+    // Após o usuário fechar a janela do Pagar.me, perguntamos se ele concluiu o pagamento
+    const checkInterval = setInterval(() => {
+      if (pixWindow.closed) {
+        clearInterval(checkInterval);
         
-        handlePixResponse(mockPixData);
-        
-        // Fechar a janela de pagamento se ainda estiver aberta
-        if (pixWindow && !pixWindow.closed) {
-          pixWindow.close();
+        // Perguntar ao usuário se completou o pagamento
+        if (confirm('Você já realizou o pagamento PIX? Clique em OK para confirmar o pagamento ou Cancelar para tentar novamente.')) {
+          // Fechar o modal de PIX
+          pixModal.style.display = 'none';
+          
+          // Processar o pedido como pago
+          submitNormalOrder(orderData);
+        } else {
+          // Ocultar loading e mostrar conteúdo simulado para tentar novamente
+          document.getElementById('pix-loading').style.display = 'none';
+          document.getElementById('pix-content').style.display = 'block';
+          
+          // Configurar o botão para verificar pagamento
+          const checkButton = document.getElementById('check-payment-status');
+          if (checkButton) {
+            checkButton.addEventListener('click', function() {
+              // Simular confirmação de pagamento
+              if (confirm('Para simular o pagamento realizado, clique em OK. Para simular pagamento pendente, clique em Cancelar.')) {
+                pixModal.style.display = 'none';
+                submitNormalOrder(orderData);
+              } else {
+                showNotification('Pagamento ainda não confirmado. Aguarde ou verifique novamente.');
+              }
+            });
+          }
         }
       }
-    }, 5000);
-    
-    // Função para receber os dados do PIX
-    window.handlePixResponse = function(pixData) {
-      console.log('Recebidos dados do PIX:', pixData);
-      
-      // Ocultar carregamento e mostrar conteúdo
-      document.getElementById('pix-loading').style.display = 'none';
-      document.getElementById('pix-content').style.display = 'block';
-      
-      // Atualizar o modal com os dados do PIX
-      const pixCodeElement = document.getElementById('pix-code');
-      const pixQRCodeElement = document.getElementById('pix-qrcode');
-      
-      if (pixCodeElement) {
-        pixCodeElement.textContent = pixData.pix_code;
-      }
-      
-      if (pixQRCodeElement) {
-        pixQRCodeElement.src = pixData.pix_qrcode_url;
-      }
-      
-      // Fechar a janela de pagamento se ainda estiver aberta
-      if (pixWindow && !pixWindow.closed) {
-        pixWindow.close();
-      }
-      
-      // Configurar verificação de status
-      setupPaymentStatusCheck(pixData.order_id || 'test', orderData);
-    };
+    }, 1000);
     
   } catch (error) {
     console.error('Erro ao processar pagamento PIX:', error);
