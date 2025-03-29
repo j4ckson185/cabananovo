@@ -5123,6 +5123,15 @@ function setupPaymentEvents() {
         });
     });
     
+    // Configurar o iframe PIX para detectar mensagens
+    window.addEventListener('message', function(event) {
+        if (event.data === 'PAYMENT_COMPLETED') {
+            // Pagamento confirmado, fechar modal e finalizar pedido
+            document.getElementById('pixModal').style.display = 'none';
+            submitOrder();
+        }
+    });
+    
     // Modificar o botão de finalizar pedido para verificar o método de pagamento
     const orderForm = document.getElementById('createOrderForm');
     const submitButton = orderForm.querySelector('button[type="button"]');
@@ -5137,13 +5146,42 @@ function setupPaymentEvents() {
         }
         
         if (selectedPayment.value === 'online') {
-            // Se for PIX, gera o pagamento pelo Pagar.me
-            generatePixPayment();
+            // Se for PIX, preparar o formulário
+            preparePIXForm();
+            // Exibir o modal de PIX
+            document.getElementById('createOrderModal').style.display = 'none';
+            document.getElementById('pixModal').style.display = 'block';
         } else {
             // Para outros métodos, continua com o fluxo original
             submitOrder();
         }
     };
+    
+    // Evento para quando o iframe é carregado
+    document.getElementById('pixFrame').addEventListener('load', function() {
+        document.getElementById('pixFrameContainer').style.display = 'block';
+    });
+}
+
+// Função para preparar o formulário PIX
+function preparePIXForm() {
+    // Calcular valor total
+    const subtotal = cart.reduce((total, item) => total + item.price, 0);
+    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    const deliveryFee = 3.00;
+    const total = subtotal - discount + deliveryFee;
+    
+    // Preencher formulário
+    document.getElementById('pix_description').value = "Pedido Cabana Açaí";
+    document.getElementById('pix_amount').value = total.toFixed(2);
+    document.getElementById('pix_customer_name').value = document.getElementById('customerName').value;
+    document.getElementById('pix_customer_phone').value = document.getElementById('customerPhone').value;
+    
+    // Definir URL de retorno (webhook)
+    // O ideal seria uma URL que, quando chamada, registre o pagamento e finalize o pedido
+    // Como solução temporária, vamos usar window.location.href para que o Apps Script
+    // saiba para onde redirecionar o usuário após confirmação de pagamento
+    document.getElementById('pix_webhook_url').value = window.location.href;
 }
     
 async function submitOrder() {
@@ -6888,7 +6926,7 @@ async function checkPixStatus() {
         </button>
     </div>
 </div>
-    <!-- Modal do PIX -->
+<!-- Modal do PIX -->
 <div class="modal" id="pixModal">
     <div class="modal-content">
         <div class="modal-header">
@@ -6896,46 +6934,24 @@ async function checkPixStatus() {
             <button class="close-modal">&times;</button>
         </div>
         <div class="pix-content">
-            <div class="success-message">
-                PIX gerado com sucesso! Use um dos métodos abaixo para pagar.
-            </div>
-
-            <div class="order-details">
-                <h3>Detalhes do Pedido</h3>
-                <p><strong>Valor:</strong> <span id="pix-order-value">R$ 0,00</span></p>
-                <p><strong>Cliente:</strong> <span id="pix-customer-name"></span></p>
-            </div>
-
-            <div class="qr-code-container">
-                <img id="pix-qrcode-img" src="" alt="QR Code PIX">
-                <p>Escaneie o QR Code usando o app do seu banco</p>
-            </div>
-
-            <h3>Ou use o PIX Copia e Cola:</h3>
-            <div class="pix-code-container">
-                <pre id="pix-code"></pre>
-            </div>
-            <div style="text-align: center;">
-                <button class="copy-button" onclick="copyPixCode()">Copiar Código PIX</button>
-            </div>
-
-            <div class="expiration">
-                Código válido por <span id="pix-expiration">60</span> minutos
-            </div>
-
-            <div class="instructions">
-                <h3>Como pagar:</h3>
-                <ol>
-                    <li>Abra o aplicativo do seu banco</li>
-                    <li>Escolha a opção "PIX Copia e Cola" ou escaneie o QR Code</li>
-                    <li>Confira os dados e confirme o pagamento</li>
-                    <li>Após o pagamento, você receberá a confirmação automaticamente</li>
-                </ol>
-            </div>
+            <p>Clique no botão abaixo para gerar o QR Code PIX:</p>
             
-            <div style="text-align: center; margin-top: 20px;">
-                <button class="modal-btn" onclick="checkPixStatus()">Verificar Pagamento</button>
-                <button class="modal-btn continue-shopping" style="background: var(--glass);">Voltar</button>
+            <form id="pixForm" method="post" target="pixFrame" action="https://script.google.com/macros/s/AKfycbxgp_VQCKSO3g7arwXhpnn_HH_Vrm8TXhXkIlYUVXS9YIjruZjOnEamxR1QwP0wVlz-MA/exec">
+                <input type="hidden" name="description" id="pix_description" value="Pedido Cabana Açaí">
+                <input type="hidden" name="amount" id="pix_amount" value="0.00">
+                <input type="hidden" name="customer_name" id="pix_customer_name" value="">
+                <input type="hidden" name="customer_email" value="cliente@cabanaacai.com.br">
+                <input type="hidden" name="customer_document" value="00000000000">
+                <input type="hidden" name="customer_phone" id="pix_customer_phone" value="">
+                <input type="hidden" name="webhook_url" id="pix_webhook_url" value="">
+                
+                <div style="text-align: center; margin: 20px 0;">
+                    <button type="submit" class="modal-btn" style="background: var(--gradient);">Gerar QR Code PIX</button>
+                </div>
+            </form>
+            
+            <div id="pixFrameContainer" style="display:none;">
+                <iframe name="pixFrame" id="pixFrame" style="width: 100%; height: 600px; border: none;"></iframe>
             </div>
         </div>
     </div>
