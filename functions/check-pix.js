@@ -1,15 +1,15 @@
 const axios = require('axios');
 const { Buffer } = require('buffer');
 
-// Configuração da API Pagar.me
-const API_KEY = 'sk_test_74a124ada92a4702beba69c65335c168';
+// Configuração da API Pagar.me (Produção)
+const API_KEY = 'sk_a4612521c1f44373a396e124a92e5504';
 const API_URL = 'https://api.pagar.me/core/v5';
 
 // Função principal
 exports.handler = async function(event, context) {
   // Configurar CORS para permitir solicitações do seu site
   const headers = {
-    'Access-Control-Allow-Origin': '*', // Substitua pelo seu domínio em produção
+    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS'
   };
@@ -48,7 +48,7 @@ exports.handler = async function(event, context) {
     const auth = Buffer.from(`${API_KEY}:`).toString('base64');
     
     // Fazer a requisição para a API do Pagar.me
-    const response = await axios.get(`${API_URL}/orders/${requestData.orderId}`, {
+    const response = await axios.get(`${API_URL}/charges/${requestData.orderId}`, {
       headers: {
         'Authorization': `Basic ${auth}`
       }
@@ -61,20 +61,28 @@ exports.handler = async function(event, context) {
       body: JSON.stringify({
         status: response.data.status,
         orderId: response.data.id,
-        charges: response.data.charges
+        lastTransaction: response.data.last_transaction
       })
     };
     
   } catch (error) {
     console.error('Erro ao verificar status do pedido:', error);
     
+    let errorDetails = {
+      message: error.message
+    };
+    
+    if (error.response) {
+      errorDetails.status = error.response.status;
+      errorDetails.data = error.response.data;
+    }
+    
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
         error: 'Erro ao verificar status do pedido',
-        message: error.message,
-        details: error.response ? error.response.data : null
+        details: errorDetails
       })
     };
   }
