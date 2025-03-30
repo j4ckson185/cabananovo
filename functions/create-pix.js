@@ -1,4 +1,3 @@
-// functions/create-pix.js
 const axios = require('axios');
 const { Buffer } = require('buffer');
 
@@ -6,24 +5,17 @@ const { Buffer } = require('buffer');
 const API_KEY = 'sk_test_74a124ada92a4702beba69c65335c168';
 const API_URL = 'https://api.pagar.me/core/v5';
 
-// Função principal
 exports.handler = async function(event, context) {
-  // Configurar CORS para permitir solicitações do seu site
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS'
   };
 
-  // Processar solicitações OPTIONS (para CORS)
   if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers
-    };
+    return { statusCode: 200, headers };
   }
   
-  // Apenas permita POST
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -33,10 +25,9 @@ exports.handler = async function(event, context) {
   }
   
   try {
-    // Obter dados da solicitação
     const requestData = JSON.parse(event.body);
+    console.log('Dados recebidos:', JSON.stringify(requestData));
     
-    // Validar dados necessários
     if (!requestData.amount || !requestData.customerName) {
       return {
         statusCode: 400,
@@ -45,15 +36,9 @@ exports.handler = async function(event, context) {
       };
     }
     
-    // Log para debug
-    console.log('Dados recebidos:', JSON.stringify(requestData));
-    
-    // Preparar dados para a API do Pagar.me
-    const amountInCents = Math.round(parseFloat(requestData.amount) * 100);
-    
-    // Extrair código de área e número do telefone com validação
-    let areaCode = "00";
-    let phoneNumber = "000000000";
+    // Extrair código de área e número do telefone
+    let areaCode = "11";
+    let phoneNumber = "999999999";
     
     if (requestData.customerPhone) {
       const phoneDigits = requestData.customerPhone.replace(/\D/g, '');
@@ -63,101 +48,91 @@ exports.handler = async function(event, context) {
       }
     }
     
-    const pagarmeData = {
-      items: [
-        {
-          amount: amountInCents,
-          description: requestData.description || "Pedido Cabana Açaí",
-          quantity: 1
+    // Criar o cliente primeiro
+    const customerData = {
+      name: requestData.customerName,
+      email: requestData.customerEmail || "cliente@cabanaacai.com.br",
+      type: "individual",
+      document: requestData.customerDocument || "00000000000",
+      phones: {
+        mobile_phone: {
+          country_code: "55",
+          area_code: areaCode,
+          number: phoneNumber
         }
-      ],
-      customer: {
-        name: requestData.customerName,
-        email: requestData.customerEmail || "cliente@cabanaacai.com.br",
-        type: "individual",
-        document: requestData.customerDocument || "00000000000",
-        phones: {
-          mobile_phone: {
-            country_code: "55",
-            area_code: areaCode,
-            number: phoneNumber
-          }
-        }
-      },
-      payments: [
-        {
-          payment_method: "pix",
-          pix: {
-            expires_in: 3600 // Expira em 1 hora
-          }
-        }
-      ]
+      }
     };
     
-    // Configurar autenticação Basic
+    console.log('Criando cliente:', JSON.stringify(customerData));
+    
+    // Configurar autenticação
     const auth = Buffer.from(`${API_KEY}:`).toString('base64');
+    const authHeaders = {
+      'Authorization': `Basic ${auth}`,
+      'Content-Type': 'application/json'
+    };
     
-    // Log para debug
-    console.log('Enviando para Pagar.me:', JSON.stringify(pagarmeData));
-    
-    // Fazer a requisição para a API do Pagar.me
-    const response = await axios.post(`${API_URL}/orders`, pagarmeData, {
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/json'
-      }
+    // Criar cliente
+    const customerResponse = await axios.post(`${API_URL}/customers`, customerData, {
+      headers: authHeaders
     });
     
-    // Log para debug
-    console.log('Resposta do Pagar.me:', JSON.stringify(response.data));
+    console.log('Cliente criado:', JSON.stringify(customerResponse.data));
     
-    // Verificar se há erros na resposta
-    if (response.data.status === 'failed') {
+    // Criar a cobrança
+    const chargeData = {
+      amount: Math.round(parseFloat(requestData.amount) * 100),
+      payment_method: "pix",
+      pix: {
+        expires_in: 3600
+      },
+      customer_id: customerResponse.data.id,
+      metadata: {
+        order_description: requestData.description || "Pedido Cabana Açaí" 
+      }
+    };
+    
+    console.log('Criando cobrança:', JSON.stringify(chargeData));
+    
+    const chargeResponse = await axios.post(`${API_URL}/charges`, chargeData, {
+      headers: authHeaders
+    });
+    
+    console.log('Cobrança criada:', JSON.stringify(chargeResponse.data));
+    
+    // Verificar se a cobrança foi criada com sucesso
+    if (chargeResponse.data.status === 'pending' && 
+        chargeResponse.data.last_transaction && 
+        chargeResponse.data.last_transaction.qr_code) {
+      
+      const transaction = chargeResponse.data.last_transaction;
+      
+      // Retornar os dados do PIX
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          orderId: chargeResponse.data.id,
+          status: chargeResponse.data.status,
+          pixCode: transaction.qr_code,
+          pixQrCodeUrl: transaction.qr_code_url,
+          expiresAt: transaction.expires_at
+        })
+      };
+    } else {
+      // Se houve algum problema
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({
           status: 'failed',
-          orderId: response.data.id,
-          error: 'Falha ao criar pedido no Pagar.me',
-          errorDetails: response.data.charges ? response.data.charges[0]?.last_transaction?.gateway_response : null,
-          expiresAt: response.data.charges?.[0]?.last_transaction?.expires_at || null
+          orderId: chargeResponse.data.id,
+          error: 'Falha ao criar cobrança PIX',
+          errorDetails: chargeResponse.data.last_transaction?.gateway_response || chargeResponse.data,
+          expiresAt: chargeResponse.data.last_transaction?.expires_at
         })
       };
     }
-    
-    // Verificar se a resposta contém as informações necessárias
-    if (!response.data.charges || 
-        response.data.charges.length === 0 || 
-        !response.data.charges[0].last_transaction ||
-        !response.data.charges[0].last_transaction.qr_code) {
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({ 
-          error: 'Formato de resposta inesperado da API Pagar.me',
-          response: response.data
-        })
-      };
-    }
-    
-    // Extrair dados do PIX
-    const transaction = response.data.charges[0].last_transaction;
-    
-    const result = {
-      orderId: response.data.id,
-      status: response.data.status,
-      pixCode: transaction.qr_code,
-      pixQrCodeUrl: transaction.qr_code_url,
-      expiresAt: transaction.expires_at
-    };
-    
-    // Retornar resultado
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify(result)
-    };
     
   } catch (error) {
     console.error('Erro ao processar requisição:', error);
@@ -169,8 +144,6 @@ exports.handler = async function(event, context) {
     if (error.response) {
       errorDetails.status = error.response.status;
       errorDetails.data = error.response.data;
-      
-      // Log detalhado para depuração
       console.log('Detalhes completos do erro:', JSON.stringify(error.response.data));
     }
     
