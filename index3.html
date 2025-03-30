@@ -6656,6 +6656,13 @@ async function generatePixPayment() {
             return;
         }
         
+        // Verificar se o telefone tem pelo menos 10 dígitos (código de área + número)
+        const phoneDigits = customerPhone.replace(/\D/g, '');
+        if (phoneDigits.length < 10) {
+            showNotification('Número de telefone inválido');
+            return;
+        }
+        
         // Calcular valores
         const subtotal = cart.reduce((total, item) => total + item.price, 0);
         const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
@@ -6669,11 +6676,13 @@ async function generatePixPayment() {
             customerName: customerName,
             customerEmail: "cliente@cabanaacai.com.br",
             customerDocument: "00000000000",
-            customerPhone: customerPhone
+            customerPhone: phoneDigits
         };
         
         // Mostrar carregamento
         showNotification("Gerando PIX, aguarde...");
+        
+        console.log("Enviando dados para gerar PIX:", requestData);
         
         // Fazer requisição para a função Netlify
         const response = await fetch('/api/create-pix', {
@@ -6684,16 +6693,29 @@ async function generatePixPayment() {
             body: JSON.stringify(requestData)
         });
         
-        if (!response.ok) {
-            throw new Error(`Erro na requisição: ${response.statusText}`);
+        const responseText = await response.text();
+        console.log("Resposta bruta da API:", responseText);
+        
+        let result;
+        try {
+            result = JSON.parse(responseText);
+        } catch (e) {
+            throw new Error(`Resposta inválida da API: ${responseText}`);
         }
         
-        const result = await response.json();
+        if (!response.ok) {
+            const errorMsg = result.error || result.message || response.statusText;
+            throw new Error(`Erro na requisição (${response.status}): ${errorMsg}`);
+        }
+        
+        console.log("Resposta processada:", result);
         
         if (!result.pixCode || !result.pixQrCodeUrl) {
+            console.error("Resposta completa sem dados do PIX:", result);
             throw new Error("Dados de PIX não encontrados na resposta");
         }
         
+        // O restante da função permanece igual...
         // Armazenar ID do pedido para verificação posterior
         currentPixOrderId = result.orderId;
         
