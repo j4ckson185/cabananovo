@@ -1,8 +1,8 @@
 const axios = require('axios');
 const { Buffer } = require('buffer');
 
-// Configuração da API Pagar.me
-const API_KEY = 'sk_test_74a124ada92a4702beba69c65335c168';
+// Configuração da API Pagar.me (Produção)
+const API_KEY = 'sk_a4612521c1f44373a396e124a92e5504';
 const API_URL = 'https://api.pagar.me/core/v5';
 
 exports.handler = async function(event, context) {
@@ -79,7 +79,7 @@ exports.handler = async function(event, context) {
     
     console.log('Cliente criado:', JSON.stringify(customerResponse.data));
     
-    // Criar a cobrança - CORRIGIDO o formato dos dados
+    // Criar a cobrança
     const chargeData = {
       amount: Math.round(parseFloat(requestData.amount) * 100),
       payment: {
