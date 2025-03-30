@@ -7049,7 +7049,59 @@ function confirmPaymentManually() {
     showNotification('Pedido finalizado! Obrigado pela compra.');
 }
 
-    
+// Função para gerar pagamento PIX abrindo uma nova janela
+function generatePixPaymentNewWindow() {
+    try {
+        // Obter dados do formulário
+        const customerName = document.getElementById('customerName').value;
+        const customerPhone = document.getElementById('customerPhone').value;
+        
+        if (!customerName || !customerPhone) {
+            showNotification('Preencha todos os dados do cliente');
+            return;
+        }
+        
+        // Calcular valores
+        const subtotal = cart.reduce((total, item) => total + item.price, 0);
+        const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+        const deliveryFee = 3.00;
+        const total = subtotal - discount + deliveryFee;
+        
+        // Construir URL com parâmetros
+        const url = new URL('/api/create-pix-page', window.location.origin);
+        url.searchParams.append('description', 'Pedido Cabana Açaí');
+        url.searchParams.append('amount', total.toFixed(2));
+        url.searchParams.append('customerName', customerName);
+        url.searchParams.append('customerEmail', 'cliente@cabanaacai.com.br');
+        url.searchParams.append('customerDocument', '00000000000');
+        url.searchParams.append('customerPhone', customerPhone);
+        url.searchParams.append('returnUrl', window.location.href);
+        
+        // Salvar dados do pedido no localStorage para recuperação posterior
+        localStorage.setItem('pendingOrder', JSON.stringify({
+            cart: cart,
+            customerInfo: {
+                name: customerName,
+                phone: customerPhone
+            },
+            orderTotal: total,
+            timestamp: new Date().toISOString()
+        }));
+        
+        // Abrir nova janela/tab com o URL construído
+        window.open(url.toString(), '_blank');
+        
+        // Fechar modal atual
+        document.getElementById('createOrderModal').style.display = 'none';
+        
+        // Mostrar notificação
+        showNotification('Abrindo página de pagamento PIX em nova aba...');
+        
+    } catch (error) {
+        console.error('Erro ao abrir página de PIX:', error);
+        showNotification(`Erro ao gerar PIX: ${error.message}`);
+    }
+}
     
 </script>
 <<!-- Modal para Criar Novo Pedido -->
