@@ -6703,16 +6703,31 @@ async function generatePixPayment() {
             throw new Error(`Resposta inválida da API: ${responseText}`);
         }
         
-        if (!response.ok) {
-            const errorMsg = result.error || result.message || response.statusText;
-            throw new Error(`Erro na requisição (${response.status}): ${errorMsg}`);
-        }
-        
         console.log("Resposta processada:", result);
         
+        // Verificar se houve erro ou status falhou
+        if (result.error || result.status === 'failed') {
+            let errorMessage = result.error || "Falha ao gerar pagamento PIX";
+            if (result.errorDetails) {
+                errorMessage += `: ${result.errorDetails}`;
+            }
+            throw new Error(errorMessage);
+        }
+        
+        // Verificar se tem dados de PIX
         if (!result.pixCode || !result.pixQrCodeUrl) {
             console.error("Resposta completa sem dados do PIX:", result);
-            throw new Error("Dados de PIX não encontrados na resposta");
+            
+            // Tentar solução alternativa - usuário confirma manualmente
+            const useManualConfirmation = confirm("Não foi possível gerar o QR Code PIX automaticamente. Deseja utilizar o pagamento PIX manual?");
+            
+            if (useManualConfirmation) {
+                // Usar PIX manual como fallback
+                useManualPix(customerName, total);
+                return;
+            } else {
+                throw new Error("Dados de PIX não encontrados na resposta");
+            }
         }
         
         // O restante da função permanece igual...
@@ -6785,6 +6800,78 @@ async function generatePixPayment() {
     } catch (error) {
         console.error('Erro ao gerar PIX:', error);
         showNotification(`Erro ao gerar PIX: ${error.message}`);
+    }
+}
+
+// Função para usar PIX manual como fallback
+function useManualPix(customerName, total) {
+    try {
+        const paymentModal = document.getElementById('createOrderModal');
+        const pixModal = document.getElementById('pixModal');
+        
+        // Exibir QR Code e código PIX no modal
+        document.getElementById('pixModal').innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Pagamento via PIX</h2>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="pix-content">
+                    <div class="success-message">
+                        Use um dos métodos abaixo para pagar R$ ${total.toFixed(2)}
+                    </div>
+                    
+                    <div class="order-details">
+                        <h3>Detalhes do Pedido</h3>
+                        <p><strong>Valor:</strong> R$ ${total.toFixed(2)}</p>
+                        <p><strong>Cliente:</strong> ${customerName}</p>
+                    </div>
+                    
+                    <div class="qr-code-container">
+                        <img src="https://gerarqrcodepix.com.br/api/v1?nome=Jackson%20Cabana%20Acai&cidade=Natal&chave=84988731028&valor=${total.toFixed(2)}" alt="QR Code PIX">
+                        <p>Escaneie o QR Code usando o app do seu banco</p>
+                    </div>
+                    
+                    <h3>Ou use a chave PIX:</h3>
+                    <div class="pix-code-container">
+                        <pre id="pix-code">84988731028</pre>
+                    </div>
+                    <div style="text-align: center;">
+                        <button class="copy-button" onclick="copyPixCode()">Copiar Chave PIX</button>
+                    </div>
+                    
+                    <div class="instructions">
+                        <h3>Como pagar:</h3>
+                        <ol>
+                            <li>Abra o aplicativo do seu banco</li>
+                            <li>Escolha a opção "PIX" e informe o valor R$ ${total.toFixed(2)}</li>
+                            <li>Selecione a opção "Pagar com chave PIX" ou escaneie o QR Code</li>
+                            <li>Confira os dados e confirme o pagamento</li>
+                            <li>Após o pagamento, clique no botão abaixo para finalizar</li>
+                        </ol>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button onclick="confirmPaymentManually()" class="modal-btn" style="background: var(--gradient);">Já paguei, finalizar pedido</button>
+                        <button onclick="closePixModal()" class="modal-btn continue-shopping" style="background: var(--glass);">Fechar</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Fechar modal de criação de pedido e mostrar modal de PIX
+        paymentModal.style.display = 'none';
+        pixModal.style.display = 'block';
+        
+        // Adicionar event listener para o botão de fechar
+        const closeButtons = document.querySelectorAll('#pixModal .close-modal, #pixModal .continue-shopping');
+        closeButtons.forEach(button => {
+            button.addEventListener('click', closePixModal);
+        });
+        
+    } catch (error) {
+        console.error('Erro ao gerar PIX manual:', error);
+        showNotification(`Erro ao gerar PIX manual: ${error.message}`);
     }
 }
 
