@@ -1,8 +1,8 @@
 const axios = require('axios');
 const { Buffer } = require('buffer');
 
-// Configuração da API Pagar.me
-const API_KEY = 'sk_test_74a124ada92a4702beba69c65335c168';
+// Configuração da API Pagar.me (Produção)
+const API_KEY = 'sk_a4612521c1f44373a396e124a92e5504';
 const API_URL = 'https://api.pagar.me/core/v5';
 
 exports.handler = async function(event, context) {
@@ -45,16 +45,16 @@ exports.handler = async function(event, context) {
     console.log('Webhook recebido:', JSON.stringify(webhookData));
     
     // Processar diferentes tipos de eventos
-    if (webhookData.type === 'order.paid') {
+    if (webhookData.type === 'charge.paid') {
       // Pagamento confirmado
-      const orderId = webhookData.data.id;
+      const chargeId = webhookData.data.id;
       
       // Aqui você pode implementar lógica adicional:
       // - Atualizar status na sua base de dados
       // - Enviar confirmação para o cliente
       // - etc.
       
-      console.log(`Pagamento confirmado para pedido: ${orderId}`);
+      console.log(`Pagamento confirmado para cobrança: ${chargeId}`);
       
       return {
         statusCode: 200,
@@ -62,18 +62,18 @@ exports.handler = async function(event, context) {
         body: JSON.stringify({
           success: true,
           message: 'Pagamento processado com sucesso',
-          orderId: orderId
+          chargeId: chargeId
         })
       };
     } 
-    else if (webhookData.type === 'order.created') {
-      console.log(`Pedido criado: ${webhookData.data.id}`);
+    else if (webhookData.type === 'charge.created') {
+      console.log(`Cobrança criada: ${webhookData.data.id}`);
       return {
         statusCode: 200,
         headers,
         body: JSON.stringify({
           success: true,
-          message: 'Pedido criado recebido'
+          message: 'Cobrança criada recebida'
         })
       };
     }
