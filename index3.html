@@ -6656,13 +6656,6 @@ async function generatePixPayment() {
             return;
         }
         
-        // Verificar se o telefone tem pelo menos 10 dígitos (código de área + número)
-        const phoneDigits = customerPhone.replace(/\D/g, '');
-        if (phoneDigits.length < 10) {
-            showNotification('Número de telefone inválido');
-            return;
-        }
-        
         // Calcular valores
         const subtotal = cart.reduce((total, item) => total + item.price, 0);
         const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
@@ -6676,7 +6669,7 @@ async function generatePixPayment() {
             customerName: customerName,
             customerEmail: "cliente@cabanaacai.com.br",
             customerDocument: "00000000000",
-            customerPhone: phoneDigits
+            customerPhone: customerPhone
         };
         
         // Mostrar carregamento
@@ -6709,7 +6702,7 @@ async function generatePixPayment() {
         if (result.error || result.status === 'failed') {
             let errorMessage = result.error || "Falha ao gerar pagamento PIX";
             if (result.errorDetails) {
-                errorMessage += `: ${result.errorDetails}`;
+                errorMessage += `: ${JSON.stringify(result.errorDetails)}`;
             }
             throw new Error(errorMessage);
         }
@@ -6717,20 +6710,9 @@ async function generatePixPayment() {
         // Verificar se tem dados de PIX
         if (!result.pixCode || !result.pixQrCodeUrl) {
             console.error("Resposta completa sem dados do PIX:", result);
-            
-            // Tentar solução alternativa - usuário confirma manualmente
-            const useManualConfirmation = confirm("Não foi possível gerar o QR Code PIX automaticamente. Deseja utilizar o pagamento PIX manual?");
-            
-            if (useManualConfirmation) {
-                // Usar PIX manual como fallback
-                useManualPix(customerName, total);
-                return;
-            } else {
-                throw new Error("Dados de PIX não encontrados na resposta");
-            }
+            throw new Error("Dados de PIX não encontrados na resposta");
         }
         
-        // O restante da função permanece igual...
         // Armazenar ID do pedido para verificação posterior
         currentPixOrderId = result.orderId;
         
