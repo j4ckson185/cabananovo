@@ -1,8 +1,8 @@
 const axios = require('axios');
 const { Buffer } = require('buffer');
 
-// Configuração da API Pagar.me (Produção)
-const API_KEY = 'sk_a4612521c1f44373a396e124a92e5504';
+// Configuração da API Pagar.me
+const API_KEY = 'sk_test_74a124ada92a4702beba69c65335c168';
 const API_URL = 'https://api.pagar.me/core/v5';
 
 exports.handler = async function(event, context) {
@@ -48,21 +48,13 @@ exports.handler = async function(event, context) {
       }
     }
     
-    // Configurar autenticação
-    const auth = Buffer.from(`${API_KEY}:`).toString('base64');
-    const authHeaders = {
-      'Authorization': `Basic ${auth}`,
-      'Content-Type': 'application/json'
-    };
-    
-    // Tentar abordagem de Orders
+    // Seguindo exatamente a mesma estrutura do Apps Script original
     const orderData = {
       items: [
         {
           amount: Math.round(parseFloat(requestData.amount) * 100),
           description: requestData.description || "Pedido Cabana Açaí",
-          quantity: 1,
-          code: "ACAI" + Date.now().toString().slice(-6)
+          quantity: 1
         }
       ],
       customer: {
@@ -82,49 +74,66 @@ exports.handler = async function(event, context) {
         {
           payment_method: "pix",
           pix: {
-            expires_in: 3600
+            expires_in: 3600 // Expira em 1 hora
           }
         }
       ]
     };
     
-    console.log('Criando pedido:', JSON.stringify(orderData));
+    // Configurar autenticação Basic
+    const auth = Buffer.from(`${API_KEY}:`).toString('base64');
     
-    const orderResponse = await axios.post(`${API_URL}/orders`, orderData, {
-      headers: authHeaders
+    // Log da requisição para debug
+    console.log('Enviando para Pagar.me:', JSON.stringify(orderData));
+    
+    // Fazer a requisição para a API do Pagar.me (Orders API)
+    const response = await axios.post(`${API_URL}/orders`, orderData, {
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/json'
+      }
     });
     
-    console.log('Pedido criado:', JSON.stringify(orderResponse.data));
+    // Log da resposta para debug
+    console.log('Resposta do Pagar.me:', JSON.stringify(response.data));
     
-    // Verificar se o pedido tem informações PIX
-    if (orderResponse.data.charges && 
-        orderResponse.data.charges.length > 0 && 
-        orderResponse.data.charges[0].last_transaction && 
-        orderResponse.data.charges[0].last_transaction.qr_code) {
+    // Verificar se a resposta contém as informações necessárias
+    if (response.data.charges && 
+        response.data.charges.length > 0 && 
+        response.data.charges[0].last_transaction && 
+        response.data.charges[0].last_transaction.qr_code) {
       
-      const transaction = orderResponse.data.charges[0].last_transaction;
+      const transaction = response.data.charges[0].last_transaction;
       
+      // Retornar os dados do PIX
       return {
         statusCode: 200,
         headers,
         body: JSON.stringify({
-          orderId: orderResponse.data.id,
-          status: orderResponse.data.status,
+          orderId: response.data.id,
+          status: response.data.status,
           pixCode: transaction.qr_code,
           pixQrCodeUrl: transaction.qr_code_url,
           expiresAt: transaction.expires_at
         })
       };
     } else {
+      // Se houver algum problema
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({
           status: 'failed',
-          orderId: orderResponse.data.id,
-          error: 'Falha ao criar pedido PIX',
-          errorDetails: orderResponse.data,
-          expiresAt: null
+          orderId: response.data.id,
+          error: 'Falha ao gerar QR Code PIX',
+          errorDetails: response.data.charges && 
+                        response.data.charges[0] && 
+                        response.data.charges[0].last_transaction ? 
+                        response.data.charges[0].last_transaction.gateway_response : response.data,
+          expiresAt: response.data.charges && 
+                    response.data.charges[0] && 
+                    response.data.charges[0].last_transaction ? 
+                    response.data.charges[0].last_transaction.expires_at : null
         })
       };
     }
