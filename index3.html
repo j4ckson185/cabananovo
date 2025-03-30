@@ -5137,8 +5137,8 @@ function setupPaymentEvents() {
         }
         
         if (selectedPayment.value === 'online') {
-            // Se for PIX, gera o pagamento
-            generatePixPayment();
+            // Se for PIX, usar versão manual
+            generatePixPaymentManual();
         } else {
             // Para outros métodos, continua com o fluxo original
             submitOrder();
@@ -6971,6 +6971,103 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
+
+    // Função para gerar um pagamento PIX manual
+function generatePixPaymentManual() {
+    try {
+        const paymentModal = document.getElementById('createOrderModal');
+        const pixModal = document.getElementById('pixModal');
+        
+        // Obter dados do formulário
+        const customerName = document.getElementById('customerName').value;
+        
+        // Calcular valores
+        const subtotal = cart.reduce((total, item) => total + item.price, 0);
+        const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+        const deliveryFee = 3.00;
+        const total = subtotal - discount + deliveryFee;
+        
+        // Exibir QR Code e código PIX no modal
+        document.getElementById('pixModal').innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Pagamento via PIX</h2>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="pix-content">
+                    <div class="success-message">
+                        Use um dos métodos abaixo para pagar R$ ${total.toFixed(2)}
+                    </div>
+                    
+                    <div class="order-details">
+                        <h3>Detalhes do Pedido</h3>
+                        <p><strong>Valor:</strong> R$ ${total.toFixed(2)}</p>
+                        <p><strong>Cliente:</strong> ${customerName}</p>
+                    </div>
+                    
+                    <div class="qr-code-container">
+                        <img src="https://gerarqrcodepix.com.br/api/v1?nome=Jackson%20Cabana%20Acai&cidade=Natal&chave=84988731028&valor=${total.toFixed(2)}" alt="QR Code PIX">
+                        <p>Escaneie o QR Code usando o app do seu banco</p>
+                    </div>
+                    
+                    <h3>Ou use a chave PIX:</h3>
+                    <div class="pix-code-container">
+                        <pre id="pix-code">84988731028</pre>
+                    </div>
+                    <div style="text-align: center;">
+                        <button class="copy-button" onclick="copyPixCode()">Copiar Chave PIX</button>
+                    </div>
+                    
+                    <div class="instructions">
+                        <h3>Como pagar:</h3>
+                        <ol>
+                            <li>Abra o aplicativo do seu banco</li>
+                            <li>Escolha a opção "PIX" e informe o valor R$ ${total.toFixed(2)}</li>
+                            <li>Selecione a opção "Pagar com chave PIX" ou escaneie o QR Code</li>
+                            <li>Confira os dados e confirme o pagamento</li>
+                            <li>Após o pagamento, clique no botão abaixo para finalizar</li>
+                        </ol>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button onclick="confirmPaymentManually()" class="modal-btn" style="background: var(--gradient);">Já paguei, finalizar pedido</button>
+                        <button onclick="closePixModal()" class="modal-btn continue-shopping" style="background: var(--glass);">Fechar</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Fechar modal de criação de pedido e mostrar modal de PIX
+        paymentModal.style.display = 'none';
+        pixModal.style.display = 'block';
+        
+        // Adicionar event listener para o botão de fechar
+        const closeButtons = document.querySelectorAll('#pixModal .close-modal, #pixModal .continue-shopping');
+        closeButtons.forEach(button => {
+            button.addEventListener('click', closePixModal);
+        });
+        
+    } catch (error) {
+        console.error('Erro ao gerar PIX manual:', error);
+        showNotification(`Erro ao gerar PIX manual: ${error.message}`);
+    }
+}
+
+// Função para finalizar pedido após pagamento manual
+function confirmPaymentManually() {
+    // Fechar modal de PIX
+    document.getElementById('pixModal').style.display = 'none';
+    
+    // Finalizar o pedido
+    submitOrder();
+    
+    // Limpar dados pendentes
+    localStorage.removeItem('pendingOrder');
+    
+    showNotification('Pedido finalizado! Obrigado pela compra.');
+}
+
+    
     
 </script>
 <<!-- Modal para Criar Novo Pedido -->
