@@ -5137,8 +5137,8 @@ function setupPaymentEvents() {
         }
         
         if (selectedPayment.value === 'online') {
-            // Se for PIX, usar versão manual
-            generatePixPaymentManual();
+            // Se for PIX, usar a integração com Pagar.me
+            generatePixPayment();
         } else {
             // Para outros métodos, continua com o fluxo original
             submitOrder();
