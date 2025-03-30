@@ -48,23 +48,6 @@ exports.handler = async function(event, context) {
       }
     }
     
-    // Criar o cliente primeiro
-    const customerData = {
-      name: requestData.customerName,
-      email: requestData.customerEmail || "cliente@cabanaacai.com.br",
-      type: "individual",
-      document: requestData.customerDocument || "00000000000",
-      phones: {
-        mobile_phone: {
-          country_code: "55",
-          area_code: areaCode,
-          number: phoneNumber
-        }
-      }
-    };
-    
-    console.log('Criando cliente:', JSON.stringify(customerData));
-    
     // Configurar autenticação
     const auth = Buffer.from(`${API_KEY}:`).toString('base64');
     const authHeaders = {
@@ -72,66 +55,76 @@ exports.handler = async function(event, context) {
       'Content-Type': 'application/json'
     };
     
-    // Criar cliente
-    const customerResponse = await axios.post(`${API_URL}/customers`, customerData, {
-      headers: authHeaders
-    });
-    
-    console.log('Cliente criado:', JSON.stringify(customerResponse.data));
-    
-    // Criar a cobrança
-    const chargeData = {
-      amount: Math.round(parseFloat(requestData.amount) * 100),
-      payment: {
-        payment_method: "pix",
-        pix: {
-          expires_in: 3600
+    // Tentar abordagem de Orders
+    const orderData = {
+      items: [
+        {
+          amount: Math.round(parseFloat(requestData.amount) * 100),
+          description: requestData.description || "Pedido Cabana Açaí",
+          quantity: 1,
+          code: "ACAI" + Date.now().toString().slice(-6)
+        }
+      ],
+      customer: {
+        name: requestData.customerName,
+        email: requestData.customerEmail || "cliente@cabanaacai.com.br",
+        type: "individual",
+        document: requestData.customerDocument || "00000000000",
+        phones: {
+          mobile_phone: {
+            country_code: "55",
+            area_code: areaCode,
+            number: phoneNumber
+          }
         }
       },
-      customer_id: customerResponse.data.id,
-      metadata: {
-        order_description: requestData.description || "Pedido Cabana Açaí" 
-      }
+      payments: [
+        {
+          payment_method: "pix",
+          pix: {
+            expires_in: 3600
+          }
+        }
+      ]
     };
     
-    console.log('Criando cobrança:', JSON.stringify(chargeData));
+    console.log('Criando pedido:', JSON.stringify(orderData));
     
-    const chargeResponse = await axios.post(`${API_URL}/charges`, chargeData, {
+    const orderResponse = await axios.post(`${API_URL}/orders`, orderData, {
       headers: authHeaders
     });
     
-    console.log('Cobrança criada:', JSON.stringify(chargeResponse.data));
+    console.log('Pedido criado:', JSON.stringify(orderResponse.data));
     
-    // Verificar se a cobrança foi criada com sucesso
-    if (chargeResponse.data.status === 'pending' && 
-        chargeResponse.data.last_transaction && 
-        chargeResponse.data.last_transaction.qr_code) {
+    // Verificar se o pedido tem informações PIX
+    if (orderResponse.data.charges && 
+        orderResponse.data.charges.length > 0 && 
+        orderResponse.data.charges[0].last_transaction && 
+        orderResponse.data.charges[0].last_transaction.qr_code) {
       
-      const transaction = chargeResponse.data.last_transaction;
+      const transaction = orderResponse.data.charges[0].last_transaction;
       
-      // Retornar os dados do PIX
       return {
         statusCode: 200,
         headers,
         body: JSON.stringify({
-          orderId: chargeResponse.data.id,
-          status: chargeResponse.data.status,
+          orderId: orderResponse.data.id,
+          status: orderResponse.data.status,
           pixCode: transaction.qr_code,
           pixQrCodeUrl: transaction.qr_code_url,
           expiresAt: transaction.expires_at
         })
       };
     } else {
-      // Se houve algum problema
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({
           status: 'failed',
-          orderId: chargeResponse.data.id,
-          error: 'Falha ao criar cobrança PIX',
-          errorDetails: chargeResponse.data.last_transaction?.gateway_response || chargeResponse.data,
-          expiresAt: chargeResponse.data.last_transaction?.expires_at
+          orderId: orderResponse.data.id,
+          error: 'Falha ao criar pedido PIX',
+          errorDetails: orderResponse.data,
+          expiresAt: null
         })
       };
     }
