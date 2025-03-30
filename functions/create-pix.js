@@ -1,3 +1,4 @@
+// functions/create-pix.js
 const axios = require('axios');
 const { Buffer } = require('buffer');
 
@@ -9,7 +10,7 @@ const API_URL = 'https://api.pagar.me/core/v5';
 exports.handler = async function(event, context) {
   // Configurar CORS para permitir solicitações do seu site
   const headers = {
-    'Access-Control-Allow-Origin': '*', // Substitua pelo seu domínio em produção
+    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS'
   };
@@ -50,6 +51,18 @@ exports.handler = async function(event, context) {
     // Preparar dados para a API do Pagar.me
     const amountInCents = Math.round(parseFloat(requestData.amount) * 100);
     
+    // Extrair código de área e número do telefone com validação
+    let areaCode = "00";
+    let phoneNumber = "000000000";
+    
+    if (requestData.customerPhone) {
+      const phoneDigits = requestData.customerPhone.replace(/\D/g, '');
+      if (phoneDigits.length >= 10) {
+        areaCode = phoneDigits.substring(0, 2);
+        phoneNumber = phoneDigits.substring(2);
+      }
+    }
+    
     const pagarmeData = {
       items: [
         {
@@ -66,8 +79,8 @@ exports.handler = async function(event, context) {
         phones: {
           mobile_phone: {
             country_code: "55",
-            area_code: requestData.customerPhone.substring(0, 2),
-            number: requestData.customerPhone.substring(2)
+            area_code: areaCode,
+            number: phoneNumber
           }
         }
       },
@@ -98,10 +111,26 @@ exports.handler = async function(event, context) {
     // Log para debug
     console.log('Resposta do Pagar.me:', JSON.stringify(response.data));
     
+    // Verificar se há erros na resposta
+    if (response.data.status === 'failed') {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          status: 'failed',
+          orderId: response.data.id,
+          error: 'Falha ao criar pedido no Pagar.me',
+          errorDetails: response.data.charges ? response.data.charges[0]?.last_transaction?.gateway_response : null,
+          expiresAt: response.data.charges?.[0]?.last_transaction?.expires_at || null
+        })
+      };
+    }
+    
     // Verificar se a resposta contém as informações necessárias
     if (!response.data.charges || 
         response.data.charges.length === 0 || 
-        !response.data.charges[0].last_transaction) {
+        !response.data.charges[0].last_transaction ||
+        !response.data.charges[0].last_transaction.qr_code) {
       return {
         statusCode: 500,
         headers,
@@ -140,6 +169,9 @@ exports.handler = async function(event, context) {
     if (error.response) {
       errorDetails.status = error.response.status;
       errorDetails.data = error.response.data;
+      
+      // Log detalhado para depuração
+      console.log('Detalhes completos do erro:', JSON.stringify(error.response.data));
     }
     
     return {
