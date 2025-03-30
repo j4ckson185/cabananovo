@@ -44,6 +44,9 @@ exports.handler = async function(event, context) {
       };
     }
     
+    // Log para debug
+    console.log('Dados recebidos:', JSON.stringify(requestData));
+    
     // Preparar dados para a API do Pagar.me
     const amountInCents = Math.round(parseFloat(requestData.amount) * 100);
     
@@ -81,6 +84,9 @@ exports.handler = async function(event, context) {
     // Configurar autenticação Basic
     const auth = Buffer.from(`${API_KEY}:`).toString('base64');
     
+    // Log para debug
+    console.log('Enviando para Pagar.me:', JSON.stringify(pagarmeData));
+    
     // Fazer a requisição para a API do Pagar.me
     const response = await axios.post(`${API_URL}/orders`, pagarmeData, {
       headers: {
@@ -89,24 +95,33 @@ exports.handler = async function(event, context) {
       }
     });
     
-    // Extrair dados relevantes da resposta
+    // Log para debug
+    console.log('Resposta do Pagar.me:', JSON.stringify(response.data));
+    
+    // Verificar se a resposta contém as informações necessárias
+    if (!response.data.charges || 
+        response.data.charges.length === 0 || 
+        !response.data.charges[0].last_transaction) {
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ 
+          error: 'Formato de resposta inesperado da API Pagar.me',
+          response: response.data
+        })
+      };
+    }
+    
+    // Extrair dados do PIX
+    const transaction = response.data.charges[0].last_transaction;
+    
     const result = {
       orderId: response.data.id,
-      orderCode: response.data.code,
-      status: response.data.status
+      status: response.data.status,
+      pixCode: transaction.qr_code,
+      pixQrCodeUrl: transaction.qr_code_url,
+      expiresAt: transaction.expires_at
     };
-    
-    // Verificar se há charges com last_transaction
-    if (response.data.charges && 
-        response.data.charges.length > 0 && 
-        response.data.charges[0].last_transaction) {
-      
-      const transaction = response.data.charges[0].last_transaction;
-      
-      result.pixCode = transaction.qr_code;
-      result.pixQrCodeUrl = transaction.qr_code_url;
-      result.expiresAt = transaction.expires_at;
-    }
     
     // Retornar resultado
     return {
@@ -118,13 +133,21 @@ exports.handler = async function(event, context) {
   } catch (error) {
     console.error('Erro ao processar requisição:', error);
     
+    let errorDetails = {
+      message: error.message
+    };
+    
+    if (error.response) {
+      errorDetails.status = error.response.status;
+      errorDetails.data = error.response.data;
+    }
+    
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
         error: 'Erro ao processar requisição',
-        message: error.message,
-        details: error.response ? error.response.data : null
+        details: errorDetails
       })
     };
   }
