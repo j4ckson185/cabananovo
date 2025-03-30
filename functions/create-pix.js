@@ -79,12 +79,14 @@ exports.handler = async function(event, context) {
     
     console.log('Cliente criado:', JSON.stringify(customerResponse.data));
     
-    // Criar a cobrança
+    // Criar a cobrança - CORRIGIDO o formato dos dados
     const chargeData = {
       amount: Math.round(parseFloat(requestData.amount) * 100),
-      payment_method: "pix",
-      pix: {
-        expires_in: 3600
+      payment: {
+        payment_method: "pix",
+        pix: {
+          expires_in: 3600
+        }
       },
       customer_id: customerResponse.data.id,
       metadata: {
