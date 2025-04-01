@@ -6625,24 +6625,43 @@ function generatePixQRCode(pixKey, name, city, description, amount) {
     const qrCodeContainer = document.getElementById("pixQRCode");
     qrCodeContainer.innerHTML = '';
     
-    // Criar uma URL para gerar QR Code estático para a chave Pix
-    // Usamos o serviço pix.com.br que gera QR codes para qualquer chave Pix
-    const qrCodeUrl = `https://gerarqrcodepix.com.br/api/v1?nome=${encodeURIComponent(name)}&cidade=${encodeURIComponent(city)}&valor=${amount.toFixed(2)}&saida=qr&chave=${encodeURIComponent(pixKey)}`;
+    // Para uma chave de telefone Pix, usamos o formato +5584988731028
+    // Remover qualquer formatação e adicionar o código do país
+    const cleanPixKey = pixKey.replace(/\D/g, '');
+    const formattedPixKey = `+55${cleanPixKey}`;
+    
+    // Gerar o QR code usando o API do QR Code Generator
+    const baseUrl = 'https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl=';
+    
+    // Criar o payload do Pix seguindo o padrão BR Code
+    const merchantName = encodeURIComponent(name).substring(0, 25);
+    const merchantCity = encodeURIComponent(city).substring(0, 15);
+    
+    // Formatar o valor como string com 2 casas decimais
+    const amountStr = amount.toFixed(2);
+    
+    // Criar o payload
+    // Este é um formato simplificado do BRCode para PIX
+    const pixPayload = `00020126330014BR.GOV.BCB.PIX01${formattedPixKey.length}${formattedPixKey}52040000530398654${amountStr.replace('.', '')}5802BR5913${merchantName}6004${merchantCity}62${description.length.toString().padStart(2, '0')}${description}6304`;
+    
+    // Gerar URL completa da imagem QR
+    const qrCodeUrl = baseUrl + encodeURIComponent(pixPayload);
     
     // Criar elemento de imagem
     const img = document.createElement('img');
     img.src = qrCodeUrl;
     img.alt = "QR Code Pix";
-    img.style.width = "200px";
-    img.style.height = "200px";
+    img.style.width = "100%";
+    img.style.height = "auto";
+    img.style.maxWidth = "200px";
     
     // Adicionar a imagem ao container
     qrCodeContainer.appendChild(img);
     
-    // Texto para copiar - apenas a chave Pix para simplificar
-    document.getElementById("pixCopyPasteText").value = pixKey;
+    // Texto completo do payload para copiar
+    document.getElementById("pixCopyPasteText").value = pixPayload;
     
-    return pixKey;
+    return pixPayload;
 }
 
 function createPixCopyPaste(pixKey, name, city, description, amount) {
