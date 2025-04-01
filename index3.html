@@ -6685,7 +6685,7 @@ function showPixModal() {
     
     // Limpar o container antes de mostrar a imagem
     const qrCodeContainer = document.getElementById("pixQRCode");
-    qrCodeContainer.innerHTML = '';
+    qrCodeContainer.innerHTML = ''; // Isso é crucial para limpar QR codes anteriores
     
     // Usar o QR code Pix com manipulação de erros
     const img = new Image();
@@ -6700,13 +6700,13 @@ function showPixModal() {
         qrCodeContainer.innerHTML = '<div style="width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; background: #f0f0f0; color: #333; font-size: 14px; text-align: center;">QR Code não disponível.<br>Por favor, use o código Pix abaixo.</div>';
     };
     
-    img.src = "https://i.ibb.co/84cCMy3j/qrcode-pix.png";
+    img.src = "https://i.ibb.co/84cCMy3/qrcode-pix.png"; // URL corrigida
     img.alt = "QR Code Pix";
     img.style.width = "100%";
     img.style.height = "auto";
     img.style.maxWidth = "200px";
     
-    // Novo código Pix copia e cola fornecido
+    // Código Pix copia e cola
     document.getElementById("pixCopyPasteText").value = "00020126360014BR.GOV.BCB.PIX0114+55849887310285204000053039865802BR5901N6001C62140510CabanaAcai6304CF78";
     
     // Mostrar modal
