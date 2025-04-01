@@ -5156,7 +5156,37 @@ function setupPaymentEvents() {
     
 async function submitOrder() {
   try {
-          // Modificar o botão para "Aguarde..."
+    // Verificar campos obrigatórios primeiro
+    const customerName = document.getElementById('customerName').value;
+    const customerPhone = document.getElementById('customerPhone').value;
+    const street = document.getElementById('street').value;
+    const streetNumber = document.getElementById('streetNumber').value;
+    const neighborhood = document.getElementById('neighborhood').value;
+    const zipCode = document.getElementById('zipCode').value;
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+    
+    // Validar campos obrigatórios
+    if (!customerName || !customerPhone || !street || !streetNumber || !neighborhood || !zipCode || !paymentMethod) {
+      // Destacar campos não preenchidos
+      if (!customerName) document.getElementById('customerName').style.border = '1px solid var(--error)';
+      if (!customerPhone) document.getElementById('customerPhone').style.border = '1px solid var(--error)';
+      if (!street) document.getElementById('street').style.border = '1px solid var(--error)';
+      if (!streetNumber) document.getElementById('streetNumber').style.border = '1px solid var(--error)';
+      if (!neighborhood) document.getElementById('neighborhood').style.border = '1px solid var(--error)';
+      if (!zipCode) document.getElementById('zipCode').style.border = '1px solid var(--error)';
+      if (!paymentMethod) {
+        document.querySelectorAll('.payment-option').forEach(option => {
+          option.style.border = '1px solid var(--error)';
+        });
+      }
+      
+      // Mostrar alerta
+      alert('Por favor, preencha todos os campos obrigatórios');
+      return; // Interrompe a função aqui
+    }
+    
+    // Se chegou aqui, todos os campos estão preenchidos
+    // Agora sim, modificar o botão para "Aguarde..."
     const submitButton = document.querySelector('#createOrderForm button[type="button"]');
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aguarde...';
     submitButton.style.backgroundColor = '#888'; // Cor mais escura/cinza
@@ -5176,202 +5206,192 @@ async function submitOrder() {
     // Incrementar o contador para o próximo pedido
     localStorage.setItem('orderCounter', (orderCounter + 1).toString());
         
-        // Mapear métodos de pagamento
-        const paymentMethodMap = {
-            'money': 'Dinheiro',
-            'card': 'Cartão',
-            'online': 'PIX',
-            'pix': 'PIX'
-        };
+    // Mapear métodos de pagamento
+    const paymentMethodMap = {
+        'money': 'Dinheiro',
+        'card': 'Cartão',
+        'online': 'PIX',
+        'pix': 'PIX'
+    };
 
-        // Verificar se o carrinho está vazio
-        if (!cart || cart.length === 0) {
-            alert('Seu carrinho está vazio!');
-            return;
-        }
-
-        // Ler dados diretamente do formulário
-        const customerName = document.getElementById('customerName').value;
-        const customerPhone = document.getElementById('customerPhone').value;
-        const street = document.getElementById('street').value;
-        const streetNumber = document.getElementById('streetNumber').value;
-        const neighborhood = document.getElementById('neighborhood').value;
-        const complement = document.getElementById('complement').value;
-        const zipCode = document.getElementById('zipCode').value;
-        const notes = document.getElementById('notes').value;
-        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'money';
+    // Verificar se o carrinho está vazio
+    if (!cart || cart.length === 0) {
+        alert('Seu carrinho está vazio!');
         
-        // Validar campos obrigatórios
-        if (!customerName || !customerPhone || !street || !streetNumber || !neighborhood || !zipCode) {
-            alert('Por favor, preencha todos os campos obrigatórios');
-            return;
+        // Restaurar o botão
+        submitButton.innerHTML = 'Finalizar Pedido';
+        submitButton.style.backgroundColor = ''; // Remover o estilo de cor
+        submitButton.disabled = false; // Reabilitar o botão
+        return;
+    }
+
+    // Calcular valores
+    const subtotal = cart.reduce((total, item) => total + item.price, 0);
+    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    const deliveryFee = 3.00;
+    const total = subtotal - discount + deliveryFee;
+
+    // Preparar objeto para a API no formato original
+    const order = {
+        id: orderId, // Usando o novo ID gerado com número sequencial
+        status: "open",
+        paymentMethod: paymentMethod === 'pix' ? 'online' : paymentMethod,
+        orderTotal: total,
+        orderDetails: cart.map(item => `${item.name} - R$ ${item.price.toFixed(2)}`).join('\n'),
+        notes: document.getElementById('notes').value || '',
+        deliveryPoint: {
+            address: `${street}, ${streetNumber}, ${neighborhood}`,
+            street: street,
+            houseNumber: streetNumber,
+            complement: document.getElementById('complement').value || '',
+            postalCode: zipCode,
+            city: "Natal",
+            region: "RN",
+            country: "BR"
+        },
+        customer: {
+            customerPhone: customerPhone,
+            customerName: customerName
         }
+    };
 
-        // Calcular valores
-        const subtotal = cart.reduce((total, item) => total + item.price, 0);
-        const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-        const deliveryFee = 3.00;
-        const total = subtotal - discount + deliveryFee;
+    // Enviar para API primeiro, mas com timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 segundos timeout
 
-        // Preparar objeto para a API no formato original
-        const order = {
-            id: orderId, // Usando o novo ID gerado com número sequencial
-            status: "open",
-            paymentMethod: paymentMethod === 'pix' ? 'online' : paymentMethod,
-            orderTotal: total,
-            orderDetails: cart.map(item => `${item.name} - R$ ${item.price.toFixed(2)}`).join('\n'),
-            notes: notes || '',
-            deliveryPoint: {
-                address: `${street}, ${streetNumber}, ${neighborhood}`,
-                street: street,
-                houseNumber: streetNumber,
-                complement: complement || '',
-                postalCode: zipCode,
-                city: "Natal",
-                region: "RN",
-                country: "BR"
+    try {
+        const response = await fetch('https://us-central1-cabana-8d55e.cloudfunctions.net/foodyDeliveryApi/createOrder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': '8d7c77946d534444a168bb7da794febf'
             },
-            customer: {
-                customerPhone: customerPhone,
-                customerName: customerName
-            }
-        };
-
-        // Enviar para API primeiro, mas com timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 segundos timeout
-
-        try {
-            const response = await fetch('https://us-central1-cabana-8d55e.cloudfunctions.net/foodyDeliveryApi/createOrder', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': '8d7c77946d534444a168bb7da794febf'
-                },
-                body: JSON.stringify(order),
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-
-            if (!response.ok) {
-                throw new Error(`Erro HTTP! status: ${response.status}`);
-            }
-            
-            const result = await response.json();
-            console.log('Pedido criado:', result);
-        } catch (error) {
-            if (error.name === 'AbortError') {
-                console.log('Timeout na API, continuando com WhatsApp...');
-            } else {
-                console.error('Erro na API:', error);
-            }
-            // Continua o fluxo mesmo com erro na API
-        }
-
-        // Construir mensagem WhatsApp
-        let message = `*🛍️ Novo Pedido Nº ${orderId} - Cabana Açaí*\n\n`;
-        
-        // Dados do cliente
-        message += `*Cliente:* ${customerName}\n`;
-        message += `*WhatsApp:* ${customerPhone}\n\n`;
-        
-        // Endereço
-        message += `*📍 Endereço de Entrega:*\n`;
-        message += `${street}, ${streetNumber}\n`;
-        if (complement) {
-            message += `Complemento: ${complement}\n`;
-        }
-        message += `Bairro: ${neighborhood}\n`;
-        message += `CEP: ${zipCode}\n\n`;
-        
-        // Itens do pedido
-        message += `*🍨 Itens do Pedido:*\n`;
-        cart.forEach((item, index) => {
-            message += `${index + 1}. ${item.name}\n`;
-            if (item.selectedToppings && item.selectedToppings.length > 0) {
-                message += `   Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
-            }
-            if (item.selectedExtras && item.selectedExtras.length > 0) {
-                message += `   Extras: ${item.selectedExtras.join(', ')}\n`;
-            }
-            message += `   Valor: R$ ${item.price.toFixed(2)}\n\n`;
+            body: JSON.stringify(order),
+            signal: controller.signal
         });
         
-        // Resumo financeiro
-        message += `*💰 Resumo do Pedido:*\n`;
-        message += `Subtotal: R$ ${subtotal.toFixed(2)}\n`;
-        if (discount > 0) {
-            message += `Desconto: -R$ ${discount.toFixed(2)}\n`;
-        }
-        message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
-        message += `*Total: R$ ${total.toFixed(2)}*\n\n`;
-        
-        // Pagamento
-        message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod]}\n`;
-        
-        // Se for dinheiro, verificar troco
-        if (paymentMethod === 'money') {
-            const changeAmount = document.getElementById('changeAmount')?.value;
-            if (changeAmount) {
-                message += `Troco para: R$ ${changeAmount}\n`;
-            }
-        }
-        
-        // Observações
-        if (notes?.trim()) {
-            message += `\n*📝 Observações:* ${notes}\n`;
-        }
+        clearTimeout(timeoutId);
 
-        // Salvar no Firebase
-        const orderData = {
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            status: 'new',
-            customer: {
-                name: customerName,
-                phone: customerPhone
-            },
-            address: {
-                street,
-                number: streetNumber,
-                neighborhood,
-                complement: complement || '',
-                zipCode,
-                city: 'Natal',
-                state: 'RN'
-            },
-            payment: {
-                method: paymentMethod,
-                change: document.getElementById('changeAmount')?.value || null
-            },
-            items: cart,
-            subtotal,
-            deliveryFee,
-            total,
-            notes: notes || ''
+        if (!response.ok) {
+            throw new Error(`Erro HTTP! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Pedido criado:', result);
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            console.log('Timeout na API, continuando com WhatsApp...');
+        } else {
+            console.error('Erro na API:', error);
+        }
+        // Continua o fluxo mesmo com erro na API
+    }
+
+    // Construir mensagem WhatsApp
+    let message = `*🛍️ Novo Pedido Nº ${orderId} - Cabana Açaí*\n\n`;
+    
+    // Dados do cliente
+    message += `*Cliente:* ${customerName}\n`;
+    message += `*WhatsApp:* ${customerPhone}\n\n`;
+    
+    // Endereço
+    message += `*📍 Endereço de Entrega:*\n`;
+    message += `${street}, ${streetNumber}\n`;
+    const complement = document.getElementById('complement').value;
+    if (complement) {
+        message += `Complemento: ${complement}\n`;
+    }
+    message += `Bairro: ${neighborhood}\n`;
+    message += `CEP: ${zipCode}\n\n`;
+    
+    // Itens do pedido
+    message += `*🍨 Itens do Pedido:*\n`;
+    cart.forEach((item, index) => {
+        message += `${index + 1}. ${item.name}\n`;
+        if (item.selectedToppings && item.selectedToppings.length > 0) {
+            message += `   Acompanhamentos: ${item.selectedToppings.join(', ')}\n`;
+        }
+        if (item.selectedExtras && item.selectedExtras.length > 0) {
+            message += `   Extras: ${item.selectedExtras.join(', ')}\n`;
+        }
+        message += `   Valor: R$ ${item.price.toFixed(2)}\n\n`;
+    });
+    
+    // Resumo financeiro
+    message += `*💰 Resumo do Pedido:*\n`;
+    message += `Subtotal: R$ ${subtotal.toFixed(2)}\n`;
+    if (discount > 0) {
+        message += `Desconto: -R$ ${discount.toFixed(2)}\n`;
+    }
+    message += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
+    message += `*Total: R$ ${total.toFixed(2)}*\n\n`;
+    
+    // Pagamento
+    message += `*💳 Forma de Pagamento:* ${paymentMethodMap[paymentMethod]}\n`;
+    
+    // Se for dinheiro, verificar troco
+    if (paymentMethod === 'money') {
+        const changeAmount = document.getElementById('changeAmount')?.value;
+        if (changeAmount) {
+            message += `Troco para: R$ ${changeAmount}\n`;
+        }
+    }
+    
+    // Observações
+    const notes = document.getElementById('notes')?.value;
+    if (notes?.trim()) {
+        message += `\n*📝 Observações:* ${notes}\n`;
+    }
+
+    // Salvar no Firebase
+    const orderData = {
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        status: 'new',
+        customer: {
+            name: customerName,
+            phone: customerPhone
+        },
+        address: {
+            street,
+            number: streetNumber,
+            neighborhood,
+            complement: complement || '',
+            zipCode,
+            city: 'Natal',
+            state: 'RN'
+        },
+        payment: {
+            method: paymentMethod,
+            change: document.getElementById('changeAmount')?.value || null
+        },
+        items: cart,
+        subtotal,
+        deliveryFee,
+        total,
+        notes: notes || ''
+    };
+
+    const newOrderRef = await realtimeDB.ref('orders').push(orderData);
+    
+    if (!newOrderRef.key) {
+        throw new Error('Falha ao salvar o pedido');
+    }
+
+    // Se houver cupom aplicado, registrar seu uso
+    if (appliedCoupon && appliedCoupon.isFirstPurchase) {
+        const usedCouponData = {
+            couponCode: appliedCoupon.code,
+            deviceFingerprint: window.deviceFingerprint,
+            userIP: window.userIP,
+            usedAt: firebase.database.ServerValue.TIMESTAMP,
+            orderTotal: total
         };
 
-        const newOrderRef = await realtimeDB.ref('orders').push(orderData);
-        
-        if (!newOrderRef.key) {
-            throw new Error('Falha ao salvar o pedido');
-        }
+        await realtimeDB.ref('usedCoupons').push(usedCouponData);
+    }
 
-              // Se houver cupom aplicado, registrar seu uso
-        if (appliedCoupon && appliedCoupon.isFirstPurchase) {
-            const usedCouponData = {
-                couponCode: appliedCoupon.code,
-                deviceFingerprint: window.deviceFingerprint,
-                userIP: window.userIP,
-                usedAt: firebase.database.ServerValue.TIMESTAMP,
-                orderTotal: total
-            };
-
-            await realtimeDB.ref('usedCoupons').push(usedCouponData);
-        }
-
-        // Redirecionar para WhatsApp
-        window.location.href = `https://wa.me/12362016670?text=${encodeURIComponent(message)}`;
+    // Redirecionar para WhatsApp
+    window.location.href = `https://wa.me/12362016670?text=${encodeURIComponent(message)}`;
 
   } catch (error) {
     console.error('Erro ao processar pedido:', error);
