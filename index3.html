@@ -6625,43 +6625,24 @@ function generatePixQRCode(pixKey, name, city, description, amount) {
     const qrCodeContainer = document.getElementById("pixQRCode");
     qrCodeContainer.innerHTML = '';
     
-    // Para uma chave de telefone Pix, usamos o formato +5584988731028
-    // Remover qualquer formatação e adicionar o código do país
-    const cleanPixKey = pixKey.replace(/\D/g, '');
-    const formattedPixKey = `+55${cleanPixKey}`;
+    // Criar um QR code com os dados fixos da sua chave Pix
+    // Aqui estamos simplificando, gerando um QR code que aponta para um texto simples
+    // com os dados do pagamento
+    const qrCodeText = `PIX: ${pixKey}\nNome: ${name}\nValor: R$ ${amount.toFixed(2)}\nDescrição: ${description}`;
     
-    // Gerar o QR code usando o API do QR Code Generator
-    const baseUrl = 'https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl=';
+    const qrcode = new QRCode(qrCodeContainer, {
+        text: qrCodeText,
+        width: 200,
+        height: 200,
+        colorDark: "#7209B7",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
     
-    // Criar o payload do Pix seguindo o padrão BR Code
-    const merchantName = encodeURIComponent(name).substring(0, 25);
-    const merchantCity = encodeURIComponent(city).substring(0, 15);
+    // Atualizar o campo de texto copiável com os dados do Pix
+    document.getElementById("pixCopyPasteText").value = pixKey;
     
-    // Formatar o valor como string com 2 casas decimais
-    const amountStr = amount.toFixed(2);
-    
-    // Criar o payload
-    // Este é um formato simplificado do BRCode para PIX
-    const pixPayload = `00020126330014BR.GOV.BCB.PIX01${formattedPixKey.length}${formattedPixKey}52040000530398654${amountStr.replace('.', '')}5802BR5913${merchantName}6004${merchantCity}62${description.length.toString().padStart(2, '0')}${description}6304`;
-    
-    // Gerar URL completa da imagem QR
-    const qrCodeUrl = baseUrl + encodeURIComponent(pixPayload);
-    
-    // Criar elemento de imagem
-    const img = document.createElement('img');
-    img.src = qrCodeUrl;
-    img.alt = "QR Code Pix";
-    img.style.width = "100%";
-    img.style.height = "auto";
-    img.style.maxWidth = "200px";
-    
-    // Adicionar a imagem ao container
-    qrCodeContainer.appendChild(img);
-    
-    // Texto completo do payload para copiar
-    document.getElementById("pixCopyPasteText").value = pixPayload;
-    
-    return pixPayload;
+    return qrCodeText;
 }
 
 function createPixCopyPaste(pixKey, name, city, description, amount) {
@@ -6700,7 +6681,7 @@ function showPixModal() {
         qrCodeContainer.innerHTML = '<div style="width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; background: #f0f0f0; color: #333; font-size: 14px; text-align: center;">QR Code não disponível.<br>Por favor, use o código Pix abaixo.</div>';
     };
     
-    img.src = "https://i.ibb.co/84cCMy3/qrcode-pix.png"; // URL corrigida
+    img.src = "https://i.ibb.co/84cCMy3j/qrcode-pix.png"; // URL corrigida
     img.alt = "QR Code Pix";
     img.style.width = "100%";
     img.style.height = "auto";
