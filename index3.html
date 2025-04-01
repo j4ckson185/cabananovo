@@ -6683,7 +6683,23 @@ function showPixModal() {
     // Atualizar valor no modal
     document.getElementById('pixAmountValue').textContent = total.toFixed(2);
     
-    generatePixQRCode('84988731028', 'Jackson', 'Natal', 'Pedido Cabana Acai', total);
+    // Limpar o container antes de mostrar a imagem
+    const qrCodeContainer = document.getElementById("pixQRCode");
+    qrCodeContainer.innerHTML = '';
+    
+    // Usar o QR code Pix fornecido em anexo
+    const img = document.createElement('img');
+    img.src = "https://firebasestorage.googleapis.com/v0/b/cabana-8d55e.firebasestorage.app/o/qrcode-pix.png?alt=media&token=0d42dbc8-fdd3-4f0f-bafd-8ed35f3fbff6"; // Substitua por uma URL válida para sua imagem
+    img.alt = "QR Code Pix";
+    img.style.width = "100%";
+    img.style.height = "auto";
+    img.style.maxWidth = "200px";
+    
+    // Adicionar a imagem ao container
+    qrCodeContainer.appendChild(img);
+    
+    // Código Pix copia e cola fornecido
+    document.getElementById("pixCopyPasteText").value = "00020126360014br.gov.bcb.pix0114+55849887310285204000053039865802BR5921JACKSON MACIEL FREIRE6005NATAL62580520SAN2025040114470516150300017br.gov.bcb.brcode01051.0.0630466C9";
     
     // Mostrar modal
     document.getElementById('pixPaymentModal').style.display = 'block';
