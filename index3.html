@@ -6687,19 +6687,27 @@ function showPixModal() {
     const qrCodeContainer = document.getElementById("pixQRCode");
     qrCodeContainer.innerHTML = '';
     
-    // Usar o QR code Pix fornecido em anexo
-    const img = document.createElement('img');
-    img.src = "https://i.ibb.co/84cCMy3j/qrcode-pix.png"; // Substitua por uma URL válida para sua imagem
+    // Usar o QR code Pix com manipulação de erros
+    const img = new Image();
+    img.onload = function() {
+        // A imagem carregou com sucesso
+        qrCodeContainer.appendChild(img);
+    };
+    
+    img.onerror = function() {
+        // Erro ao carregar a imagem
+        console.error("Erro ao carregar a imagem do QR Code");
+        qrCodeContainer.innerHTML = '<div style="width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; background: #f0f0f0; color: #333; font-size: 14px; text-align: center;">QR Code não disponível.<br>Por favor, use o código Pix abaixo.</div>';
+    };
+    
+    img.src = "https://i.ibb.co/84cCMy3j/qrcode-pix.png";
     img.alt = "QR Code Pix";
     img.style.width = "100%";
     img.style.height = "auto";
     img.style.maxWidth = "200px";
     
-    // Adicionar a imagem ao container
-    qrCodeContainer.appendChild(img);
-    
-    // Código Pix copia e cola fornecido
-    document.getElementById("pixCopyPasteText").value = "00020126360014br.gov.bcb.pix0114+55849887310285204000053039865802BR5921JACKSON MACIEL FREIRE6005NATAL62580520SAN2025040114470516150300017br.gov.bcb.brcode01051.0.0630466C9";
+    // Novo código Pix copia e cola fornecido
+    document.getElementById("pixCopyPasteText").value = "00020126360014BR.GOV.BCB.PIX0114+55849887310285204000053039865802BR5901N6001C62140510CabanaAcai6304CF78";
     
     // Mostrar modal
     document.getElementById('pixPaymentModal').style.display = 'block';
