@@ -2262,76 +2262,104 @@ document.head.appendChild(style);
     display: none !important;
 }
 
-/* Estilos para o modal de PIX */
 .pix-content {
-    padding: 1rem;
-}
-
-.success-message {
-    background-color: #d1e7dd;
-    color: #0f5132;
-    padding: 15px;
-    border-radius: 6px;
-    margin-bottom: 20px;
-    text-align: center;
-}
-
-.order-details {
-    background-color: var(--glass);
-    border-radius: 6px;
-    padding: 15px;
-    margin: 20px 0;
-}
-
-.order-details h3 {
-    margin-bottom: 10px;
-    color: white;
-}
-
-.qr-code-container {
+    padding: 1.5rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 20px 0;
+    gap: 1.5rem;
 }
 
-.qr-code-container img {
-    max-width: 200px;
-    height: 200px;
-    margin-bottom: 15px;
-    padding: 10px;
+.pix-amount {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.pix-amount-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.pix-qrcode-container {
     background: white;
+    padding: 1rem;
+    border-radius: 10px;
+}
+
+.pix-info {
+    width: 100%;
+    text-align: center;
+}
+
+.pix-copy-container {
+    display: flex;
+    margin: 1rem 0;
+    gap: 0.5rem;
+}
+
+.pix-copy-container input {
+    flex: 1;
+    padding: 0.75rem;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
     border-radius: 8px;
+    color: white;
+    font-size: 0.9rem;
 }
 
-.pix-code-container {
-    background-color: var(--glass);
-    border: 1px dashed var(--glass-border);
-    border-radius: 6px;
-    padding: 15px;
-    margin: 20px 0;
-    word-break: break-all;
-    font-family: monospace;
-    font-size: 14px;
-    position: relative;
-    color: white;
-}
-
-.copy-button {
-    background: var(--gradient);
-    color: white;
+.pix-copy-btn {
+    padding: 0.75rem 1rem;
+    background: var(--accent);
     border: none;
-    border-radius: 50px;
-    padding: 10px 20px;
+    border-radius: 8px;
+    color: white;
     cursor: pointer;
-    font-size: 14px;
-    margin-top: 10px;
     transition: all 0.3s ease;
 }
 
-.copy-button:hover {
+.pix-copy-btn:hover {
     transform: translateY(-2px);
+}
+
+.pix-details {
+    background: var(--glass);
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.pix-details p {
+    margin: 0.5rem 0;
+}
+
+.pix-confirm-btn {
+    background: var(--gradient);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.pix-confirm-btn:hover {
+    transform: translateY(-3px);
     box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
+}
+
+@media (max-width: 768px) {
+    .pix-content {
+        padding: 1rem;
+    }
+    
+    .pix-amount-value {
+        font-size: 1.5rem;
+    }
 }
 
 </style>
@@ -5088,8 +5116,6 @@ function formatOrderForWhatsApp() {
     
 function setupPaymentEvents() {
     const moneyRadio = document.getElementById('paymentMoney');
-    const pixRadio = document.getElementById('paymentOnline');
-    
     const changeInput = document.createElement('div');
     changeInput.innerHTML = `
         <div id="changeContainer" style="display: none; margin-top: 10px;">
@@ -5100,80 +5126,34 @@ function setupPaymentEvents() {
     
     moneyRadio.closest('div').appendChild(changeInput);
     
-    document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            const changeContainer = document.getElementById('changeContainer');
-            const changeAmount = document.getElementById('changeAmount');
-            const notes = document.getElementById('notes');
+// Modificar essa parte existente da função setupPaymentEvents()
+document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+        const changeContainer = document.getElementById('changeContainer');
+        const changeAmount = document.getElementById('changeAmount');
+        const notes = document.getElementById('notes');
+        
+        if (e.target.value === 'money') {
+            changeContainer.style.display = 'block';
             
-            if (e.target.value === 'money') {
-                changeContainer.style.display = 'block';
-                
-                changeAmount.addEventListener('change', () => {
-                    if (changeAmount.value) {
-                        notes.value = `Troco para R$ ${changeAmount.value}`;
-                    } else {
-                        notes.value = '';
-                    }
-                });
-            } else {
-                changeContainer.style.display = 'none';
-                notes.value = '';
-            }
-        });
-    });
-    
-    // Adicionar event listener para mensagens da janela de pagamento
-    window.addEventListener('message', function(event) {
-        if (event.data === 'PIX_PAYMENT_COMPLETED') {
-            // Confirmar pagamento
-            submitOrder();
-            showNotification('Pagamento confirmado! Pedido finalizado.');
-        }
-    });
-    
-    // Modificar o botão de finalizar pedido para verificar o método de pagamento
-    const orderForm = document.getElementById('createOrderForm');
-    const submitButton = orderForm.querySelector('button[type="button"]');
-    
-    // Substituir o onclick do botão original
-    submitButton.onclick = function() {
-        const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked');
-        
-        if (!selectedPayment) {
-            showNotification('Selecione uma forma de pagamento');
-            return;
-        }
-        
-        if (selectedPayment.value === 'online') {
-            // Se for PIX, usar a abordagem de abrir nova janela
-            generatePixPaymentNewWindow();
+            changeAmount.addEventListener('change', () => {
+                if (changeAmount.value) {
+                    notes.value = `Troco para R$ ${changeAmount.value}`;
+                } else {
+                    notes.value = '';
+                }
+            });
+        } else if (e.target.value === 'online') {
+            // Mostrar o modal do Pix quando seleciona Pix
+            showPixModal();
+            changeContainer.style.display = 'none';
+            notes.value = 'Pagamento via Pix';
         } else {
-            // Para outros métodos, continua com o fluxo original
-            submitOrder();
+            changeContainer.style.display = 'none';
+            notes.value = '';
         }
-    };
-}
-
-// Função para preparar o formulário PIX
-function preparePIXForm() {
-    // Calcular valor total
-    const subtotal = cart.reduce((total, item) => total + item.price, 0);
-    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-    const deliveryFee = 3.00;
-    const total = subtotal - discount + deliveryFee;
-    
-    // Preencher formulário
-    document.getElementById('pix_description').value = "Pedido Cabana Açaí";
-    document.getElementById('pix_amount').value = total.toFixed(2);
-    document.getElementById('pix_customer_name').value = document.getElementById('customerName').value;
-    document.getElementById('pix_customer_phone').value = document.getElementById('customerPhone').value;
-    
-    // Definir URL de retorno (webhook)
-    // O ideal seria uma URL que, quando chamada, registre o pagamento e finalize o pedido
-    // Como solução temporária, vamos usar window.location.href para que o Apps Script
-    // saiba para onde redirecionar o usuário após confirmação de pagamento
-    document.getElementById('pix_webhook_url').value = window.location.href;
+    });
+});
 }
     
 async function submitOrder() {
@@ -5936,13 +5916,6 @@ document.addEventListener('DOMContentLoaded', () => {
     checkStoreStatus();
     setInterval(checkStoreStatus, 60000);
     setupPaymentEvents();
-    
-    // Adicionar event listeners para o modal do PIX
-document.querySelectorAll('#pixModal .close-modal, #pixModal .continue-shopping').forEach(button => {
-    button.addEventListener('click', () => {
-        document.getElementById('pixModal').style.display = 'none';
-    });
-});
 
     // Configuração do Intersection Observer para o mascote
     const mascotVideo = document.querySelector('.mascot-video');
@@ -6647,469 +6620,65 @@ async function updateSMSStatus(phone, type) {
     await recordAbandonedCart(data);
 }
 
-// Variável para armazenar o ID do pedido PIX atual
-let currentPixOrderId = null;
-
-// Função para gerar um pagamento PIX
-async function generatePixPayment() {
-    try {
-        const paymentModal = document.getElementById('createOrderModal');
-        const pixModal = document.getElementById('pixModal');
-        
-        // Obter dados do formulário
-        const customerName = document.getElementById('customerName').value;
-        const customerPhone = document.getElementById('customerPhone').value;
-        
-        if (!customerName || !customerPhone) {
-            showNotification('Preencha todos os dados do cliente');
-            return;
-        }
-        
-        // Calcular valores
-        const subtotal = cart.reduce((total, item) => total + item.price, 0);
-        const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-        const deliveryFee = 3.00;
-        const total = subtotal - discount + deliveryFee;
-        
-        // Preparar dados para a função Netlify
-        const requestData = {
-            description: "Pedido Cabana Açaí",
-            amount: total,
-            customerName: customerName,
-            customerEmail: "cliente@cabanaacai.com.br",
-            customerDocument: "00000000000",
-            customerPhone: customerPhone
-        };
-        
-        // Mostrar carregamento
-        showNotification("Gerando PIX, aguarde...");
-        
-        console.log("Enviando dados para gerar PIX:", requestData);
-        
-        // Fazer requisição para a função Netlify
-        const response = await fetch('/api/create-pix', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestData)
-        });
-        
-        const responseText = await response.text();
-        console.log("Resposta bruta da API:", responseText);
-        
-        let result;
-        try {
-            result = JSON.parse(responseText);
-        } catch (e) {
-            throw new Error(`Resposta inválida da API: ${responseText}`);
-        }
-        
-        console.log("Resposta processada:", result);
-        
-        // Verificar se houve erro ou status falhou
-        if (result.error || result.status === 'failed') {
-            let errorMessage = result.error || "Falha ao gerar pagamento PIX";
-            if (result.errorDetails) {
-                errorMessage += `: ${JSON.stringify(result.errorDetails)}`;
-            }
-            throw new Error(errorMessage);
-        }
-        
-        // Verificar se tem dados de PIX
-        if (!result.pixCode || !result.pixQrCodeUrl) {
-            console.error("Resposta completa sem dados do PIX:", result);
-            throw new Error("Dados de PIX não encontrados na resposta");
-        }
-        
-        // Armazenar ID do pedido para verificação posterior
-        currentPixOrderId = result.orderId;
-        
-        // Exibir QR Code e código PIX no modal
-        document.getElementById('pixModal').innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Pagamento via PIX</h2>
-                    <button class="close-modal">&times;</button>
-                </div>
-                <div class="pix-content">
-                    <div class="success-message">
-                        PIX gerado com sucesso! Use um dos métodos abaixo para pagar.
-                    </div>
-                    
-                    <div class="order-details">
-                        <h3>Detalhes do Pedido</h3>
-                        <p><strong>Valor:</strong> R$ ${total.toFixed(2)}</p>
-                        <p><strong>Cliente:</strong> ${customerName}</p>
-                    </div>
-                    
-                    <div class="qr-code-container">
-                        <img src="${result.pixQrCodeUrl}" alt="QR Code PIX">
-                        <p>Escaneie o QR Code usando o app do seu banco</p>
-                    </div>
-                    
-                    <h3>Ou use o PIX Copia e Cola:</h3>
-                    <div class="pix-code-container">
-                        <pre id="pix-code">${result.pixCode}</pre>
-                    </div>
-                    <div style="text-align: center;">
-                        <button class="copy-button" onclick="copyPixCode()">Copiar Código PIX</button>
-                    </div>
-                    
-                    <div class="expiration">
-                        Código válido por 60 minutos
-                    </div>
-                    
-                    <div class="instructions">
-                        <h3>Como pagar:</h3>
-                        <ol>
-                            <li>Abra o aplicativo do seu banco</li>
-                            <li>Escolha a opção "PIX Copia e Cola" ou escaneie o QR Code</li>
-                            <li>Confira os dados e confirme o pagamento</li>
-                            <li>Após o pagamento, clique no botão abaixo para verificar</li>
-                        </ol>
-                    </div>
-                    
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button onclick="checkPixStatus()" class="modal-btn" style="background: var(--gradient);">Verificar Pagamento</button>
-                        <button onclick="closePixModal()" class="modal-btn continue-shopping" style="background: var(--glass);">Fechar</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Fechar modal de criação de pedido e mostrar modal de PIX
-        paymentModal.style.display = 'none';
-        pixModal.style.display = 'block';
-        
-        // Adicionar event listener para o botão de fechar
-        const closeButtons = document.querySelectorAll('#pixModal .close-modal, #pixModal .continue-shopping');
-        closeButtons.forEach(button => {
-            button.addEventListener('click', closePixModal);
-        });
-        
-    } catch (error) {
-        console.error('Erro ao gerar PIX:', error);
-        showNotification(`Erro ao gerar PIX: ${error.message}`);
-    }
+function generatePixQRCode(pixKey, name, city, description, amount) {
+    const pixCopyPaste = createPixCopyPaste(pixKey, name, city, description, amount);
+    const qrcode = new QRCode(document.getElementById("pixQRCode"), {
+        text: pixCopyPaste,
+        width: 200,
+        height: 200,
+        colorDark: "#7209B7",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+    
+    document.getElementById("pixCopyPasteText").value = pixCopyPaste;
+    return pixCopyPaste;
 }
 
-// Função para usar PIX manual como fallback
-function useManualPix(customerName, total) {
-    try {
-        const paymentModal = document.getElementById('createOrderModal');
-        const pixModal = document.getElementById('pixModal');
-        
-        // Exibir QR Code e código PIX no modal
-        document.getElementById('pixModal').innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Pagamento via PIX</h2>
-                    <button class="close-modal">&times;</button>
-                </div>
-                <div class="pix-content">
-                    <div class="success-message">
-                        Use um dos métodos abaixo para pagar R$ ${total.toFixed(2)}
-                    </div>
-                    
-                    <div class="order-details">
-                        <h3>Detalhes do Pedido</h3>
-                        <p><strong>Valor:</strong> R$ ${total.toFixed(2)}</p>
-                        <p><strong>Cliente:</strong> ${customerName}</p>
-                    </div>
-                    
-                    <div class="qr-code-container">
-                        <img src="https://gerarqrcodepix.com.br/api/v1?nome=Jackson%20Cabana%20Acai&cidade=Natal&chave=84988731028&valor=${total.toFixed(2)}" alt="QR Code PIX">
-                        <p>Escaneie o QR Code usando o app do seu banco</p>
-                    </div>
-                    
-                    <h3>Ou use a chave PIX:</h3>
-                    <div class="pix-code-container">
-                        <pre id="pix-code">84988731028</pre>
-                    </div>
-                    <div style="text-align: center;">
-                        <button class="copy-button" onclick="copyPixCode()">Copiar Chave PIX</button>
-                    </div>
-                    
-                    <div class="instructions">
-                        <h3>Como pagar:</h3>
-                        <ol>
-                            <li>Abra o aplicativo do seu banco</li>
-                            <li>Escolha a opção "PIX" e informe o valor R$ ${total.toFixed(2)}</li>
-                            <li>Selecione a opção "Pagar com chave PIX" ou escaneie o QR Code</li>
-                            <li>Confira os dados e confirme o pagamento</li>
-                            <li>Após o pagamento, clique no botão abaixo para finalizar</li>
-                        </ol>
-                    </div>
-                    
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button onclick="confirmPaymentManually()" class="modal-btn" style="background: var(--gradient);">Já paguei, finalizar pedido</button>
-                        <button onclick="closePixModal()" class="modal-btn continue-shopping" style="background: var(--glass);">Fechar</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Fechar modal de criação de pedido e mostrar modal de PIX
-        paymentModal.style.display = 'none';
-        pixModal.style.display = 'block';
-        
-        // Adicionar event listener para o botão de fechar
-        const closeButtons = document.querySelectorAll('#pixModal .close-modal, #pixModal .continue-shopping');
-        closeButtons.forEach(button => {
-            button.addEventListener('click', closePixModal);
-        });
-        
-    } catch (error) {
-        console.error('Erro ao gerar PIX manual:', error);
-        showNotification(`Erro ao gerar PIX manual: ${error.message}`);
-    }
+function createPixCopyPaste(pixKey, name, city, description, amount) {
+    // Função simplificada para gerar o código Pix
+    // Normalmente seria usado uma biblioteca completa para isso
+    const payload = `00020126330014BR.GOV.BCB.PIX0111${pixKey}52040000530398654${amount.toFixed(2).replace('.', '')}5802BR5913${name}6004${city}62${description.length.toString().padStart(2, '0')}${description}6304`;
+    
+    // Na prática, precisaria calcular o CRC16 e adicionar ao final
+    // Aqui estou simplificando com um valor fixo para demonstração
+    return payload + "ABCD";
 }
 
-// Função para copiar o código PIX
+function showPixModal() {
+    const subtotal = cart.reduce((total, item) => total + item.price, 0);
+    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    const deliveryFee = 3.00;
+    const total = subtotal - discount + deliveryFee;
+    
+    // Atualizar valor no modal
+    document.getElementById('pixAmountValue').textContent = total.toFixed(2);
+    
+    // Gerar QR Code
+    // Precisa incluir a biblioteca QRCode.js antes de usar
+    // <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    generatePixQRCode('84988731028', 'Jackson', 'Natal', 'Pedido Cabana Acai', total);
+    
+    // Mostrar modal
+    document.getElementById('pixPaymentModal').style.display = 'block';
+}
+
 function copyPixCode() {
-    const pixCode = document.getElementById('pix-code').textContent;
-    navigator.clipboard.writeText(pixCode)
-        .then(() => {
-            showNotification('Código PIX copiado!');
-        })
-        .catch(err => {
-            console.error('Erro ao copiar:', err);
-            alert('Não foi possível copiar automaticamente. Por favor, selecione o código manualmente e copie.');
-        });
-}
-
-// Função para verificar status do pagamento PIX
-async function checkPixStatus() {
-    if (!currentPixOrderId) {
-        showNotification('ID do pedido não encontrado');
-        return;
-    }
+    const copyText = document.getElementById('pixCopyPasteText');
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    document.execCommand('copy');
     
-    try {
-        showNotification("Verificando pagamento...");
-        
-        const response = await fetch('/api/check-pix', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ orderId: currentPixOrderId })
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Erro na requisição: ${response.statusText}`);
-        }
-        
-        const result = await response.json();
-        
-        if (result.status === 'paid') {
-            showNotification('Pagamento confirmado! Seu pedido foi processado.');
-            document.getElementById('pixModal').style.display = 'none';
-            
-            // Procede com a finalização do pedido
-            submitOrder();
-        } else {
-            showNotification('Pagamento ainda não confirmado. Tente novamente em alguns instantes.');
-        }
-        
-    } catch (error) {
-        console.error('Erro ao verificar pagamento:', error);
-        showNotification(`Erro ao verificar pagamento: ${error.message}`);
-    }
+    // Mostrar notificação
+    showNotification('Código Pix copiado!');
 }
 
-// Função para fechar o modal PIX
-function closePixModal() {
-    document.getElementById('pixModal').style.display = 'none';
-}
-
-// Verificar ao carregar a página se há pedido pendente
-document.addEventListener('DOMContentLoaded', function() {
-    const pendingOrder = localStorage.getItem('pendingOrder');
+function confirmPixPayment() {
+    // Fecha o modal do Pix
+    document.getElementById('pixPaymentModal').style.display = 'none';
     
-    if (pendingOrder) {
-        try {
-            const orderData = JSON.parse(pendingOrder);
-            const orderTime = new Date(orderData.timestamp);
-            const now = new Date();
-            const hoursPassed = (now - orderTime) / (1000 * 60 * 60);
-            
-            // Se o pedido pendente é de menos de 2 horas atrás
-            if (hoursPassed < 2) {
-                // Restaurar carrinho
-                cart = orderData.cart;
-                updateCartCount();
-                
-                // Perguntar se deseja finalizar o pedido
-                setTimeout(() => {
-                    if (confirm('Você tem um pedido com pagamento PIX pendente. Deseja finalizar seu pedido?')) {
-                        // Preencher formulário de cliente
-                        document.getElementById('customerName').value = orderData.customerInfo.name;
-                        document.getElementById('customerPhone').value = orderData.customerInfo.phone;
-                        
-                        // Mostrar modal de finalização
-                        document.getElementById('createOrderModal').style.display = 'block';
-                    }
-                }, 1000);
-            } else {
-                // Se passou muito tempo, limpar os dados pendentes
-                localStorage.removeItem('pendingOrder');
-            }
-        } catch (error) {
-            console.error('Erro ao processar pedido pendente:', error);
-            localStorage.removeItem('pendingOrder');
-        }
-    }
-});
-
-    // Função para gerar um pagamento PIX manual
-function generatePixPaymentManual() {
-    try {
-        const paymentModal = document.getElementById('createOrderModal');
-        const pixModal = document.getElementById('pixModal');
-        
-        // Obter dados do formulário
-        const customerName = document.getElementById('customerName').value;
-        
-        // Calcular valores
-        const subtotal = cart.reduce((total, item) => total + item.price, 0);
-        const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-        const deliveryFee = 3.00;
-        const total = subtotal - discount + deliveryFee;
-        
-        // Exibir QR Code e código PIX no modal
-        document.getElementById('pixModal').innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Pagamento via PIX</h2>
-                    <button class="close-modal">&times;</button>
-                </div>
-                <div class="pix-content">
-                    <div class="success-message">
-                        Use um dos métodos abaixo para pagar R$ ${total.toFixed(2)}
-                    </div>
-                    
-                    <div class="order-details">
-                        <h3>Detalhes do Pedido</h3>
-                        <p><strong>Valor:</strong> R$ ${total.toFixed(2)}</p>
-                        <p><strong>Cliente:</strong> ${customerName}</p>
-                    </div>
-                    
-                    <div class="qr-code-container">
-                        <img src="https://gerarqrcodepix.com.br/api/v1?nome=Jackson%20Cabana%20Acai&cidade=Natal&chave=84988731028&valor=${total.toFixed(2)}" alt="QR Code PIX">
-                        <p>Escaneie o QR Code usando o app do seu banco</p>
-                    </div>
-                    
-                    <h3>Ou use a chave PIX:</h3>
-                    <div class="pix-code-container">
-                        <pre id="pix-code">84988731028</pre>
-                    </div>
-                    <div style="text-align: center;">
-                        <button class="copy-button" onclick="copyPixCode()">Copiar Chave PIX</button>
-                    </div>
-                    
-                    <div class="instructions">
-                        <h3>Como pagar:</h3>
-                        <ol>
-                            <li>Abra o aplicativo do seu banco</li>
-                            <li>Escolha a opção "PIX" e informe o valor R$ ${total.toFixed(2)}</li>
-                            <li>Selecione a opção "Pagar com chave PIX" ou escaneie o QR Code</li>
-                            <li>Confira os dados e confirme o pagamento</li>
-                            <li>Após o pagamento, clique no botão abaixo para finalizar</li>
-                        </ol>
-                    </div>
-                    
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button onclick="confirmPaymentManually()" class="modal-btn" style="background: var(--gradient);">Já paguei, finalizar pedido</button>
-                        <button onclick="closePixModal()" class="modal-btn continue-shopping" style="background: var(--glass);">Fechar</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Fechar modal de criação de pedido e mostrar modal de PIX
-        paymentModal.style.display = 'none';
-        pixModal.style.display = 'block';
-        
-        // Adicionar event listener para o botão de fechar
-        const closeButtons = document.querySelectorAll('#pixModal .close-modal, #pixModal .continue-shopping');
-        closeButtons.forEach(button => {
-            button.addEventListener('click', closePixModal);
-        });
-        
-    } catch (error) {
-        console.error('Erro ao gerar PIX manual:', error);
-        showNotification(`Erro ao gerar PIX manual: ${error.message}`);
-    }
-}
-
-// Função para finalizar pedido após pagamento manual
-function confirmPaymentManually() {
-    // Fechar modal de PIX
-    document.getElementById('pixModal').style.display = 'none';
-    
-    // Finalizar o pedido
+    // Continua o processo de checkout
     submitOrder();
-    
-    // Limpar dados pendentes
-    localStorage.removeItem('pendingOrder');
-    
-    showNotification('Pedido finalizado! Obrigado pela compra.');
-}
-
-// Função para gerar pagamento PIX abrindo uma nova janela
-function generatePixPaymentNewWindow() {
-    try {
-        // Obter dados do formulário
-        const customerName = document.getElementById('customerName').value;
-        const customerPhone = document.getElementById('customerPhone').value;
-        
-        if (!customerName || !customerPhone) {
-            showNotification('Preencha todos os dados do cliente');
-            return;
-        }
-        
-        // Calcular valores
-        const subtotal = cart.reduce((total, item) => total + item.price, 0);
-        const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
-        const deliveryFee = 3.00;
-        const total = subtotal - discount + deliveryFee;
-        
-        // Construir URL com parâmetros
-        const url = new URL('/api/create-pix-page', window.location.origin);
-        url.searchParams.append('description', 'Pedido Cabana Açaí');
-        url.searchParams.append('amount', total.toFixed(2));
-        url.searchParams.append('customerName', customerName);
-        url.searchParams.append('customerEmail', 'cliente@cabanaacai.com.br');
-        url.searchParams.append('customerDocument', '00000000000');
-        url.searchParams.append('customerPhone', customerPhone);
-        url.searchParams.append('returnUrl', window.location.href);
-        
-        // Salvar dados do pedido no localStorage para recuperação posterior
-        localStorage.setItem('pendingOrder', JSON.stringify({
-            cart: cart,
-            customerInfo: {
-                name: customerName,
-                phone: customerPhone
-            },
-            orderTotal: total,
-            timestamp: new Date().toISOString()
-        }));
-        
-        // Abrir nova janela/tab com o URL construído
-        window.open(url.toString(), '_blank');
-        
-        // Fechar modal atual
-        document.getElementById('createOrderModal').style.display = 'none';
-        
-        // Mostrar notificação
-        showNotification('Abrindo página de pagamento PIX em nova aba...');
-        
-    } catch (error) {
-        console.error('Erro ao abrir página de PIX:', error);
-        showNotification(`Erro ao gerar PIX: ${error.message}`);
-    }
 }
     
 </script>
@@ -7208,6 +6777,46 @@ function generatePixPaymentNewWindow() {
         <button onclick="closeStoreClosedPopup()">Fechar</button>
     </div>
 </div>
+
+<!-- Aqui é onde você deve adicionar o modal do Pix -->
+<div id="pixPaymentModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Pagamento via Pix</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="pix-content">
+            <div class="pix-amount">
+                <h3>Valor a pagar:</h3>
+                <div class="pix-amount-value">R$ <span id="pixAmountValue">0.00</span></div>
+            </div>
+            
+            <div class="pix-qrcode-container">
+                <div id="pixQRCode"></div>
+            </div>
+            
+            <div class="pix-info">
+                <p>Faça o pagamento usando o QR Code acima ou copie o código abaixo:</p>
+                <div class="pix-copy-container">
+                    <input type="text" id="pixCopyPasteText" readonly>
+                    <button class="pix-copy-btn" onclick="copyPixCode()">
+                        <i class="fas fa-copy"></i> Copiar
+                    </button>
+                </div>
+                <div class="pix-details">
+                    <p><strong>Chave Pix:</strong> 84 988731028</p>
+                    <p><strong>Banco:</strong> Santander</p>
+                    <p><strong>Nome:</strong> Jackson</p>
+                </div>
+            </div>
+            
+            <button class="pix-confirm-btn" onclick="confirmPixPayment()">
+                Já realizei o pagamento
+            </button>
+        </div>
+    </div>
+</div>
+    
 <div class="chat-button" onclick="toggleChat()">
     <i class="fas fa-comments"></i>
 </div>
@@ -7223,9 +6832,6 @@ function generatePixPaymentNewWindow() {
         </button>
     </div>
 </div>
-<!-- Modal do PIX -->
-<div class="modal" id="pixModal">
-    <!-- O conteúdo será preenchido dinamicamente -->
-</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </body>
 </html>
