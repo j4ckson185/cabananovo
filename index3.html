@@ -5114,46 +5114,44 @@ function formatOrderForWhatsApp() {
     }
 }
     
+// Certifique-se que esta parte do código seja executada apenas uma vez
 function setupPaymentEvents() {
-    const moneyRadio = document.getElementById('paymentMoney');
-    const changeInput = document.createElement('div');
-    changeInput.innerHTML = `
-        <div id="changeContainer" style="display: none; margin-top: 10px;">
-            <label>Troco para quanto?</label>
-            <input type="number" id="changeAmount" step="0.01">
-        </div>
-    `;
-    
-    moneyRadio.closest('div').appendChild(changeInput);
-    
-// Modificar essa parte existente da função setupPaymentEvents()
-document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
-    radio.addEventListener('change', (e) => {
-        const changeContainer = document.getElementById('changeContainer');
-        const changeAmount = document.getElementById('changeAmount');
-        const notes = document.getElementById('notes');
-        
-        if (e.target.value === 'money') {
-            changeContainer.style.display = 'block';
-            
-            changeAmount.addEventListener('change', () => {
-                if (changeAmount.value) {
-                    notes.value = `Troco para R$ ${changeAmount.value}`;
-                } else {
-                    notes.value = '';
-                }
-            });
-        } else if (e.target.value === 'online') {
-            // Mostrar o modal do Pix quando seleciona Pix
-            showPixModal();
-            changeContainer.style.display = 'none';
-            notes.value = 'Pagamento via Pix';
-        } else {
-            changeContainer.style.display = 'none';
-            notes.value = '';
-        }
+    // Remover event listeners antigos (se existirem)
+    const paymentRadios = document.querySelectorAll('input[name="paymentMethod"]');
+    paymentRadios.forEach(radio => {
+        // Clone o elemento para remover todos os event listeners antigos
+        const newRadio = radio.cloneNode(true);
+        radio.parentNode.replaceChild(newRadio, radio);
     });
-});
+    
+    // Adicionar novos event listeners
+    document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const changeContainer = document.getElementById('changeContainer');
+            const changeAmount = document.getElementById('changeAmount');
+            const notes = document.getElementById('notes');
+            
+            if (e.target.value === 'money') {
+                changeContainer.style.display = 'block';
+                
+                changeAmount.addEventListener('change', () => {
+                    if (changeAmount.value) {
+                        notes.value = `Troco para R$ ${changeAmount.value}`;
+                    } else {
+                        notes.value = '';
+                    }
+                });
+            } else if (e.target.value === 'online') {
+                // Mostrar o modal do Pix quando seleciona Pix
+                changeContainer.style.display = 'none';
+                notes.value = 'Pagamento via Pix';
+                showPixModal();
+            } else {
+                changeContainer.style.display = 'none';
+                notes.value = '';
+            }
+        });
+    });
 }
     
 async function submitOrder() {
