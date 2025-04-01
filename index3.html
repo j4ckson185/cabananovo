@@ -6621,18 +6621,28 @@ async function updateSMSStatus(phone, type) {
 }
 
 function generatePixQRCode(pixKey, name, city, description, amount) {
-    const pixCopyPaste = createPixCopyPaste(pixKey, name, city, description, amount);
-    const qrcode = new QRCode(document.getElementById("pixQRCode"), {
-        text: pixCopyPaste,
-        width: 200,
-        height: 200,
-        colorDark: "#7209B7",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H
-    });
+    // Limpar o container antes de gerar novo QR code
+    const qrCodeContainer = document.getElementById("pixQRCode");
+    qrCodeContainer.innerHTML = '';
     
-    document.getElementById("pixCopyPasteText").value = pixCopyPaste;
-    return pixCopyPaste;
+    // Criar uma URL para gerar QR Code estático para a chave Pix
+    // Usamos o serviço pix.com.br que gera QR codes para qualquer chave Pix
+    const qrCodeUrl = `https://gerarqrcodepix.com.br/api/v1?nome=${encodeURIComponent(name)}&cidade=${encodeURIComponent(city)}&valor=${amount.toFixed(2)}&saida=qr&chave=${encodeURIComponent(pixKey)}`;
+    
+    // Criar elemento de imagem
+    const img = document.createElement('img');
+    img.src = qrCodeUrl;
+    img.alt = "QR Code Pix";
+    img.style.width = "200px";
+    img.style.height = "200px";
+    
+    // Adicionar a imagem ao container
+    qrCodeContainer.appendChild(img);
+    
+    // Texto para copiar - apenas a chave Pix para simplificar
+    document.getElementById("pixCopyPasteText").value = pixKey;
+    
+    return pixKey;
 }
 
 function createPixCopyPaste(pixKey, name, city, description, amount) {
