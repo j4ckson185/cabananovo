@@ -2262,6 +2262,106 @@ document.head.appendChild(style);
     display: none !important;
 }
 
+.pix-content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.pix-amount {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.pix-amount-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.pix-qrcode-container {
+    background: white;
+    padding: 1rem;
+    border-radius: 10px;
+}
+
+.pix-info {
+    width: 100%;
+    text-align: center;
+}
+
+.pix-copy-container {
+    display: flex;
+    margin: 1rem 0;
+    gap: 0.5rem;
+}
+
+.pix-copy-container input {
+    flex: 1;
+    padding: 0.75rem;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    color: white;
+    font-size: 0.9rem;
+}
+
+.pix-copy-btn {
+    padding: 0.75rem 1rem;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.pix-copy-btn:hover {
+    transform: translateY(-2px);
+}
+
+.pix-details {
+    background: var(--glass);
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.pix-details p {
+    margin: 0.5rem 0;
+}
+
+.pix-confirm-btn {
+    background: var(--gradient);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.pix-confirm-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
+}
+
+@media (max-width: 768px) {
+    .pix-content {
+        padding: 1rem;
+    }
+    
+    .pix-amount-value {
+        font-size: 1.5rem;
+    }
+}
+
 </style>
 </head>
 <body>
@@ -5014,18 +5114,17 @@ function formatOrderForWhatsApp() {
     }
 }
     
+// Certifique-se que esta parte do código seja executada apenas uma vez
 function setupPaymentEvents() {
-    const moneyRadio = document.getElementById('paymentMoney');
-    const changeInput = document.createElement('div');
-    changeInput.innerHTML = `
-        <div id="changeContainer" style="display: none; margin-top: 10px;">
-            <label>Troco para quanto?</label>
-            <input type="number" id="changeAmount" step="0.01">
-        </div>
-    `;
+    // Remover event listeners antigos (se existirem)
+    const paymentRadios = document.querySelectorAll('input[name="paymentMethod"]');
+    paymentRadios.forEach(radio => {
+        // Clone o elemento para remover todos os event listeners antigos
+        const newRadio = radio.cloneNode(true);
+        radio.parentNode.replaceChild(newRadio, radio);
+    });
     
-    moneyRadio.closest('div').appendChild(changeInput);
-    
+    // Adicionar novos event listeners
     document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             const changeContainer = document.getElementById('changeContainer');
@@ -5042,6 +5141,11 @@ function setupPaymentEvents() {
                         notes.value = '';
                     }
                 });
+            } else if (e.target.value === 'online') {
+                // Mostrar o modal do Pix quando seleciona Pix
+                changeContainer.style.display = 'none';
+                notes.value = 'Pagamento via Pix';
+                showPixModal();
             } else {
                 changeContainer.style.display = 'none';
                 notes.value = '';
@@ -6514,6 +6618,98 @@ async function updateSMSStatus(phone, type) {
     await recordAbandonedCart(data);
 }
 
+function generatePixQRCode(pixKey, name, city, description, amount) {
+    // Limpar o container antes de gerar novo QR code
+    const qrCodeContainer = document.getElementById("pixQRCode");
+    qrCodeContainer.innerHTML = '';
+    
+    // Criar um QR code com os dados fixos da sua chave Pix
+    // Aqui estamos simplificando, gerando um QR code que aponta para um texto simples
+    // com os dados do pagamento
+    const qrCodeText = `PIX: ${pixKey}\nNome: ${name}\nValor: R$ ${amount.toFixed(2)}\nDescrição: ${description}`;
+    
+    const qrcode = new QRCode(qrCodeContainer, {
+        text: qrCodeText,
+        width: 200,
+        height: 200,
+        colorDark: "#7209B7",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+    
+    // Atualizar o campo de texto copiável com os dados do Pix
+    document.getElementById("pixCopyPasteText").value = pixKey;
+    
+    return qrCodeText;
+}
+
+function createPixCopyPaste(pixKey, name, city, description, amount) {
+    // Função simplificada para gerar o código Pix
+    // Normalmente seria usado uma biblioteca completa para isso
+    const payload = `00020126330014BR.GOV.BCB.PIX0111${pixKey}52040000530398654${amount.toFixed(2).replace('.', '')}5802BR5913${name}6004${city}62${description.length.toString().padStart(2, '0')}${description}6304`;
+    
+    // Na prática, precisaria calcular o CRC16 e adicionar ao final
+    // Aqui estou simplificando com um valor fixo para demonstração
+    return payload + "ABCD";
+}
+
+function showPixModal() {
+    const subtotal = cart.reduce((total, item) => total + item.price, 0);
+    const discount = appliedCoupon ? calculateDiscount(subtotal) : 0;
+    const deliveryFee = 3.00;
+    const total = subtotal - discount + deliveryFee;
+    
+    // Atualizar valor no modal
+    document.getElementById('pixAmountValue').textContent = total.toFixed(2);
+    
+    // Limpar o container antes de mostrar a imagem
+    const qrCodeContainer = document.getElementById("pixQRCode");
+    qrCodeContainer.innerHTML = ''; // Isso é crucial para limpar QR codes anteriores
+    
+    // Usar o QR code Pix com manipulação de erros
+    const img = new Image();
+    img.onload = function() {
+        // A imagem carregou com sucesso
+        qrCodeContainer.appendChild(img);
+    };
+    
+    img.onerror = function() {
+        // Erro ao carregar a imagem
+        console.error("Erro ao carregar a imagem do QR Code");
+        qrCodeContainer.innerHTML = '<div style="width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; background: #f0f0f0; color: #333; font-size: 14px; text-align: center;">QR Code não disponível.<br>Por favor, use o código Pix abaixo.</div>';
+    };
+    
+    img.src = "https://i.ibb.co/84cCMy3j/qrcode-pix.png"; // URL corrigida
+    img.alt = "QR Code Pix";
+    img.style.width = "100%";
+    img.style.height = "auto";
+    img.style.maxWidth = "200px";
+    
+    // Código Pix copia e cola
+    document.getElementById("pixCopyPasteText").value = "00020126360014BR.GOV.BCB.PIX0114+55849887310285204000053039865802BR5901N6001C62140510CabanaAcai6304CF78";
+    
+    // Mostrar modal
+    document.getElementById('pixPaymentModal').style.display = 'block';
+}
+
+function copyPixCode() {
+    const copyText = document.getElementById('pixCopyPasteText');
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+    
+    // Mostrar notificação
+    showNotification('Código Pix copiado!');
+}
+
+function confirmPixPayment() {
+    // Fecha o modal do Pix
+    document.getElementById('pixPaymentModal').style.display = 'none';
+    
+    // Continua o processo de checkout
+    submitOrder();
+}
+    
 </script>
 <<!-- Modal para Criar Novo Pedido -->
 <!-- Modal para Criar Novo Pedido -->
@@ -6610,6 +6806,46 @@ async function updateSMSStatus(phone, type) {
         <button onclick="closeStoreClosedPopup()">Fechar</button>
     </div>
 </div>
+
+<!-- Aqui é onde você deve adicionar o modal do Pix -->
+<div id="pixPaymentModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Pagamento via Pix</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="pix-content">
+            <div class="pix-amount">
+                <h3>Valor a pagar:</h3>
+                <div class="pix-amount-value">R$ <span id="pixAmountValue">0.00</span></div>
+            </div>
+            
+            <div class="pix-qrcode-container">
+                <div id="pixQRCode"></div>
+            </div>
+            
+            <div class="pix-info">
+                <p>Faça o pagamento usando o QR Code acima ou copie o código abaixo:</p>
+                <div class="pix-copy-container">
+                    <input type="text" id="pixCopyPasteText" readonly>
+                    <button class="pix-copy-btn" onclick="copyPixCode()">
+                        <i class="fas fa-copy"></i> Copiar
+                    </button>
+                </div>
+                <div class="pix-details">
+                    <p><strong>Chave Pix:</strong> 84 988731028</p>
+                    <p><strong>Banco:</strong> Santander</p>
+                    <p><strong>Nome:</strong> Jackson</p>
+                </div>
+            </div>
+            
+            <button class="pix-confirm-btn" onclick="confirmPixPayment()">
+                Já realizei o pagamento
+            </button>
+        </div>
+    </div>
+</div>
+    
 <div class="chat-button" onclick="toggleChat()">
     <i class="fas fa-comments"></i>
 </div>
@@ -6625,5 +6861,6 @@ async function updateSMSStatus(phone, type) {
         </button>
     </div>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </body>
 </html>
