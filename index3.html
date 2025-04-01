@@ -6654,9 +6654,6 @@ function showPixModal() {
     // Atualizar valor no modal
     document.getElementById('pixAmountValue').textContent = total.toFixed(2);
     
-    // Gerar QR Code
-    // Precisa incluir a biblioteca QRCode.js antes de usar
-    // <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     generatePixQRCode('84988731028', 'Jackson', 'Natal', 'Pedido Cabana Acai', total);
     
     // Mostrar modal
