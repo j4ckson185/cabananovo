@@ -11,6 +11,7 @@
         .error { color: red; margin: 10px 0; }
         .success { color: green; margin: 10px 0; }
         #debug { background: #f5f5f5; padding: 10px; margin-top: 20px; font-family: monospace; }
+        .endereco-exemplo { color: #666; font-size: 0.9em; }
     </style>
 </head>
 <body>
@@ -19,7 +20,7 @@
         
         <div>
             <label>URL da Função:</label>
-            <input type="text" id="functionUrl" placeholder="URL da sua função Twilio">
+            <input type="text" id="functionUrl" placeholder="https://rota-motoboys-whatsapp-9573.twil.io/rota">
         </div>
 
         <div>
@@ -34,10 +35,13 @@
 
         <div>
             <label>Endereços (um por linha):</label>
-            <textarea id="enderecos" rows="6" placeholder="Exemplo:
-Rua Monte Sinai, 123, Potengi
+            <div class="endereco-exemplo">Exemplo de formato: Rua Monte Sinai, 123, Potengi</div>
+            <textarea id="enderecos" rows="6">Rua Monte Sinai, 123, Potengi
 Av. das Fronteiras, 456, N. Sra. Apresentação
-Rua João Medeiros, 789, Pajuçara"></textarea>
+Rua João Medeiros, 789, Pajuçara
+Av. Itapetinga, 321, Potengi
+Rua das Pedras, 654, N. Sra. Apresentação
+Av. das Cirandas, 987, Pajuçara</textarea>
         </div>
 
         <button onclick="testar()">Testar Envio</button>
@@ -73,20 +77,20 @@ Rua João Medeiros, 789, Pajuçara"></textarea>
             document.getElementById('error').style.display = 'none';
         }
 
-        async function testar() {
+        function testar() {
             const debug = document.getElementById('debug');
             debug.innerHTML = '';
             
             try {
                 const url = document.getElementById('functionUrl').value;
+                if (!url) {
+                    throw new Error('Informe a URL da função');
+                }
+
                 const motoboy = document.getElementById('motoboy').value;
                 const enderecos = document.getElementById('enderecos').value
                     .split('\n')
                     .filter(e => e.trim());
-
-                if (!url) {
-                    throw new Error('Informe a URL da função');
-                }
 
                 if (enderecos.length < 6) {
                     throw new Error('Adicione pelo menos 6 endereços');
@@ -97,27 +101,37 @@ Rua João Medeiros, 789, Pajuçara"></textarea>
                 log(`Número: whatsapp:${numerosPorNome[motoboy]}`);
                 log(`Total de endereços: ${enderecos.length}`);
 
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        test: 'true',
-                        motoboy: motoboy,
-                        numero: `whatsapp:${numerosPorNome[motoboy]}`,
-                        enderecos: enderecos
-                    })
+                // Criar elemento script para JSONP
+                const script = document.createElement('script');
+                const callbackName = 'callback_' + Date.now();
+                
+                // Definir callback global
+                window[callbackName] = function(response) {
+                    if (response.success) {
+                        showSuccess('Teste enviado com sucesso! Verifique seu WhatsApp.');
+                        log('Resposta: ' + JSON.stringify(response, null, 2));
+                    } else {
+                        showError(response.error || 'Erro no envio');
+                        log('Erro: ' + JSON.stringify(response, null, 2));
+                    }
+                    // Limpar callback e script
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                };
+
+                // Construir URL com parâmetros
+                const params = new URLSearchParams({
+                    test: 'true',
+                    motoboy: motoboy,
+                    numero: `whatsapp:${numerosPorNome[motoboy]}`,
+                    enderecos: JSON.stringify(enderecos),
+                    callback: callbackName
                 });
 
-                const data = await response.json();
-                
-                if (data.success) {
-                    showSuccess('Teste enviado com sucesso!');
-                    log('Resposta: ' + JSON.stringify(data, null, 2));
-                } else {
-                    throw new Error(data.error || 'Erro no envio');
-                }
+                script.src = `${url}?${params.toString()}`;
+                document.body.appendChild(script);
+
+                log('Requisição enviada, aguardando resposta...');
 
             } catch (error) {
                 showError(error.message);
