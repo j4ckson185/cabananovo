@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Rotas Motoboys</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        select, input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #25d366;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #128C7E;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: none;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+            display: none;
+        }
+        .success {
+            color: green;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🛵 Teste de Rotas - Motoboys</h2>
+        
+        <div class="form-group">
+            <label>Selecione o Motoboy:</label>
+            <select id="motoboy">
+                <option value="Gabriel Andrade">Gabriel Andrade (84988529385)</option>
+                <option value="Boaz">Boaz (8492090818)</option>
+                <option value="Rafael">Rafael (8491472409)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Endereços (um por linha):</label>
+            <textarea id="enderecos" rows="8" placeholder="Digite um endereço por linha. Ex:
+Rua Monte Sinai, 123, Potengi
+Av. das Fronteiras, 456, N. Sra. Apresentação"></textarea>
+        </div>
+
+        <button onclick="testarEnvio()">Enviar Teste</button>
+
+        <div id="success" class="success">
+            Teste enviado com sucesso! Verifique o WhatsApp do motoboy.
+        </div>
+
+        <div id="error" class="error">
+            Erro ao enviar teste. Verifique os logs no console.
+        </div>
+
+        <div id="result" class="result">
+            <h3>Detalhes do Envio:</h3>
+            <pre id="resultDetails"></pre>
+        </div>
+    </div>
+
+    <script>
+        async function testarEnvio() {
+            const motoboy = document.getElementById('motoboy').value;
+            const enderecos = document.getElementById('enderecos').value.split('\n').filter(e => e.trim());
+            
+            const success = document.getElementById('success');
+            const error = document.getElementById('error');
+            const result = document.getElementById('result');
+            const resultDetails = document.getElementById('resultDetails');
+            
+            success.style.display = 'none';
+            error.style.display = 'none';
+            result.style.display = 'none';
+
+            if (enderecos.length < 6) {
+                error.textContent = 'Adicione pelo menos 6 endereços para teste';
+                error.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch('SUA_URL_DA_FUNCAO_TWILIO/test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        test: 'true',
+                        motoboy: motoboy,
+                        enderecos: enderecos
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    success.style.display = 'block';
+                    result.style.display = 'block';
+                    resultDetails.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    throw new Error('Falha no envio');
+                }
+            } catch (err) {
+                error.textContent = 'Erro ao enviar teste: ' + err.message;
+                error.style.display = 'block';
+                console.error('Erro completo:', err);
+            }
+        }
+    </script>
+</body>
+</html>
