@@ -4,147 +4,119 @@
     <title>Teste Rotas Motoboys</title>
     <meta charset="UTF-8">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        .container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        select, input, textarea {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        button {
-            background: #25d366;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #128C7E;
-        }
-        .result {
-            margin-top: 20px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            display: none;
-        }
-        .error {
-            color: red;
-            margin-top: 10px;
-            display: none;
-        }
-        .success {
-            color: green;
-            margin-top: 10px;
-            display: none;
-        }
+        body { font-family: Arial; margin: 20px; }
+        .container { max-width: 800px; margin: auto; padding: 20px; border: 1px solid #ddd; }
+        input, select, textarea { width: 100%; margin: 5px 0; padding: 5px; }
+        button { background: #25D366; color: white; padding: 10px; border: none; cursor: pointer; }
+        .error { color: red; margin: 10px 0; }
+        .success { color: green; margin: 10px 0; }
+        #debug { background: #f5f5f5; padding: 10px; margin-top: 20px; font-family: monospace; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>🛵 Teste de Rotas - Motoboys</h2>
+        <h2>Teste de Rotas - Motoboys</h2>
         
-        <div class="form-group">
-            <label>Selecione o Motoboy:</label>
+        <div>
+            <label>URL da Função:</label>
+            <input type="text" id="functionUrl" placeholder="URL da sua função Twilio">
+        </div>
+
+        <div>
+            <label>Motoboy:</label>
             <select id="motoboy">
-                <option value="Gabriel Andrade">Gabriel Andrade (84988529385)</option>
-                <option value="Boaz">Boaz (8492090818)</option>
-                <option value="Rafael">Rafael (8491472409)</option>
-                <option value="Elsinho">Jackson (8487673202)</option>
+                <option value="Gabriel Andrade">Gabriel Andrade</option>
+                <option value="Boaz">Boaz</option>
+                <option value="Rafael">Rafael</option>
             </select>
         </div>
 
-        <div class="form-group">
+        <div>
             <label>Endereços (um por linha):</label>
-            <textarea id="enderecos" rows="8" placeholder="Digite um endereço por linha. Ex:
-Rua Monte Sinai, 123, Potengi
-Av. das Fronteiras, 456, N. Sra. Apresentação"></textarea>
+            <textarea id="enderecos" rows="6"></textarea>
         </div>
 
-        <button onclick="testarEnvio()">Enviar Teste</button>
+        <button onclick="testar()">Testar Envio</button>
 
-        <div id="success" class="success">
-            Teste enviado com sucesso! Verifique o WhatsApp do motoboy.
-        </div>
-
-        <div id="error" class="error">
-            Erro ao enviar teste. Verifique os logs no console.
-        </div>
-
-        <div id="result" class="result">
-            <h3>Detalhes do Envio:</h3>
-            <pre id="resultDetails"></pre>
-        </div>
+        <div id="error" class="error" style="display:none"></div>
+        <div id="success" class="success" style="display:none"></div>
+        <div id="debug"></div>
     </div>
 
     <script>
-        async function testarEnvio() {
-            const motoboy = document.getElementById('motoboy').value;
-            const enderecos = document.getElementById('enderecos').value.split('\n').filter(e => e.trim());
-            
-            const success = document.getElementById('success');
-            const error = document.getElementById('error');
-            const result = document.getElementById('result');
-            const resultDetails = document.getElementById('resultDetails');
-            
-            success.style.display = 'none';
-            error.style.display = 'none';
-            result.style.display = 'none';
+        function log(msg) {
+            const debug = document.getElementById('debug');
+            debug.innerHTML += msg + '<br>';
+            console.log(msg);
+        }
 
-            if (enderecos.length < 6) {
-                error.textContent = 'Adicione pelo menos 6 endereços para teste';
-                error.style.display = 'block';
-                return;
-            }
+        function showError(msg) {
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').innerText = msg;
+            document.getElementById('success').style.display = 'none';
+        }
 
+        function showSuccess(msg) {
+            document.getElementById('success').style.display = 'block';
+            document.getElementById('success').innerText = msg;
+            document.getElementById('error').style.display = 'none';
+        }
+
+        async function testar() {
+            const debug = document.getElementById('debug');
+            debug.innerHTML = ''; // Limpa logs anteriores
+            
             try {
-                const response = await fetch('https://rota-motoboys-whatsapp-9573.twil.io/rota', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        test: 'true',
-                        motoboy: motoboy,
-                        enderecos: enderecos
-                    })
+                const url = document.getElementById('functionUrl').value;
+                const motoboy = document.getElementById('motoboy').value;
+                const enderecos = document.getElementById('enderecos').value
+                    .split('\n')
+                    .filter(e => e.trim());
+
+                if (!url) {
+                    throw new Error('Informe a URL da função');
+                }
+
+                if (enderecos.length < 6) {
+                    throw new Error('Adicione pelo menos 6 endereços');
+                }
+
+                log('Iniciando teste...');
+                log(`Motoboy: ${motoboy}`);
+                log(`Total de endereços: ${enderecos.length}`);
+
+                // Cria um script tag para JSONP
+                const script = document.createElement('script');
+                const callback = 'callback_' + Math.floor(Math.random() * 1000000);
+                
+                window[callback] = function(response) {
+                    if (response.success) {
+                        showSuccess('Teste enviado com sucesso!');
+                        log('Resposta: ' + JSON.stringify(response, null, 2));
+                    } else {
+                        showError(response.error || 'Erro no envio');
+                        log('Erro: ' + JSON.stringify(response, null, 2));
+                    }
+                    // Limpa o callback
+                    delete window[callback];
+                    document.body.removeChild(script);
+                };
+
+                const params = new URLSearchParams({
+                    test: 'true',
+                    motoboy: motoboy,
+                    callback: callback,
+                    enderecos: JSON.stringify(enderecos)
                 });
 
-                const data = await response.json();
-                
-                if (data.success) {
-                    success.style.display = 'block';
-                    result.style.display = 'block';
-                    resultDetails.textContent = JSON.stringify(data, null, 2);
-                } else {
-                    throw new Error('Falha no envio');
-                }
-            } catch (err) {
-                error.textContent = 'Erro ao enviar teste: ' + err.message;
-                error.style.display = 'block';
-                console.error('Erro completo:', err);
+                script.src = `${url}?${params.toString()}`;
+                document.body.appendChild(script);
+
+                log('Requisição enviada, aguardando resposta...');
+
+            } catch (error) {
+                showError(error.message);
+                log('Erro: ' + error.message);
             }
         }
     </script>
