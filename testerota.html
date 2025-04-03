@@ -23,17 +23,21 @@
         </div>
 
         <div>
-            <label>Motoboy:</label>
+            <label>Destinatário:</label>
             <select id="motoboy">
-                <option value="Gabriel Andrade">Gabriel Andrade</option>
-                <option value="Boaz">Boaz</option>
-                <option value="Rafael">Rafael</option>
+                <option value="Eduardo">Eduardo (84987673202)</option>
+                <option value="Gabriel Andrade">Gabriel Andrade (84988529385)</option>
+                <option value="Boaz">Boaz (8492090818)</option>
+                <option value="Rafael">Rafael (8491472409)</option>
             </select>
         </div>
 
         <div>
             <label>Endereços (um por linha):</label>
-            <textarea id="enderecos" rows="6"></textarea>
+            <textarea id="enderecos" rows="6" placeholder="Exemplo:
+Rua Monte Sinai, 123, Potengi
+Av. das Fronteiras, 456, N. Sra. Apresentação
+Rua João Medeiros, 789, Pajuçara"></textarea>
         </div>
 
         <button onclick="testar()">Testar Envio</button>
@@ -44,6 +48,13 @@
     </div>
 
     <script>
+        const numerosPorNome = {
+            'Eduardo': '+5584987673202',
+            'Gabriel Andrade': '+5584988529385',
+            'Boaz': '+558492090818',
+            'Rafael': '+558491472409'
+        };
+
         function log(msg) {
             const debug = document.getElementById('debug');
             debug.innerHTML += msg + '<br>';
@@ -64,7 +75,7 @@
 
         async function testar() {
             const debug = document.getElementById('debug');
-            debug.innerHTML = ''; // Limpa logs anteriores
+            debug.innerHTML = '';
             
             try {
                 const url = document.getElementById('functionUrl').value;
@@ -82,37 +93,31 @@
                 }
 
                 log('Iniciando teste...');
-                log(`Motoboy: ${motoboy}`);
+                log(`Destinatário: ${motoboy}`);
+                log(`Número: whatsapp:${numerosPorNome[motoboy]}`);
                 log(`Total de endereços: ${enderecos.length}`);
 
-                // Cria um script tag para JSONP
-                const script = document.createElement('script');
-                const callback = 'callback_' + Math.floor(Math.random() * 1000000);
-                
-                window[callback] = function(response) {
-                    if (response.success) {
-                        showSuccess('Teste enviado com sucesso!');
-                        log('Resposta: ' + JSON.stringify(response, null, 2));
-                    } else {
-                        showError(response.error || 'Erro no envio');
-                        log('Erro: ' + JSON.stringify(response, null, 2));
-                    }
-                    // Limpa o callback
-                    delete window[callback];
-                    document.body.removeChild(script);
-                };
-
-                const params = new URLSearchParams({
-                    test: 'true',
-                    motoboy: motoboy,
-                    callback: callback,
-                    enderecos: JSON.stringify(enderecos)
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        test: 'true',
+                        motoboy: motoboy,
+                        numero: `whatsapp:${numerosPorNome[motoboy]}`,
+                        enderecos: enderecos
+                    })
                 });
 
-                script.src = `${url}?${params.toString()}`;
-                document.body.appendChild(script);
-
-                log('Requisição enviada, aguardando resposta...');
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('Teste enviado com sucesso!');
+                    log('Resposta: ' + JSON.stringify(data, null, 2));
+                } else {
+                    throw new Error(data.error || 'Erro no envio');
+                }
 
             } catch (error) {
                 showError(error.message);
