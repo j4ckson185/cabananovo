@@ -6416,7 +6416,7 @@ if (data.choices && data.choices.length) {
 function addMessageToChat(message, type) {
     const messagesContainer = document.querySelector('.chat-messages');
     const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${type}-message`;
+    messageDiv.className = 'message ' + type + '-message';
     if (type === 'bot') {
         messageDiv.innerHTML = `<span class="bot-prefix">🤖</span>${message}`;
     } else {
