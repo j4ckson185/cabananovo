@@ -3075,13 +3075,13 @@ function pararGravacao() {
     if (recordingIndicator) recordingIndicator.style.display = 'none';
 }
     
-function enviarAudioParaChatbot(audioBlob) {
+async function enviarAudioParaChatbot(blob) {
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.lang = 'pt-BR';
     recognition.continuous = false;
     recognition.interimResults = false;
 
-    recognition.onresult = (event) => {
+    recognition.onresult = async (event) => {
         const texto = event.results[0][0].transcript;
         addMessageToChat(texto, 'user'); // Adiciona a mensagem do usuário
 
