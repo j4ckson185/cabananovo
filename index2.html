@@ -6906,14 +6906,20 @@ function submitNormalOrder(orderData) {
     💬
 </div>
 
-<script>
-document.querySelector('.send-button').addEventListener('click', () => {
-    const input = document.querySelector('.chat-input');
-    const userMessage = input.value.trim();
-    if (!userMessage) return;
+<div class="chat-container">
+    <div class="chat-messages"></div>
+    <div class="chat-input-container">
+        <input type="text" class="chat-input" placeholder="Digite sua mensagem...">
+        <button class="send-button">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+</div>
 
-    appendMessage('user', userMessage);
-    input.value = '';
+<script>
+document.getElementById('claude-chat-icon').addEventListener('click', () => {
+    const userMessage = prompt("Digite sua pergunta:");
+    if (!userMessage) return;
 
     fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
