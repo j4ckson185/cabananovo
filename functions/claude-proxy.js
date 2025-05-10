@@ -1,8 +1,7 @@
 // netlify/functions/claude-proxy.js
-
 const axios = require('axios');
 
-exports.handler = async function(event, context) {
+exports.handler = async function(event) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, headers: { Allow: 'POST' }, body: 'Method Not Allowed' };
   }
@@ -21,11 +20,11 @@ exports.handler = async function(event, context) {
 
   const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
   if (!CLAUDE_API_KEY) {
-    console.error('⚠️ CLAUDE_API_KEY não encontrada em process.env');
+    console.error('⚠️ CLAUDE_API_KEY not set');
     return { statusCode: 500, body: JSON.stringify({ error: 'CLAUDE_API_KEY not set' }) };
   }
 
-  // --- TODO: mantenha este bloco resumindo todo o treinamento ---
+  // Resumo do treinamento (mantendo todas as informações)
   const SYSTEM_PROMPT = `
 Locais de entrega: apenas zona norte de Natal (Potengi, Lagoa Azul, Pajuçara, Nossa Senhora da Apresentação, Igapó, Redinha e São Gonçalo do Amarante — neste último somente Conjunto Amarante e Golandim).
 
@@ -106,34 +105,40 @@ Promoção iFood (via chat):
 `;
 
   try {
-    const resp = await axios.post(
-      'https://api.anthropic.com/v1/complete',
+    const response = await axios.post(
+      'https://api.anthropic.com/v1/messages',
       {
         model: 'claude-3-5-haiku-20241022',
-        prompt: `${SYSTEM_PROMPT}\n\nHuman: ${message}\n\nAssistant:`,
+        messages: [
+          { role: 'system',  content: SYSTEM_PROMPT },
+          { role: 'user',    content: message }
+        ],
         max_tokens_to_sample: 1000,
         temperature: 0.7
       },
       {
         headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': CLAUDE_API_KEY,
-          'anthropic-version': '2023-06-01'
+          'Content-Type':        'application/json',
+          'x-api-key':           CLAUDE_API_KEY,
+          'anthropic-version':   '2023-06-01'
         }
       }
     );
 
+    const replyBlock = response.data.content?.find(c => c.type === 'text');
+    const reply = replyBlock ? replyBlock.text : '';
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ reply: resp.data.completion })
+      body: JSON.stringify({ reply })
     };
 
   } catch (err) {
-    console.error('❌ erro Anthropic:', err.response?.data || err.message);
-    const msg = err.response?.data || err.message;
+    console.error('❌ Erro na Messages API:', err.response?.data || err.message);
+    const errorInfo = err.response?.data || err.message;
     return {
       statusCode: err.response?.status || 500,
-      body: JSON.stringify({ error: msg })
+      body: JSON.stringify({ error: errorInfo })
     };
   }
 };
