@@ -1,11 +1,18 @@
 // netlify/functions/claude-proxy.js
+
 const axios = require('axios');
 
 exports.handler = async function(event) {
+  // só aceitar POST
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers: { Allow: 'POST' }, body: 'Method Not Allowed' };
+    return {
+      statusCode: 405,
+      headers: { Allow: 'POST' },
+      body: 'Method Not Allowed'
+    };
   }
 
+  // parse do body
   let body;
   try {
     body = JSON.parse(event.body);
@@ -15,16 +22,23 @@ exports.handler = async function(event) {
 
   const message = body.message;
   if (!message) {
-    return { statusCode: 400, body: JSON.stringify({ error: '"message" is required' }) };
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: '"message" is required' })
+    };
   }
 
+  // lê a API Key do Claude
   const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
   if (!CLAUDE_API_KEY) {
     console.error('⚠️ CLAUDE_API_KEY not set');
-    return { statusCode: 500, body: JSON.stringify({ error: 'CLAUDE_API_KEY not set' }) };
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'CLAUDE_API_KEY not set' })
+    };
   }
 
-  // Resumo do treinamento (mantendo todas as informações)
+  // --- trechão de sistema resumindo TODO o treinamento ---
   const SYSTEM_PROMPT = `
 Locais de entrega: apenas zona norte de Natal (Potengi, Lagoa Azul, Pajuçara, Nossa Senhora da Apresentação, Igapó, Redinha e São Gonçalo do Amarante — neste último somente Conjunto Amarante e Golandim).
 
@@ -69,9 +83,9 @@ Pedidos em atraso:
 - Peça desculpas; “alto fluxo”; peça WhatsApp para contato.
 
 Cancelamento:
-- Só via iFood; se for WhatsApp/cardápio, peça dados (pedido ou nome+endereço), solicite cancelamento, informe reembolso em até 48 h e peça chave PIX do cliente.
+- Só via iFood; se for WhatsApp/cardápio, peça dados (número do pedido ou nome+endereço), solicite cancelamento, informe reembolso em até 48 h e peça chave PIX do cliente.
 
-Encerramento:
+Encerramento de conversa:
 - Sempre cumprimente e envie mensagem bíblica.
 
 Frutas disponíveis:
@@ -84,12 +98,19 @@ Tamanhos e preços:
 - 300 ml R$11,99; 500 ml R$16,99; 1 l R$27,99.
 
 Sabores:
-- Açaí tradicional; Açaí Fitness (puro + banana + whey 30 g separado; whey + banana juntos ou misturados; fitness: 300 ml R$16,99, 500 ml R$21,99, 1 l R$31,99; porção extra de whey R$5,99); Creme de Ninho; Cupuaçu; Morango; Ovomaltine; Amendoim.
+- Açaí tradicional;
+- Açaí Fitness (puro + banana + whey 30 g separado; whey + banana juntos ou misturados; fitness: 300 ml R$16,99, 500 ml R$21,99, 1 l R$31,99; porção extra de whey R$5,99);
+- Creme de Ninho;
+- Cupuaçu;
+- Morango;
+- Ovomaltine;
+- Amendoim.
 
-Extras:
-- R$1,99 cada; em 300 ml e 500 ml até 4; em 1 l até 8.
+Acompanhamentos extras:
+- R$1,99 cada;
+- Em 300 ml e 500 ml até 4; em 1 l até 8.
 
-Entrega:
+Tempo de entrega:
 - Estimado 40–50 min;
 - Para iFood: “já saiu para entrega, motoboy a caminho” (peça número do pedido);
 - Para WhatsApp: se dentro do horário, “chega logo”; senão, agendado para o próximo dia útil.
@@ -98,39 +119,38 @@ Reembolso:
 - Registre no sistema, peça chave PIX e WhatsApp; prazo máximo 48 h.
 
 Combos:
-- 300 ml R$20,99; 500 ml R$26,99; 1 l R$49,99.
+- Combo 300 ml R$20,99; 500 ml R$26,99; 1 l R$49,99.
 
 Promoção iFood (via chat):
 - Coletar nome, endereço, WhatsApp e finalizar manualmente.
 `;
 
   try {
+    // chamada à Messages API
     const response = await axios.post(
       'https://api.anthropic.com/v1/messages',
       {
         model: 'claude-3-5-haiku-20241022',
+        system: SYSTEM_PROMPT,         // prompt de sistema no nível superior
         messages: [
-          { role: 'system',  content: SYSTEM_PROMPT },
-          { role: 'user',    content: message }
+          { role: 'user', content: message }
         ],
         max_tokens_to_sample: 1000,
         temperature: 0.7
       },
       {
         headers: {
-          'Content-Type':        'application/json',
-          'x-api-key':           CLAUDE_API_KEY,
-          'anthropic-version':   '2023-06-01'
+          'Content-Type':      'application/json',
+          'x-api-key':         CLAUDE_API_KEY,
+          'anthropic-version': '2023-06-01'
         }
       }
     );
 
-    const replyBlock = response.data.content?.find(c => c.type === 'text');
-    const reply = replyBlock ? replyBlock.text : '';
-
+    // a resposta vem em response.data.content
     return {
       statusCode: 200,
-      body: JSON.stringify({ reply })
+      body: JSON.stringify({ reply: response.data.content })
     };
 
   } catch (err) {
