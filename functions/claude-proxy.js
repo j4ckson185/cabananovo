@@ -106,21 +106,22 @@ Promoção iFood (via chat):
 `;
 
   try {
-    const resp = await axios.post(
-      'https://api.anthropic.com/v1/complete',
-      {
-        model: 'claude-3.5-haiku-20241022',
-        prompt: `SYSTEM: ${SYSTEM_PROMPT}\n\nUSER: ${message}\n\nASSISTANT:`,
-        max_tokens_to_sample: 1000,
-        temperature: 0.7
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': CLAUDE_API_KEY
-        }
-      }
-    );
+const resp = await axios.post(
+  'https://api.anthropic.com/v1/complete',
+  {
+    model: 'claude-3.5-haiku-20241022',
+    prompt: `SYSTEM: ${SYSTEM_PROMPT}\n\nUSER: ${message}\n\nASSISTANT:`,
+    max_tokens_to_sample: 1000,
+    temperature: 0.7
+  },
+  {
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': CLAUDE_API_KEY,
+      'anthropic-version': '2023-06-01'
+    }
+  }
+);
 
     return {
       statusCode: 200,
