@@ -3,42 +3,29 @@
 const axios = require('axios');
 
 exports.handler = async function(event, context) {
-  // só aceitar POST
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers: { 'Allow': 'POST' },
-      body: 'Method Not Allowed'
-    };
+    return { statusCode: 405, headers: { Allow: 'POST' }, body: 'Method Not Allowed' };
   }
 
   let body;
   try {
     body = JSON.parse(event.body);
   } catch {
-    return {
-      statusCode: 400,
-      body: 'Invalid JSON'
-    };
+    return { statusCode: 400, body: 'Invalid JSON' };
   }
 
   const message = body.message;
   if (!message) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: '"message" is required' })
-    };
+    return { statusCode: 400, body: JSON.stringify({ error: '"message" is required' }) };
   }
 
   const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
   if (!CLAUDE_API_KEY) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'CLAUDE_API_KEY not set' })
-    };
+    console.error('⚠️ CLAUDE_API_KEY não encontrada em process.env');
+    return { statusCode: 500, body: JSON.stringify({ error: 'CLAUDE_API_KEY not set' }) };
   }
 
-  // *** RESUMO DO TREINAMENTO (mantendo todas as informações) ***
+  // resumo do treino (mantendo todas as infos)
   const SYSTEM_PROMPT = `
 Locais de entrega: apenas zona norte de Natal (Potengi, Lagoa Azul, Pajuçara, Nossa Senhora da Apresentação, Igapó, Redinha e São Gonçalo do Amarante — neste último somente Conjunto Amarante e Golandim).
 
@@ -119,10 +106,10 @@ Promoção iFood (via chat):
 `;
 
   try {
-    const anthropicRes = await axios.post(
+    const resp = await axios.post(
       'https://api.anthropic.com/v1/complete',
       {
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-3.5-haiku-20241022',
         prompt: `SYSTEM: ${SYSTEM_PROMPT}\n\nUSER: ${message}\n\nASSISTANT:`,
         max_tokens_to_sample: 1000,
         temperature: 0.7
@@ -137,13 +124,16 @@ Promoção iFood (via chat):
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ reply: anthropicRes.data.completion })
+      body: JSON.stringify({ reply: resp.data.completion })
     };
+
   } catch (err) {
-    console.error('Erro na API Claude:', err);
+    // log completo no console da Function, e devolve mensagem pra você ver
+    console.error('❌ erro Anthropic:', err.response?.data || err.message);
+    const msg = err.response?.data || err.message;
     return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Internal Claude error' })
+      statusCode: err.response?.status || 500,
+      body: JSON.stringify({ error: msg })
     };
   }
 };
