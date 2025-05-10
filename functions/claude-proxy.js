@@ -3,16 +3,11 @@
 const axios = require('axios');
 
 exports.handler = async function(event) {
-  // só aceitar POST
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers: { Allow: 'POST' },
-      body: 'Method Not Allowed'
-    };
+    return { statusCode: 405, headers: { Allow: 'POST' }, body: 'Method Not Allowed' };
   }
 
-  // parse do body
+  // Parse do corpo
   let body;
   try {
     body = JSON.parse(event.body);
@@ -22,23 +17,16 @@ exports.handler = async function(event) {
 
   const message = body.message;
   if (!message) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: '"message" is required' })
-    };
+    return { statusCode: 400, body: JSON.stringify({ error: '"message" is required' }) };
   }
 
-  // lê a API Key do Claude
   const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
   if (!CLAUDE_API_KEY) {
     console.error('⚠️ CLAUDE_API_KEY not set');
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'CLAUDE_API_KEY not set' })
-    };
+    return { statusCode: 500, body: JSON.stringify({ error: 'CLAUDE_API_KEY not set' }) };
   }
 
-  // --- trechão de sistema resumindo TODO o treinamento ---
+  // --- TODO: mantenha todo o seu prompt de sistema resumido aqui ---
   const SYSTEM_PROMPT = `
 Locais de entrega: apenas zona norte de Natal (Potengi, Lagoa Azul, Pajuçara, Nossa Senhora da Apresentação, Igapó, Redinha e São Gonçalo do Amarante — neste último somente Conjunto Amarante e Golandim).
 
@@ -126,16 +114,13 @@ Promoção iFood (via chat):
 `;
 
   try {
-    // chamada à Messages API
     const response = await axios.post(
       'https://api.anthropic.com/v1/messages',
       {
         model: 'claude-3-5-haiku-20241022',
-        system: SYSTEM_PROMPT,         // prompt de sistema no nível superior
-        messages: [
-          { role: 'user', content: message }
-        ],
-        max_tokens: 500,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: message }],
+        max_tokens: 1000,
         temperature: 0.7
       },
       {
@@ -147,15 +132,20 @@ Promoção iFood (via chat):
       }
     );
 
-    // a resposta vem em response.data.content
+    // response.data.content é um array de blocos: [{type:"text", text:"..."}]
+    const blocks = response.data.content;  // :contentReference[oaicite:0]{index=0}
+    const reply = Array.isArray(blocks)
+      ? blocks.map(b => b.text).join('')  // junta todos os textos num único string :contentReference[oaicite:1]{index=1}
+      : '';
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ reply: response.data.content })
+      body: JSON.stringify({ reply })
     };
 
   } catch (err) {
     console.error('❌ Erro na Messages API:', err.response?.data || err.message);
-    const errorInfo = err.response?.data || err.message;
+    const errorInfo = err.response?.data || err.message;  // :contentReference[oaicite:2]{index=2}
     return {
       statusCode: err.response?.status || 500,
       body: JSON.stringify({ error: errorInfo })
