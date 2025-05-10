@@ -25,7 +25,7 @@ exports.handler = async function(event, context) {
     return { statusCode: 500, body: JSON.stringify({ error: 'CLAUDE_API_KEY not set' }) };
   }
 
-  // resumo do treino (mantendo todas as infos)
+  // --- TODO: mantenha este bloco resumindo todo o treinamento ---
   const SYSTEM_PROMPT = `
 Locais de entrega: apenas zona norte de Natal (Potengi, Lagoa Azul, Pajuçara, Nossa Senhora da Apresentação, Igapó, Redinha e São Gonçalo do Amarante — neste último somente Conjunto Amarante e Golandim).
 
@@ -106,22 +106,22 @@ Promoção iFood (via chat):
 `;
 
   try {
-const resp = await axios.post(
-  'https://api.anthropic.com/v1/complete',
-  {
-    model: 'claude-3.5-haiku-20241022',
-    prompt: `SYSTEM: ${SYSTEM_PROMPT}\n\nUSER: ${message}\n\nASSISTANT:`,
-    max_tokens_to_sample: 1000,
-    temperature: 0.7
-  },
-  {
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': CLAUDE_API_KEY,
-      'anthropic-version': '2023-06-01'
-    }
-  }
-);
+    const resp = await axios.post(
+      'https://api.anthropic.com/v1/complete',
+      {
+        model: 'claude-3.5-haiku-20241022',
+        prompt: `${SYSTEM_PROMPT}\n\nHuman: ${message}\n\nAssistant:`,
+        max_tokens_to_sample: 1000,
+        temperature: 0.7
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': CLAUDE_API_KEY,
+          'anthropic-version': '2023-06-01'
+        }
+      }
+    );
 
     return {
       statusCode: 200,
@@ -129,7 +129,6 @@ const resp = await axios.post(
     };
 
   } catch (err) {
-    // log completo no console da Function, e devolve mensagem pra você ver
     console.error('❌ erro Anthropic:', err.response?.data || err.message);
     const msg = err.response?.data || err.message;
     return {
