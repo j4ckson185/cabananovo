@@ -6883,69 +6883,131 @@ function confirmPixPayment() {
 </div>
 
   <!-- INÍCIO: chat widget Claude -->
-  <div id="claude-chat" style="position: fixed; bottom: 20px; right: 20px; width: 300px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden; font-family: sans-serif; z-index: 1000;">
-    <div id="claude-chat-window" style="height: 200px; overflow-y: auto; padding: 10px; background: #fff;">
-      <!-- Aqui aparecem as mensagens -->
-    </div>
-    <div style="display: flex; border-top: 1px solid #eee;">
-      <input id="claude-chat-input"
-             type="text"
-             placeholder="Digite sua mensagem…"
-             style="flex:1; border:none; padding: 8px; outline:none;" />
-      <button id="claude-send-button"
-              style="border:none; padding: 0 16px; background: #4CAF50; color:#fff; cursor:pointer;">
-        Enviar
-      </button>
-    </div>
+<!-- INÍCIO: botão e chat Claude -->
+<style>
+  /* botão flutuante */
+  #claude-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border: none;
+    border-radius: 50%;
+    background: #4CAF50;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1000;
+  }
+  /* container do chat, escondido por padrão */
+  #claude-container {
+    display: none;
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 300px;
+    max-height: 400px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    border-radius: 8px;
+    overflow: hidden;
+    font-family: sans-serif;
+    background: #fff;
+    z-index: 1000;
+  }
+  #claude-window {
+    height: 260px;
+    overflow-y: auto;
+    padding: 10px;
+  }
+  #claude-input-row {
+    display: flex;
+    border-top: 1px solid #eee;
+  }
+  #claude-input {
+    flex: 1;
+    border: none;
+    padding: 8px;
+    outline: none;
+  }
+  #claude-send {
+    border: none;
+    padding: 0 16px;
+    background: #4CAF50;
+    color: #fff;
+    cursor: pointer;
+  }
+</style>
+
+<button id="claude-toggle">💬</button>
+
+<div id="claude-container">
+  <div id="claude-window"></div>
+  <div id="claude-input-row">
+    <input id="claude-input" type="text" placeholder="Digite sua mensagem…" />
+    <button id="claude-send">Enviar</button>
   </div>
+</div>
   <!-- FIM: chat widget Claude -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-    <script>
+<script>
+  // controle de exibição do chat
+  const toggle = document.getElementById('claude-toggle');
+  const container = document.getElementById('claude-container');
+  toggle.addEventListener('click', () => {
+    container.style.display = container.style.display === 'block' ? 'none' : 'block';
+  });
+
+  // função segura de chamada ao proxy
   async function sendToClaude(text) {
-    const res = await fetch('/claude', {
+    const res = await fetch('/.netlify/functions/claude-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: text })
     });
-    const data = await res.json();
+    // se não for JSON, pega o texto cru
+    const raw = await res.text();
+    if (!res.ok) throw new Error(raw || res.statusText);
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
+      throw new Error(raw || 'Resposta inválida do servidor');
+    }
     if (data.error) throw new Error(data.error);
     return data.reply;
   }
 
-  // Quando o usuário clicar em “Enviar”:
-  document.getElementById('claude-send-button')
-    .addEventListener('click', async () => {
-      const inputEl = document.getElementById('claude-chat-input');
-      const chatWindow = document.getElementById('claude-chat-window');
-      const userText = inputEl.value.trim();
-      if (!userText) return;
-
-      // Exibe a mensagem do usuário
-      chatWindow.insertAdjacentHTML(
+  // lógica de envio e exibição
+  document.getElementById('claude-send').addEventListener('click', async () => {
+    const input = document.getElementById('claude-input');
+    const win = document.getElementById('claude-window');
+    const text = input.value.trim();
+    if (!text) return;
+    // exibe mensagem do usuário
+    win.insertAdjacentHTML(
+      'beforeend',
+      `<div style="text-align:right; margin:5px;"><strong>Você:</strong> ${text}</div>`
+    );
+    input.value = '';
+    win.scrollTop = win.scrollHeight;
+    // chama o Claude
+    try {
+      const reply = await sendToClaude(text);
+      win.insertAdjacentHTML(
         'beforeend',
-        `<div style="text-align:right; margin:5px 0;"><strong>Você:</strong> ${userText}</div>`
+        `<div style="text-align:left; margin:5px;"><strong>Claude:</strong> ${reply}</div>`
       );
-
-      inputEl.value = '';
-      chatWindow.scrollTop = chatWindow.scrollHeight;
-
-      // Chama o Claude e exibe a resposta
-      try {
-        const reply = await sendToClaude(userText);
-        chatWindow.insertAdjacentHTML(
-          'beforeend',
-          `<div style="text-align:left; margin:5px 0;"><strong>Claude:</strong> ${reply}</div>`
-        );
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-      } catch (err) {
-        chatWindow.insertAdjacentHTML(
-          'beforeend',
-          `<div style="color:red; margin:5px 0;">Erro: ${err.message}</div>`
-        );
-      }
-    });
+    } catch (err) {
+      win.insertAdjacentHTML(
+        'beforeend',
+        `<div style="color:red; margin:5px;">Erro: ${err.message}</div>`
+      );
+    }
+    win.scrollTop = win.scrollHeight;
+  });
 </script>
 
 </body>
