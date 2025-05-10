@@ -135,7 +135,7 @@ Promoção iFood (via chat):
         messages: [
           { role: 'user', content: message }
         ],
-        max_tokens_to_sample: 1000,
+        max_tokens: 500,
         temperature: 0.7
       },
       {
