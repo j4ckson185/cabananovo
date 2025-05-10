@@ -109,7 +109,7 @@ Promoção iFood (via chat):
     const resp = await axios.post(
       'https://api.anthropic.com/v1/complete',
       {
-        model: 'claude-3.5-haiku-20241022',
+        model: 'claude-3-5-haiku-20241022',
         prompt: `${SYSTEM_PROMPT}\n\nHuman: ${message}\n\nAssistant:`,
         max_tokens_to_sample: 1000,
         temperature: 0.7
